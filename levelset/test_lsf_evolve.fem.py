@@ -138,11 +138,8 @@ for i in range(nt):
 
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
 
-    if i % 20 == 0 and i != 0:
-        phi0[:] = lsfemsolver.reinit(phi0 = phi0, dt=0.001, nt=20)
-        print("开始重置")
-    diff_avg, diff_max = check_gradient_norm(space, phi0, mesh)
-    print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+    #if i % 5 == 0 and i != 0:
+    #    phi0[:] = lsfemsolver.reinit(phi0 = phi0)
 
     # Save the current state if output is enabled
     if output != 'None':
@@ -154,4 +151,6 @@ for i in range(nt):
     # Move to the next time level
     timeline.advance()
 
+diff_avg, diff_max = check_gradient_norm(space, phi0, mesh)
+print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
