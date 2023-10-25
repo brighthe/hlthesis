@@ -114,7 +114,7 @@ class TopLevelSet:
         
         return struc, lsf
 
-    def updateStep(self, iterNum, lsf, shapeSens, topSens, stepLength, topWeight):
+    def updateStep(self, lsf, shapeSens, topSens, stepLength, topWeight):
         kernel = 1/6 * np.array([[0, 1, 0], 
                                 [1, 2, 1], 
                                 [0, 1, 0]])
@@ -132,7 +132,6 @@ class TopLevelSet:
         shapeSens_smoothed[-1, key_positions] = 0
         topSens_smoothed[-1, key_positions] = 0
 
-        print("lsf:", lsf.shape)
         struc, lsf = self.evolve(-shapeSens_smoothed, topSens_smoothed*(lsf[1:-1, 1:-1] < 0), lsf, stepLength, topWeight)
 
         return struc, lsf
@@ -184,7 +183,7 @@ class TopLevelSet:
             shapeSens = shapeSens + la + 1/La * (volCurr - volReq)
             topSens = topSens - np.pi * ( la + 1/La * (volCurr - volReq) )
 
-            struc, lsf = self.updateStep(iterNum, lsf, shapeSens, topSens, stepLength, topWeight)
+            struc, lsf = self.updateStep(lsf, shapeSens, topSens, stepLength, topWeight)
 
             if iterNum % numReinit == 0:
                 lsf = self.reinit(struc)
@@ -203,4 +202,4 @@ class TopLevelSet:
 
 
 tls = TopLevelSet()
-print(tls.optimize(Num = 2))
+print(tls.optimize())
