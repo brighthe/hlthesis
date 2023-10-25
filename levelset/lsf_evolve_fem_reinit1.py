@@ -8,7 +8,7 @@ from fealpy.timeintegratoralg import UniformTimeLine
 
 from fealpy.functionspace import LagrangeFESpace
 
-from fealpy.levelset.ls_fem_solver import LSFEMSolver
+from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
 
 from fealpy.decorator import cartesian
 
@@ -55,35 +55,6 @@ ns = args.ns
 T = args.T
 output = args.output
 
-def check_gradient_norm(space, phi, mesh):
-    """
-    Check the gradient magnitude of the level set function.
-
-    Parameters:
-    - space: The finite element space object.
-    - phi: The level set function.
-    - mesh: The mesh object.
-
-    Returns:
-    - diff_avg: The average difference between the gradient magnitude and 1.
-    - diff_max: The maximum difference between the gradient magnitude and 1.
-    """
-    # Compute the gradient of phi at quadrature points
-    qf = mesh.integrator(3)
-    bcs, _ = qf.get_quadrature_points_and_weights()
-    grad_phi = space.grad_value(uh=phi, bc=bcs)
-
-    # Compute the magnitude of the gradient
-    magnitude = np.linalg.norm(grad_phi, axis=-1)
-
-    # Compute the difference between the magnitude and 1
-    diff = np.abs(magnitude - 1)
-
-    diff_avg = np.mean(diff)
-    diff_max = np.max(diff)
-
-    return diff_avg, diff_max
-
 
 # Define the velocity field $u$ for the evolution
 @cartesian
@@ -116,19 +87,17 @@ dt = timeline.dt
 space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
-phi0 = space.interpolate(circle) # phi0.shape = (10201, )
-u = space.interpolate(velocity_field, dim=2) # u.shape = (10201, 2)
+phi0 = space.interpolate(circle)
+u = space.interpolate(velocity_field, dim=2)
 
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
-# If output is enabled, save the initial state
-if output != 'None':
-    mesh.nodedata['phi'] = phi0
-    mesh.nodedata['velocity'] = u
-    fname = output + 'test_'+ str(0).zfill(10) + '.vtu'
-    mesh.to_vtk(fname=fname)
+lssolver = LSSolver(space = space, phi0 = phi0, u = u, output_dir = output)
 
-diff_avg, diff_max = check_gradient_norm(space, phi0, mesh)
+# If output is enabled, save the initial state
+lssolver.output(0)
+
+diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
 # Time iteration
@@ -141,15 +110,11 @@ for i in range(nt):
     if i % 20 == 0 and i != 0:
         phi0[:] = lsfemsolver.reinit(phi0 = phi0, dt=0.001, nt=20)
         print("开始重置")
-    diff_avg, diff_max = check_gradient_norm(space, phi0, mesh)
+    diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
     print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
     # Save the current state if output is enabled
-    if output != 'None':
-        mesh.nodedata['phi'] = phi0
-        mesh.nodedata['velocity'] = u
-        fname = output + 'test_'+ str(i+1).zfill(10) + '.vtu'
-        mesh.to_vtk(fname=fname)
+    lssolver.output(i+1)
 
     # Move to the next time level
     timeline.advance()
