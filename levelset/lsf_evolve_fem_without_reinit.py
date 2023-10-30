@@ -107,7 +107,6 @@ for i in range(nt):
 
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
 
-
     # Save the current state if output is enabled
     lssolver.output(i+1)
 

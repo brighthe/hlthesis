@@ -2,14 +2,12 @@ import argparse
 import os
 import numpy as np
 
+from functools import partial
+
 from fealpy.mesh.triangle_mesh import TriangleMesh
-
 from fealpy.timeintegratoralg import UniformTimeLine
-
 from fealpy.functionspace import LagrangeFESpace
-
 from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
-
 from fealpy.decorator import cartesian
 
 
@@ -58,12 +56,12 @@ output = args.output
 
 # Define the velocity field $u$ for the evolution
 @cartesian
-def velocity_field(p):
+def velocity_field(p, t):
     x = p[..., 0]
     y = p[..., 1]
     u = np.zeros(p.shape)
-    u[..., 0] = np.sin((np.pi*x))**2 * np.sin(2*np.pi*y)
-    u[..., 1] = -np.sin((np.pi*y))**2 * np.sin(2*np.pi*x)
+    u[..., 0] = 2 * np.sin(2 * np.pi * y) * np.sin(np.pi * x)**2 * np.cos(np.pi * t)
+    u[..., 1] = -2 * np.sin(2 * np.pi * x) * np.sin(np.pi * y)**2 * np.cos(np.pi * t)
     return u
 
 # Initial level set function $\phi0$ representing the circle
@@ -88,7 +86,7 @@ space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 phi0 = space.interpolate(circle)
-u = space.interpolate(velocity_field, dim=2)
+u = space.interpolate(partial(velocity_field, t=0.25), dim=2)
 
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
@@ -107,16 +105,12 @@ for i in range(nt):
 
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
 
-    if i % 20 == 0 and i != 0:
-        phi0[:] = lsfemsolver.reinit(phi0 = phi0, dt=0.001, nt=20)
-        print("开始重置")
-    diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
-    print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
-
     # Save the current state if output is enabled
     lssolver.output(i+1)
 
     # Move to the next time level
     timeline.advance()
 
+diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
+print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
