@@ -11,7 +11,7 @@ x = np.full((nely, nelx), volfrac)
 
 # 创建一个随机灵敏度分布
 np.random.seed(0)
-dc = np.random.rand(nely, nelx)
+dc = -np.random.rand(nely, nelx)
 
 # 创建 TopSimp 对象
 tsp = TopSimp()

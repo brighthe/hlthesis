@@ -7,6 +7,9 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse import lil_matrix, csc_matrix
 from scipy.signal import convolve2d
 
+from visualizer import Visualizer
+
+import sys
 
 class TopLevelSet:
     """
@@ -123,7 +126,7 @@ class TopLevelSet:
         # Define loads and supports (Bridge)
         F[2 * (round(nelx/2)+1) * (nely+1) - 1] = 1
         fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
-                                np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
+                                     np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
         alldofs = np.arange( 2*(nely+1)*(nelx+1) )
         freedofs = np.setdiff1d(alldofs, fixeddofs)
 
@@ -185,6 +188,7 @@ class TopLevelSet:
         topSens = np.zeros((nely, nelx))
 
         KE, KTr, lambda_, mu = self. materialInfo()
+
         lsf = self.reinit(struc)
         
         objective = np.zeros(Num)
@@ -195,6 +199,13 @@ class TopLevelSet:
 
         for iterNum in range(Num):
             U = self.FE(nelx, nely, KE, struc)
+            print("最大值:", np.max(U))
+            print("最小值:", np.min(U))
+            print("平均值:", np.mean(U))
+            visualize = Visualizer()
+            visualize.plot_displacement(U, nelx, nely)
+
+            sys.exit()
 
             for elx in range(nelx):
                 for ely in range(nely):
