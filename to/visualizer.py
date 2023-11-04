@@ -36,32 +36,6 @@ class Visualizer:
         plt.tight_layout()
         plt.show()
 
-    #def plot_displacement(self, U, nelx, nely):
-    #    """
-    #    Visualizes the displacement field from the finite element analysis.
-
-    #    Parameters:
-    #    - U: Displacement vector obtained from FEA.
-    #    - nelx: Number of elements in the x-direction.
-    #    - nely: Number of elements in the y-direction.
-    #    """
-    #    # Reshape the displacement vector into two fields
-    #    Ux = U[::2].reshape((nely+1, nelx+1))
-    #    Uy = U[1::2].reshape((nely+1, nelx+1))
-
-    #    # Compute the magnitude of displacement
-    #    U_mag = np.sqrt(Ux**2 + Uy**2)
-
-    #    # Visualize the magnitude of displacement using matplotlib
-    #    plt.figure(figsize=(10, 4))
-    #    plt.imshow(U_mag, cmap='viridis', extent=[0, nelx, 0, nely], origin='lower')
-    #    plt.colorbar()  # Shows the color scale
-    #    plt.title('Magnitude of Displacement')
-    #    plt.xlabel('X Coordinate')
-    #    plt.ylabel('Y Coordinate')
-    #    plt.show()
-
-
     def plot_displacement(self, U, nelx, nely):
         """
         Visualizes the displacement field from the finite element analysis.
@@ -80,14 +54,14 @@ class Visualizer:
 
         # Visualize the magnitude of displacement using matplotlib
         plt.figure(figsize=(10, 4))
-        im = plt.imshow(U_mag, cmap='viridis', aspect='auto', extent=[0, nelx, 0, nely], origin='lower')
-        plt.colorbar(im, fraction=0.046, pad=0.04)  # Shows the color scale
+        plt.imshow(U_mag, cmap='viridis', extent=[0, nelx, 0, nely], origin='lower')
+        plt.colorbar()  # Shows the color scale
         plt.title('Magnitude of Displacement')
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
-        plt.axis('equal')
-        plt.axis('tight')
         plt.show()
+
+
 
 
 if __name__ == "__main__":
