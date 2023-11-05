@@ -187,7 +187,11 @@ class TopLevelSet:
         shapeSens = np.zeros((nely, nelx))
         topSens = np.zeros((nely, nelx))
 
+        visualize = Visualizer()
         KE, KTr, lambda_, mu = self. materialInfo()
+        visualize.plot_matrices(KE, KTr, 
+                  titles=['Element Stiffness Matrix (KE)', 'Topology Derivative Stiffness Matrix (KTr)'],
+                  fmt=".2e", annot_kws={"size": 8})
 
         lsf = self.reinit(struc)
         
@@ -202,7 +206,6 @@ class TopLevelSet:
             print("最大值:", np.max(U))
             print("最小值:", np.min(U))
             print("平均值:", np.mean(U))
-            visualize = Visualizer()
             visualize.plot_displacement(U, nelx, nely)
 
             sys.exit()
