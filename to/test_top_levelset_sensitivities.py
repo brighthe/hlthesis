@@ -27,22 +27,51 @@ class TopLevelSet:
         self._topWeight = topWeight
 
 
-
     def reinit(self, struc):
+        """
+        Reinitialize the level set function for a given structure.
+
+        This function extends the input structure by adding a boundary of void cells,
+        computes the Euclidean distance to the nearest solid and void cells,
+        and computes the level set function which is negative inside the solid phase
+        and positive inside the void phase.
+
+        Parameters:
+        - struc (numpy.ndarray): A 2D array representing the solid (1) and void (0) cells of the structure.
+
+        Returns:
+        numpy.ndarray: A 2D array of the same shape as 'struc', representing the reinitialized level set function.
+        """
         strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
         strucFull[1:-1, 1:-1] = struc
 
+        # Compute the distance to the nearest void (0-valued) cells.
         dist_to_0 = ndimage.distance_transform_edt(strucFull)
+
+        # Compute the distance to the nearest solid (1-valued) cells.
         dist_to_1 = ndimage.distance_transform_edt(strucFull - 1)
 
+        # Offset the distances by 0.5 to center the level set function on the boundaries.
         temp_1 = dist_to_1 - 0.5
         temp_2 = dist_to_0 - 0.5
 
+        # Calculate the level set function, ensuring the correct sign inside and outside the structure.
         lsf = (~strucFull.astype(bool)).astype(int) * temp_1 - strucFull * temp_2
 
         return lsf
 
+
     def stiffnessMatrix(self, k):
+        """
+        Constructs an 8x8 elemental stiffness matrix for plane stress problems.
+
+        Parameters:
+        - k (numpy.ndarray): An array of material properties used to construct the stiffness matrix.
+
+        Returns:
+        - numpy.ndarray: An 8x8 elemental stiffness matrix.
+        """
+        # Element stiffness matrix symmetry is exploited for efficient assembly
         K = np.array([
             [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
             [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
@@ -56,13 +85,23 @@ class TopLevelSet:
 
         return K
 
+
     def materialInfo(self):
+        """
+        Calculates and returns material property information necessary for 
+        stress analysis and topology derivative calculations.
+
+        Returns:
+        - KE: Element stiffness matrix for stress analysis.
+        - KTr: Element stiffness matrix for topology derivative calculations.
+        - lambda_, mu: Lame parameters for the material.
+        """
         E = 1.0
         nu = 0.3
         lambda_ = E * nu / ((1 + nu) * (1 - nu))
         mu = E / (2 * (1 + nu))
-        k = np.array([1/2 - nu/6, 1/8 + nu/8, -1/4 - nu/12, -1/8 + 3 * nu/8,
-                  -1/4 + nu/12, -1/8 - nu/8, nu/6, 1/8 - 3 * nu/8])
+        k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
+                    -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
 
         KE = E / (1 - nu**2) * self.stiffnessMatrix(k)
 
@@ -72,6 +111,17 @@ class TopLevelSet:
         return KE, KTr, lambda_, mu
 
     def FE(self, nelx, nely, KE, struc):
+        """
+        Finite element analysis performed for each optimization iteration.
+
+        Parameters:
+        - nelx, nely: Number of elements in x and y directions.
+        - KE: Element stiffness matrix.
+        - struc: Current structure as a binary matrix.
+
+        Returns:
+        - U: Displacement vector for the entire structure.
+        """
         K = lil_matrix( (2*(nelx+1)*(nely+1), 2*(nelx+1)*(nely+1)) )
         F = lil_matrix( (2*(nelx+1)*(nely+1), 1) )
         U = np.zeros( 2*(nelx+1)*(nely+1) )
@@ -84,10 +134,10 @@ class TopLevelSet:
 
                 K[np.ix_(edof, edof)] += max(struc[ely, elx], 0.0001) * KE
 
+        # Define loads and supports (Bridge)
         F[2 * (round(nelx/2)+1) * (nely+1) - 1] = 1
-        
         fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
-                                np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
+                                     np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
         alldofs = np.arange( 2*(nely+1)*(nelx+1) )
         freedofs = np.setdiff1d(alldofs, fixeddofs)
 
@@ -151,6 +201,7 @@ class TopLevelSet:
 
         # Load bearing pixels must remain solid - Bridge
         key_positions = [0, round((shapeSens_smoothed.shape[1]-1)/2), round((shapeSens_smoothed.shape[1]-1)/2) + 1, -1]
+
         shapeSens_smoothed[-1, key_positions] = 0
         topSens_smoothed[-1, key_positions] = 0
 
@@ -159,7 +210,7 @@ class TopLevelSet:
         return struc, lsf
 
 
-    def optimize(self, Num: int = 2):
+    def optimize(self, Num: int = 1):
         '''
         Num : Maximum number of iterations of the optimization algorithm
         '''
@@ -193,7 +244,6 @@ class TopLevelSet:
                     additional_term = (lambda_ - mu) * Ue.T @ KTr @ Ue
                     topSens[ely, elx] = struc[ely, elx] * coeff * UeT_KE_Ue * (UeT_KE_Ue + additional_term)
 
-
             objective[iterNum] = -np.sum(shapeSens)
             volCurr = np.sum(struc) / (nelx * nely)
 
@@ -205,14 +255,19 @@ class TopLevelSet:
                 La = alpha * La
 
             shapeSens = shapeSens - la + 1/La * (volCurr - volReq)
-            print("shapeSens:", shapeSens)
-            smoothed_sensitivity = self.smooth_sensitivity(sensitivity=shapeSens)
-            print("smooth_sensitivity:", smoothed_sensitivity)
-            visualize.plot_matrices(shapeSens, smoothed_sensitivity, 
-                  titles=['Original Sensitivity', 'Smoothed Sensitivity'],
+            topSens = topSens + np.pi * ( la - 1/La * (volCurr - volReq) )
+            print("topSens:\n", topSens)
+
+            smoothed_shapeSens = self.smooth_sensitivity(sensitivity = shapeSens)
+            smoothed_topSens = self.smooth_sensitivity(sensitivity = topSens)
+            print("smoothed_topSens:\n", smoothed_topSens)
+            visualize.plot_matrices(shapeSens, smoothed_shapeSens, 
+                  titles=['Original shapeSens', 'Smoothed shapeSens'],
+                  fmt=".1e", annot_kws={"size": 6})
+            visualize.plot_matrices(topSens, smoothed_topSens, 
+                  titles=['Original topSens', 'Smoothed topSens'],
                   fmt=".1e", annot_kws={"size": 6})
 
-            topSens = topSens + np.pi * ( la - 1/La * (volCurr - volReq) )
 
             struc, lsf = self.updateStep(lsf, shapeSens, topSens, stepLength, topWeight)
 

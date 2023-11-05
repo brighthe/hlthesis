@@ -6,6 +6,7 @@ from scipy.sparse import lil_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.signal import convolve2d
 
+from visualizer import Visualizer
 
 class TopLevelSet:
 
@@ -247,7 +248,7 @@ class TopLevelSet:
         return struc, lsf
 
 
-    def optimize(self, Num: int = 10):
+    def optimize(self, Num: int = 1):
         '''
         Perform the topology optimization process.
 
@@ -278,6 +279,8 @@ class TopLevelSet:
         la = -0.01 # Lagrange multiplier
         La = 1000 # Lagrange multiplier
         alpha = 0.9 # Reduction rate for the penalty parameter
+
+        visualize = Visualizer()
 
         # Start the optimization loop
         for iterNum in range(Num):
@@ -323,6 +326,7 @@ class TopLevelSet:
 
             # Perform the design update step
             struc, lsf = self.updateStep(lsf, shapeSens, topSens, stepLength, topWeight)
+            visualize.plot_matrices(struc, lsf, titles=['Updated struc', 'Updated lsf'], fmt=".1e", annot_kws={"size": 6})
 
             # Reinitialize the level set function at specified iterations
             if iterNum % numReinit == 0:
@@ -330,14 +334,7 @@ class TopLevelSet:
         
             # Print the current iteration's results to the console
             print(f'Iter: {iterNum+1}, Compliance.: {objective[iterNum]:.4f}, Volfrac.: {volCurr:.3f}, la: {la:.3f}, La: {La:.3f}')
-
-            plt.imshow(-struc, cmap='gray', vmin=-1, vmax=0)
-            plt.axis('off')
-            plt.axis('equal')
-            plt.draw()
-            plt.pause(1e-5)
-
-        plt.ioff()
+        plt.tight_layout()
         plt.show()
 
 
