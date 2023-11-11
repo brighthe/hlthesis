@@ -1,5 +1,4 @@
 import argparse 
-import os
 import numpy as np
 
 from functools import partial
@@ -96,7 +95,7 @@ circle = plt.Circle((0.5, 0.75), 0.15, color='black', fill=False)
 ax.add_patch(circle)
 ax.annotate('r=0.15', xy=circle_center, fontsize=12, weight='bold', ha='right', va='bottom')
 
-ax.set_title("Initial configuration and domain for the vortex test")
+ax.set_title("Initial configuration and domain for the vortex test(t=0.5)")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_xlim(0, 1)

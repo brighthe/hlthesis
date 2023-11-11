@@ -3,13 +3,9 @@ import os
 import numpy as np
 
 from fealpy.mesh.triangle_mesh import TriangleMesh
-
 from fealpy.timeintegratoralg import UniformTimeLine
-
 from fealpy.functionspace import LagrangeFESpace
-
 from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
-
 from fealpy.decorator import cartesian
 
 
@@ -54,7 +50,6 @@ nt = args.nt
 ns = args.ns
 T = args.T
 output = args.output
-
 
 # Define the velocity field $u$ for the evolution
 @cartesian
