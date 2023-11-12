@@ -87,10 +87,10 @@ u = space.interpolate(velocity_field, dim=2)
 
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
-lssolver = LSSolver(space = space, phi0 = phi0, u = u, output_dir = output)
+lssolver = LSSolver(space = space, phi0 = phi0, u = u)
 
 # If output is enabled, save the initial state
-lssolver.output(0)
+lssolver.output(timestep = 0, output_dir = output, filename_prefix = 'lsf_without_reinit')
 
 diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
@@ -103,7 +103,7 @@ for i in range(nt):
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
 
     # Save the current state if output is enabled
-    lssolver.output(i+1)
+    lssolver.output(timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit')
 
     # Move to the next time level
     timeline.advance()
