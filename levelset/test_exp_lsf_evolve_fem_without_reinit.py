@@ -85,6 +85,12 @@ space = LagrangeFESpace(mesh, p=degree)
 phi0 = space.interpolate(circle)
 u = space.interpolate(velocity_field, dim=2)
 
+
+from ..to.visualizer import Visualizer
+visualize = Visualizer()
+visualize.plot_matrices(phi0, titles=['Signed distance function (lsf)'], fmt=".1e", annot_kws={"size": 6}) 
+
+
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
 lssolver = LSSolver(space = space, phi0 = phi0, u = u)
