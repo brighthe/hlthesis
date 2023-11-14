@@ -101,6 +101,7 @@ for i in range(nt):
     print("t1=", t1)
 
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
+    print("phi0", phi0)
 
     # Save the current state if output is enabled
     lssolver.output(timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit')

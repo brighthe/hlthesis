@@ -65,8 +65,3 @@ class Visualizer:
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
         plt.show()
-
-
-
-#if __name__ == "__main__":
-#    pass

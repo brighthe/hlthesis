@@ -85,8 +85,12 @@ space = LagrangeFESpace(mesh, p=degree)
 phi0 = space.interpolate(circle)
 u = space.interpolate(velocity_field, dim=2)
 
+# 添加上级目录
+import sys
+sys.path.append('..')
+print(sys.path)
 
-from ..to.visualizer import Visualizer
+from to.visualizer import Visualizer
 visualize = Visualizer()
 visualize.plot_matrices(phi0, titles=['Signed distance function (lsf)'], fmt=".1e", annot_kws={"size": 6}) 
 
