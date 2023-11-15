@@ -8,6 +8,7 @@ from fealpy.functionspace import LagrangeFESpace
 from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
 from fealpy.decorator import cartesian
 
+from functools import partial
 
 # Command line argument parser
 parser = argparse.ArgumentParser(description=
@@ -20,8 +21,8 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--ns',
-        default=100, type=int,
-        help='Number of spatial divisions in each direction. Default is 100.')
+        default=512, type=int,
+        help='Number of spatial divisions in each direction. Default is 512.')
 
 parser.add_argument('--nt',
         default=100, type=int,
@@ -53,12 +54,12 @@ output = args.output
 
 # Define the velocity field $u$ for the evolution
 @cartesian
-def velocity_field(p):
+def velocity_field(p, t):
     x = p[..., 0]
     y = p[..., 1]
     u = np.zeros(p.shape)
-    u[..., 0] = np.sin((np.pi*x))**2 * np.sin(2*np.pi*y)
-    u[..., 1] = -np.sin((np.pi*y))**2 * np.sin(2*np.pi*x)
+    u[..., 0] = np.sin((np.pi*x))**2 * np.sin(2*np.pi*y) * np.cos(np.pi*t)
+    u[..., 1] = -np.sin((np.pi*y))**2 * np.sin(2*np.pi*x) * np.cos(np.pi*t)
     return u
 
 # Initial level set function $\phi0$ representing the circle
@@ -66,7 +67,7 @@ def velocity_field(p):
 def circle(p):
     x = p[...,0]
     y = p[...,1]
-    val = np.sqrt((x-0.5)**2+(y-0.75)**2)-0.15
+    val = np.sqrt((x-0.5)**2+(y-0.75)**2) - 0.15
     return val
 
 # Define the domain and generate the triangular mesh
@@ -83,16 +84,17 @@ space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 phi0 = space.interpolate(circle)
-u = space.interpolate(velocity_field, dim=2)
+velocity_field_at_0 = partial(velocity_field, t=0)
+u = space.interpolate(velocity_field_at_0, dim=2)
 
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
-lssolver = LSSolver(space = space, phi0 = phi0, u = u)
+lssolver = LSSolver(space = space)
 
 # If output is enabled, save the initial state
-lssolver.output(timestep = 0, output_dir = output, filename_prefix = 'lsf_without_reinit')
+lssolver.output(phi = phi0, u = u, timestep = 0, output_dir = output, filename_prefix = 'lsf_init')
 
-diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
 # Time iteration
@@ -100,15 +102,16 @@ for i in range(nt):
     t1 = timeline.next_time_level()
     print("t1=", t1)
 
-    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
-    print("phi0", phi0)
+    velocity_field_at_i = partial(velocity_field, t=t1)
+    u = space.interpolate(velocity_field_at_i, dim=2)
+    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt, u = u)
 
     # Save the current state if output is enabled
-    lssolver.output(timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit')
+    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit_h3')
 
     # Move to the next time level
     timeline.advance()
 
-diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
