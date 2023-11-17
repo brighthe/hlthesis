@@ -1,7 +1,6 @@
 import argparse 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 from fealpy.mesh.triangle_mesh import TriangleMesh
 from fealpy.timeintegratoralg import UniformTimeLine
@@ -26,7 +25,7 @@ parser.add_argument('--ns',
         help='Number of spatial divisions in each direction. Default is 128.')
 
 parser.add_argument('--nt',
-        default=1000, type=int,
+        default=100, type=int,
         help='Number of time divisions. Default is 100.')
 
 parser.add_argument('--T',
@@ -91,7 +90,6 @@ u = space.interpolate(velocity_field_at_0, dim=2)
 lsfemsolver = LSFEMSolver(space = space)
 
 lssolver = LSSolver(space = space)
-area_0 = lssolver.compute_zero_level_set_area(phi0)
 
 # If output is enabled, save the initial state
 lssolver.output(phi = phi0, u = u, timestep = 0, output_dir = output, filename_prefix = 'lsf_init')
@@ -99,29 +97,20 @@ lssolver.output(phi = phi0, u = u, timestep = 0, output_dir = output, filename_p
 diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
-zero_level_set_areas = []
 # Time iteration
 for i in range(nt):
     t1 = timeline.next_time_level()
-    # print("t1=", t1)
+    print("t1=", t1)
 
     velocity_field_at_i = partial(velocity_field, t=t1)
     u = space.interpolate(velocity_field_at_i, dim=2)
-    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt, u = u)
-    area = lssolver.compute_zero_level_set_area(phi0)
-    zero_level_set_areas.append(area)
+    phi0[:] = lsfemsolver.solve_measure(phi0 = phi0, dt = dt, u = u)
 
     # Save the current state if output is enabled
-    # lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit_h1')
+    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit_h1')
 
     # Move to the next time level
     timeline.advance()
-
-plt.plot(zero_level_set_areas)
-plt.xlabel('Time steps')
-plt.ylabel('Zero Level Set Area')
-plt.title('Zero Level Set Area over Time')
-plt.show()
 
 diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")

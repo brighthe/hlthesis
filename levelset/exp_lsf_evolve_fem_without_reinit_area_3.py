@@ -1,6 +1,7 @@
 import argparse 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 from fealpy.mesh.triangle_mesh import TriangleMesh
 from fealpy.timeintegratoralg import UniformTimeLine
@@ -21,8 +22,8 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--ns',
-        default=128, type=int,
-        help='Number of spatial divisions in each direction. Default is 128.')
+        default=512, type=int,
+        help='Number of spatial divisions in each direction. Default is 512.')
 
 parser.add_argument('--nt',
         default=100, type=int,
@@ -73,7 +74,7 @@ def circle(p):
 # Define the domain and generate the triangular mesh
 domain = [0, 1, 0, 1]
 mesh = TriangleMesh.from_box(domain, nx=ns, ny=ns)
-cellmeasure = mesh.entity_measure('cell')
+# cellmeasure = mesh.entity_measure('cell')
 
 # Generate the uniform timeline
 timeline = UniformTimeLine(0, T, nt)
@@ -84,19 +85,12 @@ space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 phi0 = space.interpolate(circle)
-velocity_field_at_0 = partial(velocity_field, t=0)
-u = space.interpolate(velocity_field_at_0, dim=2)
 
 lsfemsolver = LSFEMSolver(space = space)
 
 lssolver = LSSolver(space = space)
 
-# If output is enabled, save the initial state
-lssolver.output(phi = phi0, u = u, timestep = 0, output_dir = output, filename_prefix = 'lsf_init')
-
-diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
-print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
-
+zero_level_set_areas = []
 # Time iteration
 for i in range(nt):
     t1 = timeline.next_time_level()
@@ -105,13 +99,21 @@ for i in range(nt):
     velocity_field_at_i = partial(velocity_field, t=t1)
     u = space.interpolate(velocity_field_at_i, dim=2)
     phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt, u = u)
-
-    # Save the current state if output is enabled
-    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit_h1')
+    area = lssolver.compute_zero_level_set_area(phi0)
+    zero_level_set_areas.append(area)
 
     # Move to the next time level
     timeline.advance()
 
-diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
-print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+print("area_0:", zero_level_set_areas[0])
+print("area_-1:", zero_level_set_areas[-1])
+print("area_change:", (zero_level_set_areas[-1] - zero_level_set_areas[0]) / zero_level_set_areas[-1])
+
+plt.plot(zero_level_set_areas)
+plt.xlabel('Time steps')
+plt.ylabel('Zero Level Set Area')
+plt.title('Zero Level Set Area over Time')
+plt.show()
+
+
 

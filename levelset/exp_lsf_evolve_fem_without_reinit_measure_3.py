@@ -21,8 +21,8 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--ns',
-        default=128, type=int,
-        help='Number of spatial divisions in each direction. Default is 128.')
+        default=512, type=int,
+        help='Number of spatial divisions in each direction. Default is 512.')
 
 parser.add_argument('--nt',
         default=100, type=int,
@@ -104,10 +104,7 @@ for i in range(nt):
 
     velocity_field_at_i = partial(velocity_field, t=t1)
     u = space.interpolate(velocity_field_at_i, dim=2)
-    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt, u = u)
-
-    # Save the current state if output is enabled
-    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit_h1')
+    phi0[:] = lsfemsolver.solve_measure(phi0 = phi0, dt = dt, u = u)
 
     # Move to the next time level
     timeline.advance()
