@@ -15,9 +15,8 @@ parser = argparse.ArgumentParser(description=
         """)
 
 parser.add_argument('--degree',
-        default=3, type=int,
-        help='Degree of the Lagrange finite element space. Default is 3.')
-
+        default=1, type=int,
+        help='Degree of the Lagrange finite element space. Default is 1.')
 parser.add_argument('--ns',
         default=128, type=int,
         help='Number of spatial divisions in each direction. Default is 128.')
@@ -87,12 +86,11 @@ lsfemsolver = LSFEMSolver(space = space)
 
 lssolver = LSSolver(space = space)
 
-
 diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
 # Time iteration
-for i in range(nt):
+for i in range(1):
     t1 = timeline.next_time_level()
     print("t1=", t1)
 

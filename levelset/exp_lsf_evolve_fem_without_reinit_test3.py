@@ -84,8 +84,6 @@ space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 phi0 = space.interpolate(circle)
-# velocity_field_at_0 = partial(velocity_field, t=0)
-# u = space.interpolate(velocity_field_at_0, dim=2)
 
 lsfemsolver = LSFEMSolver(space = space)
 

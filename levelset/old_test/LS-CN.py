@@ -191,7 +191,6 @@ C = space.convection_matrix(c = u)
 
 ## LS
 A = M + dt/2*C
-## re
 diff = []
 measure = space.function()
 

@@ -2,18 +2,11 @@ import argparse
 import os
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 from fealpy.mesh.triangle_mesh import TriangleMesh
-
 from fealpy.timeintegratoralg import UniformTimeLine
-
 from fealpy.functionspace import LagrangeFESpace
-
 from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
-
 from fealpy.decorator import cartesian
-
 
 # Command line argument parser
 parser = argparse.ArgumentParser(description=
@@ -24,18 +17,17 @@ parser = argparse.ArgumentParser(description=
 parser.add_argument('--degree',
         default=1, type=int,
         help='Degree of the Lagrange finite element space. Default is 1.')
-
 parser.add_argument('--ns',
-        default=100, type=int,
-        help='Number of spatial divisions in each direction. Default is 100.')
+        default=128, type=int,
+        help='Number of spatial divisions in each direction. Default is 128.')
 
 parser.add_argument('--nt',
-        default=100, type=int,
-        help='Number of time divisions. Default is 100.')
+        default=200, type=int,
+        help='Number of time divisions. Default is 200.')
 
 parser.add_argument('--T',
-        default=1, type=float,
-        help='End time of the evolution. Default is 1.')
+        default=2, type=float,
+        help='End time of the evolution. Default is 2.')
 
 parser.add_argument('--output',
         default='./results/', type=str,
@@ -57,22 +49,6 @@ ns = args.ns
 T = args.T
 output = args.output
 
-def visualize_level_set(phi):
-    plt.figure(figsize=(6, 6))
-    
-    # 画出完整的水平集值
-    im = plt.imshow(phi, extent=[0, 100, 0, 100], origin='lower', cmap='jet', vmin=phi.min(), vmax=phi.max())
-    
-    # 画出零水平集的轮廓
-    plt.contour(phi, levels=[0], colors='red', linewidths=2, extent=[0, 100, 0, 100])
-    
-    plt.title("Level Set Visualization")
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.colorbar(im, boundaries=np.linspace(phi.min(), phi.max(), 10))
-    plt.show()
-
-
 # Define the velocity field $u$ for the evolution
 @cartesian
 def velocity_field(p):
@@ -88,7 +64,7 @@ def velocity_field(p):
 def circle(p):
     x = p[...,0]
     y = p[...,1]
-    val = np.sqrt((x-0.5)**2+(y-0.75)**2)-0.15
+    val = np.sqrt((x-0.5)**2+(y-0.75)**2) - 0.15
     return val
 
 # Define the domain and generate the triangular mesh
@@ -105,36 +81,40 @@ space = LagrangeFESpace(mesh, p=degree)
 
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 phi0 = space.interpolate(circle)
-phi0 = np.array(phi0.reshape(101, 101))
-print(np.isnan(phi0).any())
-print(np.isinf(phi0).any())
 
-visualize_level_set(phi0)
-#u = space.interpolate(velocity_field, dim=2)
-#
-#lsfemsolver = LSFEMSolver(space = space, u = u)
-#
-#lssolver = LSSolver(space = space, phi0 = phi0, u = u, output_dir = output)
-#
-## If output is enabled, save the initial state
-#lssolver.output(0)
-#
-#diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
-#print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
-#
-## Time iteration
-#for i in range(nt):
-#    t1 = timeline.next_time_level()
-#    print("t1=", t1)
-#
-#    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
-#
-#    # Save the current state if output is enabled
-#    lssolver.output(i+1)
-#
-#    # Move to the next time level
-#    timeline.advance()
-#
-#diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
-#print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+lsfemsolver = LSFEMSolver(space = space)
+
+lssolver = LSSolver(space = space)
+
+from fealpy.functionspace import LagrangeFiniteElementSpace
+space1 = LagrangeFiniteElementSpace(mesh, p=1)
+M1 = space1.mass_matrix()
+u = space1.interpolation(velocity_field, dim=2)
+C1 = space1.convection_matrix(c = u) 
+A1 = M1 + dt/2*C1
+
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
+print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+
+# Time iteration
+for i in range(1):
+    t1 = timeline.next_time_level()
+    print("t1=", t1)
+
+    u = space.interpolate(velocity_field, dim=2)
+    phi0[:], A, b, M, C = lsfemsolver.mumps_solve(phi0 = phi0, dt = dt, u = u)
+    print("diff_A:\n", np.max(np.abs(A-A1)))
+    print("diff_M:\n", np.max(np.abs(M-M1)))
+    print("diff_C:\n", np.max(np.abs(C-C1)))
+    tolerance = 1e-4
+    np.testing.assert_allclose(C1.toarray(), C.toarray().T, atol=1e-7)
+
+    # Save the current state if output is enabled
+    # lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'exp2_lsf_without_reinit_mumps')
+
+    # Move to the next time level
+    timeline.advance()
+
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
+print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 

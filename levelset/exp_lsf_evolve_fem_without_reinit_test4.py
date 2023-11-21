@@ -90,6 +90,7 @@ lssolver = LSSolver(space = space)
 diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
+
 # Time iteration
 for i in range(nt):
     t1 = timeline.next_time_level()
