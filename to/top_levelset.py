@@ -6,11 +6,7 @@ from scipy.sparse import lil_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.signal import convolve2d
 
-from visualizer import Visualizer
-
-
 class TopLevelSet:
-
 
     def __init__(self, nelx: int = 60, nely: int = 30, volReq: float = 0.3, 
                 stepLength: int = 3, numReinit: int = 2, topWeight: int = 2):
@@ -287,8 +283,6 @@ class TopLevelSet:
         La = 1000 # Lagrange multiplier
         alpha = 0.9 # Reduction rate for the penalty parameter
 
-        visualize = Visualizer()
-
         # Start the optimization loop
         for iterNum in range(1, Num + 1):
             # Perform finite element analysis and get global displacement vector
@@ -354,5 +348,34 @@ class TopLevelSet:
 
 
 if __name__ == "__main__":
+    from fealpy.mesh import QuadrangleMesh
+    nelx = 60
+    nely = 30
+    mesh = QuadrangleMesh.from_box(box = [0, nelx, 0, nely], nx = nelx, ny = nely)
+    node = mesh.entity('node') # 按列增加
+    print(node.shape)
+    print("node:", node)
+    # 网格中点的 x 坐标
+    X = node[:, 0].reshape(nelx+1, nely+1).T
+    print(X.shape)
+    print("X:", X)
+    # 网格中点的 y 坐标
+    Y = node[:, 1].reshape(nelx+1, nely+1).T
+    print(Y.shape)
+    print("Y:", Y)
+
+    struc = np.ones((nely, nelx))
+    print("struc:", struc.shape)
     tls = TopLevelSet()
-    print(tls.optimize())
+    lsf = tls.reinit(struc = struc)
+    print(lsf.shape)
+    print("lsf:", lsf)
+
+    import os
+    output = './mesh/'
+    if not os.path.exists(output):
+        os.makedirs(output)
+    fname = os.path.join(output, 'quad_mesh_2.vtu')
+    mesh_lsf = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx+1, ny = nely+1)
+    mesh_lsf.nodedata['lsf'] = lsf.flatten('F') # 按列增加
+    mesh_lsf.to_vtk(fname=fname)
