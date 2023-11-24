@@ -30,7 +30,7 @@ class TopLevelSet:
         self._topWeight = topWeight
 
 
-    def reinit(self, struc):
+    def reinit(self, strucFull):
         """
         Reinitialize the level set function for a given structure.
 
@@ -45,8 +45,8 @@ class TopLevelSet:
         Returns:
         numpy.ndarray: A 2D array of the same shape as 'struc', representing the reinitialized level set function.
         """
-        strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
-        strucFull[1:-1, 1:-1] = struc
+        # strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
+        # strucFull[1:-1, 1:-1] = struc
 
         # Compute the distance to the nearest void (0-valued) cells.
         dist_to_0 = ndimage.distance_transform_edt(strucFull)
@@ -351,31 +351,111 @@ if __name__ == "__main__":
     from fealpy.mesh import QuadrangleMesh
     nelx = 60
     nely = 30
-    mesh = QuadrangleMesh.from_box(box = [0, nelx, 0, nely], nx = nelx, ny = nely)
+    mesh = QuadrangleMesh.from_box(box = [0, nelx+2, 0, nely+2], nx = nelx+2, ny = nely+2)
     node = mesh.entity('node') # 按列增加
     print(node.shape)
     print("node:", node)
     # 网格中点的 x 坐标
-    X = node[:, 0].reshape(nelx+1, nely+1).T
-    print(X.shape)
-    print("X:", X)
+    # X = node[:, 0].reshape(nelx+1, nely+1).T
+    # print(X.shape)
+    # print("X:", X)
     # 网格中点的 y 坐标
-    Y = node[:, 1].reshape(nelx+1, nely+1).T
-    print(Y.shape)
-    print("Y:", Y)
+    # Y = node[:, 1].reshape(nelx+1, nely+1).T
+    # print(Y.shape)
+    # print("Y:", Y)
 
     struc = np.ones((nely, nelx))
-    print("struc:", struc.shape)
+    print(struc.shape)
+    print("struc:\n", struc)
+    strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
+    strucFull[1:-1, 1:-1] = struc
+    print(strucFull.shape)
+    print("strucFull:\n", strucFull)
+
     tls = TopLevelSet()
-    lsf = tls.reinit(struc = struc)
+
+    lsf = tls.reinit(strucFull = strucFull)
     print(lsf.shape)
-    print("lsf:", lsf)
+    print("lsf:\n", lsf)
+
+    shapeSens = np.zeros((nely, nelx))
+    topSens = np.zeros((nely, nelx))
+    KE, KTr, lambda_, mu = tls.materialInfo()
+    print("KE:\n", KE, "\n", "KTr:\n", KTr, "\n", "lambda_:", lambda_, "mu:", mu)
+
+    # Allocate space for the objective function history
+    objective = np.zeros(200)
+
+    volReq = 0.3
+
+    # Initialize the augmented Lagrangian parameters for volume constraint
+    la = -0.01 # Lagrange multiplier
+    La = 1000 # Lagrange multiplier
+    alpha = 0.9 # Reduction rate for the penalty parameter
+
+
+    # Start the optimization loop
+    for iterNum in range(1):
+        # Perform finite element analysis and get global displacement vector
+        U = tls.FE(nelx, nely, KE, struc)
+        
+        # Loop over each element to compute sensitivities
+        for elx in range(nelx):
+            for ely in range(nely):
+                # Global indices of the nodes of the element
+                n1 = (nely + 1) * elx + ely
+                n2 = (nely + 1) * (elx + 1) + ely
+                # Local displacement vector for the element
+                Ue = U[np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])]
+
+                # Compute shape sensitivity for compliance
+                shapeSens[ely, elx] = -max(struc[ely, elx], 0.0001) * Ue.T @ KE @ Ue
+                
+                # Compute topological sensitivity for compliance
+                coeff = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
+                UeT_KE_Ue = 4 * mu * Ue.T @ KE @ Ue
+                additional_term = (lambda_ - mu) * Ue.T @ KTr @ Ue
+                topSens[ely, elx] = struc[ely, elx] * coeff * UeT_KE_Ue * (UeT_KE_Ue + additional_term)
+
+        # print("shapeSens:", shapeSens.shape, "\n", shapeSens)
+        # print("topSens:", topSens.shape, "\n", topSens)
+
+        # Store the compliance objective for current iteration
+        objective[iterNum] = -np.sum(shapeSens)
+        # print("objective:", objective)
+
+        # Calculate the current volume fraction
+        volCurr = np.sum(struc) / (nelx * nely)
+        # print("volCurr:", volCurr)
+        
+        # print("iterNum:", iterNum)
+        # Check for convergence after a certain number of iterations
+        if iterNum > 4 and (abs(volCurr-volReq) < 0.005) and np.all( abs(objective[-1]-objective[-6:-1]) < 0.01*abs(objective[-1]) ):
+            break
+
+        # Update the augmented Lagrangian parameters for the next iteration
+        if iterNum > 0:
+            la = la - 1/La * (volCurr - volReq)
+            La = alpha * La
+        #print("la:", la)
+        #print("La:", La)
+
+        # Update the sensitivities with augmented Lagrangian terms
+        shapeSens = shapeSens - la + 1/La * (volCurr - volReq)
+        topSens = topSens + np.pi * ( la - 1/La * (volCurr - volReq) )
+        print("shapeSens:", shapeSens.shape, "\n", shapeSens)
+        print("topSens:", topSens.shape, "\n", topSens)
+
+
+
+
 
     import os
     output = './mesh/'
     if not os.path.exists(output):
         os.makedirs(output)
     fname = os.path.join(output, 'quad_mesh_2.vtu')
-    mesh_lsf = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx+1, ny = nely+1)
-    mesh_lsf.nodedata['lsf'] = lsf.flatten('F') # 按列增加
-    mesh_lsf.to_vtk(fname=fname)
+    mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
+
+    mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
+    mesh.to_vtk(fname=fname)
