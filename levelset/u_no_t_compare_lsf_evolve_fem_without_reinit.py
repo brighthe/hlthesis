@@ -15,8 +15,8 @@ parser = argparse.ArgumentParser(description=
         """)
 
 parser.add_argument('--degree',
-        default=1, type=int,
-        help='Degree of the Lagrange finite element space. Default is 1.')
+        default=3, type=int,
+        help='Degree of the Lagrange finite element space. Default is 3.')
 parser.add_argument('--ns',
         default=128, type=int,
         help='Number of spatial divisions in each direction. Default is 128.')
@@ -87,34 +87,37 @@ lsfemsolver = LSFEMSolver(space = space)
 lssolver = LSSolver(space = space)
 
 from fealpy.functionspace import LagrangeFiniteElementSpace
-space1 = LagrangeFiniteElementSpace(mesh, p=1)
+space1 = LagrangeFiniteElementSpace(mesh, p=3)
 M1 = space1.mass_matrix()
-u = space1.interpolation(velocity_field, dim=2)
-C1 = space1.convection_matrix(c = u) 
+u1 = space1.interpolation(velocity_field, dim=2)
+s0 = space1.interpolation(circle)
+C1 = space1.convection_matrix(c = u1, q = 4).T 
 A1 = M1 + dt/2*C1
 
-diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
-print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+# diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
+# print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
+u = space.interpolate(velocity_field, dim=2)
 # Time iteration
-for i in range(1):
+for i in range(nt):
     t1 = timeline.next_time_level()
     print("t1=", t1)
 
-    u = space.interpolate(velocity_field, dim=2)
     phi0[:], A, b, M, C = lsfemsolver.mumps_solve(phi0 = phi0, dt = dt, u = u)
-    print("diff_A:\n", np.max(np.abs(A-A1)))
-    print("diff_M:\n", np.max(np.abs(M-M1)))
-    print("diff_C:\n", np.max(np.abs(C-C1)))
-    tolerance = 1e-4
-    np.testing.assert_allclose(C1.toarray(), C.toarray().T, atol=1e-7)
+
+    b = A1@s0 - dt/2*C1@s0
+    s0[:] = lssolver.mumps_solve_system(A1, b)
+
+    print("diff:", np.sum(np.abs(phi0-s0)))
+    print("diff2:", np.sum(np.abs(A-A1)))
 
     # Save the current state if output is enabled
-    # lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'exp2_lsf_without_reinit_mumps')
+    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'old_exp_u_no_t_lsf_without_reinit_mumps')
+    lssolver.output(phi = s0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'new_exp_u_no_t_lsf_without_reinit_mumps')
 
     # Move to the next time level
     timeline.advance()
 
-diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
-print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
+# diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
+# print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
