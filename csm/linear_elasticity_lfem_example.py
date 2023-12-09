@@ -53,7 +53,11 @@ pde = BoxDomainData()
 mu = pde.mu
 lambda_ = pde.lam
 domain = pde.domain()
-mesh = pde.init_mesh(n = 0)
+mesh = pde.delaunay_mesh()
+NN = mesh.number_of_nodes()
+NC = mesh.number_of_cells()
+print("NN:", NN)
+print("NC:", NC)
 
 output = './mesh/'
 if not os.path.exists(output):
@@ -61,12 +65,52 @@ if not os.path.exists(output):
 fname = os.path.join(output, 'DelaunayMesh.vtu')
 mesh.to_vtk(fname=fname)
 
+space = Space(mesh, p=p, doforder=doforder)
+uh = space.function(dim=GD)
+vspace = GD*(space, )
+gdof = vspace[0].number_of_global_dofs()
+vgdof = gdof * GD
+ldof = vspace[0].number_of_local_dofs()
+print("gdof", gdof)
+print("vgdof", vgdof)
+print("ldof", ldof)
+
+integrator1 = LinearElasticityOperatorIntegrator(lam=pde.lam, mu=pde.mu, q=4)
+
+bform = BilinearForm(vspace)
+bform.add_domain_integrator(integrator1)
+KK = integrator1.assembly_cell_matrix(space=vspace)
+print("KK:", KK.shape)
+print(KK[0])
+K = bform.assembly()
+# K = bform.get_matrix()
+# print(K.shape)
+# print("K:", K)
+
+integrator2 = VectorSourceIntegrator(f = pde.source)
+
+lform = LinearForm(vspace)
+lform.add_domain_integrator(integrator2)
+FK = integrator2.assembly_cell_vector(space = vspace)
+print("FK:", FK.shape)
+# print("FK:", FK)
+F = lform.assembly()
+print(F.shape)
+# print("F:", F)
+
+if hasattr(pde, 'dirichlet'):
+    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
+    K, F = bc.apply(K, F, uh)
+
+
+
+
+
 
 pirntas(sad)
 
 
 
-NN = mesh.number_of_nodes()
 
 # 新接口程序
 # 构建双线性型，表示问题的微分形式
