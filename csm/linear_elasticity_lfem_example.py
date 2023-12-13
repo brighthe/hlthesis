@@ -38,8 +38,8 @@ parser.add_argument('--scale',
         help='网格变形系数，默认为 1')
 
 parser.add_argument('--doforder',
-        default='sdofs', type=str,
-        help='自由度排序的约定，默认为 sdofs')
+        default='vdims', type=str,
+        help='自由度排序的约定，默认为 vdims')
 
 args = parser.parse_args()
 p = args.degree
@@ -54,8 +54,20 @@ mu = pde.mu
 lambda_ = pde.lam
 domain = pde.domain()
 mesh = pde.delaunay_mesh()
+import matplotlib.pyplot as plt
+fig = plt.figure()
+axes = fig.gca()
+mesh.add_plot(axes)
+mesh.find_cell(axes, showindex=True, color='k', marker='s', markersize=2, fontsize=8, fontcolor='k')
+mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
+plt.show()
+
 NN = mesh.number_of_nodes()
 NC = mesh.number_of_cells()
+node = mesh.entity('node')
+cell = mesh.entity('cell')
+print("mu:", mu)
+print("lambda:", lambda_)
 print("NN:", NN)
 print("NC:", NC)
 
@@ -71,36 +83,37 @@ vspace = GD*(space, )
 gdof = vspace[0].number_of_global_dofs()
 vgdof = gdof * GD
 ldof = vspace[0].number_of_local_dofs()
-print("gdof", gdof)
+vldof = ldof * GD
 print("vgdof", vgdof)
-print("ldof", ldof)
+print("vldof", vldof)
 
-integrator1 = LinearElasticityOperatorIntegrator(lam=pde.lam, mu=pde.mu, q=4)
+integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=4)
 
 bform = BilinearForm(vspace)
 bform.add_domain_integrator(integrator1)
 KK = integrator1.assembly_cell_matrix(space=vspace)
 print("KK:", KK.shape)
-print(KK[0])
-K = bform.assembly()
-# K = bform.get_matrix()
-# print(K.shape)
-# print("K:", K)
-
-integrator2 = VectorSourceIntegrator(f = pde.source)
-
-lform = LinearForm(vspace)
-lform.add_domain_integrator(integrator2)
-FK = integrator2.assembly_cell_vector(space = vspace)
-print("FK:", FK.shape)
-# print("FK:", FK)
-F = lform.assembly()
-print(F.shape)
-# print("F:", F)
-
-if hasattr(pde, 'dirichlet'):
-    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-    K, F = bc.apply(K, F, uh)
+print("KK_19:\n", KK[19])
+print("KK_36:\n", KK[36])
+bform.assembly()
+K = bform.get_matrix()
+print("K:", K.shape)
+print(K.toarray().round(4))
+#
+#integrator2 = VectorSourceIntegrator(f = pde.source)
+#
+#lform = LinearForm(vspace)
+#lform.add_domain_integrator(integrator2)
+#FK = integrator2.assembly_cell_vector(space = vspace)
+#print("FK:", FK.shape)
+## print("FK:", FK)
+#F = lform.assembly()
+#print(F.shape)
+## print("F:", F)
+#
+#if hasattr(pde, 'dirichlet'):
+#    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
+#    K, F = bc.apply(K, F, uh)
 
 
 
@@ -108,7 +121,6 @@ if hasattr(pde, 'dirichlet'):
 
 
 pirntas(sad)
-
 
 
 
