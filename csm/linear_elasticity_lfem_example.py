@@ -14,7 +14,6 @@ from fealpy.fem import VectorMassIntegrator
 from fealpy.fem import BilinearForm
 from fealpy.fem import LinearForm
 from fealpy.fem import DirichletBC
-from fealpy.fem import VectorNeumannBCIntegrator #TODO
 
 
 ## 参数解析
@@ -68,11 +67,10 @@ NC = mesh.number_of_cells()
 node = mesh.entity('node')
 cell = mesh.entity('cell')
 
-output = './mesh/'
+output = './csm_results/'
 if not os.path.exists(output):
     os.makedirs(output)
 fname = os.path.join(output, 'DelaunayMesh.vtu')
-mesh.to_vtk(fname=fname)
 
 space = Space(mesh, p=p, doforder=doforder)
 uh = space.function(dim=GD)
@@ -92,7 +90,7 @@ KK = integrator1.assembly_cell_matrix(space=vspace)
 print("KK", KK.shape)
 bform.assembly()
 K = bform.get_matrix()
-print("K:", K.shape)
+print("K:", K.shape, "\n", K.toarray().round(4))
 
 integrator2 = VectorMassIntegrator(c=1, q=5)
 
@@ -109,17 +107,14 @@ integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
 lform = LinearForm(vspace)
 lform.add_domain_integrator(integrator3)
 FK = integrator3.assembly_cell_vector(space = vspace)
-print("FK[0]:", FK.shape, "\n", FK[0])
+print("FK[0]:", FK.shape)
 lform.assembly()
 F = lform.get_vector()
 print("F:", F.shape, "\n", F.round(4))
 
 ipoints = space.interpolation_points()
-print("ipoints:", ipoints.shape)
 fh = pde.source(p=ipoints)
-print("fh:", fh.shape)
 fh_1 = np.zeros(M.shape[0])
-print("fh_1:", fh_1.shape)
 fh_1[::GD] = fh[:,0]
 fh_1[1::GD] = fh[:,1]
 Fh = M @ fh_1
@@ -127,68 +122,16 @@ print("Fh:", Fh.shape, "\n", Fh.round(4))
 
 print("error:", np.sum(np.abs(F - Fh)))
 
-
-#node = mesh.entity('node')
-#f = pde.source(p=node)
-#print(f.shape)
-#f1 = np.zeros(M.shape[0])
-#print(f1.shape)
-#f1[::2] = f[:,0]
-#f1[1::2] = f[:,1]
-#F2 = M @ f1
-#print("F2:", F2.shape, "\n", F2.round(4))
-
-#print("error:", np.sum(np.abs(F-F2)))
-
-#if hasattr(pde, 'dirichlet'):
-#    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-#    K, F = bc.apply(K, F, uh)
-
-
-
-
-
-
-pirntas(sad)
-
-
-
-# 新接口程序
-# 构建双线性型，表示问题的微分形式
-space = Space(mesh, p=p, doforder=doforder)
-uh = space.function(dim=GD)
-vspace = GD*(space, ) # 把标量空间张成向量空间
-bform = BilinearForm(vspace)
-bform.add_domain_integrator(LinearElasticityOperatorIntegrator(pde.lam, pde.mu))
-bform.assembly()
-
-# 构建单线性型，表示问题的源项
-lform = LinearForm(vspace)
-lform.add_domain_integrator(VectorSourceIntegrator(pde.source, q=1))
-if hasattr(pde, 'neumann'):
-    bi = VectorNeumannBCIntegrator(pde.neumann, threshold=pde.is_neumann_boundary, q=1)
-    lform.add_boundary_integrator(bi)
-lform.assembly()
-
-A = bform.get_matrix()
-F = lform.get_vector()
-
 if hasattr(pde, 'dirichlet'):
-    bc = DirichletBC(vspace, pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-    A, F = bc.apply(A, F, uh)
+    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
+    K, Fh = bc.apply(K, Fh, uh)
 
-uh.flat[:] = spsolve(A, F)
+print("K:", K.shape, "\n", K.toarray().round(4))
+print("Fh:", Fh.shape, "\n", Fh.round(4))
 
-# 画出原始网格
-mesh.add_plot(plt)
+uh.flat[:] = spsolve(K, Fh)
+print("uh:", uh.shape, uh)
+mesh.nodedata['u'] = uh[:, 0]
+mesh.nodedata['v'] = uh[:, 1]
 
-if doforder == 'sdofs':
-    # 画出变形网格
-    mesh.node += scale*uh[:, :NN].T
-    mesh.add_plot(plt)
-elif doforder == 'vdims':
-    # 画出变形网格
-    mesh.node += scale*uh[:NN]
-    mesh.add_plot(plt)
-
-plt.show()
+mesh.to_vtk(fname=fname)
