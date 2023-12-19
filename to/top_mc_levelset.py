@@ -25,6 +25,54 @@ class TopLevelset:
         self._topWeight = topWeight
         self._mesh = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx, ny = nely)
 
+    def stiffnessMatrix(self, k):
+        """
+        Constructs an 8x8 elemental stiffness matrix for plane stress problems.
+
+        Parameters:
+        - k (numpy.ndarray): An array of material properties used to construct the stiffness matrix.
+
+        Returns:
+        - numpy.ndarray: An 8x8 elemental stiffness matrix.
+        """
+        # Element stiffness matrix symmetry is exploited for efficient assembly
+        K = np.array([
+            [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
+            [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
+            [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
+            [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
+            [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
+            [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
+            [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
+            [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
+        ])
+
+        return K
+
+    def materialInfo(self):
+        """
+        Calculates and returns material property information necessary for 
+        stress analysis and topology derivative calculations.
+
+        Returns:
+        - KE: Element stiffness matrix for stress analysis.
+        - KTr: Element stiffness matrix for topology derivative calculations.
+        - lambda_, mu: Lame parameters for the material.
+        """
+        E = 1.0
+        nu = 0.3
+        lambda_ = E * nu / ((1 + nu) * (1 - nu))
+        mu = E / (2 * (1 + nu))
+        k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
+                    -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
+
+        KE = E / (1 - nu**2) * self.stiffnessMatrix(k)
+
+        k = np.array([1/3, 1/4, -1/3, 1/4, -1/6, -1/4, 1/6, -1/4])
+        KTr = E / (1 - nu) * self.stiffnessMatrix(k)
+
+        return KE, KTr, lambda_, mu
+
     def optimize(self, Num: int = 200):
         '''
         Perform the topology optimization process.
@@ -57,6 +105,9 @@ class TopLevelset:
             os.makedirs(output)
         fname = os.path.join(output, 'quad_mesh_2.vtu')
         mesh.to_vtk(fname=fname)
+
+        KE, KTr, lambda_, mu = self. materialInfo()
+        print("KE:", KE.shape, "\n", KE.round(4))
 
 if __name__ == "__main__":
 
