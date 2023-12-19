@@ -4,7 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from mpl_toolkits.mplot3d import Axes3D
+# from mpl_toolkits.mplot3d import Axes3D
 
 from fealpy.pde.poisson_2d import CosCosData
 
@@ -34,11 +34,11 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--nx',
-        default=8, type=int,
+        default=10, type=int,
         help='Number of initial mesh divisions along x.')
 
 parser.add_argument('--ny',
-        default=8, type=int,
+        default=10, type=int,
         help='Number of initial mesh divisions along y.')
 
 parser.add_argument('--maxit',
