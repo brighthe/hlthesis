@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser(description=
         """)
 
 parser.add_argument('--degree',
-        default=1, type=int,
-        help='Degree of the Lagrange finite element space. Default is 1.')
+        default=3, type=int,
+        help='Degree of the Lagrange finite element space. Default is 3.')
 
 parser.add_argument('--ns',
         default=100, type=int,
@@ -28,8 +28,8 @@ parser.add_argument('--nt',
         help='Number of time divisions. Default is 100.')
 
 parser.add_argument('--T',
-        default=1, type=float,
-        help='End time of the evolution. Default is 1.')
+        default=2, type=float,
+        help='End time of the evolution. Default is 2.')
 
 parser.add_argument('--output',
         default='./results/', type=str,
@@ -50,6 +50,7 @@ nt = args.nt
 ns = args.ns
 T = args.T
 output = args.output
+q = degree + 2
 
 # Define the velocity field $u$ for the evolution
 @cartesian
@@ -85,24 +86,14 @@ space = LagrangeFESpace(mesh, p=degree)
 phi0 = space.interpolate(circle)
 u = space.interpolate(velocity_field, dim=2)
 
-# 添加上级目录
-# import sys
-# sys.path.append('..')
-# print(sys.path)
-
-from to.visualizer import Visualizer
-visualize = Visualizer()
-visualize.plot_matrices(phi0, titles=['Signed distance function (lsf)'], fmt=".1e", annot_kws={"size": 6}) 
-
-
 lsfemsolver = LSFEMSolver(space = space, u = u)
 
-lssolver = LSSolver(space = space, phi0 = phi0, u = u)
+lssolver = LSSolver(space = space)
 
 # If output is enabled, save the initial state
-lssolver.output(timestep = 0, output_dir = output, filename_prefix = 'lsf_without_reinit')
+lssolver.output(phi = phi0, u = u, timestep = 0, output_dir = output, filename_prefix = 'lsf_init')
 
-diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
 # Time iteration
@@ -110,14 +101,14 @@ for i in range(nt):
     t1 = timeline.next_time_level()
     print("t1=", t1)
 
-    phi0[:] = lsfemsolver.solve(phi0 = phi0, dt = dt)
+    phi0[:] = lsfemsolver.mumps_solve(q = q, phi0 = phi0, dt = dt, u = u)
 
     # Save the current state if output is enabled
-    lssolver.output(timestep = i+1, output_dir = output, filename_prefix = 'lsf_without_reinit')
+    lssolver.output(phi = phi0, u = u, timestep = i+1, output_dir = output, filename_prefix = 'lsf_mumps')
 
     # Move to the next time level
     timeline.advance()
 
-diff_avg, diff_max = lssolver.check_gradient_norm(phi = phi0)
+diff_avg, diff_max = lssolver.check_gradient_norm_at_interface(phi = phi0)
 print(f"Average diff: {diff_avg:.4f}, Max diff: {diff_max:.4f}")
 
