@@ -1,0 +1,204 @@
+% !Mode:: "TeX:UTF-8"
+\documentclass{article}
+\input{../en_preamble.tex}
+\input{../xecjk_preamble.tex}
+\begin{document}
+\title{建筑结构力学分析计算内核开发项目验收报告}
+\author{魏华祎}
+\date{\chntoday}
+\maketitle
+
+\section{项目计划目标、任务和考核指标}
+
+\subsection{项目计划目标}
+
+
+\subsection{任务和考核指标}
+
+
+
+\section{课题执行情况评价}
+
+
+\section{研究基础}
+
+
+
+\section{主要研究内容}
+\subsection{任意次有限元求解线弹性方程}
+
+\subsection{桁架结构求解模块}
+
+
+\subsection{三维梁单元结构求解模块}
+
+\subsubsection{模型假设}
+Timoshenko 梁理论有如下假设：
+\begin{itemize}
+\item 变形前垂直梁中心线的平剖面，变形后仍然为平面（刚性横截面假定）；
+
+\item 梁受力发生变形时，横截面依然为一个平面，但不再垂直于中性轴，即考虑剪切变形和转动惯量的影响。
+\end{itemize}
+
+\subsubsection{数学模型}
+Timoshenko 梁的应变能分为两部分：一是轴向变形产生的，二是由于剪切变形产生的，
+$$\Lambda= \frac{1}{2}\int_z\int_{S(z)}E\varepsilon_z^2\,\mathrm{d}x\mathrm{d}y\mathrm{d}z+\frac{1}{2}
+\int_z\int_{S(z)}\frac{G}{k}(\gamma_{xz}^2 + \gamma_{yz}^2)\,\mathrm{d}x\mathrm{d}y\mathrm{d}z$$
+其中，$S(z)$表示中轴线上$z$点对应的截面（$xy$平面）， $k$是剪切修正系数。
+
+\subsubsection{全局到局部的坐标变换}
+给定空间中的一个梁单元 $e :=(\bm{x}_0, \bm{x}_1)$，其长度记为 $l$，则其单位切向量为
+ $$\bm{t}:=\frac{\bm{x}_1-\bm{x}_0}{l}$$
+
+给定梁的任一截面 $S$，可以指定一个单位法向 $\bm{n}_x$做为 $S$的第一方向（局部的 $x$方向），通过叉乘运算可以确定另外一个方向 $\bm{n}_y = \bm{t}\times \bm{n}_x$，则可以用标架 $(\bm{n}_x, \bm{n}_y, \bm{t})$ 建立梁的局部坐标系，原点选为梁中点 $\bm{c} := \frac{\bm{x}_0 + \bm{x}_1}{2}$。我们用 $|S|$表示截面 $S$的面积。
+
+局部坐标系的坐标向量为 $(\bm{n}_x, \bm{n}_y, \bm{t})$，则全局到局部坐标系的变换矩阵为
+$$\bm{T} = 
+\begin{bmatrix}
+\bm{n}_x^{\rm T} \\
+\bm{n}_y^{\rm T} \\
+\bm{t}^{\rm T}
+\end{bmatrix}$$
+
+设全局的平动位移为 $\bm{d} = \begin{bmatrix}
+u & v & w
+\end{bmatrix}^{\rm T}$，转动位移为 $\bm{\theta}=\begin{bmatrix}
+\theta_x & \theta_y & \theta_z
+\end{bmatrix}^T$，则在局部坐标系下的平动位移和转动位移分别为
+$$\bar{\bm{d}}=\bm{T}\bm{d},\quad \bar{\bm{\theta}}=\bm{T}\bm{\theta}.$$
+同时有
+$$\bm{d}=\bm{T}^{\rm T}\bar{\bm{d}},\quad \bm{\theta}=\bm{T}^{\rm T}\bar{\bm{\theta}}.$$
+
+\subsubsection{位移-应变关系}
+
+在局部坐标系下计算梁截面上的任一点 $(x,y,z)$处的位移，由于
+\begin{align*}
+u(x, y, z) &= \bar{u}(z)-y\bar{\theta}_z(z)\\
+v(x,y,z) &= \bar{v}(z)+x\bar{\theta}_z(z)\\
+w(x, y, z) &= \bar{w}(z)-x\bar{\theta}_y(z) + y\bar{\theta}_x(z)
+\end{align*}
+则应变的计算对应的矩阵形式为：
+$$\begin{bmatrix}
+\varepsilon_z \\
+\gamma_{xz} \\
+\gamma_{yz}
+\end{bmatrix} = 
+\begin{bmatrix}
+0 & 0 & 
+\frac{\mathrm{d}}{\mathrm{d}z} &
+y\frac{\mathrm{d}}{\mathrm{d}z} &
+-x\frac{\mathrm{d}}{\mathrm{d}z}&
+0\\
+\frac{\mathrm{d}}{\mathrm{d}z} &
+0 & 0 & 0 & -1 &
+-y\frac{\mathrm{d}}{\mathrm{d}z}\\
+0&\frac{\mathrm{d}}{\mathrm{d}z} &
+0 &  1 & 0 &
+x\frac{\mathrm{d}}{\mathrm{d}z}
+\end{bmatrix}
+\begin{bmatrix}
+\bar{u}(z) \\
+\bar{v}(z) \\
+\bar{w}(z) \\
+\bar{\theta}_x(z) \\
+\bar{\theta}_y(z) \\
+\bar{\theta}_z(z) \\
+\end{bmatrix} = 
+\mathcal{B}\bar{\bm{u}}$$
+
+取线性拉格朗日基
+$$\phi_0=\frac{1-\xi}{2},\phi_1=\frac{1+\xi}{2},(-1\leq\xi\leq1)$$
+其中，$$\xi=\frac{2z-z_0-z_1}{l}$$
+
+先排 $\bm{x}_0$的 6 个自由度，再排 $\bm{x}_1$上的 6 个自由度，可得相应的向量基函数矩阵
+
+$$\bm{\Phi} = 
+\begin{bmatrix}
+\bm{\Phi}_0 & \bm{\Phi}_1
+\end{bmatrix} 
+= 
+\begin{bmatrix}
+\phi_0\bm{I}_6 & \phi_1\bm{I}_6
+\end{bmatrix} 
+$$
+可得应变矩阵$\bm{B}$：
+
+$$\bm{B} = \mathcal{B}\bm{\Phi} =
+\begin{bmatrix}
+\bm{B}_0 & \bm{B}_1
+\end{bmatrix}$$
+
+\subsubsection{应变-应力关系}
+
+应力-应变关系遵循 Hooke 定律：
+$$\bm{\sigma}=\bm{D}\bm{\varepsilon}$$
+即：
+$$\begin{bmatrix}
+\sigma_{z} \\
+\tau_{zx} \\
+\tau_{zy}
+\end{bmatrix}  = \begin{bmatrix}
+E & 0 & 0\\
+0 & \frac{G}{k} & 0\\
+0 & 0 & \frac{G}{k}
+\end{bmatrix}\begin{bmatrix}
+\varepsilon_z \\
+\gamma_{zx} \\
+\gamma_{zy}
+\end{bmatrix}$$
+其中$\bm{D}$是材料的弹性系数常数。
+
+\subsubsection{梁的刚度矩阵}
+根据梁的应变能、位移-应变以及应变-应力的关系，可得刚度矩阵计算公式为：
+$$\bm{K}=
+\int_z\int_{S(z)}
+\bm{B}^T\bm{D}\bm{B}\,
+\mathrm{d}x\mathrm{d}y\mathrm{d}z$$
+由此可得刚度矩阵为：
+$$\bm{K} = 
+\begin{bmatrix}
+\bm{K}_{00} & \bm{K}_{01} \\
+\bm{K}_{10} & \bm{K}_{11}
+\end{bmatrix}$$
+其中，
+\begin{align*}
+    \bm{K}_{00} &= \int_z\int_{S(z)}
+\bm{B}^T_0\bm{D}\bm{B}_0\,\mathrm{d}x\mathrm{d}y\mathrm{d}z \\
+    \bm{K}_{11} &= \int_z\int_{S(z)}
+\bm{B}^T_1\bm{D}\bm{B}_1\,
+\mathrm{d}x\mathrm{d}y\mathrm{d}z \\
+    \bm{K}_{01} &= \int_z\int_{S(z)}
+\bm{B}^T_0\bm{D}\bm{B}_1\,
+\mathrm{d}x\mathrm{d}y\mathrm{d}z \\
+\end{align*}
+横截面面积为$A=\int_{S}\mathrm{d}x\mathrm{d}y$。
+
+注意：这里假设截面 $S$ 沿中轴线形状不变，因此面积是常数，惯性矩、惯性积和极惯性矩为：
+
+\begin{align*}
+	I_{xx} &= \int_Sy^2\,\mathrm{d}x\mathrm{d}y,I_{yy}=\int_Sx^2\,\mathrm{d}x\mathrm{d}y \\
+	I_{xy} &= \int_Sxy\,\mathrm{d}x\mathrm{d}y \\
+	J &= \int_S(x^2+y^2)\,\mathrm{d}x\mathrm{d}y
+\end{align*}
+
+\subsubsection{实验结果}
+
+
+\section{预研内容}
+
+\subsection{板壳结构求解模块}
+\subsubsection{引言}
+SHELL63 是 ANSYS 中的一个四节点有限元壳体单元，适用于模拟各种薄厚壳体结构。
+\subsubsection{全局到单元局部坐标系推导}
+
+\subsection{断裂模拟的自适应有限元方法}
+
+\subsection{任意次混合有限元求解线弹性方程}
+
+\section{主要成果及工作总结}
+
+
+
+\bibliographystyle{abbrv}
+\bibliography{Timoshenko3d}
+\end{document}
