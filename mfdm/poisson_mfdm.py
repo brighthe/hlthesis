@@ -5,6 +5,7 @@ import numpy as np
 from poisson import SinSinData
 
 from fealpy.mesh.triangle_mesh import TriangleMesh
+from fealpy.mesh.polygon_mesh import PolygonMesh
 
 from fealpy.functionspace.lagrange_fe_space import LagrangeFESpace
 
@@ -47,7 +48,30 @@ pde = SinSinData()
 domain = pde.domain()
 
 # Create the initial triangle mesh
-mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
+# mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
+node = np.array([[0.0, 0.0], [0.0, 0.5], [0.0, 1.0],
+                 [0.5, 0.0], [0.5, 0.5], [0.5, 1.0],
+                 [1.0, 0.0], [1.0, 0.5], [1.0, 1.0]], dtype=np.float64)
+cell = np.array([0, 3, 4, 1, 3, 6, 7, 4, 1, 4, 5, 2, 4, 7, 8, 4, 8, 5], dtype=np.int_)
+cellLocation = np.array([0, 4, 8, 12, 15, 18], dtype=np.int_)
+mesh = PolygonMesh(node=node, cell=cell, cellLocation=cellLocation)
+edge = mesh.entity('edge')
+# mesh = PolygonMesh.from_box(box = domain, nx = nx, ny = ny)
+
+
+import matplotlib.pyplot as plt
+fig = plt.figure()
+axes = fig.gca()
+mesh.add_plot(axes)
+mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=8, fontsize=16, fontcolor='r')
+mesh.find_cell(axes, showindex=True, color='b', marker='o', markersize=8, fontsize=16, fontcolor='b')
+mesh.find_edge(axes, showindex=True, color='g', marker='o', markersize=8, fontsize=16, fontcolor='g')
+plt.show()
+
+printt("sadasd")
+
+
+
 
 space = LagrangeFESpace(mesh, p = p, spacetype = 'C', doforder = 'vdims')
 #space = LagrangeFESpace(mesh, p = p, spacetype = 'C', doforder = 'sdofs')
