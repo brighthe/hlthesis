@@ -55,9 +55,47 @@ node = np.array([[0.0, 0.0], [0.0, 0.5], [0.0, 1.0],
 cell = np.array([0, 3, 4, 1, 3, 6, 7, 4, 1, 4, 5, 2, 4, 7, 8, 4, 8, 5], dtype=np.int_)
 cellLocation = np.array([0, 4, 8, 12, 15, 18], dtype=np.int_)
 mesh = PolygonMesh(node=node, cell=cell, cellLocation=cellLocation)
-edge = mesh.entity('edge')
-# mesh = PolygonMesh.from_box(box = domain, nx = nx, ny = ny)
 
+node = mesh.entity('node')
+NN = mesh.number_of_nodes()
+print("node:", NN, ":\n", node)
+cell = mesh.entity('cell')
+NC = mesh.number_of_cells()
+print("cell:", NC, ":\n", cell)
+edge = mesh.entity('edge')
+NE = mesh.number_of_edges()
+print("edge:", NE, ":\n", edge)
+
+edge_lengths = mesh.entity_measure('edge')
+print("edge_lengths:\n", edge_lengths)
+
+cell2edge = mesh.ds.cell_to_edge()
+print("cell2edge:\n", cell2edge)
+cell2edge_sorted = [np.array(sorted(arr)) for arr in cell2edge]
+print("cell2edge_sorted:\n", cell2edge_sorted)
+
+#vertices = mesh.ds.cell_to_node()
+#print("vertices:\n", vertices)
+
+area_of_p = mesh.entity_measure('cell')
+print("area_of_p:\n", area_of_p)
+
+edge_normals = mesh.edge_unit_normal()
+edge_normals = -edge_normals
+print("edge_unit_normal:\n", edge_normals)
+
+edge_centers = mesh.entity_barycenter('edge')
+print("edge_centers:\n", edge_centers)
+
+barycenters = mesh.entity_barycenter('cell')
+print("barycenters:\n", barycenters)
+
+for i in range(NC):
+    N = np.zeros((len(cell[i]), 2))
+    for j, edge_index in enumerate(cell2edge_sorted[i]):
+        N[j, :] = edge_normals[edge_index]
+
+    print("N:\n", N)
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
@@ -67,6 +105,13 @@ mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=8, fontsi
 mesh.find_cell(axes, showindex=True, color='b', marker='o', markersize=8, fontsize=16, fontcolor='b')
 mesh.find_edge(axes, showindex=True, color='g', marker='o', markersize=8, fontsize=16, fontcolor='g')
 plt.show()
+
+import os
+output = './csm_results/'
+if not os.path.exists(output):
+    os.makedirs(output)
+fname = os.path.join(output, 'polygon_mesh.vtu')
+mesh.to_vtk(fname=fname)
 
 printt("sadasd")
 
