@@ -87,15 +87,32 @@ print("edge_unit_normal:\n", edge_normals)
 edge_centers = mesh.entity_barycenter('edge')
 print("edge_centers:\n", edge_centers)
 
+cell2edge_sign = mesh.ds.cell_to_edge_sign(return_sparse=False)
+Alphas = []
+start = 0
+for c in cell:
+    end = start + len(c)
+    Alphas.append(cell2edge_sign[start:end])
+    start = end
+print("Alphas:\n", Alphas)
+
 barycenters = mesh.entity_barycenter('cell')
 print("barycenters:\n", barycenters)
 
 for i in range(NC):
+    R = np.zeros((len(cell[i]), 2))
     N = np.zeros((len(cell[i]), 2))
     for j, edge_index in enumerate(cell2edge_sorted[i]):
+        R[j, :] = Alphas[i][j] * (edge_centers[edge_index] - barycenters[i,:]) * edge_lengths[edge_index]
         N[j, :] = edge_normals[edge_index]
 
+    print("R:\n", R)
     print("N:\n", N)
+
+    size = 1 / len(cell2edge_sorted[i])
+    print("size:", size)
+    M0 = R @(np.linalg.pinv(R.T @ N) @ R.T)
+    print("M0:", M0)
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
