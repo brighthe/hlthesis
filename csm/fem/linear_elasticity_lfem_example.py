@@ -67,7 +67,7 @@ NC = mesh.number_of_cells()
 node = mesh.entity('node')
 cell = mesh.entity('cell')
 
-output = './csm_results/'
+output = './mesh/'
 if not os.path.exists(output):
     os.makedirs(output)
 fname = os.path.join(output, 'DelaunayMesh.vtu')
