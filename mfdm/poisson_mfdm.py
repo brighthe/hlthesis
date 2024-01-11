@@ -88,6 +88,7 @@ edge_centers = mesh.entity_barycenter('edge')
 print("edge_centers:\n", edge_centers)
 
 cell2edge_sign = mesh.ds.cell_to_edge_sign(return_sparse=False)
+print("cell2edge_sign:\n", cell2edge_sign)
 Alphas = []
 start = 0
 for c in cell:
@@ -99,9 +100,13 @@ print("Alphas:\n", Alphas)
 barycenters = mesh.entity_barycenter('cell')
 print("barycenters:\n", barycenters)
 
+Mf = np.zeros((NE, NE))
+# TODO: sparse
+
 for i in range(NC):
-    R = np.zeros((len(cell[i]), 2))
-    N = np.zeros((len(cell[i]), 2))
+    num_edges = len(cell2edge[i])
+    R = np.zeros((num_edges, 2))
+    N = np.zeros((num_edges, 2))
     for j, edge_index in enumerate(cell2edge_sorted[i]):
         R[j, :] = Alphas[i][j] * (edge_centers[edge_index] - barycenters[i,:]) * edge_lengths[edge_index]
         N[j, :] = edge_normals[edge_index]
@@ -109,10 +114,39 @@ for i in range(NC):
     print("R:\n", R)
     print("N:\n", N)
 
-    size = 1 / len(cell2edge_sorted[i])
-    print("size:", size)
+    size = 1 / num_edges
     M0 = R @(np.linalg.pinv(R.T @ N) @ R.T)
-    print("M0:", M0)
+    print("M0:\n", M0)
+    M1 = size * np.trace(M0) * (np.eye(num_edges) - N @ np.linalg.pinv(N.T @ N) @ N.T)
+    print("M1:\n", M1)
+    M = M0 + M1
+    print("M:\n", M)
+
+    assembly = np.zeros((num_edges, NE))
+    for k, edge in enumerate(cell2edge_sorted[i]):
+        #print("k:", k)
+        #print("edge:", edge)
+        assembly[k, edge] = 1
+
+    #print("assembly:\n", assembly)
+    Mf += assembly.T @ M @ assembly
+    print("Mf:\n", Mf)
+
+divh = np.zeros((NC, NE))
+for i in range(NC):
+    for j, edge_index in enumerate(cell2edge_sorted[i]):
+        divh[i, edge_index] = Alphas[i][j] * edge_lengths[edge_index] / area_of_p[i]
+print("divh:\n", divh)
+
+Mc = np.diag(area_of_p)
+print("Mc:\n", Mc)
+
+A = np.block([
+    [Mf, -divh.T @ Mc],
+    [Mc @ divh, np.zeros((NC, NC))]
+])
+print("A:", A.shape, "\n", A)
+
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
