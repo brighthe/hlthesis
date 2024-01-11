@@ -106,6 +106,21 @@ class TopLevelset:
         fname = os.path.join(output, 'quad_mesh_2.vtu')
         mesh.to_vtk(fname=fname)
 
+        from fealpy.functionspace import LagrangeFESpace as Space
+        from fealpy.fem import LinearElasticityOperatorIntegrator
+        from fealpy.fem import BilinearForm
+        mesh = self._mesh
+        space = Space(mesh, p=1, doforder='vdims')
+        vspace = 2*(space, )
+        E, nu = 1.0, 0.3
+        mu = E / (2 *(1 + nu))
+        lambda_ = ( E * nu) / ((1 + nu) * (1 - 2 * nu))
+        integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=5)
+        bform = BilinearForm(vspace)
+        bform.add_domain_integrator(integrator1)
+        KK = integrator1.assembly_cell_matrix(space=vspace)
+        print("KK:", KK.shape, "\n", KK[0].round(4))
+
         KE, KTr, lambda_, mu = self. materialInfo()
         print("KE:", KE.shape, "\n", KE.round(4))
 

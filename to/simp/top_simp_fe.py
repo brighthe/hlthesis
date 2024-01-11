@@ -61,22 +61,6 @@ class TopSimp:
         """
         # Get local stiffness matrix
         KE = self.lk()
-        print("KE:", KE.shape, "\n", KE.round(4))
-
-        from fealpy.functionspace import LagrangeFESpace as Space
-        from fealpy.fem import LinearElasticityOperatorIntegrator
-        from fealpy.fem import BilinearForm
-        mesh = self._mesh
-        space = Space(mesh, p=1, doforder='vdims')
-        vspace = 2*(space, )
-        E, nu = 1.0, 0.3
-        mu = E / (2 *(1 + nu))
-        lambda_ = ( E * nu) / ((1 + nu) * (1 - 2 * nu))
-        integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=5)
-        bform = BilinearForm(vspace)
-        bform.add_domain_integrator(integrator1)
-        KK = integrator1.assembly_cell_matrix(space=vspace)
-        print("KK:", KK.shape, "\n", KK[0].round(4))
 
         # Initialize the global stiffness matrix, load matrix and global displacement vector
         K = lil_matrix( ( 2*(nelx+1)*(nely+1), 2*(nelx+1)*(nely+1) ) )
@@ -125,31 +109,29 @@ class TopSimp:
         output = './mesh/'
         if not os.path.exists(output):
             os.makedirs(output)
-        fname = os.path.join(output, 'quad_mesh_1.vtu')
+        fname = os.path.join(output, 'quad_mesh.vtu')
         mesh.to_vtk(fname=fname)
 
-        loop = 0 # Iteration counter
-        change = 1.0 # Maximum change in design variables between iterations
+        KE = self.lk()
+        print("KE:", KE.shape, "\n", KE.round(4))
 
-        U = self.FE(nelx, nely, penal, x)
-        print("U:", U.shape, "\n", U)
-        printa(asd)
-         # Optimization loop, runs until the change is less than 1%
-        while change > 0.01:
-            loop += 1
-            xold = np.copy(x)
+        from fealpy.functionspace import LagrangeFESpace as Space
+        from fealpy.fem import LinearElasticityOperatorIntegrator
+        from fealpy.fem import BilinearForm
+        mesh = self._mesh
+        space = Space(mesh, p=1, doforder='vdims')
+        vspace = 2*(space, )
+        E, nu = 1.0, 0.3
+        mu = E / (2 *(1 + nu))
+        lambda_ = ( E * nu) / ((1 + nu) * (1 - 2 * nu))
+        integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=5)
+        bform = BilinearForm(vspace)
+        bform.add_domain_integrator(integrator1)
+        KK = integrator1.assembly_cell_matrix(space=vspace)
+        print("KK:", KK.shape, "\n", KK[0].round(4))
 
-            # FE-Analysis: perform finite element analysis on the current design
-            U = self.FE(nelx, nely, penal, x)
 
 if __name__ == "__main__":
 
     ts = TopSimp()
     ts.optimize()
-
-    #import matplotlib.pyplot as plt
-    #fig = plt.figure()
-    #axes = fig.gca()
-    #mesh.add_plot(axes)
-    #mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
-    #plt.show()
