@@ -139,13 +139,87 @@ reshaped_uh = uh.reshape(-1)
 cell2dof = space.cell_to_dof()
 print("cell2dof:", cell2dof.shape, "\n", cell2dof)
 updated_cell2dof = np.repeat(cell2dof * GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
-cell_displacements = reshaped_uh[updated_cell2dof]
+cell_displacements = reshaped_uh[updated_cell2dof] # (NC, ldof*GD)
 print("cell_displacements:", cell_displacements.shape, "\n", cell_displacements)
 
 qf =  mesh.integrator(p+1, 'cell')
 bcs, ws = qf.get_quadrature_points_and_weights()
 grad = space.grad_basis(bcs) # (NQ, NC, ldof, GD)
 print("grad:", grad.shape, "\n", grad)
+
+import numpy as np
+
+def compute_strain(grad, cell_displacement):
+    """
+    参数:
+    grad (np.ndarray): 形状函数梯度，形状为 (NQ, NC, ldof, GD)
+    cell_displacement (np.ndarray): 单元位移，形状为 (NC, ldof*GD)
+    返回:
+    np.ndarray: 应变矩阵
+    """
+    NQ, NC, ldof, GD = grad.shape
+    strain_dim = GD * (GD + 1) // 2
+    strain = np.zeros((NQ, NC, strain_dim))
+
+    # (NC, ldof*GD) -> (NC, ldof, GD)
+    cell_displacement_reshaped = cell_displacement.reshape(1, NC, ldof, GD)
+
+    # 对于二维和三维问题，使用不同的索引策略
+    if GD == 2:
+        # 二维应变计算 (ε_xx, ε_yy, γ_xy)
+        strain[:, :, 0] = np.sum(grad[:, :, :, 0] * cell_displacement_reshaped[:, :, :, 0], axis=2)  # ε_xx
+        strain[:, :, 1] = np.sum(grad[:, :, :, 1] * cell_displacement_reshaped[:, :, :, 1], axis=2)  # ε_yy
+        strain[:, :, 2] = np.sum(grad[:, :, :, 0] * cell_displacement_reshaped[:, :, :, 1] +
+                                 grad[:, :, :, 1] * cell_displacement_reshaped[:, :, :, 0], axis=2)  # γ_xy
+    elif GD == 3:
+        # 三维应变计算 (ε_xx, ε_yy, ε_zz, γ_xy, γ_yz, γ_xz)
+        for i in range(GD):
+            strain[:, :, i] = np.sum(grad[:, :, :, i] * cell_displacement_reshaped[:, :, :, i], axis=2)  # ε_xx, ε_yy, ε_zz
+        strain[:, :, 3] = np.sum(grad[:, :, :, 0] * cell_displacement_reshaped[:, :, :, 1] +
+                                 grad[:, :, :, 1] * cell_displacement_reshaped[:, :, :, 0], axis=2)  # γ_xy
+        strain[:, :, 4] = np.sum(grad[:, :, :, 1] * cell_displacement_reshaped[:, :, :, 2] +
+                                 grad[:, :, :, 2] * cell_displacement_reshaped[:, :, :, 1], axis=2)  # γ_yz
+        strain[:, :, 5] = np.sum(grad[:, :, :, 0] * cell_displacement_reshaped[:, :, :, 2] +
+                                 grad[:, :, :, 2] * cell_displacement_reshaped[:, :, :, 0], axis=2)  # γ_xz
+
+    return strain
+
+strain = compute_strain(grad=grad, cell_displacement=cell_displacements)
+print("strain:", strain.shape, "\n", strain)
+
+def compute_stress(mu, lam, strain):
+    """
+    参数:
+    strain (np.ndarray): 应变矩阵，形状为 (NQ, NC, strain_dim)
+    返回:
+    np.ndarray: 应力矩阵
+    """
+    strain_dim = strain.shape[-1]
+    if strain_dim == 3:
+        # 二维应力计算
+        D = np.array([
+            [2*mu+lam, lam, 0],
+            [lam, 2*mu+lam, 0],
+            [0, 0, mu]
+        ])
+    elif strain_dim == 6:
+        # 三维应力计算
+        D = np.array([
+            [2*mu+lam, lam, lam, 0, 0, 0],
+            [lam, 2*mu+lam, lam, 0, 0, 0],
+            [lam, lam, 2*mu+lam, 0, 0, 0],
+            [0, 0, 0, mu, 0, 0],
+            [0, 0, 0, 0, mu, 0],
+            [0, 0, 0, 0, 0, mu]
+        ])
+    stress = np.einsum('qck, kl -> qcl', strain, D)
+
+    return stress
+
+stress = compute_stress(mu=mu, lam=lambda_, strain=strain)
+print("stress:", stress.shape, "\n", stress)
+
+
 
 
 mesh.nodedata['u'] = uh[:, 0]
