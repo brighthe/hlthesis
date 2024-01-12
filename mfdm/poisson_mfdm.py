@@ -116,11 +116,14 @@ for i in range(NC):
 
     size = 1 / num_edges
     M0 = R @(np.linalg.pinv(R.T @ N) @ R.T)
-    print("M0:\n", M0)
+    #print("M0:\n", M0)
     M1 = size * np.trace(M0) * (np.eye(num_edges) - N @ np.linalg.pinv(N.T @ N) @ N.T)
-    print("M1:\n", M1)
+    #print("M1:\n", M1)
     M = M0 + M1
     print("M:\n", M)
+
+    MN = M @ N
+    print("MN:\n", MN)
 
     assembly = np.zeros((num_edges, NE))
     for k, edge in enumerate(cell2edge_sorted[i]):

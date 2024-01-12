@@ -63,9 +63,12 @@ mesh = pde.delaunay_mesh()
 #mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
 #plt.show()
 NN = mesh.number_of_nodes()
+print("NN:", NN)
 NC = mesh.number_of_cells()
+print("NC:", NC)
 node = mesh.entity('node')
 cell = mesh.entity('cell')
+print("cell:\n", cell.shape, "\n", cell)
 
 output = './mesh/'
 if not os.path.exists(output):
@@ -131,6 +134,20 @@ print("Fh:", Fh.shape, "\n", Fh.round(4))
 
 uh.flat[:] = spsolve(K, Fh)
 print("uh:", uh.shape, uh)
+
+reshaped_uh = uh.reshape(-1)
+cell2dof = space.cell_to_dof()
+print("cell2dof:", cell2dof.shape, "\n", cell2dof)
+updated_cell2dof = np.repeat(cell2dof * GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
+cell_displacements = reshaped_uh[updated_cell2dof]
+print("cell_displacements:", cell_displacements.shape, "\n", cell_displacements)
+
+qf =  mesh.integrator(p+1, 'cell')
+bcs, ws = qf.get_quadrature_points_and_weights()
+grad = space.grad_basis(bcs) # (NQ, NC, ldof, GD)
+print("grad:", grad.shape, "\n", grad)
+
+
 mesh.nodedata['u'] = uh[:, 0]
 mesh.nodedata['v'] = uh[:, 1]
 
