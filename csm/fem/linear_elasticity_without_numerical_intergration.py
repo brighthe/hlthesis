@@ -11,6 +11,7 @@ from fealpy.functionspace import LagrangeFESpace as Space
 from fealpy.fem import LinearElasticityOperatorIntegrator
 from fealpy.fem import VectorSourceIntegrator
 from fealpy.fem import VectorMassIntegrator
+from fealpy.fem import ScalarMassIntegrator
 from fealpy.fem import BilinearForm
 from fealpy.fem import LinearForm
 from fealpy.fem import DirichletBC
@@ -31,8 +32,8 @@ parser.add_argument('--GD',
         help='模型问题的维数, 默认求解 2 维问题.')
 
 parser.add_argument('--nrefine',
-        default=2, type=int,
-        help='初始网格加密的次数, 默认初始加密 2 次.')
+        default=1, type=int,
+        help='初始网格加密的次数, 默认初始加密 1 次.')
 
 parser.add_argument('--scale',
         default=1, type=float,
@@ -54,7 +55,7 @@ pde = BoxDomainData()
 mu = pde.mu
 lambda_ = pde.lam
 domain = pde.domain()
-mesh = pde.delaunay_mesh()
+mesh = pde.triangle_mesh()
 #import matplotlib.pyplot as plt
 #fig = plt.figure()
 #axes = fig.gca()
@@ -63,17 +64,15 @@ mesh = pde.delaunay_mesh()
 #mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
 #plt.show()
 NN = mesh.number_of_nodes()
-print("NN:", NN)
 NC = mesh.number_of_cells()
 print("NC:", NC)
 node = mesh.entity('node')
 cell = mesh.entity('cell')
-print("cell:\n", cell.shape, "\n", cell)
 
 output = './mesh/'
 if not os.path.exists(output):
     os.makedirs(output)
-fname = os.path.join(output, 'DelaunayMesh.vtu')
+fname = os.path.join(output, 'TriangleMesh.vtu')
 
 space = Space(mesh, p=p, doforder=doforder)
 uh = space.function(dim=GD)
@@ -84,6 +83,33 @@ ldof = vspace[0].number_of_local_dofs()
 vldof = ldof * GD
 print("vgdof", vgdof)
 print("vldof", vldof)
+
+integrator_scalar_mass = ScalarMassIntegrator(c=1, q=p+1)
+bform_scalar_mass = BilinearForm(space)
+bform_scalar_mass.add_domain_integrator(integrator_scalar_mass)
+MK_scalar_mass_1 = integrator_scalar_mass.assembly_cell_matrix(space=space)
+print("MK_scalar_mass_1:\n", MK_scalar_mass_1.shape, "\n", MK_scalar_mass_1)
+
+integrator_scalar_mass_fast = ScalarMassIntegrator(q=p+1)
+MK_scalar_mass_2 = integrator_scalar_mass_fast.assembly_cell_matrix_fast(trialspace=space, testspace=space)
+print("MK_scalar_mass_2:\n", MK_scalar_mass_2.shape, "\n", MK_scalar_mass_2)
+
+are_matrices_equal = np.allclose(MK_scalar_mass_1, MK_scalar_mass_2, rtol=1e-05, atol=1e-08)
+print(are_matrices_equal)
+
+integrator_vector_mass = VectorMassIntegrator(c=1, q=p+1)
+bform_vector_mass = BilinearForm(vspace)
+bform_vector_mass.add_domain_integrator(integrator_vector_mass)
+MK_vector_mass_1 = integrator_vector_mass.assembly_cell_matrix(space=vspace)
+print("MK_vector_mass:\n", MK_vector_mass_1.shape, "\n", MK_vector_mass_1)
+
+integrator_vector_mass_fast = VectorMassIntegrator(q=p+1)
+MK_vector_mass_2 = integrator_vector_mass_fast.assembly_cell_matrix_for_scalar_basis_vspace_fast(trialspace=space, testspace=space)
+print("MK_vector_mass_2:\n", MK_vector_mass_2.shape, "\n", MK_vector_mass_2)
+
+are_matrices_equal = np.allclose(MK_vector_mass_2, MK_vector_mass_2, rtol=1e-05, atol=1e-08)
+print(are_matrices_equal)
+
 
 integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+1)
 
@@ -110,10 +136,10 @@ integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
 lform = LinearForm(vspace)
 lform.add_domain_integrator(integrator3)
 FK = integrator3.assembly_cell_vector(space = vspace)
-print("FK[0]:", FK.shape)
+#print("FK[0]:", FK.shape)
 lform.assembly()
 F = lform.get_vector()
-print("F:", F.shape, "\n", F.round(4))
+#print("F:", F.shape, "\n", F.round(4))
 
 ipoints = space.interpolation_points()
 fh = pde.source(p=ipoints)
@@ -121,19 +147,19 @@ fh_1 = np.zeros(M.shape[0])
 fh_1[::GD] = fh[:,0]
 fh_1[1::GD] = fh[:,1]
 Fh = M @ fh_1
-print("Fh:", Fh.shape, "\n", Fh.round(4))
+#print("Fh:", Fh.shape, "\n", Fh.round(4))
 
-print("error:", np.sum(np.abs(F - Fh)))
+#print("error:", np.sum(np.abs(F - Fh)))
 
 if hasattr(pde, 'dirichlet'):
     bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
     K, Fh = bc.apply(K, Fh, uh)
 
-print("K:", K.shape, "\n", K.toarray().round(4))
-print("Fh:", Fh.shape, "\n", Fh.round(4))
+#print("K:", K.shape, "\n", K.toarray().round(4))
+#print("Fh:", Fh.shape, "\n", Fh.round(4))
 
 uh.flat[:] = spsolve(K, Fh)
-print("uh:\n", uh.shape, uh)
+#print("uh:\n", uh.shape, uh)
 
 mesh.nodedata['u'] = uh[:, 0]
 mesh.nodedata['v'] = uh[:, 1]

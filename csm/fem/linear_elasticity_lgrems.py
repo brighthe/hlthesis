@@ -63,12 +63,9 @@ mesh = pde.delaunay_mesh()
 #mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
 #plt.show()
 NN = mesh.number_of_nodes()
-print("NN:", NN)
 NC = mesh.number_of_cells()
-print("NC:", NC)
 node = mesh.entity('node')
 cell = mesh.entity('cell')
-print("cell:\n", cell.shape, "\n", cell)
 
 output = './mesh/'
 if not os.path.exists(output):
@@ -82,60 +79,73 @@ gdof = vspace[0].number_of_global_dofs()
 vgdof = gdof * GD
 ldof = vspace[0].number_of_local_dofs()
 vldof = ldof * GD
-print("vgdof", vgdof)
-print("vldof", vldof)
 
 integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+1)
 
 bform = BilinearForm(vspace)
 bform.add_domain_integrator(integrator1)
 KK = integrator1.assembly_cell_matrix(space=vspace)
-print("KK", KK.shape)
 bform.assembly()
 K = bform.get_matrix()
-print("K:", K.shape, "\n", K.toarray().round(4))
 
 integrator2 = VectorMassIntegrator(c=1, q=5)
 
 bform2 = BilinearForm(vspace)
 bform2.add_domain_integrator(integrator2)
 MK = integrator2.assembly_cell_matrix(space=vspace)
-print("MK:", MK.shape)
 bform2.assembly()
 M = bform2.get_matrix()
-print("M:", M.shape)
 
 integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
 
 lform = LinearForm(vspace)
 lform.add_domain_integrator(integrator3)
 FK = integrator3.assembly_cell_vector(space = vspace)
-print("FK[0]:", FK.shape)
 lform.assembly()
 F = lform.get_vector()
-print("F:", F.shape, "\n", F.round(4))
-
-ipoints = space.interpolation_points()
-fh = pde.source(p=ipoints)
-fh_1 = np.zeros(M.shape[0])
-fh_1[::GD] = fh[:,0]
-fh_1[1::GD] = fh[:,1]
-Fh = M @ fh_1
-print("Fh:", Fh.shape, "\n", Fh.round(4))
-
-print("error:", np.sum(np.abs(F - Fh)))
 
 if hasattr(pde, 'dirichlet'):
     bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-    K, Fh = bc.apply(K, Fh, uh)
+    K, F = bc.apply(K, F, uh)
 
-print("K:", K.shape, "\n", K.toarray().round(4))
-print("Fh:", Fh.shape, "\n", Fh.round(4))
+import time
+start_time = time.time()
+uh_spsolve = spsolve(K, F)
+end_time = time.time()
+time_spsolve = end_time - start_time
+print("spsolve time:", time_spsolve)
 
-uh.flat[:] = spsolve(K, Fh)
-print("uh:\n", uh.shape, uh)
+class IterationCounter(object):
+    def __init__(self, disp=True):
+        self._disp = disp
+        self.niter = 0
 
-mesh.nodedata['u'] = uh[:, 0]
-mesh.nodedata['v'] = uh[:, 1]
+    def __call__(self, rk=None):
+        self.niter += 1
+        if self._disp:
+            print('iter %3i' % (self.niter))
+
+from scipy.sparse.linalg import lgmres
+def lgmres_solve_system(A, b, tol=1e-8):
+    counter = IterationCounter(disp = False)
+    result, info = lgmres(A, b, tol = tol, atol = tol, callback = counter)
+
+    return result, info
+
+start_time = time.time()
+result, info = lgmres_solve_system(A=K, b=F)
+end_time = time.time()
+time_lgmres = end_time - start_time
+
+if info == 0:
+    print("lgmres time:", time_lgmres)
+    uh_lgmres = result
+    error = np.linalg.norm(uh_spsolve - uh_lgmres)
+    print("Error between spsolve and lgmres:", error)
+else:
+    print("lgmres failed to converge. Info:", info)
+
+#mesh.nodedata['u'] = uh[:, 0]
+#mesh.nodedata['v'] = uh[:, 1]
 
 mesh.to_vtk(fname=fname)
