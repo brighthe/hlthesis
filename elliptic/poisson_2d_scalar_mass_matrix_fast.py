@@ -119,81 +119,89 @@ fname = os.path.join(output, 'TriangleMesh.vtu')
 
 space = Space(mesh, p=p)
 uh = space.function(dim=GD)
+print("uh:", uh.shape, "\n", uh)
 gdof = space.number_of_global_dofs()
 ldof = space.number_of_local_dofs()
 print("gdof", gdof)
 print("ldof", ldof)
 
 integrator_scalar_mass = ScalarMassIntegrator(c=1, q=p+1)
-bform_scalar_mass = BilinearForm(space)
-bform_scalar_mass.add_domain_integrator(integrator_scalar_mass)
+bform_scalar_mass_1 = BilinearForm(space)
+bform_scalar_mass_1.add_domain_integrator(integrator_scalar_mass)
 MK_scalar_mass_1 = integrator_scalar_mass.assembly_cell_matrix(space=space)
 print("MK_scalar_mass_1:\n", MK_scalar_mass_1.shape, "\n", MK_scalar_mass_1)
-bform_scalar_mass.assembly()
-M = bform_scalar_mass.get_matrix()
+bform_scalar_mass_1.assembly()
+M_scalar_mass_1 = bform_scalar_mass_1.get_matrix()
+print("M_scalar_mass_1:\n", M_scalar_mass_1.shape, "\n", M_scalar_mass_1.toarray())
 
 integrator_scalar_mass_fast = ScalarMassIntegrator(q=p+1)
+bform_scalar_mass_2 = BilinearForm(space)
+bform_scalar_mass_2.add_domain_integrator(integrator_scalar_mass_fast)
 MK_scalar_mass_2 = integrator_scalar_mass_fast.assembly_cell_matrix_fast(trialspace=space, testspace=space)
 print("MK_scalar_mass_2:\n", MK_scalar_mass_2.shape, "\n", MK_scalar_mass_2)
+bform_scalar_mass_2.fast_assembly()
+M_scalar_mass_2 = bform_scalar_mass_2.get_matrix()
+print("M_scalar_mass_2:\n", M_scalar_mass_2.shape, "\n", M_scalar_mass_2.toarray())
 
-are_matrices_equal = np.allclose(MK_scalar_mass_1, MK_scalar_mass_2, rtol=1e-05, atol=1e-08)
-print(are_matrices_equal)
+local_matrices_equal = np.allclose(MK_scalar_mass_1, MK_scalar_mass_2, rtol=1e-05, atol=1e-08)
+print("local_matrices_equal:\n", local_matrices_equal)
+
+global_matrices_equal = np.allclose(M_scalar_mass_1.toarray(), M_scalar_mass_2.toarray(), rtol=1e-05, atol=1e-08)
+print("global_matrices_equal:\n", global_matrices_equal)
 
 
 
-
-
-integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+1)
-
-bform = BilinearForm(vspace)
-bform.add_domain_integrator(integrator1)
-KK = integrator1.assembly_cell_matrix(space=vspace)
-print("KK", KK.shape)
-bform.assembly()
-K = bform.get_matrix()
-print("K:", K.shape, "\n", K.toarray().round(4))
-
-integrator2 = VectorMassIntegrator(c=1, q=5)
-
-bform2 = BilinearForm(vspace)
-bform2.add_domain_integrator(integrator2)
-MK = integrator2.assembly_cell_matrix(space=vspace)
-print("MK:", MK.shape)
-bform2.assembly()
-M = bform2.get_matrix()
-print("M:", M.shape)
-
-integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
-
-lform = LinearForm(vspace)
-lform.add_domain_integrator(integrator3)
-FK = integrator3.assembly_cell_vector(space = vspace)
-#print("FK[0]:", FK.shape)
-lform.assembly()
-F = lform.get_vector()
-#print("F:", F.shape, "\n", F.round(4))
-
-ipoints = space.interpolation_points()
-fh = pde.source(p=ipoints)
-fh_1 = np.zeros(M.shape[0])
-fh_1[::GD] = fh[:,0]
-fh_1[1::GD] = fh[:,1]
-Fh = M @ fh_1
-#print("Fh:", Fh.shape, "\n", Fh.round(4))
-
-#print("error:", np.sum(np.abs(F - Fh)))
-
-if hasattr(pde, 'dirichlet'):
-    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-    K, Fh = bc.apply(K, Fh, uh)
-
+#integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+1)
+#
+#bform = BilinearForm(vspace)
+#bform.add_domain_integrator(integrator1)
+#KK = integrator1.assembly_cell_matrix(space=vspace)
+#print("KK", KK.shape)
+#bform.assembly()
+#K = bform.get_matrix()
 #print("K:", K.shape, "\n", K.toarray().round(4))
-#print("Fh:", Fh.shape, "\n", Fh.round(4))
-
-uh.flat[:] = spsolve(K, Fh)
-#print("uh:\n", uh.shape, uh)
-
-mesh.nodedata['u'] = uh[:, 0]
-mesh.nodedata['v'] = uh[:, 1]
-
-mesh.to_vtk(fname=fname)
+#
+#integrator2 = VectorMassIntegrator(c=1, q=5)
+#
+#bform2 = BilinearForm(vspace)
+#bform2.add_domain_integrator(integrator2)
+#MK = integrator2.assembly_cell_matrix(space=vspace)
+#print("MK:", MK.shape)
+#bform2.assembly()
+#M = bform2.get_matrix()
+#print("M:", M.shape)
+#
+#integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
+#
+#lform = LinearForm(vspace)
+#lform.add_domain_integrator(integrator3)
+#FK = integrator3.assembly_cell_vector(space = vspace)
+##print("FK[0]:", FK.shape)
+#lform.assembly()
+#F = lform.get_vector()
+##print("F:", F.shape, "\n", F.round(4))
+#
+#ipoints = space.interpolation_points()
+#fh = pde.source(p=ipoints)
+#fh_1 = np.zeros(M.shape[0])
+#fh_1[::GD] = fh[:,0]
+#fh_1[1::GD] = fh[:,1]
+#Fh = M @ fh_1
+##print("Fh:", Fh.shape, "\n", Fh.round(4))
+#
+##print("error:", np.sum(np.abs(F - Fh)))
+#
+#if hasattr(pde, 'dirichlet'):
+#    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
+#    K, Fh = bc.apply(K, Fh, uh)
+#
+##print("K:", K.shape, "\n", K.toarray().round(4))
+##print("Fh:", Fh.shape, "\n", Fh.round(4))
+#
+#uh.flat[:] = spsolve(K, Fh)
+##print("uh:\n", uh.shape, uh)
+#
+#mesh.nodedata['u'] = uh[:, 0]
+#mesh.nodedata['v'] = uh[:, 1]
+#
+#mesh.to_vtk(fname=fname)
