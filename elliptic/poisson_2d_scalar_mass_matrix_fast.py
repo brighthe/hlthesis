@@ -134,7 +134,7 @@ bform_scalar_mass_1.assembly()
 M_scalar_mass_1 = bform_scalar_mass_1.get_matrix()
 print("M_scalar_mass_1:\n", M_scalar_mass_1.shape, "\n", M_scalar_mass_1.toarray())
 
-integrator_scalar_mass_fast = ScalarMassIntegrator(q=p+1)
+integrator_scalar_mass_fast = ScalarMassIntegrator(c=1, q=p+1)
 bform_scalar_mass_2 = BilinearForm(space)
 bform_scalar_mass_2.add_domain_integrator(integrator_scalar_mass_fast)
 MK_scalar_mass_2 = integrator_scalar_mass_fast.assembly_cell_matrix_fast(trialspace=space, testspace=space)
