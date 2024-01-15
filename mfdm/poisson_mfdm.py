@@ -123,7 +123,7 @@ for i in range(NC):
     print("M:\n", M)
 
     MN = M @ N
-    print("MN:\n", MN)
+    print("MN-R:\n", MN-R)
 
     assembly = np.zeros((num_edges, NE))
     for k, edge in enumerate(cell2edge_sorted[i]):
