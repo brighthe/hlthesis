@@ -43,50 +43,12 @@ parser.add_argument('--ny',
         default=2, type=int,
         help='Number of initial mesh divisions along y.')
 
-parser.add_argument('--maxit',
-        default=4, type=int,
-        help='Number of times to refine the mesh and solve. Default is 4.')
-
 args = parser.parse_args()
 
 p = args.degree
 GD = args.GD
 nx = args.nx
 ny = args.ny
-maxit = args.maxit
-
-### 参数解析
-#parser = argparse.ArgumentParser(description=
-#        """
-#        单纯形网格（三角形、四面体）网格上任意次有限元方法
-#        """)
-#
-#parser.add_argument('--degree',
-#        default=1, type=int,
-#        help='Lagrange 有限元空间的次数, 默认为 1 次.')
-#
-#parser.add_argument('--GD',
-#        default=2, type=int,
-#        help='模型问题的维数, 默认求解 2 维问题.')
-#
-#parser.add_argument('--nrefine',
-#        default=1, type=int,
-#        help='初始网格加密的次数, 默认初始加密 1 次.')
-#
-#parser.add_argument('--scale',
-#        default=1, type=float,
-#        help='网格变形系数，默认为 1')
-#
-#parser.add_argument('--doforder',
-#        default='vdims', type=str,
-#        help='自由度排序的约定，默认为 vdims')
-#
-#args = parser.parse_args()
-#p = args.degree
-#GD = args.GD
-#n = args.nrefine
-#scale = args.scale
-#doforder = args.doforder
 
 # Initialize the problem with given true solution
 pde = CosCosData()
@@ -119,90 +81,39 @@ if not os.path.exists(output):
 fname = os.path.join(output, 'TriangleMesh.vtu')
 
 space = Space(mesh, p=p)
-uh = space.function(dim=GD)
-print("uh:", uh.shape, "\n", uh)
 gdof = space.number_of_global_dofs()
 ldof = space.number_of_local_dofs()
-print("gdof", gdof)
 print("ldof", ldof)
 
-integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=1, q=p+1)
+coef = 2
+from fealpy.decorator import cartesian
+@cartesian
+def func_coef(p):
+    x = p[..., 0]
+    y = p[..., 1]
+    return x + y
+
+integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=func_coef, q=p+2)
+
 bform_scalar_diffusion_1 = BilinearForm(space)
 bform_scalar_diffusion_1.add_domain_integrator(integrator_scalar_diffusion)
 MK_scalar_diffusion_1 = integrator_scalar_diffusion.assembly_cell_matrix(space=space)
 print("MK_scalar_diffusion_1:\n", MK_scalar_diffusion_1.shape, "\n", MK_scalar_diffusion_1)
 bform_scalar_diffusion_1.assembly()
-MK_scalar_diffusion_1 = bform_scalar_diffusion_1.get_matrix()
-print("MK_scalar_diffusion_1:\n", MK_scalar_diffusion_1.shape, "\n", MK_scalar_diffusion_1.toarray())
+M_scalar_diffusion_1 = bform_scalar_diffusion_1.get_matrix()
+print("M_scalar_diffusion_1:\n", M_scalar_diffusion_1.shape, "\n", M_scalar_diffusion_1.toarray())
 
-integrator_scalar_diffusion_fast = ScalarDiffusionIntegrator(q=p+1)
 bform_scalar_diffusion_2 = BilinearForm(space)
-bform_scalar_diffusion_2.add_domain_integrator(integrator_scalar_diffusion_fast)
-MK_scalar_diffusion_2 = integrator_scalar_diffusion_fast.assembly_cell_matrix_fast(trialspace=space, testspace=space)
+bform_scalar_diffusion_2.add_domain_integrator(integrator_scalar_diffusion)
+MK_scalar_diffusion_2 = integrator_scalar_diffusion.assembly_cell_matrix_fast(trialspace=space, testspace=space, coefspace=space)
 print("MK_scalar_diffusion_2:\n", MK_scalar_diffusion_2.shape, "\n", MK_scalar_diffusion_2)
-bform_scalar_diffusion_2.fast_assembly()
-MK_scalar_diffusion_2 = bform_scalar_diffusion_2.get_matrix()
-print("MK_scalar_diffusion_2:\n", MK_scalar_diffusion_2.shape, "\n", MK_scalar_diffusion_2.toarray())
+bform_scalar_diffusion_2.fast_assembly(trialspace=space, testspace=space, coefspace=space)
+M_scalar_diffusion_2 = bform_scalar_diffusion_2.get_matrix()
+print("M_scalar_diffusion_2:\n", M_scalar_diffusion_2.shape, "\n", M_scalar_diffusion_2.toarray())
 
 local_matrices_equal = np.allclose(MK_scalar_diffusion_1, MK_scalar_diffusion_2, rtol=1e-05, atol=1e-08)
 print("local_matrices_equal:\n", local_matrices_equal)
 
-global_matrices_equal = np.allclose(MK_scalar_diffusion_2.toarray(), MK_scalar_diffusion_2.toarray(), rtol=1e-05, atol=1e-08)
+global_matrices_equal = np.allclose(M_scalar_diffusion_1.toarray(), M_scalar_diffusion_2.toarray(), rtol=1e-05, atol=1e-08)
 print("global_matrices_equal:\n", global_matrices_equal)
 
-
-
-#integrator1 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+1)
-#
-#bform = BilinearForm(vspace)
-#bform.add_domain_integrator(integrator1)
-#KK = integrator1.assembly_cell_matrix(space=vspace)
-#print("KK", KK.shape)
-#bform.assembly()
-#K = bform.get_matrix()
-#print("K:", K.shape, "\n", K.toarray().round(4))
-#
-#integrator2 = VectorMassIntegrator(c=1, q=5)
-#
-#bform2 = BilinearForm(vspace)
-#bform2.add_domain_integrator(integrator2)
-#MK = integrator2.assembly_cell_matrix(space=vspace)
-#print("MK:", MK.shape)
-#bform2.assembly()
-#M = bform2.get_matrix()
-#print("M:", M.shape)
-#
-#integrator3 = VectorSourceIntegrator(f = pde.source, q=5)
-#
-#lform = LinearForm(vspace)
-#lform.add_domain_integrator(integrator3)
-#FK = integrator3.assembly_cell_vector(space = vspace)
-##print("FK[0]:", FK.shape)
-#lform.assembly()
-#F = lform.get_vector()
-##print("F:", F.shape, "\n", F.round(4))
-#
-#ipoints = space.interpolation_points()
-#fh = pde.source(p=ipoints)
-#fh_1 = np.zeros(M.shape[0])
-#fh_1[::GD] = fh[:,0]
-#fh_1[1::GD] = fh[:,1]
-#Fh = M @ fh_1
-##print("Fh:", Fh.shape, "\n", Fh.round(4))
-#
-##print("error:", np.sum(np.abs(F - Fh)))
-#
-#if hasattr(pde, 'dirichlet'):
-#    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-#    K, Fh = bc.apply(K, Fh, uh)
-#
-##print("K:", K.shape, "\n", K.toarray().round(4))
-##print("Fh:", Fh.shape, "\n", Fh.round(4))
-#
-#uh.flat[:] = spsolve(K, Fh)
-##print("uh:\n", uh.shape, uh)
-#
-#mesh.nodedata['u'] = uh[:, 0]
-#mesh.nodedata['v'] = uh[:, 1]
-#
-#mesh.to_vtk(fname=fname)
