@@ -95,5 +95,6 @@ global_matricee_equal = M_scalar_mass_1 - M_scalar_mass_2
 print("global_matricee_equal:\n", global_matricee_equal.toarray().round(4))
 local_matrices_equal = np.allclose(MK_scalar_mass_1, MK_scalar_mass_2, rtol=1e-05, atol=1e-08)
 print("local_matrices_equal:\n", local_matrices_equal)
+
 global_matrices_equal = np.allclose(M_scalar_mass_1.toarray(), M_scalar_mass_2.toarray(), rtol=1e-05, atol=1e-08)
 print("global_matrices_equal:\n", global_matrices_equal)

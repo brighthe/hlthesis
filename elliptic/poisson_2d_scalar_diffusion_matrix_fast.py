@@ -1,24 +1,15 @@
 import argparse
 import os
-import matplotlib.pyplot as plt
 import numpy as np
-
-from scipy.sparse.linalg import spsolve
 
 from fealpy.functionspace import LagrangeFESpace as Space
 
 from fealpy.mesh import TriangleMesh
 
-from fealpy.pde.poisson_2d import CosCosData
+from poisson_2d import CosCosData
 
-from fealpy.fem import LinearElasticityOperatorIntegrator
-from fealpy.fem import VectorSourceIntegrator
-from fealpy.fem import VectorMassIntegrator
 from fealpy.fem import ScalarDiffusionIntegrator
-from fealpy.fem import ScalarMassIntegrator
 from fealpy.fem import BilinearForm
-from fealpy.fem import LinearForm
-from fealpy.fem import DirichletBC
 
 
 # Argument Parsing
@@ -56,29 +47,11 @@ domain = pde.domain()
 
 # Create the initial triangle mesh
 mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
-#pde = BoxDomainData()
-#
-#mu = pde.mu
-#lambda_ = pde.lam
-#domain = pde.domain()
-#mesh = pde.triangle_mesh()
-#import matplotlib.pyplot as plt
-#fig = plt.figure()
-#axes = fig.gca()
-#mesh.add_plot(axes)
-#mesh.find_cell(axes, showindex=True, color='k', marker='s', markersize=2, fontsize=8, fontcolor='k')
-#mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=2, fontsize=8, fontcolor='r')
-#plt.show()
 NN = mesh.number_of_nodes()
 NC = mesh.number_of_cells()
 print("NC:", NC)
 node = mesh.entity('node')
 cell = mesh.entity('cell')
-
-output = './mesh/'
-if not os.path.exists(output):
-    os.makedirs(output)
-fname = os.path.join(output, 'TriangleMesh.vtu')
 
 space = Space(mesh, p=p)
 gdof = space.number_of_global_dofs()
@@ -105,9 +78,9 @@ print("M_scalar_diffusion_1:\n", M_scalar_diffusion_1.shape, "\n", M_scalar_diff
 
 bform_scalar_diffusion_2 = BilinearForm(space)
 bform_scalar_diffusion_2.add_domain_integrator(integrator_scalar_diffusion)
-MK_scalar_diffusion_2 = integrator_scalar_diffusion.assembly_cell_matrix_fast(trialspace=space, testspace=space, coefspace=space)
+MK_scalar_diffusion_2 = integrator_scalar_diffusion.assembly_cell_matrix_fast(space=space)
 print("MK_scalar_diffusion_2:\n", MK_scalar_diffusion_2.shape, "\n", MK_scalar_diffusion_2)
-bform_scalar_diffusion_2.fast_assembly(trialspace=space, testspace=space, coefspace=space)
+bform_scalar_diffusion_2.fast_assembly()
 M_scalar_diffusion_2 = bform_scalar_diffusion_2.get_matrix()
 print("M_scalar_diffusion_2:\n", M_scalar_diffusion_2.shape, "\n", M_scalar_diffusion_2.toarray())
 
