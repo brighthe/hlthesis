@@ -1,20 +1,13 @@
 import argparse
-import os
-import matplotlib.pyplot as plt
 import numpy as np
 
-from scipy.sparse.linalg import spsolve
 
 from linear_elasticity_model import BoxDomainData
 from fealpy.functionspace import LagrangeFESpace as Space
 
 from fealpy.fem import LinearElasticityOperatorIntegrator, VectorDiffusionIntegrator
-from fealpy.fem import VectorSourceIntegrator
 from fealpy.fem import VectorMassIntegrator
-from fealpy.fem import ScalarMassIntegrator
 from fealpy.fem import BilinearForm
-from fealpy.fem import LinearForm
-from fealpy.fem import DirichletBC
 
 
 ## 参数解析
@@ -135,12 +128,8 @@ def func_coef(p):
     y = p[..., 1]
     return x + y
 
-@barycentric
-def func_coef_2(p, index=None):
-    return (1 - p)**2 + 0.00001
-
 vector_coef = np.full(NC, 2)
-integrator3 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+2, c=vector_coef)
+integrator3 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+2, c=func_coef)
 
 bform5 = BilinearForm(vspace)
 bform5.add_domain_integrator(integrator3)
