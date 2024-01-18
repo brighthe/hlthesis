@@ -41,7 +41,7 @@ print("x:", x.shape, "\n", x)
 ph = x[-NC:]
 print("ph:", ph.shape, "\n", ph)
 
-error = p-ph
+error = p - ph
 print(np.max(np.abs(error)))
 
 

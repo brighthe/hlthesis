@@ -34,6 +34,8 @@ class Mimetic():
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
             R = np.einsum('l, lg, l -> lg', cell_out_flag, cell_edge_centers-cell_centers[i, :], cell_edge_measure) # (LNE, GD)
             N = norm[cell2edge[i], :] # (LNE, GD)
+            print("N:", N.shape, "\n", N)
+            print("R:", R.shape, "\n", R)
 
             #for j, edge_index in enumerate(cell2edge[i]):
                 #R[j, :] = (edge_centers[edge_index,:] - cell_centers[i,:]) * edge_measure[edge_index]
@@ -49,13 +51,11 @@ class Mimetic():
             M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
             #print("M:", M.shape, "\n", M)
-            '''
             print(f"第{i}个单元")
-            print(np.linalg.eigvals(M))
-            print(np.max(np.abs(M-M.T)))
-            print(np.max(np.abs(M@N-R)))
-            A  = np.zeros((LNE, NE))
-            '''
+            #print(np.linalg.eigvals(M))
+            #print(np.max(np.abs(M-M.T)))
+            print("M@N - R:", np.max(np.abs(M@N - R)))
+            #A  = np.zeros((LNE, NE))
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])
             result[indexi, indexj] += M 
 
@@ -84,7 +84,8 @@ class Mimetic():
             print("cell_out_flag:", cell_out_flag.shape, "\n", cell_out_flag)
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
             print("cell_edge_measure:", cell_edge_measure.shape, "\n", cell_edge_measure)
-            result[i, cell2edge[i]] = cell_out_flag * cell_edge_measure/cell_measure[i]
+            result[i, cell2edge[i]] = cell_out_flag * cell_edge_measure/cell_measure[i] # (NC, NE)
+
         return result
     
     def source(self, fun, gddof, D):
@@ -99,7 +100,7 @@ class Mimetic():
 
         f = fun(cell_centers)
         b = cell_measure * f
-        #print("b:", b.shape, "\n", b)
+        print("b1:", b.shape, "\n", b)
         #b1 = np.diag(cell_measure) * f
         #print("b1:", b1.shape, "\n", b1)
         #print("b-b1:", b-b1)
