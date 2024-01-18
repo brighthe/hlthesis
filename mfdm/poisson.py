@@ -2,6 +2,8 @@ import numpy as np
 
 from fealpy.decorator import cartesian
 
+from fealpy.mesh.polygon_mesh import PolygonMesh
+
 class SinSinData:
     """
         -\\Delta u = f
@@ -13,81 +15,60 @@ class SinSinData:
     def domain(self):
         return np.array([0, 1, 0, 1])
 
+    def polygon_mesh(self):
+        node = np.array([[0.0, 0.0], [0.0, 0.5], [0.0, 1.0],
+                    [0.5, 0.0], [0.5, 0.5], [0.5, 1.0],
+                    [1.0, 0.0], [1.0, 0.5], [1.0, 1.0]], dtype=np.float64)
+
+        cell = np.array([0, 3, 4, 1, 3, 6, 7, 4, 1, 4, 5, 2, 4, 7, 8, 4, 8, 5], dtype=np.int_)
+        cellLocation = np.array([0, 4, 8, 12, 15, 18], dtype=np.int_)
+        mesh = PolygonMesh(node=node, cell=cell, cellLocation=cellLocation)
+
+        return mesh
+
+    def polygon_mesh_2(self, n=2):
+        mesh = PolygonMesh.from_unit_square(nx=n, ny=n)
+
+        return mesh
+
     @cartesian
-    def solution(self, p):
+    def solution(self, p, index=None):
         x = p[..., 0]
         y = p[..., 1]
         pi = np.pi
-        val = np.sin(pi*x)*np.sin(pi*y)
+        val = np.sin(pi*x) * np.sin(pi*y)
         return val
-
 
     @cartesian
     def source(self, p):
         x = p[..., 0]
         y = p[..., 1]
         pi = np.pi
-        val = 2*pi*pi*np.sin(pi*x)*np.sin(pi*y)
+        val = 2*pi*pi * np.sin(pi*x) * np.sin(pi*y)
         return val
 
     @cartesian
-    def gradient(self, p):
-        """ The gradient of the exact solution 
-        """
+    def gradient_u(self, p):
         x = p[..., 0]
         y = p[..., 1]
         pi = np.pi
-        val = np.zeros(p.shape, dtype=np.float64)
+        val = np.zeros_like(p)
         val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)
         val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)
         return val # val.shape == p.shape
 
     @cartesian
-    def flux(self, p):
-        return -self.gradient(p)
-
-    @cartesian
-    def dirichlet(self, p):
-        return self.solution(p)
-
-    @cartesian
-    def is_dirichlet_boundary(self, p):
+    def div_u(self, p, index=None):
+        x = p[..., 0]
         y = p[..., 1]
-        return ( y == 1.0) | ( y == 0.0)
+        value0 = np.pi*np.cos(np.pi*x)*np.sin(np.pi*y)
+        value1 = np.pi*np.sin(np.pi*x)*np.cos(np.pi*y)
+        value = value0+value1
+        return value
 
     @cartesian
-    def neumann(self, p, n):
-        """ 
-        Neuman  boundary condition
-
-        Parameters
-        ----------
-
-        p: (NQ, NE, 2)
-        n: (NE, 2)
-
-        grad*n : (NQ, NE, 2)
-        """
-        grad = self.gradient(p) # (NQ, NE, 2)
-        val = np.sum(grad*n, axis=-1) # (NQ, NE)
+    def Dirichlet(self, p):
+        x = p[..., 0]
+        y = p[..., 1]
+        val = 0
         return val
-
-    @cartesian
-    def is_neumann_boundary(self, p):
-        x = p[..., 0]
-        return x == 1.0
-
-    @cartesian
-    def robin(self, p, n):
-        grad = self.gradient(p) # (NQ, NE, 2)
-        val = np.sum(grad*n, axis=-1)
-        shape = len(val.shape)*(1, )
-        kappa = np.array([1.0], dtype=np.float64).reshape(shape)
-        val += self.solution(p) 
-        return val, kappa
-
-    @cartesian
-    def is_robin_boundary(self, p):
-        x = p[..., 0]
-        return x == 0.0
-
