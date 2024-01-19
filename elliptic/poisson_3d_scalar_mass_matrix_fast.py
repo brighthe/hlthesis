@@ -1,12 +1,11 @@
 import argparse
-import os
 import numpy as np
 
 from fealpy.functionspace import LagrangeFESpace as Space
 
-from fealpy.mesh import TriangleMesh
+from fealpy.mesh import TetrahedronMesh, TriangleMesh
 
-from poisson_2d import CosCosData
+from poisson_3d import CosCosCosData
 
 from fealpy.fem import ScalarMassIntegrator
 from fealpy.fem import BilinearForm
@@ -23,8 +22,8 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--GD',
-        default=2, type=int,
-        help='模型问题的维数, 默认求解 2 维问题.')
+        default=3, type=int,
+        help='模型问题的维数, 默认求解 3 维问题.')
 
 parser.add_argument('--nx',
         default=2, type=int,
@@ -34,19 +33,25 @@ parser.add_argument('--ny',
         default=2, type=int,
         help='Number of initial mesh divisions along y.')
 
+parser.add_argument('--nz',
+        default=2, type=int,
+        help='Number of initial mesh divisions along z.')
+
 args = parser.parse_args()
 
 p = args.degree
 GD = args.GD
 nx = args.nx
 ny = args.ny
+nz = args.nz
 
 # Initialize the problem with given true solution
-pde = CosCosData()
+pde = CosCosCosData()
 domain = pde.domain()
 
 # Create the initial triangle mesh
-mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
+#mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
+mesh = TetrahedronMesh.from_box(box=domain, nx=nx, ny=ny, nz=nz)
 NN = mesh.number_of_nodes()
 NC = mesh.number_of_cells()
 print("NC:", NC)
@@ -63,9 +68,8 @@ from fealpy.decorator import cartesian
 def func_coef(p):
     x = p[..., 0]
     y = p[..., 1]
-    return x + y
-    #return np.cos(x) + np.sin(y)
-    #return x**2 + y**2
+    z = p[..., 2]
+    return x + y + z
 u = space.interpolate(func_coef)
 cell2dof = space.cell_to_dof()
 uc = u[cell2dof]
@@ -76,8 +80,8 @@ arr_coef = np.full(NC, 2)
 print("arr_coef:", arr_coef.shape, "\n", arr_coef)
 
 #integrator_scalar_mass = ScalarMassIntegrator(c=scalar_coef, q=p+3)
-integrator_scalar_mass = ScalarMassIntegrator(c=arr_coef, q=p+3)
-#integrator_scalar_mass = ScalarMassIntegrator(c=func_coef, q=p+3)
+#integrator_scalar_mass = ScalarMassIntegrator(c=arr_coef, q=p+3)
+integrator_scalar_mass = ScalarMassIntegrator(c=func_coef, q=p+3)
 
 bform_scalar_mass_1 = BilinearForm(space)
 bform_scalar_mass_1.add_domain_integrator(integrator_scalar_mass)
