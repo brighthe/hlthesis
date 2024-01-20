@@ -1,12 +1,11 @@
 import argparse
-import os
 import numpy as np
 
 from fealpy.functionspace import LagrangeFESpace as Space
 
-from fealpy.mesh import TriangleMesh
+from fealpy.mesh import TetrahedronMesh
 
-from poisson_2d import CosCosData
+from poisson_3d import CosCosCosData
 
 from fealpy.fem import ScalarDiffusionIntegrator
 from fealpy.fem import BilinearForm
@@ -15,7 +14,7 @@ from fealpy.fem import BilinearForm
 # Argument Parsing
 parser = argparse.ArgumentParser(description=
         """
-        Finite element method on a TriangleMesh of arbitrary order.
+        Finite element method on a TetrahedronMesh of arbitrary order.
         """)
 
 parser.add_argument('--degree',
@@ -23,8 +22,8 @@ parser.add_argument('--degree',
         help='Degree of the Lagrange finite element space. Default is 1.')
 
 parser.add_argument('--GD',
-        default=2, type=int,
-        help='模型问题的维数, 默认求解 2 维问题.')
+        default=3, type=int,
+        help='模型问题的维数, 默认求解 3 维问题.')
 
 parser.add_argument('--nx',
         default=2, type=int,
@@ -34,19 +33,24 @@ parser.add_argument('--ny',
         default=2, type=int,
         help='Number of initial mesh divisions along y.')
 
+parser.add_argument('--nz',
+        default=2, type=int,
+        help='Number of initial mesh divisions along z.')
+
 args = parser.parse_args()
 
 p = args.degree
 GD = args.GD
 nx = args.nx
 ny = args.ny
+nz = args.nz
 
 # Initialize the problem with given true solution
-pde = CosCosData()
+pde = CosCosCosData()
 domain = pde.domain()
 
 # Create the initial triangle mesh
-mesh = TriangleMesh.from_box(box = domain, nx = nx, ny = ny)
+mesh = TetrahedronMesh.from_box(box = domain, nx = nx, ny = ny, nz = nz)
 NN = mesh.number_of_nodes()
 NC = mesh.number_of_cells()
 print("NC:", NC)
@@ -65,12 +69,13 @@ from fealpy.decorator import cartesian
 def func_coef(p):
     x = p[..., 0]
     y = p[..., 1]
-    return x + y
+    z = p[..., 2]
+    return x + y + z
 
-integrator_scalar_diffusion = ScalarDiffusionIntegrator(q=p+2)
+#integrator_scalar_diffusion = ScalarDiffusionIntegrator(q=p+2)
 #integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=scalar_coef, q=p+2)
 #integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=arr_coef, q=p+2)
-#integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=func_coef, q=p+2)
+integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=func_coef, q=p+2)
 
 bform_scalar_diffusion_1 = BilinearForm(space)
 bform_scalar_diffusion_1.add_domain_integrator(integrator_scalar_diffusion)

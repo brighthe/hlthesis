@@ -3,7 +3,7 @@ import numpy as np
 
 from fealpy.functionspace import LagrangeFESpace as Space
 
-from fealpy.mesh import TetrahedronMesh, TriangleMesh
+from fealpy.mesh import TetrahedronMesh
 
 from poisson_3d import CosCosCosData
 
@@ -14,7 +14,7 @@ from fealpy.fem import BilinearForm
 # Argument Parsing
 parser = argparse.ArgumentParser(description=
         """
-        Finite element method on a TriangleMesh of arbitrary order.
+        Finite element method on a TetrahedronMesh of arbitrary order.
         """)
 
 parser.add_argument('--degree',
@@ -79,9 +79,10 @@ scalar_coef = 2
 arr_coef = np.full(NC, 2)
 print("arr_coef:", arr_coef.shape, "\n", arr_coef)
 
+integrator_scalar_mass = ScalarMassIntegrator(q=p+3)
 #integrator_scalar_mass = ScalarMassIntegrator(c=scalar_coef, q=p+3)
 #integrator_scalar_mass = ScalarMassIntegrator(c=arr_coef, q=p+3)
-integrator_scalar_mass = ScalarMassIntegrator(c=func_coef, q=p+3)
+#integrator_scalar_mass = ScalarMassIntegrator(c=func_coef, q=p+3)
 
 bform_scalar_mass_1 = BilinearForm(space)
 bform_scalar_mass_1.add_domain_integrator(integrator_scalar_mass)
