@@ -6,7 +6,8 @@ from scipy.sparse.linalg import spsolve
 from fealpy.mesh import QuadrangleMesh
 
 class TopSimp:
-    def __init__(self, nelx: int = 60, nely: int = 20, volfrac: float = 0.5, penal: float = 3.0, rmin: float = 1.5):
+    def __init__(self, nelx: int = 60, nely: int = 20, volfrac: float = 0.5, penal: float = 3.0,
+                rmin: float = 1.5):
         '''
         Parameters:
         - nelx (int): Number of elements in the horizontal direction. Defaults to 60.
