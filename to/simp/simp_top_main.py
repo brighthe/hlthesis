@@ -15,14 +15,6 @@ print("cell:", cell.shape, "\n", cell)
 
 # Initialize design variable field to the volume fraction
 x = np.full((nely, nelx), volfrac)
-mesh.celldata['x'] = x.flatten('F') # 按列增加
-
-import os
-output = './mesh/'
-if not os.path.exists(output):
-    os.makedirs(output)
-fname = os.path.join(output, 'quad_mesh.vtu')
-mesh.to_vtk(fname=fname)
 
 #KE = ts.lk()
 #print("KE:", KE.shape, "\n", KE.round(4))
@@ -40,6 +32,11 @@ mesh.to_vtk(fname=fname)
 #bform.add_domain_integrator(integrator1)
 #KK = integrator1.assembly_cell_matrix(space=vspace)
 #print("KK:", KK.shape, "\n", KK[0].round(4))
+
+import os
+output = './mesh/'
+if not os.path.exists(output):
+    os.makedirs(output)
 
 loop = 0 # Iteration counter
 change = 1.0 # Maximum change in design variables between iterations
@@ -81,6 +78,8 @@ while change > 0.01:
     change = np.max(np.abs(x - xold))
     print(f' Iter.: {loop:4d} Objective.: {c:10.4f} Volfrac.: {np.sum(x)/(nelx*nely):6.3f} change.: {change:6.3f}')
 
+    mesh.celldata['x'] = np.flipud(x).flatten('F') # 因为网格的左下角为 0 号单元，所以先将 x 翻转，再按列展平
 
-
+    fname = os.path.join(output, f'quad_mesh_{loop:04d}.vtu')
+    mesh.to_vtk(fname=fname)
 
