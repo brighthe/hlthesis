@@ -4,7 +4,7 @@ from fealpy.decorator  import cartesian
 from fealpy.mesh import TriangleMesh
 from fealpy.geometry.domain_2d import RectangleDomain
 
-class BoxDomainData():
+class BoxDomainData2d():
     """
     @brief 混合边界条件的线弹性问题模型
     @note 本模型假设在二维方形区域 [0,1] x [0,1] 内的线性弹性问题

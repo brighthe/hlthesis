@@ -1,12 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from scipy.sparse import lil_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve
 
+from fealpy.mesh import QuadrangleMesh
+
 class TopSimp:
-    def __init__(self, nelx: int = 60, nely: int = 20, volfrac: float = 0.5,
-                penal: float = 3.0, rmin: float = 1.5):
+    def __init__(self, nelx: int = 60, nely: int = 20, volfrac: float = 0.5, penal: float = 3.0, rmin: float = 1.5):
         '''
         Parameters:
         - nelx (int): Number of elements in the horizontal direction. Defaults to 60.
@@ -23,6 +23,8 @@ class TopSimp:
         self._volfrac = volfrac
         self._penal = penal
         self._rmin = rmin
+        self._mesh = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx, ny = nely)
+
 
     def lk(self):
         """
@@ -92,7 +94,7 @@ class TopSimp:
         # Solve the system of equations
         U[freedofs] = spsolve(csc_matrix(K[np.ix_(freedofs, freedofs)]), F[freedofs])
         U[fixeddofs] = 0
-
+        
         return U
 
     def check(self, nelx, nely, rmin, x, dc):
@@ -151,7 +153,8 @@ class TopSimp:
         Parameters:
             nelx (int): Number of elements in the x direction.
             nely (int): Number of elements in the y direction.
-            volfrac (float): Volume fraction, representing the desired fraction of the design space to be occupied by material.
+            volfrac (float): Volume fraction, representing the desired fraction of
+            the design space to be occupied by material.
             x (np.array): Density distribution matrix of shape (nely, nelx).
             dc (np.array): Original sensitivities matrix of shape (nely, nelx).
 
@@ -193,64 +196,3 @@ class TopSimp:
 
         # Return the updated design variable vector
         return xnew
-
-    def optimize(self):
-        # Initialize optimization parameterse
-        nelx, nely, rmin, penal, volfrac = self._nelx, self._nely, self._rmin, self._penal, self._volfrac
-        # Initialize design variable field to the volume fraction
-        x = np.full((nely, nelx), volfrac)
-
-        loop = 0 # Iteration counter
-        change = 1.0 # Maximum change in design variables between iterations
-
-         # Optimization loop, runs until the change is less than 1%
-        while change > 0.01:
-            loop += 1
-            xold = np.copy(x)
-
-            # FE-Analysis: perform finite element analysis on the current design
-            U = self.FE(nelx, nely, penal, x)
-
-            # Objective Function And Sensitivity Analysis
-            KE = self.lk() # Retrieve element stiffness matrix
-            c = 0# Initialize objective (compliance) to zero
-            dc = np.zeros((nely, nelx)) # Initialize sensitivity array to zero
-
-            # Loop over every element to calculate the objective and sensitivity
-            for elx in range(nelx):
-                for ely in range(nely):
-                    # Global node numbers for the upper left and upper right nodes of the element
-                    n1 = (nely+1) * elx + ely
-                    n2 = (nely+1) * (elx+1) + ely
-                    # Degrees of freedom for the element
-                    edof = np.array([2*n1, 2*n1 + 1, 2*n2, 2*n2 + 1, 2*n2 + 2, 2*n2 + 3, 2*n1 + 2, 2*n1 + 3])
-                    # Extract element displacements
-                    Ue = U[edof]
-                    # Update objective (compliance) and its sensitivity
-                    c += x[ely, elx]**penal * Ue.T @ KE @ Ue 
-                    dc[ely, elx] = -penal * x[ely, elx]**(penal - 1) * Ue.T @ KE @ Ue
-
-            # Filtering of Sensitivity: apply mesh-independent filter to the sensitivities
-            dc = self.check(nelx, nely, rmin, x, dc)
-
-            # Design Update By The Optimality Criteria Method
-            x = self.OC(nelx, nely, volfrac, x, dc)
-
-            # Print Results: output the current iteration results
-            change = np.max(np.abs(x - xold))
-            print(f' Iter.: {loop:4d} Objective.: {c:10.4f} Volfrac.: {np.sum(x)/(nelx*nely):6.3f} change.: {change:6.3f}')
-            
-            # Plot Densities: visualize the material distribution
-            plt.imshow(-x, cmap='gray')
-            plt.axis('off')
-            plt.axis('equal')
-            plt.draw()
-            plt.pause(1e-5)
-            
-        # Ensure that plot does not close automatically at the end of optimization
-        plt.ioff()
-        plt.show()
-
-if __name__ == "__main__":
-    tsp = TopSimp()
-    print(tsp.optimize())

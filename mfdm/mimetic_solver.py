@@ -34,8 +34,15 @@ class Mimetic():
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
             R = np.einsum('l, lg, l -> lg', cell_out_flag, cell_edge_centers-cell_centers[i, :], cell_edge_measure) # (LNE, GD)
             N = norm[cell2edge[i], :] # (LNE, GD)
-            print("N:", N.shape, "\n", N)
-            print("R:", R.shape, "\n", R)
+            #print("N:", N.shape, "\n", N)
+            #print("R:", R.shape, "\n", R)
+            #test1 = N.T@R - R.T@N
+            #print("test1:", test1)
+            #a = cell_measure[i] * np.eye(GD)
+            #test2 = R.T@N - a
+            #print("test2:", test2)
+
+            
 
             #for j, edge_index in enumerate(cell2edge[i]):
                 #R[j, :] = (edge_centers[edge_index,:] - cell_centers[i,:]) * edge_measure[edge_index]

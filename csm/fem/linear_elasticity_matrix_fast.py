@@ -1,8 +1,7 @@
 import argparse
 import numpy as np
 
-
-from linear_elasticity_model import BoxDomainData
+from linear_elasticity_model2d import BoxDomainData2d
 from fealpy.functionspace import LagrangeFESpace as Space
 
 from fealpy.fem import LinearElasticityOperatorIntegrator, VectorDiffusionIntegrator
@@ -43,7 +42,7 @@ n = args.nrefine
 scale = args.scale
 doforder = args.doforder
 
-pde = BoxDomainData()
+pde = BoxDomainData2d()
 
 mu = pde.mu
 lambda_ = pde.lam
@@ -129,6 +128,7 @@ def func_coef(p):
     return x + y
 
 vector_coef = np.full(NC, 2)
+
 integrator3 = LinearElasticityOperatorIntegrator(lam=lambda_, mu=mu, q=p+2, c=func_coef)
 
 bform5 = BilinearForm(vspace)

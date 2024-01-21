@@ -67,10 +67,10 @@ def func_coef(p):
     y = p[..., 1]
     return x + y
 
-integrator_scalar_diffusion = ScalarDiffusionIntegrator(q=p+2)
+#integrator_scalar_diffusion = ScalarDiffusionIntegrator(q=p+2)
 #integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=scalar_coef, q=p+2)
 #integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=arr_coef, q=p+2)
-#integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=func_coef, q=p+2)
+integrator_scalar_diffusion = ScalarDiffusionIntegrator(c=func_coef, q=p+2)
 
 bform_scalar_diffusion_1 = BilinearForm(space)
 bform_scalar_diffusion_1.add_domain_integrator(integrator_scalar_diffusion)
