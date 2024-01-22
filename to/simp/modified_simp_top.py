@@ -52,11 +52,13 @@ class TopModifiedSimp:
              nu * np.block([[B11, B12], [B12.T, B11]]))
         print("KE:", KE.shape, "\n", KE.round(4))
 
-        from fealpy.functionspace import LagrangeFESpace
-        GD = 2
-        space = LagrangeFESpace(self._mesh, p=1, doforder='vdims')
-        vspace = GD * (space, )
-        cell2dof = vspace[0].cell_to_dof()
+
+
+        #from fealpy.functionspace import LagrangeFESpace
+        #GD = 2
+        #space = LagrangeFESpace(self._mesh, p=1, doforder='vdims')
+        #vspace = GD * (space, )
+        #cell2dof = vspace[0].cell_to_dof()
         #print("cell2dof:", cell2dof.shape, "\n", cell2dof)
         # Node numbers and DOF indices
         #nodenrs = np.arange(1, (1+nelx)*(1+nely)+1).reshape((1+nely, 1+nelx), order='F')
@@ -77,7 +79,7 @@ class TopModifiedSimp:
         jK = np.kron(edofMat, np.ones((1, 8))).flatten()
         print("jK:", jK.shape, "\n", jK)
         
-        # Define loads and supports
+        # Define loads and supports (Half MBB-Beam)
         F = np.zeros((2*(nely+1)*(nelx+1), 1))
         F[2, 0] = -1
         fixeddofs = np.union1d(np.arange(1, 2*(nely+1), 2), np.array([2*(nelx+1)*(nely+1)]))

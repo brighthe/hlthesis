@@ -41,7 +41,7 @@ if not os.path.exists(output):
 loop = 0 # Iteration counter
 change = 1.0 # Maximum change in design variables between iterations
 
-    # Optimization loop, runs until the change is less than 1%
+# Optimization loop, runs until the change is less than 1%
 while change > 0.01:
     loop += 1
     xold = np.copy(x)

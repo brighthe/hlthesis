@@ -4,7 +4,7 @@ import numpy as np
 
 from scipy.sparse.linalg import spsolve
 
-from linear_elasticity_model import BoxDomainData
+from linear_elasticity_model2d import BoxDomainData
 from fealpy.functionspace import LagrangeFESpace as Space
 
 from fealpy.fem import LinearElasticityOperatorIntegrator
