@@ -6,10 +6,10 @@ from poisson import SinSinData, SinSin5Data, CosCos5Data
 from mimetic_solver import Mimetic
 
 
-#pde = SinSinData()
+pde = SinSinData()
 #pde = SinSin5Data()
-pde = CosCos5Data()
-mesh = pde.polygon_mesh_2(n=10)
+#pde = CosCos5Data()
+mesh = pde.polygon_mesh_2(n=40)
 NC = mesh.number_of_cells()
 #print("NC:", NC)
 NE = mesh.number_of_edges()
