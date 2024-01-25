@@ -58,10 +58,10 @@ class Mimetic():
             M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
             #print("M:", M.shape, "\n", M)
-            print(f"第{i}个单元")
+            #print(f"第{i}个单元")
             #print(np.linalg.eigvals(M))
             #print(np.max(np.abs(M-M.T)))
-            print("M@N - R:", np.max(np.abs(M@N - R)))
+            #print("M@N - R:", np.max(np.abs(M@N - R)))
             #A  = np.zeros((LNE, NE))
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])
             result[indexi, indexj] += M 
@@ -82,15 +82,15 @@ class Mimetic():
         cell_measure = mesh.entity_measure(etype=2)
         edge_measure = mesh.entity_measure(etype=1)
         cell2edge = mesh.ds.cell_to_edge()
-        print("cell2edge:\n", cell2edge)
+        #print("cell2edge:\n", cell2edge)
         #cell_out_normal = self.cell_out_normal()
         flag = np.where(mesh.ds.cell_to_edge_sign().toarray(), 1, -1)
         result = np.zeros((NC, NE))
         for i in range(NC):
             cell_out_flag = flag[i][cell2edge[i]] # (LNE, )
-            print("cell_out_flag:", cell_out_flag.shape, "\n", cell_out_flag)
+            #print("cell_out_flag:", cell_out_flag.shape, "\n", cell_out_flag)
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
-            print("cell_edge_measure:", cell_edge_measure.shape, "\n", cell_edge_measure)
+            #print("cell_edge_measure:", cell_edge_measure.shape, "\n", cell_edge_measure)
             result[i, cell2edge[i]] = cell_out_flag * cell_edge_measure/cell_measure[i] # (NC, NE)
 
         return result
@@ -107,7 +107,7 @@ class Mimetic():
 
         f = fun(cell_centers)
         b = cell_measure * f
-        print("b1:", b.shape, "\n", b)
+        #print("b1:", b.shape, "\n", b)
         #b1 = np.diag(cell_measure) * f
         #print("b1:", b1.shape, "\n", b1)
         #print("b-b1:", b-b1)
@@ -119,43 +119,43 @@ class Mimetic():
         return result
     
 
-    def boundary_treatment(self, A, b, Df, isDcelldof, Nf=None, isNedgedof=None, so=None):
-        mesh = self.mesh
-        NE = mesh.number_of_edges()
-        NC = mesh.number_of_cells()
-        gdof = NE+NC
-        cell_centers = mesh.entity_barycenter(etype=2)
-        edge_centers = mesh.entity_barycenter(etype=1)
-        
-        isBdDof = np.hstack(([False]*NE, isDcelldof))
-        if isNedgedof is not None:
-            isBdDof = np.hstack([isNedgedof,isDcelldof])
-        
-        bdIdx = np.zeros(gdof, dtype=np.int_)
-        bdIdx[isBdDof] = 1
-        Tbd = spdiags(bdIdx, 0, gdof, gdof).toarray()
-        T = spdiags(1-bdIdx, 0, gdof, gdof).toarray()
-        A = T@A + Tbd
-        
-        xx = np.zeros((gdof,),dtype=np.float64)
-        xx[:NE] = 0
-        if isNedgedof is not None:
-            xx[0:NE][isNedgedof] = Nf(edge_centers[isNedgedof])
-        xx[NE:][isDcelldof] = Df(cell_centers[isDcelldof])
-        #xx[NE:][isDcelldof] = so[isDcelldof]
-        b[isBdDof] = xx[isBdDof]
-        return A,b
+    #def boundary_treatment(self, A, b, Df, isDcelldof, Nf=None, isNedgedof=None, so=None):
+    #    mesh = self.mesh
+    #    NE = mesh.number_of_edges()
+    #    NC = mesh.number_of_cells()
+    #    gdof = NE+NC
+    #    cell_centers = mesh.entity_barycenter(etype=2)
+    #    edge_centers = mesh.entity_barycenter(etype=1)
+    #    
+    #    isBdDof = np.hstack(([False]*NE, isDcelldof))
+    #    if isNedgedof is not None:
+    #        isBdDof = np.hstack([isNedgedof,isDcelldof])
+    #    
+    #    bdIdx = np.zeros(gdof, dtype=np.int_)
+    #    bdIdx[isBdDof] = 1
+    #    Tbd = spdiags(bdIdx, 0, gdof, gdof).toarray()
+    #    T = spdiags(1-bdIdx, 0, gdof, gdof).toarray()
+    #    A = T@A + Tbd
+    #    
+    #    xx = np.zeros((gdof,),dtype=np.float64)
+    #    xx[:NE] = 0
+    #    if isNedgedof is not None:
+    #        xx[0:NE][isNedgedof] = Nf(edge_centers[isNedgedof])
+    #    xx[NE:][isDcelldof] = Df(cell_centers[isDcelldof])
+    #    #xx[NE:][isDcelldof] = so[isDcelldof]
+    #    b[isBdDof] = xx[isBdDof]
+    #    return A,b
 
-    def cell_out_normal(self):
-        mesh = self.mesh
-        
-        cell2edge = mesh.ds.cell_to_edge()
-        normal = mesh.edge_unit_normal()
-        flag = np.where(mesh.ds.cell_to_edge_sign().toarray(), 1, -1)
+    #def cell_out_normal(self):
+    #    mesh = self.mesh
+    #    
+    #    cell2edge = mesh.ds.cell_to_edge()
+    #    normal = mesh.edge_unit_normal()
+    #    flag = np.where(mesh.ds.cell_to_edge_sign().toarray(), 1, -1)
 
-        cellnormal = [[normal[edge] for edge in cell] for cell in cell2edge]
-        osign = [flag[i, edges] for i, edges in enumerate(cell2edge)]
-        celloutnormal = [arr1 * arr2[:,None] for arr1, arr2 in zip(cellnormal, osign)]
-        return celloutnormal
+    #    cellnormal = [[normal[edge] for edge in cell] for cell in cell2edge]
+    #    osign = [flag[i, edges] for i, edges in enumerate(cell2edge)]
+    #    celloutnormal = [arr1 * arr2[:,None] for arr1, arr2 in zip(cellnormal, osign)]
+    #    return celloutnormal
 
 
