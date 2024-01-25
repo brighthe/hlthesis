@@ -289,16 +289,16 @@ class HuZhangFiniteElementSpace2d():
         cldof = self.dof.number_of_local_dofs("cell")
 
         c2frame = self.cell_frame() #(NC, 7, 3, 3)
-        sgphi = self.space.grad_basis(bc) #(NQ, NC, ldof//3, 2)
-        dphi = np.zeros(sphi.shape[:-1]+(ldof, 2), dtype=np.float_) #(NQ, NC, ldof, 2)
+        sgphi = self.lspace.grad_basis(bc) #(NQ, NC, ldof//3, 2)
+        dphi = np.zeros(bc.shape[:-1]+(NC, ldof, 2), dtype=np.float_) #(NQ, NC, ldof, 2)
 
         ## 节点 
         sndofidx = [0, ldof//3-p-1, ldof//3-1] # 三个顶点自由度在标量元中的编号
         for i in range(3):
             frame_ni   = c2frame[:, i]                          # (NC, 3, 3) 
-            sgphi_ni    = sgphi[..., sndofidx[i], None]         # (NQ, NC, 1, 2) 
-            gphi[..., 3*i:3*i+3, 0] = np.sum(phi_ni*frame_ni[..., :2], axis=-1) # (NQ, NC, 3) 
-            gphi[..., 3*i:3*i+3, 1] = np.sum(phi_ni*frame_ni[..., 1:], axis=-1) # (NQ, NC, 3) 
+            sgphi_ni    = sgphi[..., sndofidx[i], None, :]         # (NQ, NC, 1, 2) 
+            dphi[..., 3*i:3*i+3, 0] = np.sum(sgphi_ni*frame_ni[..., :2], axis=-1) # (NQ, NC, 3) 
+            dphi[..., 3*i:3*i+3, 1] = np.sum(sgphi_ni*frame_ni[..., 1:], axis=-1) # (NQ, NC, 3) 
 
         ## 边
         eldof_2 = eldof//2
@@ -306,29 +306,30 @@ class HuZhangFiniteElementSpace2d():
         for i in range(3):
             N = i*eldof+9
             edofidx  = np.where(midx[:, i]==0)[0][1:-1] 
-            sgphi_ei  = sgphi[..., edofidx, None]    # (NQ, NC, eldof_2, 1, 2)     
-            frame_ei = c2frame[: i+3, None]        # (NC, 1, 3, 3)
-            gphi[..., N:N+eldof_2, 0] = np.sum(sgphi_ei*frame_ei[..., 0, :2], axis=-1) #(NQ, NC, eldof_2) 
-            gphi[..., N:N+eldof_2, 1] = np.sum(sgphi_ei*frame_ei[..., 0, 1:], axis=-1) #(NQ, NC, eldof_2) 
+            sgphi_ei  = sgphi[..., edofidx, :]    # (NQ, NC, eldof_2, 1, 2)     
+            frame_ei = c2frame[:, i+3, None]        # (NC, 1, 3, 3)
+            dphi[..., N:N+eldof_2, 0] = np.sum(sgphi_ei*frame_ei[..., 0, :2], axis=-1) #(NQ, NC, eldof_2) 
+            dphi[..., N:N+eldof_2, 1] = np.sum(sgphi_ei*frame_ei[..., 0, 1:], axis=-1) #(NQ, NC, eldof_2) 
 
-            gphi[..., N+eldof_2:N+eldof, 0] = np.sum(sgphi_ei*frame_ei[..., 1, :2], axis=-1) #(NQ, NC, eldof_2) 
-            gphi[..., N+eldof_2:N+eldof, 1] = np.sum(sgphi_ei*frame_ei[..., 1, 1:], axis=-1) #(NQ, NC, eldof_2) 
+            dphi[..., N+eldof_2:N+eldof, 0] = np.sum(sgphi_ei*frame_ei[..., 1, :2], axis=-1) #(NQ, NC, eldof_2) 
+            dphi[..., N+eldof_2:N+eldof, 1] = np.sum(sgphi_ei*frame_ei[..., 1, 1:], axis=-1) #(NQ, NC, eldof_2) 
 
-            gphi[..., Ndof+i*eldof_2:Ndof+(i+1)*eldof_2, 0] = np.sum(sgphi_ei*frame_ei[..., 2, :2], axis=-1) #(NQ, NC, eldof_2) 
-            gphi[..., Ndof+i*eldof_2:Ndof+(i+1)*eldof_2, 1] = np.sum(sgphi_ei*frame_ei[..., 2, 1:], axis=-1) #(NQ, NC, eldof_2) 
+            dphi[..., Ndof+i*eldof_2:Ndof+(i+1)*eldof_2, 0] = np.sum(sgphi_ei*frame_ei[..., 2, :2], axis=-1) #(NQ, NC, eldof_2) 
+            dphi[..., Ndof+i*eldof_2:Ndof+(i+1)*eldof_2, 1] = np.sum(sgphi_ei*frame_ei[..., 2, 1:], axis=-1) #(NQ, NC, eldof_2) 
 
+        cldof -= 3*(eldof//2)
         if cldof>0:
             cldof_3 = cldof//3
             cdofidx = np.where(np.all(midx>0, axis=1))[0]
-            frame_c = c2frame[: 6, None]              # (NC, 1, 3, 3)
-            sgphi_c  = sgphi[..., cdofidx, None]        # (NQ, NC, cldof//3, 1)     
-            gphi[..., -cldof:2*cldof_3, 0]    = np.sum(sgphi_c*frame_c[..., 0, :2], axis=-1)# (NQ, NC, cldof//3)
-            gphi[..., -cldof:2*cldof_3, 1]    = np.sum(sgphi_c*frame_c[..., 0, 1:], axis=-1)# (NQ, NC, cldof//3)
-            gphi[..., -2*cldof_3:-cldof_3, 0] = np.sum(sgphi_c*frame_c[..., 1, :2], axis=-1) # (NQ, NC, cldof//3)
-            gphi[..., -2*cldof_3:-cldof_3, 1] = np.sum(sgphi_c*frame_c[..., 1, 1:], axis=-1) # (NQ, NC, cldof//3)
-            gphi[..., -cldof_3:, 0]           = np.sum(sgphi_c*frame_c[..., 2, :2], axis=-1) # (NQ, NC, cldof//3)
-            gphi[..., -cldof_3:, 1]           = np.sum(sgphi_c*frame_c[..., 2, 1:], axis=-1) # (NQ, NC, cldof//3)
-        return val
+            frame_c = c2frame[:, 6, None]              # (NC, 1, 3, 3)
+            sgphi_c  = sgphi[..., cdofidx, :]        # (NQ, NC, cldof//3, 2)     
+            dphi[..., -cldof:-2*cldof_3, 0]    = np.sum(sgphi_c*frame_c[..., 0, :2], axis=-1)# (NQ, NC, cldof//3)
+            dphi[..., -cldof:-2*cldof_3, 1]    = np.sum(sgphi_c*frame_c[..., 0, 1:], axis=-1)# (NQ, NC, cldof//3)
+            dphi[..., -2*cldof_3:-cldof_3, 0] = np.sum(sgphi_c*frame_c[..., 1, :2], axis=-1) # (NQ, NC, cldof//3)
+            dphi[..., -2*cldof_3:-cldof_3, 1] = np.sum(sgphi_c*frame_c[..., 1, 1:], axis=-1) # (NQ, NC, cldof//3)
+            dphi[..., -cldof_3:, 0]           = np.sum(sgphi_c*frame_c[..., 2, :2], axis=-1) # (NQ, NC, cldof//3)
+            dphi[..., -cldof_3:, 1]           = np.sum(sgphi_c*frame_c[..., 2, 1:], axis=-1) # (NQ, NC, cldof//3)
+        return dphi
 
     def cell_to_dof(self):
         return self.dof.cell2dof

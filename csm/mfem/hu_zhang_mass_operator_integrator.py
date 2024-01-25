@@ -144,12 +144,16 @@ class HuZhangMassOperatorIntegrator:
         self.integrator = self.integralalg.integrator
 
     def mass_matrix(self, space):
-        mesh = space.mesh
-        NC = mesh.number_of_cells()
-        ldof = space.dof.number_of_local_dofs()
+        """
+        @brief 计算 (\sigma, \sigma)
+        """
+        #mesh = space.mesh
+        #NC = mesh.number_of_cells()
+        #ldof = space.dof.number_of_local_dofs()
         gdof = space.dof.number_of_global_dofs()
         cm = space.cellmeasure
         c2d = space.dof.cell_to_dof() #(NC, ldof)
+
         bcs, ws = space.integrator.get_quadrature_points_and_weights()
         phi = space.basis(bcs) #(NQ, NC, ldof, 3)
         num = np.array([1, 2, 1])
@@ -158,5 +162,68 @@ class HuZhangMassOperatorIntegrator:
         I = np.broadcast_to(c2d[:, :, None], shape=mass.shape)
         J = np.broadcast_to(c2d[:, None, :], shape=mass.shape)
         M = csr_matrix((mass.flat, (I.flat, J.flat)), shape=(gdof, gdof))
+
         return mass, M
+
+    def tr_mass_matrix(self, space):
+        """
+        @brief 计算 (tr \sigma, \sigma)
+        """
+        #mesh = space.mesh
+        #NC = mesh.number_of_cells()
+        #ldof = space.dof.number_of_local_dofs()
+        gdof = space.dof.number_of_global_dofs()
+        cm = space.cellmeasure
+        c2d = space.dof.cell_to_dof() #(NC, ldof)
+
+        bcs, ws = space.integrator.get_quadrature_points_and_weights()
+        phi = space.basis(bcs) #(NQ, NC, ldof, 3)
+        trphi = phi[..., 0] + phi[..., -1]
+        tr_mass = np.einsum("qcl, qcd, c, q->cld", trphi, trphi, cm, ws)
+
+        I = np.broadcast_to(c2d[:, :, None], shape=tr_mass.shape)
+        J = np.broadcast_to(c2d[:, None, :], shape=tr_mass.shape)
+        tr_M = csr_matrix((tr_mass.flat, (I.flat, J.flat)), shape=(gdof, gdof))
+
+        return tr_mass, tr_M 
+
+    def div_matrix(self, space, spaces):
+        """
+        @brief 计算 (div \sigma, u)
+        - space: Hu-Zhang 元空间
+        - spaces: 向量型的间断 Lagrange 有限元空间
+        """
+        vspace = spaces[0]
+        mesh = space.mesh
+        NC = mesh.number_of_cells()
+        ldof0 = space.dof.number_of_local_dofs()
+        ldof1 = vspace.dof.number_of_local_dofs()
+        gdof0 = space.dof.number_of_global_dofs()
+        gdof1 = vspace.dof.number_of_global_dofs()
+        cm = space.cellmeasure
+
+        c2d = space.dof.cell_to_dof() #(NC, ldof)
+        c2d_space = vspace.dof.cell_to_dof()
+        c2d_space = np.c_[c2d_space, c2d_space+gdof1]
+
+        bcs, ws = space.integrator.get_quadrature_points_and_weights()
+
+        if vspace.basis.coordtype == 'barycentric':
+            uphi = vspace.basis(bcs) #(NQ, NC, ldof1, 2)
+        else:
+            points = space.mesh.bc_to_point(bcs)
+            uphi = vspace.basis(points)
+
+        dphi = space.div_basis(bcs) #(NQ, NC, ldof, 2)
+        b = np.zeros((NC, ldof0, ldof1*2), dtype=np.float_) 
+        b[..., :ldof1] = np.einsum("qcl, qcm, c, q->clm", dphi[..., 0], uphi, cm, ws, optimize=True)
+        b[..., ldof1:] = np.einsum("qcl, qcm, c, q->clm", dphi[..., 1], uphi, cm, ws, optimize=True)
+
+        I = np.broadcast_to(c2d[:, :, None], shape=b.shape)
+        J = np.broadcast_to(c2d_space[:, None, :], shape=b.shape)
+        B = csr_matrix((b.flat, (I.flat, J.flat)), shape=(gdof0, gdof1*2))
+
+        return b, B
+
+
 
