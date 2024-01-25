@@ -515,9 +515,10 @@ class HuZhangFiniteElementSpace2d():
         """
         @brief gD : [[f0, eidx0], [f1, eidx1], [f2, eidx2], ...]
         """
+        gdof = self.dof.number_of_global_dofs()
         is_bd_dof = np.zeros(gdof, dtype=np.bool_)
-        n2d = self.node_to_dof()
-        e2d = self.edge_to_internal_dof()
+        n2d = self.dof.node_to_dof()
+        e2d = self.dof.edge_to_internal_dof()
 
         is_bd_node = self.mesh.ds.boundary_node_flag()
         is_bd_edge = self.mesh.ds.boundary_edge_flag()
@@ -527,7 +528,8 @@ class HuZhangFiniteElementSpace2d():
 
         is_bd_dof[n2d[self.is_corner_node]] = True
 
-        uh[is_bd_dof] = 0
+        uh[is_bd_dof] = gD
+
         return is_bd_dof
 
 

@@ -15,7 +15,7 @@ from HuZhangFiniteElementSpace2d import HuZhangFiniteElementSpace2d
 from linear_elasticity_model2d import BoxDomainData2d
 from hu_zhang_mass_operator_integrator import HuZhangMassOperatorIntegrator
 
-from scipy.sparse import bmat, coo_matrix
+from scipy.sparse import bmat, coo_matrix, spdiags
 from scipy.sparse.linalg import spsolve
 
 
@@ -119,7 +119,7 @@ print("F:", F.shape, "\n", F.round(4))
 
 Z = coo_matrix((vgdof*GD, vgdof*GD))
 BT = B.copy().T
-Stiffness_matrix = bmat([[A, B], [BT, Z]], format='coo')
+Stiffness_matrix = bmat([[A, B], [BT, Z]], format='csr')
 print("Stiffness_matrix:", Stiffness_matrix.shape, "\n", Stiffness_matrix.toarray())
 g = np.zeros(tgdof)
 F_rhs = np.hstack((g, F))
@@ -127,22 +127,34 @@ print("F_rhs:", F_rhs.shape)
 
 Uh = np.hstack((sigmah, uh.flat))
 
-ipoints = vspace[0].interpolation_points()
-ipoints_1 = node[cell].reshape(-1, GD)
-print("ipoints:", ipoints.shape, "\n", ipoints)
-print("ipoints_1-ipoints:", np.max(np.abs(ipoints_1-ipoints)))
-#isDDof = vspace[0].is_boundary_dof()
-#print("isDDof:", isDDof.shape, "\n", isDDof)
-cell2dof = vspace[0].cell_to_dof()
-cell2dof_1 = np.arange(NC*vldof).reshape(NC, vldof)
-print("cell2dof:", cell2dof.shape, "\n", cell2dof)
-print("cell2dof-cell2dof_1:", np.max(np.abs(cell2dof-cell2dof_1)))
-#idx = mesh.ds.boundary_edge_index()
-#print("idx:", idx)
-#isBdDof = np.zeros(vgdof, dtype=np.bool_)
-#edge2dof = vspace[0].edge_to_dof()
-#isBdDof[edge2dof[idx]] = True
-#print("isBdDof:", isBdDof)
+isBdDof_1 = tspace.set_dirichlete_bc(uh=sigmah, gD=0)
+print("isBdDof_1:", isBdDof_1.shape, "\n", isBdDof_1)
+isBdDof_2 = np.zeros(vgdof*GD, dtype=bool)
+print("isBdDof_2:", isBdDof_2.shape, "\n", isBdDof_2)
+isBdDof = np.hstack((isBdDof_1, isBdDof_2))
+print("isBdDof:", isBdDof.shape, "\n", isBdDof)
+
+F_rhs -= Stiffness_matrix @ Uh
+F_rhs[isBdDof] = Uh[isBdDof]
+print("F_rhs:", F_rhs.shape)
+
+bdIdx = np.zeros(Stiffness_matrix.shape[0], dtype=np.int_)
+bdIdx[isBdDof] = 1
+print("bdIdx:", bdIdx.shape, "\n", bdIdx)
+D0 = spdiags(1-bdIdx, 0, Stiffness_matrix.shape[0], Stiffness_matrix.shape[0])
+D1 = spdiags(bdIdx, 0, Stiffness_matrix.shape[0], Stiffness_matrix.shape[0])
+Stiffness_matrix = D0@Stiffness_matrix@D0 + D1
+print("Stiffness_matrix:", Stiffness_matrix.shape, "\n", Stiffness_matrix.toarray())
+
+Uh.flat[:] = spsolve(Stiffness_matrix, F_rhs)
+print("Uh:\n", Uh.shape, "\n", Uh)
+
+sigmah = Uh.flat[:tgdof]
+print("sigmah:", sigmah.shape, "\n", sigmah)
+uh[:] = Uh.flat[:-tgdof].reshape(2, -1)
+print("uh:", uh.shape, "\n", uh)
+
+print("error", mesh.error(pde.solution, uh))
 
 
 
@@ -154,55 +166,6 @@ mesh.find_cell(axes, showindex=True, color='k', marker='s', markersize=8, fontsi
 mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=8, fontsize=16, fontcolor='r')
 mesh.find_edge(axes, showindex=True, color='g', marker='*', markersize=8, fontsize=16, fontcolor='g')
 plt.show()
-
-Uh.flat[:] = spsolve(Stiffness_matrix, F_rhs)
-print("Uh:\n", Uh.shape, "\n", Uh)
-
-
-
-#lam = 1
-#mu = 1
-#
-#ln = sp.ln
-#x = sp.symbols('x0:2')
-#u = [-(1-x[0])*ln(1.5-x[0]),-(1-x[0])*ln(1.5-x[1])]
-#
-#if bdtype == 'displacement': 
-#        pde = GenLinearElasticitymodel2D(u, x, lam=lam, mu=mu,
-#                Dirichletbd_n='(x0==1)|(x0==0)|(x1==0)|(x1==1)',
-#                Dirichletbd_t='(x0==1)|(x0==0)|(x1==0)|(x1==1)')
-#
-#elif bdtype =='stress_and_displacement':
-#        pde = GenLinearElasticitymodel2D(u,x,lam=lam,mu=mu,
-#                Dirichletbd_n='(x1==0)|(x1==1)',Dirichletbd_t='(x1==0)|(x1==1)',
-#                Neumannbd_nn='(x0==1)|(x0==0)',Neumannbd_nt='(x0==1)|(x0==0)')
-#
-#elif bdtype =='stress_and_displacement_corner_point':
-#        pde = GenLinearElasticitymodel2D(u,x,lam=lam,mu=mu,
-#                Dirichletbd_n='(x0==1)|(x1==1)',Dirichletbd_t='(x0==1)|(x1==1)',
-#                Neumannbd_nn='(x0==0)|(x1==0)',Neumannbd_nt='(x0==0)|(x1==0)')
-#
-#mesh = TriangleMesh.from_box(box=pde.domain(), nx=2, ny=2)
-#mesh.uniform_refine(nrefine)
-#
-#output = './mesh/'
-#if not os.path.exists(output):
-#    os.makedirs(output)
-#fname = os.path.join(output, 'TriangleMesh.vtu')
-#
-#tspace = HuZhangFiniteElementSpace(mesh, degree)
-#vspace = LagrangeFESpace(mesh, degree-1, spacetype='D') 
-#
-#tgdof = tspace.number_of_global_dofs()
-#vgdof = vspace.number_of_global_dofs()
-#
-#sh = tspace.function()
-#uh = vspace.function(dim=GD)
-#
-#mu = pde.mu
-#lambda_ = pde.lam
-#M = tspace.parallel_compliance_tensor_matrix(mu=mu, lam=lam)
-#print("M:", M.shape, "\n", M)
 
 mesh.to_vtk(fname=fname)
 
