@@ -25,6 +25,7 @@ class CosCosData:
         y = p[..., 1]
         pi = np.pi
         val = np.cos(pi*x)*np.cos(pi*y)
+
         return val # val.shape == x.shape
 
 

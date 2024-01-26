@@ -1,5 +1,4 @@
 import argparse
-import os
 import numpy as np
 
 from fealpy.functionspace import LagrangeFESpace as Space
