@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-from fealpy.pde.truss_model import Truss_3d
+from truss_model import Truss_3d
 
 from fealpy.functionspace.lagrange_fe_space import LagrangeFESpace
 
@@ -12,6 +12,7 @@ from fealpy.fem.truss_structure_integrator import TrussStructureIntegrator
 from fealpy.fem.dirichlet_bc import DirichletBC
 
 from scipy.sparse.linalg import spsolve
+from scipy.sparse import spdiags
 
 # Argument Parsing
 parser = argparse.ArgumentParser(description=
@@ -41,7 +42,6 @@ parser.add_argument('--doforder',
 
 args = parser.parse_args()
 
-
 # Assigning the parsed arguments to local variables for clarity
 p = args.degree
 GD = args.GD
@@ -56,7 +56,6 @@ if GD not in [2, 3] or p < 0 or n < 0 or scale < 0 or doforder not in ['vdims', 
 
 # Initializing the truss model
 pde = Truss_3d()
-
 # Initializing the mesh for the problem
 mesh = pde.init_mesh()
 
@@ -70,23 +69,33 @@ E = pde.E
 
 # Constructing bilinear form representing the differential formulation of the problem
 bform = BilinearForm(vspace)
-bform.add_domain_integrator(TrussStructureIntegrator(E, A))
+bform.add_domain_integrator(TrussStructureIntegrator(E=E, A=A, q=p+2))
 K = bform.assembly()
+print("K:", K.shape, "\n", K.toarray().round(4))
 
 # Load and boundary conditions
 uh = space.function(dim = GD)
-print("uh:", uh.shape)
+print("uh:", uh.shape, "\n", uh)
 F = np.zeros((uh.shape[0], GD), dtype = np.float64)
-idx, f = mesh.meshdata['force_bc']
-F[idx] = f
-idx, disp = mesh.meshdata['disp_bc']
+print("F:", F.shape, "\n", F)
+idx_f, f = mesh.meshdata['force_bc']
+F[idx_f] = f
+idx_disp, disp = mesh.meshdata['disp_bc']
 
 # Applying Dirichlet boundary conditions
-bc = DirichletBC(vspace, disp, threshold = idx)
-A, F = bc.apply(K, F.flat, uh)
+dflag = vspace[0].boundary_interpolate(gD=disp, uh=uh, threshold=idx_disp)
+F = F.flat- K@uh.flat
+bdIdx = np.zeros(K.shape[0], dtype=np.int_)
+bdIdx[dflag.flat] = 1
+D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
+D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
+K = D0@K@D0 + D1
+F[dflag.flat] = uh.ravel()[dflag.flat]
+#bc = DirichletBC(vspace, disp, threshold = idx_disp)
+#A, F = bc.apply(K, F.flat, uh)
 
 # Solving the linear system
-uh.flat[:] = spsolve(A, F)
+uh.flat[:] = spsolve(K, F)
 
 # Visualization of the original and deformed truss
 fig = plt.figure()
