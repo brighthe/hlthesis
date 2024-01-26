@@ -9,7 +9,6 @@ from fealpy.functionspace.lagrange_fe_space import LagrangeFESpace
 
 from fealpy.fem.bilinear_form import BilinearForm
 from fealpy.fem.truss_structure_integrator import TrussStructureIntegrator
-from fealpy.fem.dirichlet_bc import DirichletBC
 
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import spdiags

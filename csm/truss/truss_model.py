@@ -27,6 +27,17 @@ class Truss_3d():
 
         return mesh
 
+class Truss_2d():
+    def __init__(self):
+        self.A = 100 # Cross-sectional - area mm^2
+        self.E = 29.5e4 # Elastic Modulus - newton/mm^2
+
+    def init_mesh(self):
+        mesh = EdgeMesh.from_four_bar_mesh()
+
+        return mesh
+
+
     #@cartesian
     #def source(self, p):
     #    shape = len(p.shape[:-1])*(1,) + (-1, )
