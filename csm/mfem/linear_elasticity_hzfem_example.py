@@ -151,6 +151,7 @@ print("Uh:\n", Uh.shape, "\n", Uh)
 
 sigmah = Uh.flat[:tgdof]
 print("sigmah:", sigmah.shape, "\n", sigmah)
+# 因为 uh 属于的间断 Lagrange 有限元空间的自由度排序是 sdofs，所以 uh 的形状应该为 (GD, vgdof)
 uh[:] = Uh.flat[:-tgdof].reshape(2, -1)
 print("uh:", uh.shape, "\n", uh)
 
