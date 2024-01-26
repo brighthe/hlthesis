@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from scipy.sparse.linalg import spsolve
+from scipy.sparse import spdiags
 
-from fealpy.pde.linear_elasticity_model import BoxDomainData
+from linear_elasticity_model2d import BoxDomainData2d
 from fealpy.functionspace import LagrangeFESpace as Space
 
 from fealpy.fem import LinearElasticityOperatorIntegrator
@@ -23,8 +24,8 @@ parser = argparse.ArgumentParser(description=
         """)
 
 parser.add_argument('--degree',
-        default=1, type=int,
-        help='Lagrange 有限元空间的次数, 默认为 1 次.')
+        default=2, type=int,
+        help='Lagrange 有限元空间的次数, 默认为 2 次.')
 
 parser.add_argument('--GD',
         default=2, type=int,
@@ -49,7 +50,7 @@ n = args.nrefine
 scale = args.scale
 doforder = args.doforder
 
-pde = BoxDomainData()
+pde = BoxDomainData2d()
 
 mu = pde.mu
 lambda_ = pde.lam
@@ -68,7 +69,7 @@ NC = mesh.number_of_cells()
 print("NC:", NC)
 node = mesh.entity('node')
 cell = mesh.entity('cell')
-print("cell:\n", cell.shape, "\n", cell)
+#print("cell:\n", cell.shape, "\n", cell)
 
 output = './mesh/'
 if not os.path.exists(output):
@@ -126,14 +127,29 @@ print("Fh:", Fh.shape, "\n", Fh.round(4))
 print("error:", np.sum(np.abs(F - Fh)))
 
 if hasattr(pde, 'dirichlet'):
-    bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
-    K, Fh = bc.apply(K, Fh, uh)
+    # dflag.shape = (gdof, GD)
+    dflag = vspace[0].boundary_interpolate(gD=pde.dirichlet, uh=uh,
+                                           threshold=pde.is_dirichlet_boundary)
+    Fh -= K@uh.flat
+
+    bdIdx = np.zeros(K.shape[0], dtype=np.int_)
+    bdIdx[dflag.flat] = 1
+    D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
+    D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
+    K = D0@K@D0 + D1
+
+    Fh[dflag.flat] = uh.ravel()[dflag.flat]
+    #bc = DirichletBC(space=vspace, gD=pde.dirichlet, threshold=pde.is_dirichlet_boundary)
+    #K, Fh = bc.apply(K, Fh, uh)
 
 print("K:", K.shape, "\n", K.toarray().round(4))
 print("Fh:", Fh.shape, "\n", Fh.round(4))
 
 uh.flat[:] = spsolve(K, Fh)
 print("uh:\n", uh.shape, uh)
+
+u_exact = space.interpolate(pde.solution)
+print("u_exact:", u_exact.shape, "\n", u_exact)
 
 mesh.nodedata['u'] = uh[:, 0]
 mesh.nodedata['v'] = uh[:, 1]

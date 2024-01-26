@@ -70,6 +70,17 @@ class BoxDomainData2d():
         return val
 
     @cartesian
+    def solution(self, p):
+        x = p[..., 0]
+        y = p[..., 1]
+        val = np.zeros(p.shape, dtype=np.float64)
+        val[..., 0] = x*(1-x)*y*(1-y)
+        val[..., 1] = 0
+
+        return val
+
+
+    @cartesian
     def dirichlet(self, p):
         """
         @brief 返回 Dirichlet 边界上的给定点的位移
