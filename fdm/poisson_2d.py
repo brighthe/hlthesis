@@ -36,21 +36,6 @@ class SinSinData:
         val = 2*pi*pi*np.sin(pi*x)*np.sin(pi*y)
         return val
     
-    @cartesian
-    def gradient(self, p):
-        """
-        @brief: 计算 PDE 模型的真解的梯度
-        @param p: 自标量 x,y 的数组
-        @return: PDE 模型在给定点处真解的梯度
-        """
-        x = p[..., 0]
-        y = p[..., 1]
-        pi = np.pi
-        val = np.zeros(p.shape, dtype=np.float64)
-        val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)
-        val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)
-        return val
-
     @cartesian    
     def dirichlet(self, p):
         return self.solution(p)
