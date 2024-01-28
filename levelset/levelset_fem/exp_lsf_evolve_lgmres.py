@@ -7,7 +7,6 @@ from fealpy.timeintegratoralg import UniformTimeLine
 from fealpy.functionspace import LagrangeFESpace
 from fealpy.levelset.ls_fem_solver import LSFEMSolver, LSSolver
 
-
 # Command line argument parser
 parser = argparse.ArgumentParser(description=
         """
