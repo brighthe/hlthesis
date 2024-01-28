@@ -37,6 +37,7 @@ class SinSinData:
         y = p[..., 1]
         pi = np.pi
         val = np.sin(pi*x) * np.sin(pi*y)
+
         return val
 
     @cartesian
