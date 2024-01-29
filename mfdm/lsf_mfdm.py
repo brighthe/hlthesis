@@ -30,16 +30,10 @@ print("edge_length:", edge_length.shape, "\n", edge_length)
 edge_center = mesh.entity_barycenter(etype=1)
 print("edge_center:", edge_center.shape, "\n", edge_center)
 
-
-GD = mesh.geo_dimension()
-qf = mesh.integrator(q=5, etype='cell')
-bcs, ws = qf.get_quadrature_points_and_weights()
-#ps = mesh.bc_to_point(bcs)
 u0 = pde.velocity_field(edge_center)
 print("u0:", u0.shape, "\n", u0)
-u = mesh.integral(u=pde.velocity_field*edge_tangent, q=5, celltype=True) / edge_length
+u = u0 * edge_center
 print("u:", u.shape, "\n", u)
-#u = space.interpolate(pde.velocity_field, dim=2)
 
 NN = mesh.number_of_nodes()
 
@@ -56,7 +50,6 @@ for i in range(nt):
 
     A = diags([1 + dt * np.dot(u, gradh)], 0, shape=(NN, NN), format='csr')
     phi0[:] = spsolve(A, phi0)
-
 
 fig = plt.figure()
 axes = fig.gca()
