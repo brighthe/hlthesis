@@ -14,8 +14,7 @@ class TopSimp:
         - nely (int): Number of elements in the vertical direction. Defaults to 20.
         - volfrac (float): Volume fraction, representing the desired fraction of
         the design space to be occupied by material. Defaults to 0.5.
-        - penal (float): Penalization power, controlling the penalization of intermediate
-        densities in the SIMP method. Defaults to 3.0.
+        - penal : Penalization power, 在 SIMP 中控制中间密度的 penalization. Defaults to 3.0.
         - rmin (float): Filter radius (divided by the element size), used to achieve
         mesh-independence in the design. Defaults to 1.5.
         '''
@@ -24,7 +23,15 @@ class TopSimp:
         self._volfrac = volfrac
         self._penal = penal
         self._rmin = rmin
-        self._mesh = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx, ny = nely)
+        node = np.array([[0, 2], [0, 1], [0, 0],
+                         [1, 2], [1, 1], [1, 0],
+                         [2, 2], [2, 1], [2, 0]], dtype=np.float64)
+        cell = np.array([[0, 3, 4, 1],
+                         [1, 4, 5, 2],
+                         [3, 6, 7, 4],
+                         [4, 7, 8, 5]], dtype=np.int_)
+        self._mesh = QuadrangleMesh(node=node, cell=cell)
+        #self._mesh = QuadrangleMesh.from_box(box = [0, nelx+1, 0, nely+1], nx = nelx, ny = nely)
 
 
     def lk(self):
@@ -83,9 +90,11 @@ class TopSimp:
                 # DOF mapping
                 edof = np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])
 
+                print("test:", edof)
                 # Insert the local stiffness matrix into the global matrix
                 K[np.ix_(edof, edof)] += x[ely, elx] ** penal * KE
 
+        print("K_2", K.shape, "\n", K.toarray().round(4))
         # Define loads and supports (Half MBB-Beam)
         F[1] = -1
         fixeddofs = np.union1d( np.arange(0, 2*(nely+1), 2), np.array([2*(nelx+1)*(nely+1) - 1]) )
@@ -96,7 +105,7 @@ class TopSimp:
         U[freedofs] = spsolve(csc_matrix(K[np.ix_(freedofs, freedofs)]), F[freedofs])
         U[fixeddofs] = 0
         
-        return U
+        return U, K
 
     def check(self, nelx, nely, rmin, x, dc):
         """

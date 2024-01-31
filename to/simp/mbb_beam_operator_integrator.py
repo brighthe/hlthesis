@@ -1,27 +1,26 @@
 import numpy as np
-from typing import Optional, Tuple
 
-from fealpy.fem.precomp_data import data
 
 class MbbBeamOperatorIntegrator:
-    def __init__(self, nu, nelx, nely, xPhys, penal, E0, Emin,):
+    def __init__(self, nu, E0, nelx, nely, penal, x=None, xPhys=None, Emin=None):
         """
         初始化 MbbBeamOperatorIntegrator 类
 
         参数:
         nu: 泊松比
         """
-        self.nu = nu
+        self.nu = nu # Poisson's ration
+        self.E0 = E0 # Young's module
         self.nelx = nelx
         self.nely = nely
+        self.x = x # 设计变量
         self.xPhys = xPhys
-        self.penal = penal
-        self.E0 = E0
+        self.penal = penal # Penalization Power
         self.Emin = Emin
 
     def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
         """
-        构建 MBB 梁有限元矩阵
+        构建 SIMP 中 MBB 梁有限元矩阵
 
         参数:
         space (Tuple): 有限元空间
@@ -30,15 +29,23 @@ class MbbBeamOperatorIntegrator:
         out (Optional[np.ndarray]): 输出矩阵，默认为 None
 
         返回:
-        Optional[np.ndarray]: 如果 out 参数为 None，则返回 MBB 梁有限元矩阵，否则不返回
+        Optional[np.ndarray]: 如果 out 参数为 None，则返回 SIMP 中 MBB 梁有限元矩阵，否则不返回
+
+        Note:
+        考虑四个单元的四边形网格中的 0 号单元：
+        0,1 - 6,7
+        2,3 - 8,9
+        拓扑 : cell2dof : 0,1,6,7,8,9,2,3
+        FEALPy : cell2dof : 0,1,2,3,6,7,8,9
         """
         nu = self.nu
-        nelx = self.nelx
-        nely = self.nely
-        xPhys = self.xPhys
+        x = self.x
         penal = self.penal
+        nu = self.nu
         E0 = self.E0
         Emin = self.Emin
+        xPhys = self.xPhys
+
         mesh = space[0].mesh
         ldof = space[0].number_of_local_dofs()
         GD = mesh.geo_dimension()
@@ -56,27 +63,29 @@ class MbbBeamOperatorIntegrator:
         if space[0].doforder == 'sdofs':
             pass
         elif space[0].doforder == 'vdims':
-            A11 = np.array([[12, 3, -6, -3], [3, 12, 3, 0], [-6, 3, 12, -3], [-3, 0, -3, 12]])
-            A12 = np.array([[-6, -3, 0, 3], [-3, -6, -3, -6], [0, -3, -6, 3], [3, -6, 3, -6]])
-            B11 = np.array([[-4, 3, -2, 9], [3, -4, -9, 4], [-2, -9, -4, -3], [9, 4, -3, -4]])
-            B12 = np.array([[2, -3, 4, -9], [-3, 2, 9, -2], [4, 9, 2, 3], [-9, -2, 3, 2]])
+            k = [1/2 - nu/6, 1/8 + nu/8, -1/4 - nu/12, -1/8 + 3*nu/8,
+            -1/4 + nu/12, -1/8 - nu/8, nu/6, 1/8 - 3*nu/8]
+            KE = E0 / (1 - nu**2) * np.array([
+                [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
+                [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
+                [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
+                [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
+                [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
+                [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
+                [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
+                [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
+            ])
+            idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
+            KE = KE[idx, :][:, idx]
 
-            KE = 1/(1-nu**2)/24 * (np.block([[A11, A12], [A12.T, A11]]) +
-                nu * np.block([[B11, B12], [B12.T, B11]]))
+            if xPhys is None:
+                coef = x.ravel()**penal
+            elif x is None:
+                coef = Emin + xPhys.ravel()**penal * (E0 - Emin)
+            else:
+                ValueError("coef 不支持该类型")
 
-            xPhys = np.full((nely, nelx), 0.5)
-
-            E = Emin + xPhys.ravel()**penal * (E0 - Emin)
-
-            K[:] = np.einsum('i, jk -> ijk', E, KE)
+            K[:] = np.einsum('i, jk -> ijk', coef, KE)
 
         if out is None:
             return K
-
-
-
-
-
-
-
-
