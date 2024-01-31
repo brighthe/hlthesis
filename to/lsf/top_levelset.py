@@ -11,12 +11,12 @@ class TopLevelSet:
     def __init__(self, nelx: int = 60, nely: int = 30, volReq: float = 0.3, 
                 stepLength: int = 3, numReinit: int = 2, topWeight: int = 2):
         '''
-        Initialize the topological optimization problem.
+        初始化拓扑优化问题
 
         Parameters: 
         - nelx (int): Number of elements in the horizontal direction. Defaults to 60.
         - nely (int): Number of elements in the vertical direction. Defaults to 30.
-        - volReq (float): The required volume fraction of the final design. Defaults to 0.3.
+        - volReq : 最终设计所需的体积分数. Defaults to 0.3.
         - stepLength (int): The CFL time step size used in each iteration of the evolution equation. Defaults to 3.
         - numReinit (int): The number of algorithm iterations before performing level set reinitialization. Defaults to 2.
         - topWeight (int): Weight of the topology derivative term in the evolution equation. Defaults to 2.
