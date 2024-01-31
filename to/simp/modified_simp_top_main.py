@@ -70,11 +70,12 @@ bform.assembly()
 K = bform.get_matrix()
 print("K:", K.shape, "\n", K.toarray().round(4))
 
+# 定义载荷
 F = np.zeros(vgdof)
 F[1] = -1
 print("F:", F.shape, "\n", F.round(4))
 
-# 边界处理
+# 定义支撑(边界处理)
 fixeddofs = np.union1d( np.arange(0, 2*(nely+1), 2), np.array([2*(nelx+1)*(nely+1) - 1]) )
 dflag = fixeddofs
 F = F - K@uh.flat
