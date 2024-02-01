@@ -32,7 +32,7 @@ class TopLevelSet:
 
     def reinit(self, strucFull):
         """
-        Reinitialize the level set function for a given structure.
+        根据给定的结构重置化水平集函数
 
         This function extends the input structure by adding a boundary of void cells,
         computes the Euclidean distance to the nearest solid and void cells,
@@ -43,7 +43,7 @@ class TopLevelSet:
         - struc (numpy.ndarray): A 2D array representing the solid (1) and void (0) cells of the structure.
 
         Returns:
-        numpy.ndarray: A 2D array of the same shape as 'struc', representing the reinitialized level set function.
+        numpy.ndarray: A 2D array of the same shape as 'struc', 表示重置化后的水平集函数
         """
         # strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
         # strucFull[1:-1, 1:-1] = struc
@@ -294,8 +294,11 @@ class TopLevelSet:
                     # Global indices of the nodes of the element
                     n1 = (nely + 1) * elx + ely
                     n2 = (nely + 1) * (elx + 1) + ely
+                    print("n1:", n1)
+                    print("n2:", n2)
                     # Local displacement vector for the element
                     Ue = U[np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])]
+                    print("Ue:", Ue.shape, "\n", Ue)
 
                     # Compute shape sensitivity for compliance
                     shapeSens[ely, elx] = -max(struc[ely, elx], 0.0001) * Ue.T @ KE @ Ue

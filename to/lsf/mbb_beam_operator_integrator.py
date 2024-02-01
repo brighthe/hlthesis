@@ -15,6 +15,32 @@ class MbbBeamOperatorIntegrator:
         self.nely = nely
         self.struc = struc # 设计变量
 
+    def matrix(self):
+        """
+        Note:
+        考虑四个单元的四边形网格中的 0 号单元：
+        0,1 - 6,7
+        2,3 - 8,9
+        拓扑 : cell2dof : 0,1,6,7,8,9,2,3
+        FEALPy : cell2dof : 0,1,2,3,6,7,8,9
+        """
+        nu = self.nu
+        E0 = self.E0
+        k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
+                    -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
+        KE = E0 / (1 - nu**2) * np.array([
+            [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
+            [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
+            [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
+            [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
+            [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
+            [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
+            [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
+            [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
+        ])
+        return KE
+
+
     def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
         """
         构建 SIMP 中 MBB 梁有限元矩阵
@@ -27,18 +53,8 @@ class MbbBeamOperatorIntegrator:
 
         返回:
         Optional[np.ndarray]: 如果 out 参数为 None，则返回 SIMP 中 MBB 梁有限元矩阵，否则不返回
-
-        Note:
-        考虑四个单元的四边形网格中的 0 号单元：
-        0,1 - 6,7
-        2,3 - 8,9
-        拓扑 : cell2dof : 0,1,6,7,8,9,2,3
-        FEALPy : cell2dof : 0,1,2,3,6,7,8,9
         """
-        nu = self.nu
         struc = self.struc
-        nu = self.nu
-        E0 = self.E0
 
         mesh = space[0].mesh
         ldof = space[0].number_of_local_dofs()
@@ -57,25 +73,16 @@ class MbbBeamOperatorIntegrator:
         if space[0].doforder == 'sdofs':
             pass
         elif space[0].doforder == 'vdims':
-            k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
-                        -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
-            KE = E0 / (1 - nu**2) * np.array([
-                [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
-                [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
-                [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
-                [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
-                [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
-                [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
-                [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
-                [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
-            ])
+            KE = self.matrix()
 
+            # 用 FEALPy 中的自由度替换 Top 中的自由度
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
             KE = KE[idx, :][:, idx]
 
             # 确保矩阵非奇异
             struc = np.maximum(struc, 0.0001).ravel()
 
+            print("K:", K.shape)
             K[:] = np.einsum('i, jk -> ijk', struc, KE)
 
         if out is None:
