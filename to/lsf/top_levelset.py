@@ -8,8 +8,8 @@ from scipy.signal import convolve2d
 
 class TopLevelSet:
 
-    def __init__(self, nelx: int = 60, nely: int = 30, volReq: float = 0.3, 
-                stepLength: int = 3, numReinit: int = 2, topWeight: int = 2):
+    def __init__(self, nelx: int = 32, nely: int = 20, volReq: float = 0.4, 
+                stepLength: int = 2, numReinit: int = 3, topWeight: int = 2):
         '''
         初始化拓扑优化问题
 
@@ -30,7 +30,7 @@ class TopLevelSet:
         self._topWeight = topWeight
 
 
-    def reinit(self, strucFull):
+    def reinit(self, struc):
         """
         根据给定的结构重置化水平集函数
 
@@ -47,6 +47,10 @@ class TopLevelSet:
         """
         # strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
         # strucFull[1:-1, 1:-1] = struc
+
+        nely, nelx = struc.shape
+        strucFull = np.zeros((nely + 2, nelx + 2))
+        strucFull[1:-1, 1:-1] = struc
 
         # Compute the distance to the nearest void (0-valued) cells.
         dist_to_0 = ndimage.distance_transform_edt(strucFull)
@@ -136,11 +140,23 @@ class TopLevelSet:
                 edof = [2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3]
 
                 K[np.ix_(edof, edof)] += max(struc[ely, elx], 0.0001) * KE
+                #if (ely == 0) and (elx == 31):
+                #    print("struc:\n", struc)
+                #    print("test:", max(struc[ely, elx], 0.0001) * KE)
 
+        #import scipy.io as io
+        #K_test = io.loadmat('KFull.mat')
+        #K2_test = K_test['kFull']
+        #error = np.max(np.abs(K-K2_test))
+        #print("error:", error)
         # Define loads and supports (Bridge)
-        F[2 * (round(nelx/2)+1) * (nely+1) - 1] = 1
-        fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
-                                     np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
+        #F[2 * (round(nelx/2)+1) * (nely+1) - 1] = 1
+        #fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
+        #                             np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
+
+        # Define loads and supports (Cantilever)
+        F[2*(nelx+1)*(nely+1) - 1] = 1
+        fixeddofs = np.arange(2*(nely+1)-1)
         alldofs = np.arange( 2*(nely+1)*(nelx+1) )
         freedofs = np.setdiff1d(alldofs, fixeddofs)
 
@@ -198,20 +214,37 @@ class TopLevelSet:
         # Calculate the time step based on the maximum velocity present and a CFL condition factor
         dt = 0.1 / np.max(np.abs(v))
 
-        # Iteratively update the level set function based on the evolution equation
+        # 基于演化方程迭代更新水平集函数
         for _ in range(int(10 * stepLength)):
             # Compute forward and backward differences in the x and y directions
+            # 计算 x 方向和 y 方向的向前和向后差分
             dpx = np.roll(lsf, shift=(0, -1), axis=(0, 1)) - lsf # forward differences in x directions
             dmx = lsf - np.roll(lsf, shift=(0, 1), axis=(0, 1)) # backward differences in x directions
-            dpy = np.roll(lsf, shift=(-1, 0), axis=(0, 1)) - lsf
-            dmy = lsf - np.roll(lsf, shift=(1, 0), axis=(0, 1))
+            dpy = np.roll(lsf, shift=(-1, 0), axis=(0, 1)) - lsf # forward differences in y directions
+            dmy = lsf - np.roll(lsf, shift=(1, 0), axis=(0, 1)) # backward differences in y directions
             
-            # Use the upwind scheme to update the level set function
-            lsf = lsf - dt * np.minimum(vFull, 0) * np.sqrt( np.minimum(dmx, 0)**2 + np.maximum(dpx, 0)**2 + np.minimum(dmy, 0)**2 + np.maximum(dpy, 0)**2 ) \
-                    - dt * np.maximum(vFull, 0) * np.sqrt( np.maximum(dmx, 0)**2 + np.minimum(dpx, 0)**2 + np.maximum(dmy, 0)**2 + np.minimum(dpy, 0)**2 ) \
-                    - dt*w*gFull
+            # 使用迎风格式更新水平集函数
+            lsf = lsf \
+            - dt * np.minimum(vFull, 0) * \
+                np.sqrt( np.minimum(dmx, 0)**2 + np.maximum(dpx, 0)**2 + np.minimum(dmy, 0)**2 + np.maximum(dpy, 0)**2 ) \
+            - dt * np.maximum(vFull, 0) * \
+                np.sqrt( np.maximum(dmx, 0)**2 + np.minimum(dpx, 0)**2 + np.maximum(dmy, 0)**2 + np.minimum(dpy, 0)**2 ) \
+            - dt * w * gFull
+        ## Iteratively update the level set function based on the evolution equation
+        #for _ in range(int(10 * stepLength)):
+        #    # Compute forward and backward differences in the x and y directions
+        #    dpx = np.roll(lsf, shift=(0, -1), axis=(0, 1)) - lsf # forward differences in x directions
+        #    dmx = lsf - np.roll(lsf, shift=(0, 1), axis=(0, 1)) # backward differences in x directions
+        #    dpy = np.roll(lsf, shift=(-1, 0), axis=(0, 1)) - lsf
+        #    dmy = lsf - np.roll(lsf, shift=(1, 0), axis=(0, 1))
+        #    
+        #    # Use the upwind scheme to update the level set function
+        #    lsf = lsf - dt * np.minimum(vFull, 0) * np.sqrt( np.minimum(dmx, 0)**2 + np.maximum(dpx, 0)**2 + np.minimum(dmy, 0)**2 + np.maximum(dpy, 0)**2 ) \
+        #            - dt * np.maximum(vFull, 0) * np.sqrt( np.maximum(dmx, 0)**2 + np.minimum(dpx, 0)**2 + np.maximum(dmy, 0)**2 + np.minimum(dpy, 0)**2 ) \
+        #            - dt*w*gFull
 
         # Derive the new structure based on the zero level set
+        print("lsf2:\n", lsf.round(4))
         strucFULL = (lsf < 0).astype(int)
         struc = strucFULL[1:-1, 1:-1]
         
@@ -239,9 +272,12 @@ class TopLevelSet:
         # Load bearing pixels must remain solid - Bridge
         # Ensure load-bearing elements remain solid by setting their sensitivity to zero
         # The last row's first, middle two, and last elements are made zero
-        _, cols = shapeSens.shape
-        shapeSens_smoothed[-1, [0, cols//2 - 1, cols//2, -1]] = 0
-        topSens_smoothed[-1, [0, cols//2 - 1, cols//2, -1]] = 0
+        #_, cols = shapeSens.shape
+        #shapeSens_smoothed[-1, [0, cols//2 - 1, cols//2, -1]] = 0
+        #topSens_smoothed[-1, [0, cols//2 - 1, cols//2, -1]] = 0
+        # Cantilever
+        shapeSens_smoothed[-1, -1] = 0
+        topSens_smoothed[-1, -1] = 0
 
         # Evolve the level set function to find the new structure
         # The negative shape sensitivity is used as the velocity field
@@ -251,7 +287,7 @@ class TopLevelSet:
         return struc, lsf
 
 
-    def optimize(self, Num: int = 200):
+    def optimize(self, Num: int = 1):
         '''
         Perform the topology optimization process.
 
@@ -284,9 +320,11 @@ class TopLevelSet:
         alpha = 0.9 # Reduction rate for the penalty parameter
 
         # Start the optimization loop
-        for iterNum in range(1, Num + 1):
+        for iterNum in range(Num):
             # Perform finite element analysis and get global displacement vector
+            #print("struc2:\n", struc.round(4))
             U = self.FE(nelx, nely, KE, struc)
+            #print("U:\n", U.round(4))
 
             # Loop over each element to compute sensitivities
             for elx in range(nelx):
@@ -294,11 +332,8 @@ class TopLevelSet:
                     # Global indices of the nodes of the element
                     n1 = (nely + 1) * elx + ely
                     n2 = (nely + 1) * (elx + 1) + ely
-                    print("n1:", n1)
-                    print("n2:", n2)
                     # Local displacement vector for the element
                     Ue = U[np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])]
-                    print("Ue:", Ue.shape, "\n", Ue)
 
                     # Compute shape sensitivity for compliance
                     shapeSens[ely, elx] = -max(struc[ely, elx], 0.0001) * Ue.T @ KE @ Ue
@@ -307,10 +342,11 @@ class TopLevelSet:
                     coeff = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
                     UeT_KE_Ue = 4 * mu * Ue.T @ KE @ Ue
                     additional_term = (lambda_ - mu) * Ue.T @ KTr @ Ue
-                    topSens[ely, elx] = struc[ely, elx] * coeff * UeT_KE_Ue * (UeT_KE_Ue + additional_term)
+                    #topSens[ely, elx] = struc[ely, elx] * coeff * UeT_KE_Ue * (UeT_KE_Ue + additional_term)
+                    topSens[ely, elx] = struc[ely, elx] * coeff * (UeT_KE_Ue + additional_term)
 
             # Store the compliance objective for current iteration
-            objective[iterNum - 1] = -np.sum(shapeSens)
+            objective[iterNum] = -np.sum(shapeSens)
 
             # Calculate the current volume fraction
             volCurr = np.sum(struc) / (nelx * nely)
@@ -331,14 +367,18 @@ class TopLevelSet:
             # Perform the design update step
             struc, lsf = self.updateStep(lsf, shapeSens, topSens, stepLength, topWeight)
 
-            # Reinitialize the level set function at specified iterations
-            if iterNum % numReinit == 0:
-                lsf = self.reinit(struc)
 
-            print(f'Iter: {iterNum}, Objective Change: {np.all(abs(objective[-1]-objective[-6:]) < 0.01*abs(objective[-1]))}, Volume Change: {abs(volCurr-volReq) < 0.005}')
+            # Reinitialize the level set function at specified iterations
+            if (iterNum+1) % numReinit == 0:
+                print("lsf:\n", lsf.round(4))
+                lsf = self.reinit(struc)
+                print("struc2:\n", struc.round(4))
+                
+
+            #print(f'Iter: {iterNum}, Objective Change: {np.all(abs(objective[-1]-objective[-6:]) < 0.01*abs(objective[-1]))}, Volume Change: {abs(volCurr-volReq) < 0.005}')
 
             # Print the current iteration's results to the console
-            print(f'Iter: {iterNum}, Compliance.: {objective[iterNum - 1]:.4f}, Volfrac.: {volCurr:.3f}, la: {la:.3f}, La: {La:.3f}')
+            print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Volfrac.: {volCurr:.3f}')
 
             plt.imshow(-struc, cmap='gray', vmin=-1, vmax=0)
             plt.axis('off')
@@ -351,114 +391,5 @@ class TopLevelSet:
 
 
 if __name__ == "__main__":
-    from fealpy.mesh import QuadrangleMesh
-    nelx = 60
-    nely = 30
-    mesh = QuadrangleMesh.from_box(box = [0, nelx+2, 0, nely+2], nx = nelx+2, ny = nely+2)
-    node = mesh.entity('node') # 按列增加
-    print(node.shape)
-    print("node:", node)
-    # 网格中点的 x 坐标
-    # X = node[:, 0].reshape(nelx+1, nely+1).T
-    # print(X.shape)
-    # print("X:", X)
-    # 网格中点的 y 坐标
-    # Y = node[:, 1].reshape(nelx+1, nely+1).T
-    # print(Y.shape)
-    # print("Y:", Y)
-
-    struc = np.ones((nely, nelx))
-    print(struc.shape)
-    print("struc:\n", struc)
-    strucFull = np.zeros((struc.shape[0] + 2, struc.shape[1] + 2))
-    strucFull[1:-1, 1:-1] = struc
-    print(strucFull.shape)
-    print("strucFull:\n", strucFull)
-
     tls = TopLevelSet()
-
-    lsf = tls.reinit(strucFull = strucFull)
-    print(lsf.shape)
-    print("lsf:\n", lsf)
-
-    shapeSens = np.zeros((nely, nelx))
-    topSens = np.zeros((nely, nelx))
-    KE, KTr, lambda_, mu = tls.materialInfo()
-    print("KE:\n", KE, "\n", "KTr:\n", KTr, "\n", "lambda_:", lambda_, "mu:", mu)
-
-    # Allocate space for the objective function history
-    objective = np.zeros(200)
-
-    volReq = 0.3
-
-    # Initialize the augmented Lagrangian parameters for volume constraint
-    la = -0.01 # Lagrange multiplier
-    La = 1000 # Lagrange multiplier
-    alpha = 0.9 # Reduction rate for the penalty parameter
-
-
-    # Start the optimization loop
-    for iterNum in range(1):
-        # Perform finite element analysis and get global displacement vector
-        U = tls.FE(nelx, nely, KE, struc)
-        
-        # Loop over each element to compute sensitivities
-        for elx in range(nelx):
-            for ely in range(nely):
-                # Global indices of the nodes of the element
-                n1 = (nely + 1) * elx + ely
-                n2 = (nely + 1) * (elx + 1) + ely
-                # Local displacement vector for the element
-                Ue = U[np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])]
-
-                # Compute shape sensitivity for compliance
-                shapeSens[ely, elx] = -max(struc[ely, elx], 0.0001) * Ue.T @ KE @ Ue
-                
-                # Compute topological sensitivity for compliance
-                coeff = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
-                UeT_KE_Ue = 4 * mu * Ue.T @ KE @ Ue
-                additional_term = (lambda_ - mu) * Ue.T @ KTr @ Ue
-                topSens[ely, elx] = struc[ely, elx] * coeff * UeT_KE_Ue * (UeT_KE_Ue + additional_term)
-
-        # print("shapeSens:", shapeSens.shape, "\n", shapeSens)
-        # print("topSens:", topSens.shape, "\n", topSens)
-
-        # Store the compliance objective for current iteration
-        objective[iterNum] = -np.sum(shapeSens)
-        # print("objective:", objective)
-
-        # Calculate the current volume fraction
-        volCurr = np.sum(struc) / (nelx * nely)
-        # print("volCurr:", volCurr)
-        
-        # print("iterNum:", iterNum)
-        # Check for convergence after a certain number of iterations
-        if iterNum > 4 and (abs(volCurr-volReq) < 0.005) and np.all( abs(objective[-1]-objective[-6:-1]) < 0.01*abs(objective[-1]) ):
-            break
-
-        # Update the augmented Lagrangian parameters for the next iteration
-        if iterNum > 0:
-            la = la - 1/La * (volCurr - volReq)
-            La = alpha * La
-        #print("la:", la)
-        #print("La:", La)
-
-        # Update the sensitivities with augmented Lagrangian terms
-        shapeSens = shapeSens - la + 1/La * (volCurr - volReq)
-        topSens = topSens + np.pi * ( la - 1/La * (volCurr - volReq) )
-        print("shapeSens:", shapeSens.shape, "\n", shapeSens)
-        print("topSens:", topSens.shape, "\n", topSens)
-
-
-
-
-
-    import os
-    output = './mesh/'
-    if not os.path.exists(output):
-        os.makedirs(output)
-    fname = os.path.join(output, 'quad_mesh_2.vtu')
-    mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
-
-    mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
-    mesh.to_vtk(fname=fname)
+    tls.optimize()
