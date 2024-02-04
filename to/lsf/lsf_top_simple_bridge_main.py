@@ -1,13 +1,14 @@
 import numpy as np
 
-from lsf_top import TopLsf
+from lsf_top_simple_bridge import TopLsf
 
-nelx = 32
+# Simple Bridge
+nelx = 60
 nely = 20
-volReq = 0.4
-stepLength = 2;
+volReq = 0.3
+stepLength = 3;
 topWeight = 2;
-numReinit = 3
+numReinit = 2
 ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeight=topWeight, numReinit=3)
 
 # 初始化优化参数

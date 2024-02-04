@@ -1,21 +1,21 @@
 import numpy as np
 
 from fealpy.mesh import QuadrangleMesh
-from numpy.ma import shape
 
+# Simple Bridge
 class TopLsf:
 
-    def __init__(self, nelx: int = 32, nely: int = 20, volReq: float = 0.4, 
-                stepLength: int = 2, numReinit: int = 3, topWeight: int = 2):
+    def __init__(self, nelx: int = 60, nely: int = 20, volReq: float = 0.3, 
+                stepLength: int = 3, numReinit: int = 2, topWeight: int = 2):
         '''
         初始化拓扑优化问题
 
         Parameters: 
-        - nelx (int): 水平方向的单元数. Defaults to 32.
+        - nelx (int): 水平方向的单元数. Defaults to 60.
         - nely (int): 垂直方向的单元数. Defaults to 20.
-        - volReq (float) : 最终设计所需的体积分数. Defaults to 0.4.
-        - stepLength (int): 演化方程每次迭代中使用的 CFL 时间步长. Defaults to 2.
-        - numReinit (int): The number of algorithm iterations before performing level set reinitialization. Defaults to 3.
+        - volReq (float) : 最终设计所需的体积分数. Defaults to 0.3.
+        - stepLength (int): 演化方程每次迭代中使用的 CFL 时间步长. Defaults to 3.
+        - numReinit (int): 水平集函数重置化为符号距离函数的频率. Defaults to 2.
         - topWeight (int): 演化方程中 forcing 项的权重. Defaults to 2.
         '''
 
@@ -63,7 +63,7 @@ class TopLsf:
         的欧几里得距离，并计算水平集函数，该函数在 solid phase 内为负，在 void phase 中为正.
 
         Parameters:
-        - struc (numpy.ndarray): 表示结构的 solid(1) 和 void(0) 单元.
+        - struc (ndarray): 表示结构的 solid(1) 和 void(0) 单元.
 
         Returns:
         - lsf (ndarray): A 2D array of the same shape as 'struc', 表示重置化后的水平集函数
@@ -121,23 +121,16 @@ class TopLsf:
         K = bform.get_matrix()
         #print("K:", K.shape, "\n", K.toarray().round(4))
 
-        #import scipy.io as io
-        #K_test = io.loadmat('KFull.mat')
-        #K2_test = K_test['kFull']
-        #error = np.sum(np.abs(K2-K2_test))
-        #print("error:", error)
-
-
-        # 定义荷载 - Cantilever MBB
+        # 定义荷载 - Simple Bridge
         F = np.zeros(vgdof)
-        F[vgdof-1] = 1
+        F[2 * (round(nelx/2)+1) * (nely+1) - 1] = 1
+        #F[vgdof-1] = 1
         #print("F:", F.shape, "\n", F.round(4))
 
-        #from scipy.sparse import csr_matrix
-        #K2_test = csr_matrix(K2_test)
-        #K = K2_test
-        # 定义支撑(边界处理) - Cantilever MBB
-        fixeddofs = np.arange(0, 2*(nely+1), 1)
+        # 定义支撑(边界处理) - Simple Bridge
+        fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
+                                     np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
+        #fixeddofs = np.arange(0, 2*(nely+1), 1)
         dflag = fixeddofs
         #print("dflag:", dflag)
         F = F - K@uh.flat
@@ -207,10 +200,11 @@ class TopLsf:
         - lsf (numpy.ndarray): The updated level set function after the design step.
         """
 
-        # Load bearing pixels must remain solid - Cantilever MBB
-        shapeSens[-1, -1] = 0
+        # Load bearing pixels must remain solid - Simple Bridge
+        _, cols = shapeSens.shape
+        shapeSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
+        topSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
         #print("shapeSens4:", shapeSens.shape, "\n", shapeSens)
-        topSens[-1, -1] = 0
         #print("topSens4:", topSens.shape, "\n", topSens)
 
         # 求解水平集函数的演化方程以更新结构
