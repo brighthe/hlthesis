@@ -66,7 +66,7 @@ class TopLsf:
         - struc (ndarray): 表示结构的 solid(1) 和 void(0) 单元.
 
         Returns:
-        - lsf (ndarray): A 2D array of the same shape as 'struc', 表示重置化后的水平集函数
+        - lsf (ndarray): 表示重置化后的水平集函数
         """
         from scipy import ndimage
 
@@ -100,14 +100,11 @@ class TopLsf:
         space = Space(mesh, p=p, doforder='vdims')
         GD = 2
         uh = space.function(dim=GD)
-        #print("uh:", uh.shape)
         vspace = GD*(space, )
         gdof = vspace[0].number_of_global_dofs()
         vgdof = gdof * GD
         ldof = vspace[0].number_of_local_dofs()
         vldof = ldof * GD
-        #print("vgdof", vgdof)
-        #print("vldof", vldof)
 
         E0 = 1.0
         nu = 0.3
@@ -116,20 +113,16 @@ class TopLsf:
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
-        #print("KK:", KK.shape, "\n", KK.round(4))
         bform.assembly()
         K = bform.get_matrix()
-        #print("K:", K.shape, "\n", K.toarray().round(4))
 
         # 定义荷载 - Cantilever MBB
         F = np.zeros(vgdof)
         F[vgdof-1] = 1
-        #print("F:", F.shape, "\n", F.round(4))
 
         # 定义支撑(边界处理) - Cantilever MBB
         fixeddofs = np.arange(0, 2*(nely+1), 1)
         dflag = fixeddofs
-        #print("dflag:", dflag)
         F = F - K@uh.flat
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
         bdIdx[dflag.flat] = 1
@@ -140,7 +133,6 @@ class TopLsf:
 
         # 线性方程组求解
         uh.flat[:] = spsolve(K, F)
-        #print("uh:", uh.shape, "\n", uh)
 
         reshaped_uh = uh.reshape(-1)
         cell2dof = vspace[0].cell_to_dof()
@@ -186,27 +178,24 @@ class TopLsf:
         使用形状灵敏度和拓扑灵敏度执行设计更新
         
         Parameters:
-        - lsf (ndarray): The level set function, which describes the interface of the current structure.
-        - shapeSens : 当前设计的形状灵敏度.
-        - topSens : 当前设计的拓扑灵敏度.
+        - lsf (ndarray): 水平集函数，描述当前结构的界面.
+        - shapeSens (ndarray): 当前设计的形状灵敏度.
+        - topSens (ndarray): 当前设计的拓扑灵敏度.
         - stepLength (float): The step length parameter controlling the extent of the evolution.
         - topWeight (float): The weighting factor for the topological sensitivity in the evolution.
 
         Returns:
-        - struc (numpy.ndarray): The updated structure after the design step, represented as a 2D array.
-        - lsf (numpy.ndarray): The updated level set function after the design step.
+        - struc (ndarray-(nely, nelx)): 设计更新后的新结构，只能为 0 或 1.
+        - lsf (ndarray-(nely+2, nelx+2)): 设计更新后的新水平集函数.
         """
 
         # Load bearing pixels must remain solid - Cantilever MBB
         shapeSens[-1, -1] = 0
-        #print("shapeSens4:", shapeSens.shape, "\n", shapeSens)
         topSens[-1, -1] = 0
-        #print("topSens4:", topSens.shape, "\n", topSens)
 
         # 求解水平集函数的演化方程以更新结构
         # 形状灵敏度的负数作为速度场
         # 拓扑灵敏度按 topWeight 因子缩放，仅应用于结构的 solid 部分作为 forcing 项
-        #print("lsf_origin:\n", lsf.round(4))
         struc, lsf = self.evolve(-shapeSens, topSens*(lsf[1:-1, 1:-1] < 0), lsf, stepLength, topWeight)
 
         return struc, lsf
@@ -223,16 +212,12 @@ class TopLsf:
         - w (float): A weighting parameter for the influence of the force term on the evolution.
 
         Returns:
-        - struc (ndarray): 演化后的更新结构，只能为 0 或 1.
-        - lsf (ndarray): 演化的水平集函数.
+        - struc (ndarray-(nely, nelx)): 演化后的更新结构，只能为 0 或 1.
+        - lsf (ndarray-(nely+2, nelx+2)): 演化的水平集函数.
         """
         # 用零边界填充速度场和 forcing 项
-        #print("v:", v)
-        #print("g:", g)
         vFull = np.pad(v, ((1,1),(1,1)), mode='constant', constant_values=0)
         gFull = np.pad(g, ((1,1),(1,1)), mode='constant', constant_values=0)
-        #print("vFull:", vFull)
-        #print("gFull:", gFull)
 
         # 基于 CFL 值选择演化的时间步
         dt = 0.1 / np.max(np.abs(v))
@@ -257,7 +242,6 @@ class TopLsf:
         # 基于零水平集导出新结构
         strucFULL = (lsf < 0).astype(int)
         struc = strucFULL[1:-1, 1:-1]
-        #print("lsf_updated:\n", lsf.round(4))
         
         return struc, lsf
 

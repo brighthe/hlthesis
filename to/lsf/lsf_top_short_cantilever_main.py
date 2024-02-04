@@ -71,28 +71,18 @@ num = 200
 objective = np.zeros(num)
 for iterNum in range(num):
     # 计算全局位移和局部单元位移
-    #print("iterNum:", iterNum)
     U, Ue = ts.FE(mesh=mesh, struc=struc)
-    #print("struc:\n", struc.round(4))
-    #print("U:\n", U.round(4))
 
     # 计算每个单元的柔度的形状灵敏度
     temp1 = -np.maximum(struc, 0.0001)
-    #print("temp1:", temp1.shape, "\n", temp1.round(4))
-    #temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nely, nelx).T
     temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
-    #print("temp2:", temp2.shape, "\n", temp2.round(4))
     shapeSens[:] = np.einsum('ij, ij -> ij', temp1, temp2)
-    #print("shapeSens1:", shapeSens.shape, "\n", shapeSens.round(4))
 
     # 计算每个单元的柔度的拓扑灵敏度
     coef = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
-    #temp3 = (4 * mu) * np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nely, nelx).T
-    #temp4 = (lambda_ - mu) * np.einsum('ij, jk, ki -> i', Ue, KTr, Ue.T).reshape(nely, nelx).T
     temp3 = (4 * mu) * np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
     temp4 = (lambda_ - mu) * np.einsum('ij, jk, ki -> i', Ue, KTr, Ue.T).reshape(nelx, nely).T
     topSens[:] = np.einsum('ij, ij -> ij', coef*struc, (temp3+temp4))
-    #print("topSens1:", topSens.shape, "\n", topSens.round(4))
 
     # 存储当前迭代的 compliance objective
     objective[iterNum] = -np.sum(shapeSens)
@@ -115,8 +105,6 @@ for iterNum in range(num):
     if iterNum > 5 and (abs(volCurr-volReq) < 0.005) and \
         np.all( np.abs(objective[iterNum]-objective[iterNum-5:iterNum]) < 0.01*np.abs(objective[iterNum]) ):
         break
-    #if iterNum > 5 and (abs(volCurr-volReq) < 0.005):
-    #    break
 
     # 设置  augmented Lagrangian parameters
     if iterNum == 0:
@@ -143,13 +131,10 @@ for iterNum in range(num):
     # 执行设计更新
     struc, lsf = ts.updateStep(lsf=lsf, shapeSens=shapeSens, topSens=topSens,
                                stepLength=stepLength, topWeight=topWeight)
-    #print("struc:", struc.shape, "\n", struc)
-    #print("lsf1:", lsf.shape, "\n", lsf.round(4))
 
     # Reinitialize the level set function at specified iterations
     if (iterNum+1) % numReinit == 0:
         lsf = ts.reinit(struc)
-        #print("lsf2:", lsf.shape, "\n", lsf.round(4))
 
 plt.ioff()
 plt.show()
