@@ -135,8 +135,8 @@ class TopLevelSet:
 
         for elx in range(nelx):
             for ely in range(nely):
-                n1 = (nely+1) * elx + ely
-                n2 = (nely+1) * (elx+1) + ely
+                n1 = (nely + 1) * elx + (ely + 1)
+                n2 = (nely + 1) * (elx + 1) + (ely + 1)
                 edof = [2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3]
 
                 K[np.ix_(edof, edof)] += max(struc[ely, elx], 0.0001) * KE
@@ -330,8 +330,8 @@ class TopLevelSet:
             for elx in range(nelx):
                 for ely in range(nely):
                     # Global indices of the nodes of the element
-                    n1 = (nely + 1) * elx + ely
-                    n2 = (nely + 1) * (elx + 1) + ely
+                    n1 = (nely + 1) * elx + (ely + 1)
+                    n2 = (nely + 1) * (elx + 1) + (ely + 1)
                     # Local displacement vector for the element
                     Ue = U[np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])]
 

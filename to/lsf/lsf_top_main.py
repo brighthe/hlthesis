@@ -14,8 +14,6 @@ ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeigh
 nelx, nely, volReq = ts._nelx, ts._nely, ts._volReq
 #mesh = ts._mesh
 mesh = ts._mesh_top2
-#mesh2 = ts._mesh2
-#mesh3 = ts._mesh_top2
 
 node = mesh.entity('node') # 按列增加
 #node2 = mesh2.entity('node') # 按列增加
@@ -32,26 +30,11 @@ node = mesh.entity('node') # 按列增加
 #mesh.add_plot(axes)
 #mesh.find_node(axes, showindex=True, fontsize=12, fontcolor='r')
 #mesh.find_cell(axes, showindex=True, fontsize=12, fontcolor='b')
-#
-#fig = plt.figure()
-#axes = fig.gca()
-#mesh2.add_plot(axes)
-#mesh2.find_node(axes, showindex=True, fontsize=12, fontcolor='r')
-#mesh2.find_cell(axes, showindex=True, fontsize=12, fontcolor='b')
-#
-#fig = plt.figure()
-#axes = fig.gca()
-#mesh3.add_plot(axes)
-#mesh3.find_node(axes, showindex=True, fontsize=12, fontcolor='r')
-#mesh3.find_cell(axes, showindex=True, fontsize=12, fontcolor='b')
 #plt.show()
-
 
 
 cell = mesh.entity('cell') # 左下角逆时针
 print("node:", node.shape, "\n", node)
-#print("node2:", node2.shape, "\n", node2)
-#print("node3:", node3.shape, "\n", node3)
 print("cell:", cell.shape, "\n", cell)
 
 #def reorder_nodes(node_data):
@@ -59,7 +42,6 @@ print("cell:", cell.shape, "\n", cell)
 #    # and then by the first column (x values) in ascending order
 #    sorted_indices = np.lexsort((-node_data[:, 1], node_data[:, 0]))
 #    return node_data[sorted_indices]
-
 
 
 # 定义初始结构为 entirely solid
@@ -83,15 +65,15 @@ KTr = integrator.trace_matrix()
 lambda_, mu = integrator.lame()
 
 # 优化循环
-num = 6
+num = 200
 # 初始化 compliance objective value
 objective = np.zeros(num)
 for iterNum in range(num):
     # 计算全局位移和局部单元位移
-    print("iterNum:", iterNum)
-    print("struc:\n", struc.round(4))
+    #print("iterNum:", iterNum)
     U, Ue = ts.FE(mesh=mesh, struc=struc)
-    print("U:\n", U.round(4))
+    #print("struc:\n", struc.round(4))
+    #print("U:\n", U.round(4))
 
     # 计算每个单元的柔度的形状灵敏度
     temp1 = -np.maximum(struc, 0.0001)
@@ -111,9 +93,6 @@ for iterNum in range(num):
     topSens[:] = np.einsum('ij, ij -> ij', coef*struc, (temp3+temp4))
     #print("topSens1:", topSens.shape, "\n", topSens.round(4))
 
-    #if iterNum == 3:
-    #    print("U:", U.round(4))
-        #print("shapeSens:", shapeSens.round(4))
     # 存储当前迭代的 compliance objective
     objective[iterNum] = -np.sum(shapeSens)
 
@@ -121,11 +100,6 @@ for iterNum in range(num):
     volCurr = np.sum(struc) / (nelx*nely)
 
     # 打印当前迭代的结果
-    #print(f'Iter: {iterNum}, \
-    #      Objective Change: {np.all(abs(objective[-1]-objective[-6:]) < 0.01*abs(objective[-1]))}, \
-    #      Volume Change: {abs(volCurr-volReq) < 0.005}')
-    #print("struc:", np.sum(struc))
-
     print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Volfrac.: {volCurr:.3f}')
 
     # 绘制结果图
@@ -138,8 +112,10 @@ for iterNum in range(num):
 
     # 五次迭代后执行收敛性检查
     if iterNum > 5 and (abs(volCurr-volReq) < 0.005) and \
-        np.all( abs(objective[-1]-objective[-6:-1]) < 0.01*abs(objective[-1]) ):
+        np.all( np.abs(objective[iterNum]-objective[iterNum-5:iterNum]) < 0.01*np.abs(objective[iterNum]) ):
         break
+    #if iterNum > 5 and (abs(volCurr-volReq) < 0.005):
+    #    break
 
     # 设置  augmented Lagrangian parameters
     if iterNum == 0:
@@ -152,8 +128,6 @@ for iterNum in range(num):
         La = alpha * La
 
     # Update the sensitivities with augmented Lagrangian terms
-    #print("test2:", volCurr-volReq)
-    #print("test2:", -la + 1/La * (volCurr-volReq))
     shapeSens = shapeSens - la + 1/La * (volCurr - volReq)
     #print("shapeSens2:", shapeSens.shape, "\n", shapeSens.round(4))
     topSens = topSens + np.pi * ( la - 1/La * (volCurr - volReq) )
@@ -166,22 +140,15 @@ for iterNum in range(num):
     #print("topSens3:", topSens.shape, "\n", topSens.round(4))
 
     # 执行设计更新
-    struc, lsf = ts.updateStep(lsf=lsf, shapeSens=shapeSens, topSens=topSens, stepLength=stepLength, topWeight=topWeight)
+    struc, lsf = ts.updateStep(lsf=lsf, shapeSens=shapeSens, topSens=topSens,
+                               stepLength=stepLength, topWeight=topWeight)
     #print("struc:", struc.shape, "\n", struc)
+    #print("lsf1:", lsf.shape, "\n", lsf.round(4))
 
     # Reinitialize the level set function at specified iterations
     if (iterNum+1) % numReinit == 0:
-        #print("lsf:\n", lsf.round(4))
         lsf = ts.reinit(struc)
-        #print("struc2:\n", struc.round(4))
-        #print("lsf:\n", lsf.round(4))
-    #if iterNum == 2:
-    #    print("struc:\n", struc.round(4))
-
-    #print("shapeSens:", shapeSens.shape, "\n", shapeSens.round(4))
-    #print("topSens:", topSens.shape, "\n", topSens.round(4))
-    #print("lsf:\n", lsf.round(4))
-
+        #print("lsf2:", lsf.shape, "\n", lsf.round(4))
 
 plt.ioff()
 plt.show()
@@ -191,15 +158,15 @@ plt.show()
 
 
 
-# 可视化
-import os
-output = './mesh/'
-if not os.path.exists(output):
-    os.makedirs(output)
-fname = os.path.join(output, 'lsf_quad_mesh.vtu')
-#mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
-#mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
-mesh.to_vtk(fname=fname)
+## 可视化
+#import os
+#output = './mesh/'
+#if not os.path.exists(output):
+#    os.makedirs(output)
+#fname = os.path.join(output, 'lsf_quad_mesh.vtu')
+##mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
+##mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
+#mesh.to_vtk(fname=fname)
 
 
 

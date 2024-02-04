@@ -33,20 +33,17 @@ class TopLsf:
                          [3, 6, 7, 4],
                          [4, 7, 8, 5]], dtype=np.int_)
         self._mesh = QuadrangleMesh(node=node, cell=cell)
+
         nx = self._nelx
         ny = self._nely
         x = np.linspace(0, nx, nx + 1)
-        y = np.linspace(ny, 0, ny + 1)  # Start from the top (ny) and go to the bottom (0) for y
+        y = np.linspace(ny, 0, ny + 1)
         xv, yv = np.meshgrid(x, y, indexing='ij')
-        # Flatten the arrays and stack them as columns for nodes
         nodes = np.vstack([xv.ravel(), yv.ravel()]).T
-        # Create the cells using the indices of the nodes
         cells = []
         for j in range(nx):
             for i in range(ny):
-                # Each cell is defined by the indices of its four corners
-                # Adjusted for the row-wise top-down progression
-                top_left = i + ny * j + j  # corrected index for top-left
+                top_left = i + ny * j + j
                 top_right = top_left + 1
                 bottom_left = top_left + ny + 1
                 bottom_right = bottom_left + 1
@@ -54,6 +51,7 @@ class TopLsf:
         node = nodes
         cell = np.array(cells)
         self._mesh_top2 = QuadrangleMesh(node=node, cell=cell)
+
         self._mesh2 = QuadrangleMesh.from_box(box = [0, self._nelx, 0, self._nely], \
                                               nx = self._nelx, ny = self._nely)
 
@@ -118,16 +116,16 @@ class TopLsf:
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
+        #print("KK:", KK.shape, "\n", KK.round(4))
         bform.assembly()
         K = bform.get_matrix()
-        K2 = K.toarray()
         #print("K:", K.shape, "\n", K.toarray().round(4))
 
-        import scipy.io as io
-        K_test = io.loadmat('KFull.mat')
-        K2_test = K_test['kFull']
-        error = np.sum(np.abs(K2-K2_test))
-        print("error:", error)
+        #import scipy.io as io
+        #K_test = io.loadmat('KFull.mat')
+        #K2_test = K_test['kFull']
+        #error = np.sum(np.abs(K2-K2_test))
+        #print("error:", error)
 
 
         # 定义荷载 - Cantilever MBB
@@ -198,7 +196,7 @@ class TopLsf:
         使用形状灵敏度和拓扑灵敏度执行设计更新
         
         Parameters:
-        - lsf (numpy.ndarray): The level set function, which describes the interface of the current structure.
+        - lsf (ndarray): The level set function, which describes the interface of the current structure.
         - shapeSens : 当前设计的形状灵敏度.
         - topSens : 当前设计的拓扑灵敏度.
         - stepLength (float): The step length parameter controlling the extent of the evolution.
@@ -266,7 +264,6 @@ class TopLsf:
                 np.sqrt( np.maximum(dmx, 0)**2 + np.minimum(dpx, 0)**2 + np.maximum(dmy, 0)**2 + np.minimum(dpy, 0)**2 ) \
             - dt * w * gFull
 
-        print("lsf2:\n", lsf.round(4))
         # 基于零水平集导出新结构
         strucFULL = (lsf < 0).astype(int)
         struc = strucFULL[1:-1, 1:-1]

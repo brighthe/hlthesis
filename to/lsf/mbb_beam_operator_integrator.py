@@ -98,22 +98,26 @@ class MbbBeamOperatorIntegrator:
             pass
         elif space[0].doforder == 'vdims':
             KE = self.stiff_matrix()
+            #print("KE0", KE.round(4))
 
             # 用 FEALPy 中的自由度替换 Top 中的自由度
             #cell2dof = space[0].cell_to_dof()
             #print("cell2dof:", cell2dof)
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
             KE = KE[idx, :][:, idx]
+            #print("KE0", KE.round(4))
 
             # 确保矩阵非奇异
             #print("struc2:\n", np.maximum(struc, 0.0001).round(4))
-            struc = np.maximum(struc, 0.0001).ravel()
-            #print("struc:", struc)
+            #struc = np.maximum(struc, 0.0001).ravel()
+            struc = np.maximum(struc, 0.0001)
+            #print("struc:", struc.flatten(order='F'))
 
             #print("K:", K.shape)
-            K[:] = np.einsum('i, jk -> ijk', struc, KE)
-            print("KE:\n", KE)
-            print("K[31]:\n", K[31])
+            # 在将结构乘上去时，注意单元是按列排序的，所以 struc 要按列展开
+            K[:] = np.einsum('i, jk -> ijk', struc.flatten(order='F'), KE)
+            #print("KE:\n", KE)
+            #print("K[31]:\n", K[31])
             #for elx in range(self.nelx):
             #    for ely in range(self.nely):
             #        K[:] = np.maximum(struc(ely, elx), 0.0001) * KE
