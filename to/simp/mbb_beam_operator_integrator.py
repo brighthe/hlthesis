@@ -18,19 +18,8 @@ class MbbBeamOperatorIntegrator:
         self.penal = penal # Penalization Power
         self.Emin = Emin
 
-    def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
+    def stiff_matrix(self):
         """
-        构建 SIMP 中 MBB 梁有限元矩阵
-
-        参数:
-        space (Tuple): 有限元空间
-        index (Union[np.s_, np.ndarray]): 选定的单元索引，默认为全部单元
-        cellmeasure (Optional[np.ndarray]): 对应单元的度量，默认为 None
-        out (Optional[np.ndarray]): 输出矩阵，默认为 None
-
-        返回:
-        Optional[np.ndarray]: 如果 out 参数为 None，则返回 SIMP 中 MBB 梁有限元矩阵，否则不返回
-
         Note:
         考虑四个单元的四边形网格中的 0 号单元：
         0,1 - 6,7
@@ -39,9 +28,36 @@ class MbbBeamOperatorIntegrator:
         FEALPy : cell2dof : 0,1,2,3,6,7,8,9
         """
         nu = self.nu
+        E0 = self.E0
+        k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
+                    -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
+        KE = E0 / (1 - nu**2) * np.array([
+            [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
+            [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
+            [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
+            [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
+            [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
+            [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
+            [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
+            [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
+        ])
+        return KE
+
+    def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
+        """
+        构建 SIMP 中梁有限元矩阵
+
+        参数:
+        space (Tuple): 有限元空间
+        index (Union[np.s_, np.ndarray]): 选定的单元索引，默认为全部单元
+        cellmeasure (Optional[np.ndarray]): 对应单元的度量，默认为 None
+        out (Optional[np.ndarray]): 输出矩阵，默认为 None
+
+        返回:
+        Optional[np.ndarray]: 如果 out 参数为 None，则返回 SIMP 中梁有限元矩阵，否则不返回
+        """
         x = self.x
         penal = self.penal
-        nu = self.nu
         E0 = self.E0
         Emin = self.Emin
         xPhys = self.xPhys
@@ -63,29 +79,21 @@ class MbbBeamOperatorIntegrator:
         if space[0].doforder == 'sdofs':
             pass
         elif space[0].doforder == 'vdims':
-            k = [1/2 - nu/6, 1/8 + nu/8, -1/4 - nu/12, -1/8 + 3*nu/8,
-            -1/4 + nu/12, -1/8 - nu/8, nu/6, 1/8 - 3*nu/8]
-            KE = E0 / (1 - nu**2) * np.array([
-                [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
-                [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
-                [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
-                [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
-                [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
-                [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
-                [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
-                [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
-            ])
+            KE = self.stiff_matrix()
+
+            # 用 FEALPy 中的自由度替换 Top 中的自由度
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
             KE = KE[idx, :][:, idx]
 
             if xPhys is None:
-                coef = x.ravel()**penal
+                coef = x ** penal
             elif x is None:
-                coef = Emin + xPhys.ravel()**penal * (E0 - Emin)
+                coef = Emin + xPhys ** penal * (E0 - Emin)
             else:
                 ValueError("coef 不支持该类型")
 
-            K[:] = np.einsum('i, jk -> ijk', coef, KE)
+            # 在将结构乘上去时，注意单元是按列排序的，所以 coef 要按列展开
+            K[:] = np.einsum('i, jk -> ijk', coef.flatten(order='F'), KE)
 
         if out is None:
             return K
