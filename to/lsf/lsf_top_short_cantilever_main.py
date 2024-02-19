@@ -45,7 +45,7 @@ print("cell:", cell.shape, "\n", cell)
 #    return node_data[sorted_indices]
 
 
-# 定义初始结构为 entirely solid
+# 定义开始优化时的初始结构为 entirely solid
 struc = np.ones((nely, nelx))
 #print("struc:", struc.shape, "\n", struc)
 
@@ -65,7 +65,7 @@ KE = integrator.stiff_matrix()
 KTr = integrator.trace_matrix()
 lambda_, mu = integrator.lame()
 
-# 优化循环
+# 优化循环的最大迭代次数
 num = 200
 # 初始化 compliance objective value
 objective = np.zeros(num)
