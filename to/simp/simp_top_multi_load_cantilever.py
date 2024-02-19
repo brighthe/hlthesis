@@ -2,7 +2,7 @@ import numpy as np
 
 from fealpy.mesh import QuadrangleMesh
 
-# Short Cantilever
+# Multi-Load Cantilever
 class TopSimp:
     def __init__(self, nelx: int = 32, nely: int = 20, volfrac: float = 0.4, 
                 penal: float = 3.0, rmin: float = 1.2):
@@ -61,7 +61,9 @@ class TopSimp:
         space = Space(mesh, p=p, doforder='vdims')
         GD = 2
         uh = space.function(dim=GD)
-        #print("uh:", uh.shape, "\n", uh.round(4))
+        # 适用于多载荷情况下的位移
+        uh = np.repeat(uh[:, :, np.newaxis], 2, axis=2)
+        #print("uh:", uh.shape, "\n", uh[:, :, 0].round(4))
         vspace = GD*(space, )
         gdof = vspace[0].number_of_global_dofs()
         vgdof = gdof * GD
@@ -78,34 +80,47 @@ class TopSimp:
         bform.assembly()
         K = bform.get_matrix()
 
-        # 定义荷载 - Short Cantilever
-        F = np.zeros(vgdof)
-        F[vgdof-1] = -1
+        # 定义荷载 - Multi-Load Cantilever
+        F = np.zeros((vgdof, 2))
+        F[vgdof-1, 0] = -1
+        F[2*nelx*(nely+1)+1, 1] = 1
         #print("F:", F.shape, "\n", F.round(4))
 
-        # 定义支撑(边界处理) - Short Cantilever
+        # 定义支撑(边界处理) - Multi-Load Cantilever
         fixeddofs = np.arange(0, 2*(nely+1), 1)
         dflag = fixeddofs
         #print("dflag:", dflag)
-        F = F - K@uh.flat
+        F = F - K@uh.reshape(-1, 2)
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
         bdIdx[dflag.flat] = 1
         D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
         D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
         K = D0@K@D0 + D1
-        F[dflag.flat] = uh.ravel()[dflag.flat]
+        #print("F2:", F[dflag.flat].shape, "\n", F[dflag.flat].round(4))
+        F[dflag.flat] = uh.reshape(-1, 2)[dflag.flat]
+        #print("F:", F.shape, "\n", F.round(4))
 
         # 线性方程组求解
         uh.flat[:] = spsolve(K, F)
+        #print("uh[:, :, 0]:", uh[:, :, 0].shape, "\n", uh[:, :, 0].round(4))
+        #print("uh[:, :, 1]:", uh[:, :, 1].shape, "\n", uh[:, :, 1].round(4))
 
-        reshaped_uh = uh.reshape(-1)
         cell2dof = vspace[0].cell_to_dof()
+        #print("cell2dof:", cell2dof.shape, "\n", cell2dof)
         NC = mesh.number_of_cells()
-        updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
-        idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
-        # 用 Top 中的自由度替换 FEALPy 中的自由度
-        updated_cell2dof = updated_cell2dof[:, idx]
-        ue = reshaped_uh[updated_cell2dof] # (NC, ldof*GD)
+        ue = np.zeros((NC, vldof, 2))
+
+        for i in range(2):
+            reshaped_uh = uh[:, : ,i].reshape(-1)
+            # 每个单元的自由度（每个节点两个自由度）
+            updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
+            #print("updated_cell2dof:", updated_cell2dof.shape, "\n", updated_cell2dof)
+            idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
+            # 用 Top 中的自由度替换 FEALPy 中的自由度
+            updated_cell2dof = updated_cell2dof[:, idx]
+            ue[:, :, i] = reshaped_uh[updated_cell2dof]
+
+        #print("ue:", ue.shape, "\n", ue.round(4))
 
         return uh, ue
 

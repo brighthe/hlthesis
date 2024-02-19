@@ -1,10 +1,10 @@
 import numpy as np
 
-from simp_top_short_cantilever import TopSimp
+from simp_top_multi_load_cantilever import TopSimp
 
-# Short Cantilever
-nelx = 32
-nely = 20
+# Multi-Load Cantilever
+nelx = 30
+nely = 30
 volfrac = 0.4
 penal = 3.0
 rmin = 1.2
@@ -29,7 +29,6 @@ nu = 0.3
 integrator = MbbBeamOperatorIntegrator(nu=nu, E0=E0, nelx=nelx, nely=nely, penal=penal, x=x)
 KE = integrator.stiff_matrix()
 
-
 loop = 0 # 迭代次数
 change = 1.0 # 迭代中设计变量的最大变化
 
@@ -43,14 +42,17 @@ while change > 0.01:
 
     # 计算目标函数
     c = 0 # 初始化目标函数为 0
-    temp1 = x ** penal
-    temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
-    c = c + np.einsum('ij, ij -> ', temp1, temp2)
+    # 初始化每个单元的目标函数的灵敏度为 0
+    dc = np.zeros((nely, nelx))
+    #TODO:能否不要循环
+    for i in range(2):
+        temp1 = x ** penal
+        temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
+        c = c + np.einsum('ij, ij -> ', temp1, temp2)
 
-    # 计算每个单元的目标函数的灵敏度
-    temp3 = -penal * x ** (penal-1)
-    dc[:] = np.einsum('ij, ij -> ij', temp3, temp2)
-    print("dc:", dc)
+        # 计算每个单元的目标函数的灵敏度
+        temp3 = -penal * x ** (penal-1)
+        dc[:] = dc[:] + np.einsum('ij, ij -> ij', temp3, temp2)
 
     # 灵敏度过滤
     dc = ts.check(rmin=rmin, x=x, dc=dc)
