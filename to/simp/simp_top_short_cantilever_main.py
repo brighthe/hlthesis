@@ -1,13 +1,13 @@
 import numpy as np
 
-from simp_top_mbb_cantilever import TopSimp
+from simp_top_short_cantilever import TopSimp
 
-# MBB 悬臂梁
-nelx = 60
+# Short Cantilever
+nelx = 32
 nely = 20
-volfrac = 0.5
+volfrac = 0.4
 penal = 3.0
-rmin = 1.5
+rmin = 1.2
 ts = TopSimp(nelx=nelx, nely=nely, volfrac=volfrac, penal=penal, rmin=rmin)
 
 # 初始化优化参数
