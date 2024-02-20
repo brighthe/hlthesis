@@ -1,13 +1,13 @@
 import numpy as np
 
-from simp_top_short_cantilever import TopSimp
+from simp_top_cantilever_fixed_hole import TopSimp
 
-# Short Cantilever
-nelx = 32
-nely = 20
-volfrac = 0.4
+# Cantilever beam with a fixed hole
+nelx = 45
+nely = 30
+volfrac = 0.5
 penal = 3.0
-rmin = 1.2
+rmin = 1.5
 ts = TopSimp(nelx=nelx, nely=nely, volfrac=volfrac, penal=penal, rmin=rmin)
 
 # 初始化优化参数
@@ -20,6 +20,14 @@ cell = mesh.entity('cell') # 左下角逆时针
 # 根据体积分数 volfrac 初始化设计变量场
 x = np.full((nely, nelx), volfrac)
 
+# 利用 passive 单元给结构打孔洞
+passive = np.zeros((nely, nelx))
+for ely in range(nely):
+    for elx in range(nelx):
+        if np.sqrt((ely+1 - nely/2.)**2 + (elx+1 - nelx/3.)**2) < nely / 3.:
+            passive[ely, elx] = 1
+            x[ely, elx] = 0.001
+
 # 初始化每个单元的目标函数的灵敏度为 0
 dc = np.zeros((nely, nelx))
 
@@ -28,7 +36,6 @@ E0 = 1.0
 nu = 0.3
 integrator = MbbBeamOperatorIntegrator(nu=nu, E0=E0, nelx=nelx, nely=nely, penal=penal, x=x)
 KE = integrator.stiff_matrix()
-
 
 loop = 0 # 迭代次数
 change = 1.0 # 迭代中设计变量的最大变化
@@ -55,7 +62,7 @@ while change > 0.01:
     dc = ts.check(rmin=rmin, x=x, dc=dc)
 
     # 使用 Optimality Criteria Method 更新设计
-    x = ts.OC(volfrac=volfrac, x=x, dc=dc)
+    x = ts.OC(volfrac=volfrac, x=x, dc=dc, passive=passive)
 
     # 计算当前的 volume fraction
     volfrac = np.sum(x) / (nelx*nely)
