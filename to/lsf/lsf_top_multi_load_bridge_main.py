@@ -1,14 +1,14 @@
 import numpy as np
 
-from lsf_top_simple_bridge import TopLsf
+from lsf_top_multi_load_bridge import TopLsf
 
-# Simple Bridge
+# Multi_load Bridge
 nelx = 60
-nely = 20
+nely = 30
 volReq = 0.3
-stepLength = 3;
-topWeight = 2;
+stepLength = 4;
 numReinit = 2
+topWeight = 3;
 ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeight=topWeight, numReinit=3)
 
 # 初始化优化参数
@@ -65,6 +65,11 @@ KE = integrator.stiff_matrix()
 KTr = integrator.trace_matrix()
 lambda_, mu = integrator.lame()
 
+#U, Ue = ts.FE(mesh=mesh, struc=struc)
+#print("U0:", U.shape, "\n", U[:, :, 0].round(4))
+#print("U1:", U.shape, "\n", U[:, :, 1].round(4))
+#print("U2:", U.shape, "\n", U[:, :, 2].round(4))
+
 # 优化循环
 num = 200
 # 初始化 compliance objective value
@@ -72,19 +77,29 @@ objective = np.zeros(num)
 for iterNum in range(num):
     # 计算全局位移和局部单元位移
     U, Ue = ts.FE(mesh=mesh, struc=struc)
+    #print("U0:", U.shape, "\n", U[:, :, 0].round(4))
+    #print("U1:", U.shape, "\n", U[:, :, 1].round(4))
+    #print("U2:", U.shape, "\n", U[:, :, 2].round(4))
 
-    # 计算每个单元的柔度的形状灵敏度
-    temp1 = -np.maximum(struc, 0.0001)
-    temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
-    shapeSens[:] = np.einsum('ij, ij -> ij', temp1, temp2)
-    #print("shapeSens1:", shapeSens.shape, "\n", shapeSens.round(4))
+    # 添加来自每个荷载的灵敏度之前，将形状和拓扑灵敏度设置为 0
+    shapeSens[:] = 0
+    topSens[:] = 0
 
-    # 计算每个单元的柔度的拓扑灵敏度
-    coef = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
-    temp3 = (4 * mu) * np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
-    temp4 = (lambda_ - mu) * np.einsum('ij, jk, ki -> i', Ue, KTr, Ue.T).reshape(nelx, nely).T
-    topSens[:] = np.einsum('ij, ij -> ij', coef*struc, (temp3+temp4))
-    #print("topSens1:", topSens.shape, "\n", topSens.round(4))
+    for i in range(3):
+        # 计算每个单元的柔度的形状灵敏度
+        temp1 = -np.maximum(struc, 0.0001)
+        temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
+        shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
+        #print("shapeSens1:", shapeSens.shape, "\n", shapeSens.round(4))
+
+        # 计算每个单元的柔度的拓扑灵敏度
+        coef = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
+        temp3 = (4 * mu) * \
+            np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
+        temp4 = (lambda_ - mu) * \
+            np.einsum('ij, jk, ki -> i', Ue[:, :, i], KTr, Ue[:, :, i].T).reshape(nelx, nely).T
+        topSens[:] = topSens[:] + np.einsum('ij, ij -> ij', coef*struc, (temp3+temp4))
+        #print("topSens1:", topSens.shape, "\n", topSens.round(4))
 
     # 存储当前迭代的 compliance objective
     objective[iterNum] = -np.sum(shapeSens)

@@ -1,15 +1,15 @@
 import numpy as np
 
-from lsf_top_simple_bridge import TopLsf
+from lsf_top_half_wheel import TopLsf
 
-# Simple Bridge
+# Half-wheel
 nelx = 60
-nely = 20
+nely = 30
 volReq = 0.3
 stepLength = 3;
-topWeight = 2;
 numReinit = 2
-ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeight=topWeight, numReinit=3)
+topWeight = 4;
+ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, numReinit=3, topWeight=topWeight)
 
 # 初始化优化参数
 nelx, nely, volReq = ts._nelx, ts._nely, ts._volReq
@@ -71,16 +71,24 @@ num = 200
 objective = np.zeros(num)
 for iterNum in range(num):
     # 计算全局位移和局部单元位移
+    #print("iterNum:", iterNum)
     U, Ue = ts.FE(mesh=mesh, struc=struc)
+    #print("struc:\n", struc.round(4))
+    #print("U:\n", U.round(4))
 
     # 计算每个单元的柔度的形状灵敏度
     temp1 = -np.maximum(struc, 0.0001)
+    #print("temp1:", temp1.shape, "\n", temp1.round(4))
+    #temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nely, nelx).T
     temp2 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
+    #print("temp2:", temp2.shape, "\n", temp2.round(4))
     shapeSens[:] = np.einsum('ij, ij -> ij', temp1, temp2)
     #print("shapeSens1:", shapeSens.shape, "\n", shapeSens.round(4))
 
     # 计算每个单元的柔度的拓扑灵敏度
     coef = np.pi/2 * (lambda_ + 2*mu) / mu / (lambda_ + mu)
+    #temp3 = (4 * mu) * np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nely, nelx).T
+    #temp4 = (lambda_ - mu) * np.einsum('ij, jk, ki -> i', Ue, KTr, Ue.T).reshape(nely, nelx).T
     temp3 = (4 * mu) * np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T).reshape(nelx, nely).T
     temp4 = (lambda_ - mu) * np.einsum('ij, jk, ki -> i', Ue, KTr, Ue.T).reshape(nelx, nely).T
     topSens[:] = np.einsum('ij, ij -> ij', coef*struc, (temp3+temp4))
