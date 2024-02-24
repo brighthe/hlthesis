@@ -11,12 +11,16 @@ class TopLsf:
         初始化拓扑优化问题
 
         Parameters: 
-        - nelx (int): 水平方向的单元数. Defaults to 32.
-        - nely (int): 垂直方向的单元数. Defaults to 20.
-        - volReq (float) : 最终设计所需的体积分数. Defaults to 0.4.
-        - stepLength (int): 演化方程每次迭代中使用的 CFL 时间步长. Defaults to 2.
-        - numReinit (int): 水平集函数重置化为符号距离函数的频率. Defaults to 3.
-        - topWeight (int): 演化方程中 forcing 项的权重. Defaults to 2.
+        - nelx (int): 沿设计区域水平方向的单元数. nelx > 20, nelx*nely < 5000.
+        - nely (int): 沿设计区域垂直方向的单元数. nelx > 20, nelx*nely < 5000.
+        - volReq (float) : 最终设计所需的体积分数. 0.2 < volReq < 0.7.
+        - stepLength (int): 每次迭代中求解演化方程的 CFL 时间步长.
+                            min(nelx,nely)/10 < stepLength < max(nelx,nely)/5.
+        - numReinit (int): 水平集函数重置化为符号距离函数的频率. 2 < numReinit < 6.
+        - topWeight (int): 演化方程中 forcing 项的权重. 1 < topWeight < 4.
+
+        Note:
+            numReinit 和 topWeight 会影响设计中形成孔洞的能力.
         '''
 
         self._nelx = nelx
@@ -159,7 +163,7 @@ class TopLsf:
         - Smoothed sensitivity.
         """
         from scipy.signal import convolve2d
-        # 定义 convolution kernel
+        # Convolution filter to smooth the sensitivities
         kernel_value = 1 / (2*kernel_size)
         kernel = kernel_value * np.array([[0, 1, 0], 
                                           [1, 2, 1], 
@@ -220,11 +224,14 @@ class TopLsf:
         gFull = np.pad(g, ((1,1),(1,1)), mode='constant', constant_values=0)
 
         # 基于 CFL 值选择演化的时间步
-        dt = 0.1 / np.max(np.abs(v))
+        frac_time_step = 0.1 # Fraction of the CFL time step to use as a time step 
+                        # for solving the evolution equation
+        dt = frac_time_step / np.max(np.abs(v))
 
         # 基于演化方程迭代更新水平集函数
-        for _ in range(int(10 * stepLength)):
-            # Compute forward and backward differences in the x and y directions
+        num_time_step = 1 / frac_time_step # Number of time steps required to evolve
+                        # the level-set function for a time equal to the CFL time step
+        for _ in range(int(num_time_step * stepLength)):
             # 计算 x 方向和 y 方向的向前和向后差分
             dpx = np.roll(lsf, shift=(0, -1), axis=(0, 1)) - lsf # forward differences in x directions
             dmx = lsf - np.roll(lsf, shift=(0, 1), axis=(0, 1)) # backward differences in x directions

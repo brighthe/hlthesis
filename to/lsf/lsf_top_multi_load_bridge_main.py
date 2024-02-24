@@ -65,21 +65,13 @@ KE = integrator.stiff_matrix()
 KTr = integrator.trace_matrix()
 lambda_, mu = integrator.lame()
 
-#U, Ue = ts.FE(mesh=mesh, struc=struc)
-#print("U0:", U.shape, "\n", U[:, :, 0].round(4))
-#print("U1:", U.shape, "\n", U[:, :, 1].round(4))
-#print("U2:", U.shape, "\n", U[:, :, 2].round(4))
-
-# 优化循环
+# 优化循环的最大迭代次数
 num = 200
 # 初始化 compliance objective value
 objective = np.zeros(num)
 for iterNum in range(num):
     # 计算全局位移和局部单元位移
     U, Ue = ts.FE(mesh=mesh, struc=struc)
-    #print("U0:", U.shape, "\n", U[:, :, 0].round(4))
-    #print("U1:", U.shape, "\n", U[:, :, 1].round(4))
-    #print("U2:", U.shape, "\n", U[:, :, 2].round(4))
 
     # 添加来自每个荷载的灵敏度之前，将形状和拓扑灵敏度设置为 0
     shapeSens[:] = 0
@@ -87,7 +79,9 @@ for iterNum in range(num):
 
     for i in range(3):
         # 计算每个单元的柔度的形状灵敏度
-        temp1 = -np.maximum(struc, 0.0001)
+        stiff = 0.0001 # 0.0001: Stiffness of the void phase compared to the solid phase
+                    # 可以为零，但较小的非零值可以提高算法的稳健性
+        temp1 = -np.maximum(struc, stiff)
         temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
         shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
         #print("shapeSens1:", shapeSens.shape, "\n", shapeSens.round(4))
@@ -119,11 +113,14 @@ for iterNum in range(num):
     plt.pause(1e-5)
 
     # 五次迭代后执行收敛性检查
-    if iterNum > 5 and (abs(volCurr-volReq) < 0.005) and \
-        np.all( np.abs(objective[iterNum]-objective[iterNum-5:iterNum]) < 0.01*np.abs(objective[iterNum]) ):
+    start_num = 5 # Number of iterations at the start of the optimization 
+                # for which the convergence criteria are not checked
+    vol_tor = 0.005 # Tolerance for satisfaction of the volume constraint
+    rel_tor = 0.01 # Relative tolerance on the objective values for termination of the algorithm
+    if iterNum > start_num and (abs(volCurr-volReq) < vol_tor) and \
+        np.all( np.abs(objective[iterNum] - objective[iterNum-start_num:iterNum]) \
+               < rel_tor * np.abs(objective[iterNum]) ):
         break
-    #if iterNum > 5 and (abs(volCurr-volReq) < 0.005):
-    #    break
 
     # 设置  augmented Lagrangian parameters
     if iterNum == 0:
@@ -160,22 +157,3 @@ for iterNum in range(num):
 
 plt.ioff()
 plt.show()
-
-
-
-
-
-
-## 可视化
-#import os
-#output = './mesh/'
-#if not os.path.exists(output):
-#    os.makedirs(output)
-#fname = os.path.join(output, 'lsf_quad_mesh.vtu')
-##mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
-##mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
-#mesh.to_vtk(fname=fname)
-
-
-
-

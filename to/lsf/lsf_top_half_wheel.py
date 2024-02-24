@@ -11,12 +11,16 @@ class TopLsf:
         初始化拓扑优化问题
 
         Parameters: 
-        - nelx (int): 水平方向的单元数. Defaults to 60.
-        - nely (int): 垂直方向的单元数. Defaults to 30.
-        - volReq (float) : 最终设计所需的体积分数. Defaults to 0.3.
-        - stepLength (int): 演化方程每次迭代中使用的 CFL 时间步长. Defaults to 3.
-        - numReinit (int): 水平集函数重置化为符号距离函数的频率. Defaults to 2.
-        - topWeight (int): 演化方程中 forcing 项的权重. Defaults to 4.
+        - nelx (int): 沿设计区域水平方向的单元数. nelx > 20, nelx*nely < 5000.
+        - nely (int): 沿设计区域垂直方向的单元数. nelx > 20, nelx*nely < 5000.
+        - volReq (float) : 最终设计所需的体积分数. 0.2 < volReq < 0.7.
+        - stepLength (int): 每次迭代中求解演化方程的 CFL 时间步长.
+                            min(nelx,nely)/10 < stepLength < max(nelx,nely)/5.
+        - numReinit (int): 水平集函数重置化为符号距离函数的频率. 2 < numReinit < 6.
+        - topWeight (int): 演化方程中 forcing 项的权重. 1 < topWeight < 4.
+
+        Note:
+            numReinit 和 topWeight 会影响设计中形成孔洞的能力.
         '''
 
         self._nelx = nelx
@@ -106,8 +110,6 @@ class TopLsf:
         vgdof = gdof * GD
         ldof = vspace[0].number_of_local_dofs()
         vldof = ldof * GD
-        #print("vgdof", vgdof)
-        #print("vldof", vldof)
 
         E0 = 1.0
         nu = 0.3
@@ -116,10 +118,8 @@ class TopLsf:
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
-        #print("KK:", KK.shape, "\n", KK.round(4))
         bform.assembly()
         K = bform.get_matrix()
-        #print("K:", K.shape, "\n", K.toarray().round(4))
 
         # 定义荷载 - Half-wheel
         F = np.zeros(vgdof)
@@ -168,7 +168,7 @@ class TopLsf:
         - Smoothed sensitivity.
         """
         from scipy.signal import convolve2d
-        # 定义 convolution kernel
+        # Convolution filter to smooth the sensitivities
         kernel_value = 1 / (2*kernel_size)
         kernel = kernel_value * np.array([[0, 1, 0], 
                                           [1, 2, 1], 
@@ -202,13 +202,10 @@ class TopLsf:
         _, cols = shapeSens.shape
         shapeSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
         topSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
-        #print("shapeSens4:", shapeSens.shape, "\n", shapeSens)
-        #print("topSens4:", topSens.shape, "\n", topSens)
 
         # 求解水平集函数的演化方程以更新结构
         # 形状灵敏度的负数作为速度场
         # 拓扑灵敏度按 topWeight 因子缩放，仅应用于结构的 solid 部分作为 forcing 项
-        #print("lsf_origin:\n", lsf.round(4))
         struc, lsf = self.evolve(-shapeSens, topSens*(lsf[1:-1, 1:-1] < 0), lsf, stepLength, topWeight)
 
         return struc, lsf
@@ -229,19 +226,18 @@ class TopLsf:
         - lsf (ndarray): 演化的水平集函数.
         """
         # 用零边界填充速度场和 forcing 项
-        #print("v:", v)
-        #print("g:", g)
         vFull = np.pad(v, ((1,1),(1,1)), mode='constant', constant_values=0)
         gFull = np.pad(g, ((1,1),(1,1)), mode='constant', constant_values=0)
-        #print("vFull:", vFull)
-        #print("gFull:", gFull)
 
         # 基于 CFL 值选择演化的时间步
-        dt = 0.1 / np.max(np.abs(v))
+        frac_time_step = 0.1 # Fraction of the CFL time step to use as a time step 
+                        # for solving the evolution equation
+        dt = frac_time_step / np.max(np.abs(v))
 
         # 基于演化方程迭代更新水平集函数
-        for _ in range(int(10 * stepLength)):
-            # Compute forward and backward differences in the x and y directions
+        num_time_step = 1 / frac_time_step # Number of time steps required to evolve
+                        # the level-set function for a time equal to the CFL time step
+        for _ in range(int(num_time_step * stepLength)):
             # 计算 x 方向和 y 方向的向前和向后差分
             dpx = np.roll(lsf, shift=(0, -1), axis=(0, 1)) - lsf # forward differences in x directions
             dmx = lsf - np.roll(lsf, shift=(0, 1), axis=(0, 1)) # backward differences in x directions
@@ -259,7 +255,6 @@ class TopLsf:
         # 基于零水平集导出新结构
         strucFULL = (lsf < 0).astype(int)
         struc = strucFULL[1:-1, 1:-1]
-        #print("lsf_updated:\n", lsf.round(4))
         
         return struc, lsf
 
