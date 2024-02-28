@@ -4,7 +4,6 @@ from fealpy.functionspace import LagrangeFESpace
 
 from fealpy.fem import BilinearForm
 from fealpy.fem import TrussStructureIntegrator
-from fealpy.fem import DirichletBC
 
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import spdiags
@@ -53,6 +52,7 @@ print("F:", F.shape, "\n", F)
 idx_disp, disp = mesh.meshdata['disp_bc']
 # 按分量处理自由度索引
 dflag = idx_disp
+print("dflag:", dflag.shape, "\n", dflag)
 
 F = F.flat- K@uh.flat
 bdIdx = np.zeros(K.shape[0], dtype=np.int_)

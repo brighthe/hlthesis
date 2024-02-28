@@ -14,7 +14,6 @@ from fealpy.fem import VectorSourceIntegrator
 from fealpy.fem import VectorMassIntegrator
 from fealpy.fem import BilinearForm
 from fealpy.fem import LinearForm
-from fealpy.fem import DirichletBC
 
 
 ## 参数解析
