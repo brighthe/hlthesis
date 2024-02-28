@@ -16,11 +16,11 @@ EDdof = mesh.ds.boundary_edge_index()
 
 solver = Mimetic(mesh)
 div_operator = solver.div_operator()
-#print("div_operate:", div_operate.shape, "\n", div_operate)
+print("div_operator:", div_operator.shape, "\n", div_operator)
 M_c = solver.M_c()
 #print("M_c:", M_c.shape, "\n", M_c)
 M_f = solver.M_f()
-#print("M_f:", M_f.shape, "\n", M_f)
+print("M_f:", M_f.shape, "\n", M_f)
 
 b = solver.source(fun=pde.source, gddof=EDdof, D=pde.Dirichlet)
 #print("b:", b.shape, "\n", b)
