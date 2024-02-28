@@ -15,8 +15,16 @@ cell = mesh.entity('cell') # 左下角逆时针
 print("node:", node.shape, "\n", node)
 print("cell:", cell.shape, "\n", cell)
 
-phi = ts.lsf_init(nelx = nelx, nely = nely, mesh = mesh)
-print("phi:", phi.shape, "\n", phi.round(4))
+Phi = ts.lsf_init(mesh = mesh)
+print("Phi:", Phi.shape, "\n", Phi.round(4))
+
+A, G, pGpX, pGpY, Alpha = ts.rbf_init(mesh = mesh, Phi = Phi)
+#print("G:", G.shape, "\n", G.round(4))
+#print("pGpX:", pGpX.shape, "\n", pGpX.round(4))
+#print("pGpY:", pGpY.shape, "\n", pGpY.round(4))
+#print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
+
+
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
