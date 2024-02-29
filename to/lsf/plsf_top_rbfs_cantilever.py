@@ -24,6 +24,7 @@ class TopRBFPlsm:
 
     def lsf_init(self, mesh):
         '''
+        水平集函数初始化
         Parameters: 
 
         '''
@@ -39,16 +40,17 @@ class TopRBFPlsm:
         print("Y:", Y.shape, "\n", Y)
         # 初始孔洞的半径
         r = nely * 0.1
-        # hX 和 hY 分别是初始孔洞的中心处的 x 和 y 坐标，(15, )
+        # hX 是初始孔洞的中心处的 x 坐标 - (15, )
         hX = nelx * np.concatenate([np.tile([1/6, 5/6], 3), np.tile([0, 1/3, 2/3, 1], 2), [1/2]])
         print("hX:", hX.shape, "\n", hX)
+        # hY 是初始孔洞的中心处的 y 坐标 - (15, )
         hY = nely * np.concatenate([np.repeat([0, 1/2, 1], 2), np.repeat([1/4, 3/4], 4), [1/2]])
         print("hY:", hY.shape, "\n", hY)
 
-        # dX 和 dY 分别是所有网格点在 x 方向上和 y 方向上与初始孔洞的中心之间的距离差,
-        # 形状为 (nely+1, nelx+1, 15)
+        # dX 是所有网格点在 x 方向上与初始孔洞的中心之间的距离差, 形状为 (nely+1, nelx+1, 15)
         dX = X[:, :, np.newaxis] - hX
         print("dX:", dX.shape, "\n", dX)
+        # dY 是所有网格点在 Y 方向上与初始孔洞的中心之间的距离差, 形状为 (nely+1, nelx+1, 15)
         dY = Y[:, :, np.newaxis] - hY
         print("dY:", dY.shape, "\n", dY)
 
