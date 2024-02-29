@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class MbbBeamOperatorIntegrator:
     def __init__(self, nu, E0, nelx, nely, struc):
         """

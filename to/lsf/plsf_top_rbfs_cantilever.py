@@ -109,6 +109,40 @@ class TopRBFPlsm:
 
         return A, G, pGpX, pGpY, Alpha
 
+    def FE(self, mesh):
+        from beam_operator_integrator import BeamOperatorIntegrator
+        from fealpy.fem import BilinearForm
+        from fealpy.functionspace import LagrangeFESpace as Space
+
+        p = 1
+        space = Space(mesh, p=p, doforder='vdims')
+        GD = 2
+        uh = space.function(dim=GD)
+        vspace = GD*(space, )
+        gdof = vspace[0].number_of_global_dofs()
+        vgdof = gdof * GD
+
+        E0 = 1.0
+        nu = 0.3
+        integrator = BeamOperatorIntegrator(nu=nu, E0=E0)
+        bform = BilinearForm(vspace)
+        bform.add_domain_integrator(integrator)
+        KE = integrator.stiff_matrix()
+        print("KE:", KE.shape, "\n", KE.round(4))
+
+        KE2 = integrator.stiff_matrix_2()
+        print("KE2:", KE2.shape, "\n", KE2.round(4))
+
+        # 边界条件定义 - Cantilever
+        F = np.zeros(vgdof) # 节点荷载
+        F[vgdof-1] = 1
+
+        fixeddofs = np.arange(0, 2*(nely+1), 1) # 位移约束
+        dflag = fixeddofs
+
+        return None
+
+
 
 
 

@@ -15,15 +15,6 @@ ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeigh
 nelx, nely, volReq = ts._nelx, ts._nely, ts._volReq
 mesh = ts._mesh_top2
 
-node = mesh.entity('node') # 按列增加
-#node2 = mesh2.entity('node') # 按列增加
-#sorted_indices = np.lexsort((-node2[:, 1], node2[:, 0]))
-#node3 = node2[sorted_indices]
-#NN = mesh2.number_of_nodes()
-#cell = mesh2.entity('cell')
-#mesh2.ds.reinit(NN=NN, cell=cell)
-
-
 #import matplotlib.pyplot as plt
 #fig = plt.figure()
 #axes = fig.gca()
@@ -32,17 +23,10 @@ node = mesh.entity('node') # 按列增加
 #mesh.find_cell(axes, showindex=True, fontsize=12, fontcolor='b')
 #plt.show()
 
-
+node = mesh.entity('node') # 按列增加
 cell = mesh.entity('cell') # 左下角逆时针
 print("node:", node.shape, "\n", node)
 print("cell:", cell.shape, "\n", cell)
-
-#def reorder_nodes(node_data):
-#    # The sorting is done first by the second column (y values) in descending order
-#    # and then by the first column (x values) in ascending order
-#    sorted_indices = np.lexsort((-node_data[:, 1], node_data[:, 0]))
-#    return node_data[sorted_indices]
-
 
 # 定义开始优化时的初始结构为 entirely solid
 struc = np.ones((nely, nelx))
@@ -138,22 +122,3 @@ for iterNum in range(num):
 
 plt.ioff()
 plt.show()
-
-
-
-
-
-
-## 可视化
-#import os
-#output = './mesh/'
-#if not os.path.exists(output):
-#    os.makedirs(output)
-#fname = os.path.join(output, 'lsf_quad_mesh.vtu')
-##mesh.celldata['strucFull'] = strucFull.flatten('F') # 按列增加
-##mesh.celldata['lsf'] = lsf.flatten('F') # 按列增加
-#mesh.to_vtk(fname=fname)
-
-
-
-
