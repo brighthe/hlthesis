@@ -81,7 +81,7 @@ class TopRBFPlsm:
         Ax = np.subtract.outer(X.flatten('F'), X.flatten('F')) # 所有节点间 x 方向的距离差
         Ay = np.subtract.outer(Y.flatten('F'), Y.flatten('F')) # 所有节点间 y 方向的距离差
         A = np.sqrt(Ax**2 + Ay**2 + cRBF**2)
-        print("A:", A.shape, "\n", A.round(4))
+        #print("A:", A.shape, "\n", A.round(4))
 
         # 构建矩阵 G - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
         nNode = mesh.number_of_nodes() # 节点总数
@@ -90,31 +90,30 @@ class TopRBFPlsm:
         G_upper = np.hstack((A, P))
         G_lower = np.hstack((P.T, I))
         G = np.vstack((G_upper, G_lower))
-        print("G:", G.shape, "\n", G.round(4))
+        #print("G:", G.shape, "\n", G.round(4))
 
         # MQ 样条在 x 方向上的偏导数组成的矩阵 pGpX - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
         pGpX_upper = np.hstack((Ax / A, np.tile(np.array([0, 1, 0]), (nNode, 1))))
         pGpX_lower = np.hstack((np.tile(np.array([[0], [1], [0]]), (1, nNode)), np.zeros((3, 3))))
         pGpX = np.vstack((pGpX_upper, pGpX_lower))
-        print("pGpX:", pGpX.shape, "\n", pGpX.round(4))
 
         # MQ 样条在 y 方向上的偏导数组成的矩阵 pGpY - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
         pGpY_upper = np.hstack((Ay / A, np.tile(np.array([0, 0, 1]), (nNode, 1))))
         pGpY_lower = np.hstack((np.tile(np.array([[0], [0], [1]]), (1, nNode)), np.zeros((3, 3))))
         pGpY = np.vstack((pGpY_upper, pGpY_lower))
-        print("pGpY:", pGpY.shape, "\n", pGpY.round(4))
 
         # 广义展开系数 Alpha - ((nely+1)*(nelx+1)+3, )
         Phi_flat = Phi.flatten('F')
         Alpha = np.linalg.solve(G, np.hstack((Phi_flat, np.zeros(3))))
-        print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
         return A, G, pGpX, pGpY, Alpha
 
-    def FE(self, mesh):
-        from beam_operator_integrator import BeamOperatorIntegrator
+    def FE(self, mesh, eleVol, KE, F, fixeddofs):
+        from plsf_beam_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
+        from scipy.sparse import spdiags
+        from scipy.sparse.linalg import spsolve
 
         p = 1
         space = Space(mesh, p=p, doforder='vdims')
@@ -122,27 +121,41 @@ class TopRBFPlsm:
         uh = space.function(dim=GD)
         vspace = GD*(space, )
         gdof = vspace[0].number_of_global_dofs()
-        vgdof = gdof * GD
+        ldof = vspace[0].number_of_local_dofs()
 
-        E0 = 1.0
         nu = 0.3
-        integrator = BeamOperatorIntegrator(nu=nu, E0=E0)
+        E0 = 1.0
+        Emin = 1e-9
+        integrator = BeamOperatorIntegrator(nu=nu, E0=E0, Emin=Emin, eleVol=eleVol, KE=KE)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
-        KE = integrator.stiff_matrix()
-        print("KE:", KE.shape, "\n", KE.round(4))
+        KK = integrator.assembly_cell_matrix(space=vspace)
+        bform.assembly()
+        K = bform.get_matrix()
+        print("K2:", K.shape, "\n", K.toarray().round(4))
 
-        KE2 = integrator.stiff_matrix_2()
-        print("KE2:", KE2.shape, "\n", KE2.round(4))
-
-        # 边界条件定义 - Cantilever
-        F = np.zeros(vgdof) # 节点荷载
-        F[vgdof-1] = 1
-
-        fixeddofs = np.arange(0, 2*(nely+1), 1) # 位移约束
         dflag = fixeddofs
+        F = F - K@uh.flat
+        bdIdx = np.zeros(K.shape[0], dtype=np.int_)
+        bdIdx[dflag.flat] = 1
+        D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
+        D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
+        K = D0@K@D0 + D1
+        F[dflag.flat] = uh.ravel()[dflag.flat]
 
-        return None
+        # 线性方程组求解
+        uh.flat[:] = spsolve(K, F)
+
+        reshaped_uh = uh.reshape(-1)
+        cell2dof = vspace[0].cell_to_dof()
+        NC = mesh.number_of_cells()
+        updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
+        idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
+        # 用 Top 中的自由度替换 FEALPy 中的自由度
+        updated_cell2dof = updated_cell2dof[:, idx]
+        ue = reshaped_uh[updated_cell2dof] # (NC, ldof*GD)
+
+        return uh, ue
 
 
 
