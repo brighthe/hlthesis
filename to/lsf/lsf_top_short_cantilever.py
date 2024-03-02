@@ -29,14 +29,6 @@ class TopLsf:
         self._stepLength = stepLength
         self._numReinit = numReinit
         self._topWeight = topWeight
-        node = np.array([[0, 2], [0, 1], [0, 0],
-                         [1, 2], [1, 1], [1, 0],
-                         [2, 2], [2, 1], [2, 0]], dtype=np.float64)
-        cell = np.array([[0, 3, 4, 1],
-                         [1, 4, 5, 2],
-                         [3, 6, 7, 4],
-                         [4, 7, 8, 5]], dtype=np.int_)
-        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
         nx = self._nelx
         ny = self._nely
@@ -54,10 +46,10 @@ class TopLsf:
                 cells.append([top_left, bottom_left, bottom_right, top_right])
         node = nodes
         cell = np.array(cells)
-        self._mesh_top2 = QuadrangleMesh(node=node, cell=cell)
+        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
-        self._mesh2 = QuadrangleMesh.from_box(box = [0, self._nelx, 0, self._nely], \
-                                              nx = self._nelx, ny = self._nely)
+        #self._mesh2 = QuadrangleMesh.from_box(box = [0, self._nelx, 0, self._nely], \
+        #                                      nx = self._nelx, ny = self._nely)
 
     def reinit(self, struc):
         """
@@ -93,8 +85,22 @@ class TopLsf:
 
         return lsf
 
-    def FE(self, mesh, struc):
-        from mbb_beam_operator_integrator import MbbBeamOperatorIntegrator
+    def FE(self, mesh, struc, KE, F, fixeddofs):
+        """
+        有限元计算位移.
+
+        Parameters:
+        - mesh:
+        - struc (ndarray): 表示结构的 solid(1) 和 void(0) 单元.
+        - KE (ndarray): 单元刚度矩阵.
+        - F (ndarray): 节点荷载.
+        - fixeddofs (ndarray): 位移约束(supports).
+
+        Returns:
+        - uh (ndarray - (gdof, GD)):
+        - ue (ndarray - (NC, ldof*GD))
+        """
+        from lsf_beam_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
         from scipy.sparse.linalg import spsolve
@@ -105,27 +111,18 @@ class TopLsf:
         GD = 2
         uh = space.function(dim=GD)
         vspace = GD*(space, )
-        gdof = vspace[0].number_of_global_dofs()
-        vgdof = gdof * GD
         ldof = vspace[0].number_of_local_dofs()
-        vldof = ldof * GD
 
         E0 = 1.0
         nu = 0.3
-        nely, nelx = struc.shape
-        integrator = MbbBeamOperatorIntegrator(nu=nu, E0=E0, nelx=nelx, nely=nely, struc=struc)
+        #nely, nelx = struc.shape
+        integrator = BeamOperatorIntegrator(nu=nu, E0=E0, struc=struc, KE=KE)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
         bform.assembly()
         K = bform.get_matrix()
 
-        # 定义荷载 - Cantilever MBB
-        F = np.zeros(vgdof)
-        F[vgdof-1] = 1
-
-        # 定义支撑(边界处理) - Cantilever MBB
-        fixeddofs = np.arange(0, 2*(nely+1), 1)
         dflag = fixeddofs
         F = F - K@uh.flat
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
@@ -154,13 +151,13 @@ class TopLsf:
         Smooth the sensitivity using convolution with a predefined kernel.
 
         Parameters:
-        - sens : Sensitivity to be smoothed.
+        - sens (ndarray-(nely, nelx)): Sensitivity to be smoothed.
         - kernel_size : The size of the convolution kernel. Default is 3.
         - padding_mode : The mode used for padding. Default is 'edge' 
         which pads with the edge values of the array.
 
         Returns:
-        - Smoothed sensitivity.
+        - smoothed_sens (ndarray-(nely, nelx)) : Smoothed sensitivity.
         """
         from scipy.signal import convolve2d
         # Convolution filter to smooth the sensitivities
@@ -193,7 +190,7 @@ class TopLsf:
         - lsf (ndarray-(nely+2, nelx+2)): 设计更新后的新水平集函数.
         """
 
-        # Load bearing pixels must remain solid - Cantilever MBB
+        # Load bearing pixels must remain solid - short cantilever
         shapeSens[-1, -1] = 0
         topSens[-1, -1] = 0
 
