@@ -100,7 +100,7 @@ print("fixeddofs:", fixeddofs.shape, "\n", fixeddofs)
 eleNode = cell
 
 # 迭代优化
-nLoop = 32 # 优化的最大迭代次数
+nLoop = 200 # 优化的最大迭代次数
 nRelax = 30
 dt = 0.5 # 水平集演化的时间步长
 delta = 10
@@ -231,11 +231,15 @@ for iT in range(nLoop):
     # Lagrange 乘子
     if iT < nRelax:
         lag = mu * (vol[iT] - vol[0] + (vol[0] - volfrac) * (iT + 1) / nRelax)
+        #print("lag0:", lag)
     else:
-        lag = lag + gamma * (vol[iT-1] - volfrac)
+        #print("lag:", lag)
+        #print("gamma:", gamma)
+        #print("test:", vol[iT] - volfrac)
+        lag = lag + gamma * (vol[iT] - volfrac)
         gamma = min(gamma + 0.05, 5)
-        print("lag:", lag)
-        print("gamma:", gamma)
+        #print("lag:", lag)
+        #print("gamma:", gamma)
     #print("iT:", iT)
     #print("nRelax:", nRelax)
     #print("test:", vol[iT-1] - vol[0])
