@@ -34,25 +34,25 @@ class TopRBFPlsm:
         node = mesh.entity('node') # 按列增加
         # 网格中节点的 x 坐标 - (nely+1, nelx+1)
         X = node[:, 0].reshape(nelx+1, nely+1).T
-        print("X:", X.shape, "\n", X)
+        #print("X:", X.shape, "\n", X)
         # 网格中节点的 y 坐标 - (nely+1, nelx+1)
         Y = node[:, 1].reshape(nelx+1, nely+1).T
-        print("Y:", Y.shape, "\n", Y)
+        #print("Y:", Y.shape, "\n", Y)
         # 初始孔洞的半径
         r = nely * 0.1
         # hX 是初始孔洞的中心处的 x 坐标 - (15, )
         hX = nelx * np.concatenate([np.tile([1/6, 5/6], 3), np.tile([0, 1/3, 2/3, 1], 2), [1/2]])
-        print("hX:", hX.shape, "\n", hX)
+        #print("hX:", hX.shape, "\n", hX)
         # hY 是初始孔洞的中心处的 y 坐标 - (15, )
         hY = nely * np.concatenate([np.repeat([0, 1/2, 1], 2), np.repeat([1/4, 3/4], 4), [1/2]])
-        print("hY:", hY.shape, "\n", hY)
+        #print("hY:", hY.shape, "\n", hY)
 
         # dX 是所有网格点在 x 方向上与初始孔洞的中心之间的距离差, 形状为 (nely+1, nelx+1, 15)
         dX = X[:, :, np.newaxis] - hX
-        print("dX:", dX.shape, "\n", dX)
+        #print("dX:", dX.shape, "\n", dX)
         # dY 是所有网格点在 Y 方向上与初始孔洞的中心之间的距离差, 形状为 (nely+1, nelx+1, 15)
         dY = Y[:, :, np.newaxis] - hY
-        print("dY:", dY.shape, "\n", dY)
+        #print("dY:", dY.shape, "\n", dY)
 
         # 计算网格点到最近孔洞附近的欧氏距离，并限制在 -3 到 3 之间
         Phi = np.sqrt(dX**2 + dY**2) - r
@@ -132,7 +132,7 @@ class TopRBFPlsm:
         KK = integrator.assembly_cell_matrix(space=vspace)
         bform.assembly()
         K = bform.get_matrix()
-        print("K2:", K.shape, "\n", K.toarray().round(4))
+        #print("K2:", K.shape, "\n", K.toarray().round(4))
 
         dflag = fixeddofs
         F = F - K@uh.flat

@@ -7,7 +7,6 @@ nelx = 60
 nely = 30
 volfrac = 0.5
 ts = TopRBFPlsm(nelx=nelx, nely=nely, volfrac=volfrac)
-
 # 初始化优化参数
 nelx, nely, volfrac = ts._nelx, ts._nely, ts._volfrac
 mesh = ts._mesh
@@ -21,9 +20,9 @@ Phi = ts.lsf_init(mesh = mesh)
 print("Phi:", Phi.shape, "\n", Phi.round(4))
 
 A, G, pGpX, pGpY, Alpha = ts.rbf_init(mesh = mesh, Phi = Phi)
-print("pGpX:", pGpX.shape, "\n", pGpX.round(4))
-print("pGpY:", pGpY.shape, "\n", pGpY.round(4))
-print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
+#print("pGpX:", pGpX.shape, "\n", pGpX.round(4))
+#print("pGpY:", pGpY.shape, "\n", pGpY.round(4))
+#print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
 def stiff_matrix(nu):
     """
@@ -101,7 +100,7 @@ print("fixeddofs:", fixeddofs.shape, "\n", fixeddofs)
 eleNode = cell
 
 # 迭代优化
-nLoop = 2 # 优化的最大迭代次数
+nLoop = 32 # 优化的最大迭代次数
 nRelax = 30
 dt = 0.5 # 水平集演化的时间步长
 delta = 10
@@ -127,7 +126,7 @@ for iT in range(nLoop):
              c1 / 4*Phi.flatten('F')[eleNode[:, 1]] + \
              c2 / 4*Phi.flatten('F')[eleNode[:, 2]] + \
              c3 / 4*Phi.flatten('F')[eleNode[:, 3]]
-    print("tmpPhi:", tmpPhi.shape, "\n", tmpPhi.round(4))
+    #print("tmpPhi:", tmpPhi.shape, "\n", tmpPhi.round(4))
 
     #from scipy.io import loadmat
     #data = loadmat('tmpPhi.mat')
@@ -153,15 +152,15 @@ for iT in range(nLoop):
     # Solid 部分的体积分数
     threshold = 1e-15
     eleVol = np.sum(tmpPhi >= threshold, axis=0) / np.size(s)
-    print("eleVol:", eleVol.shape, "\n", eleVol.round(4))
+    #print("eleVol:", eleVol.shape, "\n", eleVol.round(4))
     vol[iT] = np.sum(eleVol) / (nelx*nely)
-    print("vol:", vol.shape, "\n", vol.round(4))
+    #print("vol:", vol.shape, "\n", vol.round(4))
 
     E0 = 1
     Emin = 1e-9
     # 计算等效杨氏模量
     E = Emin + eleVol * (E0 - Emin)
-    print("E:", E.shape, "\n", E.round(4))
+    #print("E:", E.shape, "\n", E.round(4))
     #sK = np.outer(KE.flatten('F'), E).flatten('F')
     #print("sK:", sK.shape, "\n", sK.round(4))
 
@@ -173,16 +172,16 @@ for iT in range(nLoop):
     #print("K:", K.shape, "\n", K.toarray().round(4))
 
     U, Ue = ts.FE(mesh=mesh, eleVol=eleVol, KE=KE, F=F, fixeddofs=fixeddofs)
-    print("U:", U.shape, "\n", U.round(4))
-    print("Ue:", Ue.shape, "\n", Ue.round(4))
+    #print("U:", U.shape, "\n", U.round(4))
+    #print("Ue:", Ue.shape, "\n", Ue.round(4))
 
     temp1 = np.einsum('ij, jk, ki -> i', Ue, KE, Ue.T)
-    print("temp1:", temp1.shape, "\n", temp1.round(4))
+    #print("temp1:", temp1.shape, "\n", temp1.round(4))
     eleComp = np.einsum('c, c -> c', E, temp1)
-    print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
+    #print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
     # 计算目标函数值
     comp[iT] = np.sum(eleComp)
-    print("comp:", comp.shape, "\n", comp.round(4))
+    #print("comp:", comp.shape, "\n", comp.round(4))
 
     # 打印当前迭代的结果
     print(f'Iter: {iT}, Obj.: {comp[iT]:.4f}, Vol.: {vol[iT]:.4f}')
@@ -231,49 +230,55 @@ for iT in range(nLoop):
 
     # Lagrange 乘子
     if iT < nRelax:
-        lag = mu * (vol[iT-1] - vol[0] + (vol[0] - volfrac) * (iT + 1) / nRelax)
+        lag = mu * (vol[iT] - vol[0] + (vol[0] - volfrac) * (iT + 1) / nRelax)
     else:
         lag = lag + gamma * (vol[iT-1] - volfrac)
         gamma = min(gamma + 0.05, 5)
+        print("lag:", lag)
+        print("gamma:", gamma)
+    #print("iT:", iT)
+    #print("nRelax:", nRelax)
+    #print("test:", vol[iT-1] - vol[0])
+    #print("test2:", (vol[0] - volfrac) * (iT + 1) / nRelax)
+    #print("lag:", lag)
 
     # 水平集函数演化
     gradPhi = np.sqrt( (pGpX @ Alpha) ** 2 + (pGpY @ Alpha) ** 2 )
-    print("gradPhi:", gradPhi.shape, "\n", gradPhi.round(4))
+    #print("gradPhi:", gradPhi.shape, "\n", gradPhi.round(4))
 
     indexDelta = np.abs(Phi) <= delta
     #indexDelta = np.abs(Phi.flatten('F')) <= delta
-    print("indexDelta:", indexDelta.shape, "\n", indexDelta)
+    #print("indexDelta:", indexDelta.shape, "\n", indexDelta)
     DeltaPhi = np.zeros_like(Phi)
     DeltaPhi[indexDelta] = 0.75 / delta * (1 - Phi[indexDelta] ** 2 / delta ** 2)
-    print("DeltaPhi:", DeltaPhi.shape, "\n", DeltaPhi.round(5))
+    #print("DeltaPhi:", DeltaPhi.shape, "\n", DeltaPhi.round(5))
 
     eleComp = eleComp.reshape(nelx, nely).T
-    print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
+    #print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
     eleCompLR = np.hstack([eleComp[:, 0:1], eleComp]) + np.hstack([eleComp, eleComp[:, -1:]])
-    print("eleCompLR:", eleCompLR.shape, "\n", eleCompLR.round(4))
+    #print("eleCompLR:", eleCompLR.shape, "\n", eleCompLR.round(4))
 
     nodeComp = ( np.vstack([eleCompLR, eleCompLR[-1, :]]) + \
                  np.vstack([eleCompLR[0, :], eleCompLR]) ) / 4
-    print("nodeComp:", nodeComp.shape, "\n", nodeComp.round(4))
+    #print("nodeComp:", nodeComp.shape, "\n", nodeComp.round(4))
 
     B = ( nodeComp.flatten('F') / np.median(nodeComp) - lag ) * \
             DeltaPhi.flatten('F') * delta / 0.75
-    print("B:", B.shape, "\n", B.round(4))
+    #print("B:", B.shape, "\n", B.round(4))
 
     B_augmented = np.concatenate([B, np.zeros(3)])
     X = np.linalg.solve(G, B_augmented)
     Alpha += dt * X
-    print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
+    #print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
     condition = (eleVol.flatten('F') < 1) & (eleVol.flatten('F') > 0)
     unique_nodes = np.unique(eleNode[condition])
     mean_gradPhi = np.mean(gradPhi[unique_nodes])
     Alpha /= mean_gradPhi
-    print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
+    #print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
     Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
-    print("Phi:", Phi.shape, "\n", Phi.round(4))
-
+    #print("Phi:", Phi.shape, "\n", Phi.round(4))
 
 
 plt.ioff()
