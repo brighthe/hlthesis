@@ -2,11 +2,10 @@ import numpy as np
 
 from fealpy.mesh import QuadrangleMesh
 
-# Multi_load Bridge
 class TopLsf:
 
-    def __init__(self, nelx: int = 60, nely: int = 30, volReq: float = 0.3, 
-                stepLength: int = 4, numReinit: int = 2, topWeight: int = 3):
+    def __init__(self, nelx: int = 32, nely: int = 20, volReq: float = 0.4, 
+                stepLength: int = 2, numReinit: int = 3, topWeight: int = 2):
         '''
         初始化拓扑优化问题
 
@@ -29,14 +28,6 @@ class TopLsf:
         self._stepLength = stepLength
         self._numReinit = numReinit
         self._topWeight = topWeight
-        node = np.array([[0, 2], [0, 1], [0, 0],
-                         [1, 2], [1, 1], [1, 0],
-                         [2, 2], [2, 1], [2, 0]], dtype=np.float64)
-        cell = np.array([[0, 3, 4, 1],
-                         [1, 4, 5, 2],
-                         [3, 6, 7, 4],
-                         [4, 7, 8, 5]], dtype=np.int_)
-        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
         nx = self._nelx
         ny = self._nely
@@ -54,10 +45,7 @@ class TopLsf:
                 cells.append([top_left, bottom_left, bottom_right, top_right])
         node = nodes
         cell = np.array(cells)
-        self._mesh_top2 = QuadrangleMesh(node=node, cell=cell)
-
-        self._mesh2 = QuadrangleMesh.from_box(box = [0, self._nelx, 0, self._nely], \
-                                              nx = self._nelx, ny = self._nely)
+        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
     def reinit(self, struc):
         """
@@ -67,10 +55,10 @@ class TopLsf:
         的欧几里得距离，并计算水平集函数，该函数在 solid phase 内为负，在 void phase 中为正.
 
         Parameters:
-        - struc (ndarray): 表示结构的 solid(1) 和 void(0) 单元.
+        - struc ( ndarray - (nely, nelx) ): 表示结构的 solid(1) 和 void(0) 单元.
 
         Returns:
-        - lsf (ndarray): A 2D array of the same shape as 'struc', 表示重置化后的水平集函数
+        - lsf ( ndarray - (nely+2, nelx+2) ): 表示重置化后的水平集函数
         """
         from scipy import ndimage
 
@@ -93,8 +81,22 @@ class TopLsf:
 
         return lsf
 
-    def FE(self, mesh, struc):
-        from mbb_beam_operator_integrator import MbbBeamOperatorIntegrator
+    def FE(self, mesh, struc, KE, F, fixeddofs):
+        """
+        有限元计算位移.
+
+        Parameters:
+        - mesh:
+        - struc ( ndarray - (nely, nelx) ): 表示结构的 solid(1) 和 void(0) 单元.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
+        - F ( ndarray - (gdof*GD, nLoads) ): 节点荷载.
+        - fixeddofs (ndarray): 位移约束(supports).
+
+        Returns:
+        - uh ( ndarray - (gdof, GD, nLoads) ): 总位移.
+        - ue ( ndarray - (NC, ldof*GD, nLoads) ): 单元位移.
+        """
+        from lsf_beam_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
         from scipy.sparse.linalg import spsolve
@@ -104,55 +106,39 @@ class TopLsf:
         space = Space(mesh, p=p, doforder='vdims')
         GD = 2
         uh = space.function(dim=GD)
-        # 适用于多载荷情况下的位移
-        uh = np.repeat(uh[:, :, np.newaxis], 3, axis=2)
-        #print("uh:", uh.shape, "\n", uh[:, :, 0].round(4))
+        nLoads = F.shape[-1]
+        uh = np.repeat(uh[:, :, np.newaxis], nLoads, axis=2)
         vspace = GD*(space, )
-        gdof = vspace[0].number_of_global_dofs()
-        vgdof = gdof * GD
         ldof = vspace[0].number_of_local_dofs()
         vldof = ldof * GD
 
         E0 = 1.0
         nu = 0.3
-        nely, nelx = struc.shape
-        integrator = MbbBeamOperatorIntegrator(nu=nu, E0=E0, nelx=nelx, nely=nely, struc=struc)
+        integrator = BeamOperatorIntegrator(nu=nu, E0=E0, struc=struc, KE=KE)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
         bform.assembly()
         K = bform.get_matrix()
 
-        # 定义荷载 - Multi_load Bridge
-        F = np.zeros((vgdof, 3))
-        F[2 * (round(nelx/2)+1) * (nely+1) - 1, 0] = -1
-        F[2 * (round(nelx/2)+1) * (nely+1) - 2, 1] = 0.5
-        F[2 * (round(nelx/2)+1) * (nely+1) - 2, 2] = -0.5
-        #print("F:", F.shape, "\n", F.round(4))
-
-        # 定义支撑(边界处理) - Multi_load Bridge
-        fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ), 
-                                     np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
         dflag = fixeddofs
-        #print("dflag:", dflag)
-        F = F - K@uh.reshape(-1, 3)
+        #F = F - K@uh.flat
+        F = F - K@uh.reshape(-1, nLoads)
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
         bdIdx[dflag.flat] = 1
         D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
         D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
         K = D0@K@D0 + D1
-        F[dflag.flat] = uh.reshape(-1, 3)[dflag.flat]
+        F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
         # 线性方程组求解
         uh.flat[:] = spsolve(K, F)
-        #print("uh:", uh.shape, "\n", uh)
 
         cell2dof = vspace[0].cell_to_dof()
-        #print("cell2dof:", cell2dof.shape, "\n", cell2dof)
         NC = mesh.number_of_cells()
-        ue = np.zeros((NC, vldof, 3))
+        ue = np.zeros((NC, vldof, nLoads))
 
-        for i in range(3):
+        for i in range(nLoads):
             reshaped_uh = uh[:, : ,i].reshape(-1)
             # 每个单元的自由度（每个节点两个自由度）
             updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
@@ -169,13 +155,13 @@ class TopLsf:
         Smooth the sensitivity using convolution with a predefined kernel.
 
         Parameters:
-        - sens : Sensitivity to be smoothed.
+        - sens ( ndarray - (nely, nelx) ): Sensitivity to be smoothed.
         - kernel_size : The size of the convolution kernel. Default is 3.
         - padding_mode : The mode used for padding. Default is 'edge' 
         which pads with the edge values of the array.
 
         Returns:
-        - Smoothed sensitivity.
+        - smoothed_sens ( ndarray - (nely, nelx) ) : Smoothed sensitivity.
         """
         from scipy.signal import convolve2d
         # Convolution filter to smooth the sensitivities
@@ -192,26 +178,26 @@ class TopLsf:
 
         return smoothed_sens
 
-    def updateStep(self, lsf, shapeSens, topSens, stepLength, topWeight):
+    def updateStep(self, lsf, shapeSens, topSens, stepLength, topWeight, loadBearingIndices):
         """
         使用形状灵敏度和拓扑灵敏度执行设计更新
         
         Parameters:
-        - lsf (ndarray): The level set function, which describes the interface of the current structure.
-        - shapeSens : 当前设计的形状灵敏度.
-        - topSens : 当前设计的拓扑灵敏度.
+        - lsf ( ndarray - (nely+2, nelx+2) ): 水平集函数，描述当前结构的界面.
+        - shapeSens ( ndarray - (nely, nelx) ): 当前设计的形状灵敏度.
+        - topSens ( ndarray - (nely, nelx) ): 当前设计的拓扑灵敏度.
         - stepLength (float): The step length parameter controlling the extent of the evolution.
         - topWeight (float): The weighting factor for the topological sensitivity in the evolution.
+        - loadBearingIndices (tuples): 荷载支撑单元的索引.
 
         Returns:
-        - struc (ndarray): The updated structure after the design step, represented as a 2D array.
-        - lsf (ndarray): The updated level set function after the design step.
+        - struc ( ndarray - (nely, nelx) ): 设计更新后的新结构，只能为 0 或 1.
+        - lsf ( ndarray - (nely+2, nelx+2) ): 设计更新后的新水平集函数.
         """
 
-        # Load bearing pixels must remain solid - Simple Bridge
-        _, cols = shapeSens.shape
-        shapeSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
-        topSens[-1, [0, cols//2 - 1, cols//2, -1]] = 0
+        # Load bearing pixels must remain solid - short cantilever
+        shapeSens[loadBearingIndices] = 0
+        topSens[loadBearingIndices] = 0
 
         # 求解水平集函数的演化方程以更新结构
         # 形状灵敏度的负数作为速度场
@@ -232,8 +218,8 @@ class TopLsf:
         - w (float): A weighting parameter for the influence of the force term on the evolution.
 
         Returns:
-        - struc (ndarray): 演化后的更新结构，只能为 0 或 1.
-        - lsf (ndarray): 演化的水平集函数.
+        - struc ( ndarray - (nely, nelx)): 演化后的更新结构，只能为 0 或 1.
+        - lsf ( ndarray - (nely+2, nelx+2)): 演化的水平集函数.
         """
         # 用零边界填充速度场和 forcing 项
         vFull = np.pad(v, ((1,1),(1,1)), mode='constant', constant_values=0)
