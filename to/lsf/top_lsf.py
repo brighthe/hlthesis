@@ -4,8 +4,7 @@ from fealpy.mesh import QuadrangleMesh
 
 class TopLsf:
 
-    def __init__(self, nelx: int = 32, nely: int = 20, volReq: float = 0.4, 
-                stepLength: int = 2, numReinit: int = 3, topWeight: int = 2):
+    def __init__(self, nelx, nely, volReq, stepLength, numReinit, topWeight):
         '''
         初始化拓扑优化问题
 
@@ -122,7 +121,6 @@ class TopLsf:
         K = bform.get_matrix()
 
         dflag = fixeddofs
-        #F = F - K@uh.flat
         F = F - K@uh.reshape(-1, nLoads)
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
         bdIdx[dflag.flat] = 1

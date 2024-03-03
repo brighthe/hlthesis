@@ -150,7 +150,7 @@ la = -0.01
 La = 1000
 alpha = 0.9
 # 优化循环的最大迭代次数
-num = 200
+num = 5
 # 初始化 compliance objective value
 objective = np.zeros(num)
 for iterNum in range(num):
@@ -160,6 +160,8 @@ for iterNum in range(num):
     fe_start = time.time()
 
     U, Ue = ts.FE(mesh=mesh, struc=struc, KE=KE, F=F, fixeddofs=fixeddofs)
+    print("U:", U.shape, "\n", U.round(4))
+    print("Ue:", Ue.shape, "\n", Ue[620].round(4))
 
     fe_end = time.time()
     fe_time = fe_end - fe_start
