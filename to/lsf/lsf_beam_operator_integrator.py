@@ -24,7 +24,7 @@ class BeamOperatorIntegrator:
         - out (Optional[ndarray]): 输出矩阵，默认为 None.
 
         Returns:
-        - Optional[ndarray]: 如果 out 参数为 None，则返回梁的单元刚度矩阵，否则不返回.
+        - Optional[ndarray - (NC, ldof*GD, ldof*GD) ]: 如果 out 参数为 None，则返回梁的单元刚度矩阵，否则不返回.
         """
         struc = self.struc
 
