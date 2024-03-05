@@ -1,17 +1,16 @@
 import numpy as np
 
 class BeamOperatorIntegrator:
-    def __init__(self, nu, E0, struc, KE):
+    def __init__(self, struc, KE):
         """
         初始化 BeamOperatorIntegrator 类
 
-        参数:
-        nu: 泊松比
+        Parameters:
+        - struc ( ndarray - (nely, nelx) ): 表示结构的 solid(1) 和 void(0) 单元.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
         """
-        self.nu = nu # Poisson's ration
-        self.E0 = E0 # Young's module
-        self.struc = struc # 设计变量
-        self.KE = KE # 单元刚度矩阵
+        self.struc = struc
+        self.KE = KE
 
     def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
         """
@@ -26,7 +25,6 @@ class BeamOperatorIntegrator:
         Returns:
         - Optional[ndarray - (NC, ldof*GD, ldof*GD) ]: 如果 out 参数为 None，则返回梁的单元刚度矩阵，否则不返回.
         """
-        struc = self.struc
 
         mesh = space[0].mesh
         ldof = space[0].number_of_local_dofs()
@@ -46,6 +44,7 @@ class BeamOperatorIntegrator:
             pass
         elif space[0].doforder == 'vdims':
             KE = self.KE
+            struc = self.struc
 
             # 用 FEALPy 中的自由度替换 Top 中的自由度
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)

@@ -48,7 +48,7 @@ class TopLsf:
 
     def reinit(self, struc):
         """
-        根据给定的结构重置化水平集函数
+        根据给定的结构重置化水平集函数.
 
         该函数通过添加 void 单元的边界来扩展输入结构，计算到最近的 solid 和 void 单元
         的欧几里得距离，并计算水平集函数，该函数在 solid phase 内为负，在 void phase 中为正.
@@ -57,7 +57,7 @@ class TopLsf:
         - struc ( ndarray - (nely, nelx) ): 表示结构的 solid(1) 和 void(0) 单元.
 
         Returns:
-        - lsf ( ndarray - (nely+2, nelx+2) ): 表示重置化后的水平集函数
+        - lsf ( ndarray - (nely+2, nelx+2) ): 表示重置化后的水平集函数.
         """
         from scipy import ndimage
 
@@ -111,9 +111,7 @@ class TopLsf:
         ldof = vspace[0].number_of_local_dofs()
         vldof = ldof * GD
 
-        E0 = 1.0
-        nu = 0.3
-        integrator = BeamOperatorIntegrator(nu=nu, E0=E0, struc=struc, KE=KE)
+        integrator = BeamOperatorIntegrator(struc=struc, KE=KE)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)

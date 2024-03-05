@@ -1,51 +1,16 @@
 import numpy as np
 
 class BeamOperatorIntegrator:
-    def __init__(self, nu, E0, Emin, eleVol, KE):
+    def __init__(self, E, KE):
         """
         初始化 BeamOperatorIntegrator 类
 
-        参数:
-        nu: 泊松比
+        Parameters:
+        - E ( ndarray - (NC, ) ): 单元刚度矩阵中的等效杨氏模量.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 具有 unit 杨氏模量的单元刚度矩阵.
         """
-        self.nu = nu # Poisson's ration
-        self.E0 = E0 # Young's module
-        self.Emin = Emin
-        self.eleVol = eleVol
+        self.E = E
         self.KE = KE
-
-    def stiff_matrix(self):
-        """
-        Note:
-            考虑四个单元的四边形网格中的 0 号单元：
-            0,1 - 6,7
-            2,3 - 8,9
-            拓扑 : cell2dof : 0,1,6,7,8,9,2,3
-            FEALPy : cell2dof : 0,1,2,3,6,7,8,9
-        """
-        nu = self.nu
-
-        A11 = np.array([[12,  3, -6, -3],
-                        [ 3, 12,  3,  0],
-                        [-6,  3, 12, -3],
-                        [-3,  0, -3, 12]])
-        A12 = np.array([[-6, -3,  0,  3],
-                        [-3, -6, -3, -6],
-                        [ 0, -3, -6,  3],
-                        [ 3, -6,  3, -6]])
-        B11 = np.array([[-4,  3, -2,  9],
-                        [ 3, -4, -9,  4],
-                        [-2, -9, -4, -3],
-                        [ 9,  4, -3, -4]])
-        B12 = np.array([[ 2, -3,  4, -9],
-                        [-3,  2,  9, -2],
-                        [ 4,  9,  2,  3],
-                        [-9, -2,  3,  2]])
-
-        KE = 1 / (1-nu**2) / 24 * (np.block([[A11, A12], [A12.T, A11]]) +\
-                              nu * np.block([[B11, B12], [B12.T, B11]]))
-
-        return  KE
 
     def assembly_cell_matrix(self, space, index=np.s_[:], cellmeasure=None, out=None):
         """
@@ -78,16 +43,11 @@ class BeamOperatorIntegrator:
             pass
         elif space[0].doforder == 'vdims':
             KE = self.KE
+            E = self.E
 
             # 用 FEALPy 中的自由度替换 Top 中的自由度
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
             KE = KE[idx, :][:, idx]
-
-            # 计算等效杨氏模量
-            E0 = self.E0
-            Emin = self.Emin
-            eleVol = self.eleVol
-            E = Emin + eleVol * (E0 - Emin)
 
             K[:] = np.einsum('i, jk -> ijk', E, KE)
 

@@ -2,8 +2,7 @@ import numpy as np
 
 from fealpy.mesh import QuadrangleMesh
 
-# Cantilever
-class TopRBFPlsm:
+class TopPlsmRBFs:
 
     def __init__(self, nelx: int = 60, nely: int = 30, volfrac: float = 0.5):
         '''
@@ -24,8 +23,13 @@ class TopRBFPlsm:
 
     def lsf_init(self, mesh):
         '''
-        水平集函数初始化
-        Parameters: 
+        水平集函数初始化为设计区域内分布初始孔洞的符号距离函数 
+
+        Parameters:
+        - mesh:
+
+        Returns:
+        - Phi ( ndarray - (nely+1, nelx+1) ): 初始的水平集函数，值在 (-3, 3) 之间.
 
         '''
         nelx = self._nelx
@@ -108,7 +112,21 @@ class TopRBFPlsm:
 
         return A, G, pGpX, pGpY, Alpha
 
-    def FE(self, mesh, eleVol, KE, F, fixeddofs):
+    def FE(self, mesh, E, KE, F, fixeddofs):
+        """
+        有限元计算位移.
+
+        Parameters:
+        - mesh:
+        - E ( ndarray - (NC, ) ): 单元刚度矩阵中的等效杨氏模量.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 具有 unit 杨氏模量的单元刚度矩阵.
+        - F ( ndarray - (gdof*GD, nLoads) ): 节点荷载.
+        - fixeddofs (ndarray): 位移约束(supports).
+
+        Returns:
+        - uh ( ndarray - (gdof, GD, nLoads) ): 总位移.
+        - ue ( ndarray - (NC, ldof*GD, nLoads) ): 单元位移.
+        """
         from plsf_beam_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
@@ -119,43 +137,47 @@ class TopRBFPlsm:
         space = Space(mesh, p=p, doforder='vdims')
         GD = 2
         uh = space.function(dim=GD)
+        nLoads = F.shape[-1]
+        uh = np.repeat(uh[:, :, np.newaxis], nLoads, axis=2)
         vspace = GD*(space, )
-        gdof = vspace[0].number_of_global_dofs()
         ldof = vspace[0].number_of_local_dofs()
+        vldof = ldof * GD
 
-        nu = 0.3
-        E0 = 1.0
-        Emin = 1e-9
-        integrator = BeamOperatorIntegrator(nu=nu, E0=E0, Emin=Emin, eleVol=eleVol, KE=KE)
+        integrator = BeamOperatorIntegrator(E=E, KE=KE)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
         bform.assembly()
         K = bform.get_matrix()
-        #print("K2:", K.shape, "\n", K.toarray().round(4))
 
         dflag = fixeddofs
-        F = F - K@uh.flat
+        F = F - K@uh.reshape(-1, nLoads)
         bdIdx = np.zeros(K.shape[0], dtype=np.int_)
         bdIdx[dflag.flat] = 1
         D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
         D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
         K = D0@K@D0 + D1
-        F[dflag.flat] = uh.ravel()[dflag.flat]
+        F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
         # 线性方程组求解
         uh.flat[:] = spsolve(K, F)
 
-        reshaped_uh = uh.reshape(-1)
         cell2dof = vspace[0].cell_to_dof()
         NC = mesh.number_of_cells()
-        updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
-        idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
-        # 用 Top 中的自由度替换 FEALPy 中的自由度
-        updated_cell2dof = updated_cell2dof[:, idx]
-        ue = reshaped_uh[updated_cell2dof] # (NC, ldof*GD)
+        ue = np.zeros((NC, vldof, nLoads))
+
+        for i in range(nLoads):
+            reshaped_uh = uh[:, : ,i].reshape(-1)
+            # 每个单元的自由度（每个节点两个自由度）
+            updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
+            #print("updated_cell2dof:", updated_cell2dof.shape, "\n", updated_cell2dof)
+            idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
+            # 用 Top 中的自由度替换 FEALPy 中的自由度
+            updated_cell2dof = updated_cell2dof[:, idx]
+            ue[:, :, i] = reshaped_uh[updated_cell2dof]
 
         return uh, ue
+
 
 
 

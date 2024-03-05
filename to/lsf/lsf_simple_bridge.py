@@ -130,7 +130,6 @@ F[2*(round(nelx/2)+1)*(nely+1)-1, 0] = -1
 fixeddofs = np.concatenate( [np.arange( 2*(nely+1)-2, 2*(nely+1) ),
                              np.arange( 2*(nelx+1)*(nely+1)-2, 2*(nelx+1)*(nely+1) )] )
 
-
 # Load Bearing 单元的索引 - simple bridge
 loadBearingIndices = ( -1, [0, nelx//2-1, nelx//2, -1] )
 
@@ -146,6 +145,13 @@ time_stats = {
     'reinit_lsf': [],
     'iteration_time': []
 }
+
+# 绘制结果图 - 白色区域：void 部分, 黑色区域：solid 部分
+import matplotlib.pyplot as plt
+plt.ion()
+fig, ax = plt.subplots()
+image = ax.imshow(-struc, cmap='gray', vmin=-1, vmax=0)
+ax.axis('off')
 
 # 设置  初始的 augmented Lagrangian parameters
 la = -0.01
@@ -208,20 +214,16 @@ for iterNum in range(num):
     # 打印当前迭代的结果
     print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Volfrac.: {volCurr:.3f}')
 
-    # 绘制结果图
+    # 更新图像
     plot_start = time.time()
 
-    import matplotlib.pyplot as plt
-    plt.imshow(-struc, cmap='gray', vmin=-1, vmax=0)
-    plt.axis('off')
-    plt.axis('equal')
+    image.set_data(-struc)
     plt.draw()
     plt.pause(1e-5)
 
     plot_end = time.time()
     plot_time = plot_end - plot_start
     time_stats['plot'].append(plot_time)
-
 
     # 五次迭代后执行收敛性检查
     start_num = 5 # Number of iterations at the start of the optimization 
