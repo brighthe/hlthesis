@@ -1,134 +1,148 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
-from scipy.sparse import lil_matrix, csc_matrix
-from scipy.sparse.linalg import spsolve
+from fealpy.mesh import QuadrangleMesh
 
 class TopSimp:
-    def __init__(self, nelx: int = 60, nely: int = 20, volfrac: float = 0.5,
-                penal: float = 3.0, rmin: float = 1.5):
+    def __init__(self, nelx, nely, volfrac, penal, rmin):
         '''
+        初始化拓扑优化问题
+
         Parameters:
-        - nelx (int): Number of elements in the horizontal direction. Defaults to 60.
-        - nely (int): Number of elements in the vertical direction. Defaults to 20.
-        - volfrac (float): Volume fraction, representing the desired fraction of
-        the design space to be occupied by material. Defaults to 0.5.
-        - penal (float): Penalization power, controlling the penalization of intermediate
-        densities in the SIMP method. Defaults to 3.0.
-        - rmin (float): Filter radius (divided by the element size), used to achieve
-        mesh-independence in the design. Defaults to 1.5.
+        - nelx (int): 水平方向的单元数.
+        - nely (int): 垂直方向的单元数.
+        - volfrac (float): Volume fraction, 表示材料将占据的设计空间的期望分数.
+        - penal (float): Penalization power, 在 SIMP 中控制中间密度的 penalization.
+        - rmin (float): Filter 半径.
         '''
         self._nelx = nelx
         self._nely = nely
         self._volfrac = volfrac
         self._penal = penal
         self._rmin = rmin
+        node = np.array([[0, 2], [0, 1], [0, 0],
+                         [1, 2], [1, 1], [1, 0],
+                         [2, 2], [2, 1], [2, 0]], dtype=np.float64)
+        cell = np.array([[0, 3, 4, 1],
+                         [1, 4, 5, 2],
+                         [3, 6, 7, 4],
+                         [4, 7, 8, 5]], dtype=np.int_)
+        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
-    def lk(self):
-        """
-        Compute the local stiffness matrix for a plane stress problem.
+        nx = self._nelx
+        ny = self._nely
+        x = np.linspace(0, nx, nx + 1)
+        y = np.linspace(ny, 0, ny + 1)
+        xv, yv = np.meshgrid(x, y, indexing='ij')
+        nodes = np.vstack([xv.ravel(), yv.ravel()]).T
+        cells = []
+        for j in range(nx):
+            for i in range(ny):
+                top_left = i + ny * j + j
+                top_right = top_left + 1
+                bottom_left = top_left + ny + 1
+                bottom_right = bottom_left + 1
+                cells.append([top_left, bottom_left, bottom_right, top_right])
+        node = nodes
+        cell = np.array(cells)
+        self._mesh = QuadrangleMesh(node=node, cell=cell)
 
-        Returns:
-            np.array: 8x8 local stiffness matrix.
+    def FE(self, mesh, x, penal, KE, F, fixeddofs):
         """
-        # Young's module and Poisson's ratio
-        E, nu = 1.0, 0.3
-        k = [1/2 - nu/6, 1/8 + nu/8, -1/4 - nu/12, -1/8 + 3*nu/8,
-            -1/4 + nu/12, -1/8 - nu/8, nu/6, 1/8 - 3*nu/8]
-        KE = E / (1 - nu**2) * np.array([
-            [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
-            [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
-            [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
-            [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
-            [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
-            [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
-            [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
-            [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
-        ])
-        
-        return KE
-
-    def FE(self, nelx, nely, penal, x):
-        """
-        Compute the global displacement vector by assembling the global stiffness matrix
-        and solving the system of equations.
+        有限元计算位移.
 
         Parameters:
-            nelx (int): Number of elements in the x direction.
-            nely (int): Number of elements in the y direction.
-            penal (float): Penalization power.
-            x (np.array): Density distribution matrix.
+        - mesh:
+        - x (ndarray - (nely, nelx) ): 设计变量.
+        - penal (float): penalization power.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
+        - F ( ndarray - (gdof*GD, nLoads) ): 节点荷载.
+        - fixeddofs (ndarray): 位移约束(supports).
 
         Returns:
-            np.array: Global displacement vector.
+        - uh ( ndarray - (gdof, GD, nLoads) ): 总位移.
+        - ue ( ndarray - (NC, ldof*GD, nLoads) ): 单元位移.
         """
-        # Get local stiffness matrix
-        KE = self.lk()
+        from simp_beam_operator_integrator import BeamOperatorIntegrator
+        from fealpy.fem import BilinearForm
+        from fealpy.functionspace import LagrangeFESpace as Space
+        from scipy.sparse.linalg import spsolve
+        from scipy.sparse import spdiags
 
-        # Initialize the global stiffness matrix, load matrix and global displacement vector
-        K = lil_matrix( ( 2*(nelx+1)*(nely+1), 2*(nelx+1)*(nely+1) ) )
-        F = lil_matrix( ( 2*(nelx+1)*(nely+1), 1) )
-        U = np.zeros( 2*(nely+1)*(nelx+1) )
-        
-        # Assembly of the global stiffness matrix
-        for elx in range(nelx):
-            for ely in range(nely):
-                # Node numbers for the element
-                n1 = (nely+1) * elx + ely
-                n2 = (nely+1) * (elx+1) + ely
+        p = 1
+        space = Space(mesh, p=p, doforder='vdims')
+        GD = 2
+        uh = space.function(dim=GD)
+        nLoads = F.shape[-1]
+        uh = np.repeat(uh[:, :, np.newaxis], nLoads, axis=2)
+        vspace = GD*(space, )
+        ldof = vspace[0].number_of_local_dofs()
+        vldof = ldof * GD
 
-                # DOF mapping
-                edof = np.array([2*n1, 2*n1+1, 2*n2, 2*n2+1, 2*n2+2, 2*n2+3, 2*n1+2, 2*n1+3])
+        integrator = BeamOperatorIntegrator(x=x, penal=penal, KE=KE)
+        bform = BilinearForm(vspace)
+        bform.add_domain_integrator(integrator)
+        KK = integrator.assembly_cell_matrix(space=vspace)
+        bform.assembly()
+        K = bform.get_matrix()
 
-                # Insert the local stiffness matrix into the global matrix
-                K[np.ix_(edof, edof)] += x[ely, elx] ** penal * KE
+        dflag = fixeddofs
+        F = F - K@uh.reshape(-1, nLoads)
+        bdIdx = np.zeros(K.shape[0], dtype=np.int_)
+        bdIdx[dflag.flat] = 1
+        D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
+        D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
+        K = D0@K@D0 + D1
+        F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
-        # Define loads and supports (Half MBB-Beam)
-        F[1] = -1
-        fixeddofs = np.union1d( np.arange(0, 2*(nely+1), 2), np.array([2*(nelx+1)*(nely+1) - 1]) )
-        alldofs = np.arange(2 * (nely+1) * (nelx+1))
-        freedofs = np.setdiff1d(alldofs, fixeddofs)
-        
-        # Solve the system of equations
-        U[freedofs] = spsolve(csc_matrix(K[np.ix_(freedofs, freedofs)]), F[freedofs])
-        U[fixeddofs] = 0
+        # 线性方程组求解
+        uh.flat[:] = spsolve(K, F)
 
-        return U
+        cell2dof = vspace[0].cell_to_dof()
+        NC = mesh.number_of_cells()
+        ue = np.zeros((NC, vldof, nLoads))
 
-    def check(self, nelx, nely, rmin, x, dc):
+        for i in range(nLoads):
+            reshaped_uh = uh[:, : ,i].reshape(-1)
+            # 每个单元的自由度（每个节点两个自由度）
+            updated_cell2dof = np.repeat(cell2dof*GD, GD, axis=1) + np.tile(np.array([0, 1]), (NC, ldof))
+            #print("updated_cell2dof:", updated_cell2dof.shape, "\n", updated_cell2dof)
+            idx = np.array([0, 1, 4, 5, 6, 7, 2, 3], dtype=np.int_)
+            # 用 Top 中的自由度替换 FEALPy 中的自由度
+            updated_cell2dof = updated_cell2dof[:, idx]
+            ue[:, :, i] = reshaped_uh[updated_cell2dof]
+
+        return uh, ue
+
+    def check(self, rmin, x, dc):
         """
-        Apply the mesh-independency filter to modify the element sensitivities.
+        应用 mesh-independency filter 进行每个单元的灵敏度过滤.
 
         Parameters:
-            nelx (int): Number of elements in the x direction.
-            nely (int): Number of elements in the y direction.
-            rmin (float): Filter radius.
-            x (np.array): Density distribution matrix of shape (nely, nelx).
-            dc (np.array): Original sensitivities matrix of shape (nely, nelx).
+        - rmin (float): Filter 半径.
+        - x (ndarray - (nely, nelx) ): 密度分布矩阵.
+        - dc (ndarray - (nely, nelx) ): 原始的灵敏度矩阵.
 
         Returns:
-            np.array: Filtered sensitivities matrix of shape (nely, nelx).
-
-        Notes:
-            The convolution operator is defined such that it decays linearly with 
-            distance from the considered element, and is zero outside the filter region.
+        - dcn(ndarray - (nely, nelx) ): 过滤后的灵敏度矩阵.
         """
-        # Assert to ensure all dc values are non-positive
-        # assert np.all(dc <= 0), "dc should be non-positive (usually negative)"
 
-        # Initialize the modified sensitivities matrix
+        nely, nelx = x.shape
         dcn = np.zeros((nely, nelx))
 
-        # Loop over all elements in the design region
+        # 计算过滤器半径
+        r = int(rmin)
+
         for i in range(nelx):
             for j in range(nely):
                 sum_val = 0.0
+                # 确定邻域的范围
+                min_x = max(i - r, 0)
+                max_x = min(i + r + 1, nelx)
+                min_y = max(j - r, 0)
+                max_y = min(j + r + 1, nely)
 
-                # Loop over the square region surrounding the element (i,j) 
-                # with a side length of twice round(rmin) to find the elements 
-                # that lie within the filter radius
-                for k in range( max( i - int(rmin), 0 ), min( i + int(rmin) + 1, nelx ) ):
-                    for l in range( max( j - int(rmin), 0 ), min( j + int(rmin) + 1, nely ) ):
+                for k in range(min_x, max_x):
+                    for l in range(min_y, max_y):
 
                         # Calculate convolution operator value for the element (k,l) with respect to (i,j)
                         fac = rmin - np.sqrt((i - k)**2 + (j - l)**2)
@@ -136,7 +150,7 @@ class TopSimp:
                         # Accumulate the convolution sum
                         sum_val += max(0, fac)
 
-                        # Modify the sensitivity for element (i,j) based on the value of the convolution operator
+                        # 基于 convolution 算子的值修改单元的灵敏度
                         dcn[j, i] += max(0, fac) * x[l, k] * dc[l, k]
 
                 # Normalize the modified sensitivity for element (i,j)
@@ -144,113 +158,55 @@ class TopSimp:
 
         return dcn
 
-    def OC(self, nelx, nely, volfrac, x, dc):
+    def OC(self, volfrac, x, dc, passive=None):
         """
-        Perform topology optimization using the Optimality Criteria method.
+        使用 Optimality Criteria Method 执行设计更新.
 
         Parameters:
-            nelx (int): Number of elements in the x direction.
-            nely (int): Number of elements in the y direction.
-            volfrac (float): Volume fraction, representing the desired fraction of the design space to be occupied by material.
-            x (np.array): Density distribution matrix of shape (nely, nelx).
-            dc (np.array): Original sensitivities matrix of shape (nely, nelx).
+        - volfrac (float): Volume fraction, 表示材料将占据的设计空间的期望分数.
+        - x (ndarray - (nely, nelx) ): 密度分布矩阵.
+        - dc (ndarray - (nely, nelx) ): 原始的灵敏度矩阵.
+        - passive (ndarray - (nely, nelx) ): 一个区域，在自由变化的单元处为 0，在固定的单元处为 1.
 
         Returns:
-            xnew (np.array)-- updated design variable vector after the optimization step
+        - xnew (ndarray - (nely, nelx) ): 优化步骤后更新的设计变量.
         """
-        # Ensure that the sensitivity values are non-positive as required for the OC method
-        assert np.all(dc <= 0), "dc should be non-positive (usually negative)"
+        nely, nelx = x.shape
 
-        # Initialize Lagrange multipliers for bi-section algorithm
+        # 初始化 Lagrange 乘子
         l1, l2 = 0, 1e5
 
-        # Define the maximum change allowed in the design variables
-        move = 0.2  
+        # 定义设计变量中允许的最大变化
+        move = 0.2
 
-        # Create a copy of the design variable vector to be updated
-        xnew = np.copy(x)  
+        xnew = np.copy(x)
 
-        # Bi-section loop to find the correct Lagrange multiplier that satisfies the volume constraint
+        # 二分法以找到满足体积约束的 Lagrange 乘子
         while (l2 - l1) > 1e-4:
-            # Calculate the midpoint of the current Lagrange multiplier interval
+            # 计算当前 Lagrange 乘子区间的中点
             lmid = 0.5 * (l2 + l1)
             # Lower limit move restriction
             tmp0 = x - move
             # Upper limit move restriction
             tmp1 = x + move
-            # Design variable update (intermediate step) using OC update scheme
-            tmp2 = x * np.sqrt(-dc / lmid)
 
+            # Design variable update (intermediate step) using OC update scheme
+            be = -dc / lmid
+            tmp2 = x * np.sqrt(be)
             tmp3 = np.minimum(tmp1, tmp2)
             tmp4 = np.minimum(1, tmp3) 
             tmp5 = np.maximum(tmp0, tmp4)
+
             xnew = np.maximum(0.001, tmp5)
-            # Check if the current design violates the volume constraint
+
+            # 寻找 Passive 单元，并将其密度设置为最小密度
+            if passive is not None:
+                xnew[passive == 1] = 0.001
+
+            # 检查当前设计是否满足体积约束
             if np.sum(xnew) - volfrac * nelx * nely > 0:
                 l1 = lmid
             else:
                 l2 = lmid
 
-        # Return the updated design variable vector
         return xnew
-
-    def optimize(self):
-        # Initialize optimization parameterse
-        nelx, nely, rmin, penal, volfrac = self._nelx, self._nely, self._rmin, self._penal, self._volfrac
-        # Initialize design variable field to the volume fraction
-        x = np.full((nely, nelx), volfrac)
-
-        loop = 0 # Iteration counter
-        change = 1.0 # Maximum change in design variables between iterations
-
-         # Optimization loop, runs until the change is less than 1%
-        while change > 0.01:
-            loop += 1
-            xold = np.copy(x)
-
-            # FE-Analysis: perform finite element analysis on the current design
-            U = self.FE(nelx, nely, penal, x)
-
-            # Objective Function And Sensitivity Analysis
-            KE = self.lk() # Retrieve element stiffness matrix
-            c = 0# Initialize objective (compliance) to zero
-            dc = np.zeros((nely, nelx)) # Initialize sensitivity array to zero
-
-            # Loop over every element to calculate the objective and sensitivity
-            for elx in range(nelx):
-                for ely in range(nely):
-                    # Global node numbers for the upper left and upper right nodes of the element
-                    n1 = (nely+1) * elx + ely
-                    n2 = (nely+1) * (elx+1) + ely
-                    # Degrees of freedom for the element
-                    edof = np.array([2*n1, 2*n1 + 1, 2*n2, 2*n2 + 1, 2*n2 + 2, 2*n2 + 3, 2*n1 + 2, 2*n1 + 3])
-                    # Extract element displacements
-                    Ue = U[edof]
-                    # Update objective (compliance) and its sensitivity
-                    c += x[ely, elx]**penal * Ue.T @ KE @ Ue 
-                    dc[ely, elx] = -penal * x[ely, elx]**(penal - 1) * Ue.T @ KE @ Ue
-
-            # Filtering of Sensitivity: apply mesh-independent filter to the sensitivities
-            dc = self.check(nelx, nely, rmin, x, dc)
-
-            # Design Update By The Optimality Criteria Method
-            x = self.OC(nelx, nely, volfrac, x, dc)
-
-            # Print Results: output the current iteration results
-            change = np.max(np.abs(x - xold))
-            print(f' Iter.: {loop:4d} Objective.: {c:10.4f} Volfrac.: {np.sum(x)/(nelx*nely):6.3f} change.: {change:6.3f}')
-            
-            # Plot Densities: visualize the material distribution
-            plt.imshow(-x, cmap='gray')
-            plt.axis('off')
-            plt.axis('equal')
-            plt.draw()
-            plt.pause(1e-5)
-            
-        # Ensure that plot does not close automatically at the end of optimization
-        plt.ioff()
-        plt.show()
-
-if __name__ == "__main__":
-    tsp = TopSimp()
-    print(tsp.optimize())
