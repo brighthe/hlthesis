@@ -25,10 +25,30 @@ print("node:", node.shape, "\n", node)
 print("cell:", cell.shape, "\n", cell)
 
 # 水平集函数的初始化
-Phi = ts.lsf_init(mesh = mesh)
+r = nely * 0.1 # 初始孔洞的半径
+Phi = ts.lsf_init(mesh = mesh, r=r)
 print("Phi:", Phi.shape, "\n", Phi.round(4))
 
-A, G, pGpX, pGpY, Alpha = ts.rbf_init(mesh = mesh, Phi = Phi)
+def output(filename, output, node_val=None, cell_val=None):
+    import os
+    if not os.path.exists(output):
+        os.makedirs(output)
+    if node_val is not None:
+        mesh.nodedata['node_val'] = node_val.flatten('F') # 按列增加
+        fname = os.path.join(output, f'{filename}.vtu')
+        mesh.to_vtk(fname=fname)
+    if cell_val is not None:
+        pass
+
+output(filename='Phi0', output='./visulaization/', node_val=Phi)
+
+# 计算 MQ 样条
+A, G, pGpX, pGpY = ts.MQ_spline(mesh=mesh)
+print("A:", A.shape, "\n", A.round(4))
+
+# 径向基函数初始化
+Alpha = ts.rbf_init(G = G, Phi = Phi)
+print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
 def stiff_matrix(nu, E0):
     """
@@ -77,7 +97,7 @@ KE = stiff_matrix(nu = nu, E0 = E0)
 
 # 初始化单元应变能量场(速度场)
 eleComp = np.zeros(nelx*nely, )
-struc = np.ones((nely, nelx))
+# struc = np.ones((nely, nelx))
 
 from fealpy.functionspace import LagrangeFESpace as Space
 p = 1
@@ -95,26 +115,25 @@ F[nodal_loads_index, 0] = -100
 # 位移约束(supports) - cantilever
 fixeddofs = np.arange(0, 2*(nely+1), 1)
 
-eleNode = cell
-
 # 迭代优化
 nLoop = 200 # 优化的最大迭代次数
 nRelax = 30
 dt = 0.5 # 水平集演化的时间步长
 delta = 10
-# 增广 Lagrangian 更新方案的参数
+# Lagrangian 更新方案的参数
 mu = 20
 gamma = 0.05
 lag = 1
-# 目标函数值
+# 初始化目标函数值
 comp = np.zeros(nLoop)
-# 总体积分数
+# 初始化总体积分数
 vol = np.zeros(nLoop)
 
 # 绘制结果图
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
+eleNode = cell
 for iT in range(nLoop):
     # 有限元分析
     # 构件精细网格 - (21, 21)
@@ -227,6 +246,16 @@ for iT in range(nLoop):
     #print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
     Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
+
+    #mesh.nodedata['Phi'] = Phi.flatten('F') # 按列增加
+    #import os
+    #output = './visulaization/'
+    #if not os.path.exists(output):
+    #    os.makedirs(output)
+    #fname = os.path.join(output, 'Phi.vtu')
+    #mesh.to_vtk(fname=fname)
+
+
     #strucFULL = (Phi > 0).astype(int)
     #struc = strucFULL[1:-1, 1:-1]
     #print("Phi:", Phi.shape, "\n", Phi.round(4))

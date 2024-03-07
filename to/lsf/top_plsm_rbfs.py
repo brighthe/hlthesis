@@ -8,7 +8,7 @@ class TopPlsmRBFs:
         '''
         初始化拓扑优化问题
 
-        Parameters: 
+        Parameters:
         - nelx (int): 沿设计区域水平方向的单元数.
         - nely (int): 沿设计区域垂直方向的单元数.
         - volfrac (float) : 规定的体积分数.
@@ -21,12 +21,13 @@ class TopPlsmRBFs:
         self._mesh = QuadrangleMesh.from_box(box = [0, self._nelx, 0, self._nely], \
                                         nx = self._nelx, ny = self._nely)
 
-    def lsf_init(self, mesh):
+    def lsf_init(self, mesh, r):
         '''
-        水平集函数初始化为设计区域内分布初始孔洞的符号距离函数 
+        水平集函数初始化为设计区域内分布初始孔洞的符号距离函数.
 
         Parameters:
         - mesh:
+        - r (float): 初始孔洞的半径.
 
         Returns:
         - Phi ( ndarray - (nely+1, nelx+1) ): 初始的水平集函数，值在 (-3, 3) 之间.
@@ -42,8 +43,7 @@ class TopPlsmRBFs:
         # 网格中节点的 y 坐标 - (nely+1, nelx+1)
         Y = node[:, 1].reshape(nelx+1, nely+1).T
         #print("Y:", Y.shape, "\n", Y)
-        # 初始孔洞的半径
-        r = nely * 0.1
+
         # hX 是初始孔洞的中心处的 x 坐标 - (15, )
         hX = nelx * np.concatenate([np.tile([1/6, 5/6], 3), np.tile([0, 1/3, 2/3, 1], 2), [1/2]])
         #print("hX:", hX.shape, "\n", hX)
@@ -65,13 +65,20 @@ class TopPlsmRBFs:
 
         return Phi
 
-    def rbf_init(self, mesh, Phi):
-        '''
-        径向基函数初始化
-        '''
+    def MQ_spline(self, mesh):
+        """
+        Parameters:
+        - mesh:
+
+        Returns:
+        - A (ndarray - (NN, NN) ): MQ 样条.
+        - G (ndarray - (NN+3, NN+3) ):
+        - pGpX (ndarray - (NN+3, NN+3) ): MQ 样条在 x 方向上的偏导数.
+        - pGpY (ndarray - (NN+3, NN+3) ): MQ 样条在 y 方向上的偏导数.
+        """
         nelx = self._nelx
         nely = self._nely
-        
+
         # RBF 参数
         cRBF = 1e-4
 
@@ -81,36 +88,83 @@ class TopPlsmRBFs:
         # 网格中节点的 y 坐标 - (nely+1, nelx+1)
         Y = node[:, 1].reshape(nelx+1, nely+1).T
 
-        # MQ 样条组成的矩阵 A - ((nely+1)*(nelx+1), (nely+1)*(nelx+1))
-        Ax = np.subtract.outer(X.flatten('F'), X.flatten('F')) # 所有节点间 x 方向的距离差
-        Ay = np.subtract.outer(Y.flatten('F'), Y.flatten('F')) # 所有节点间 y 方向的距离差
+        # 所有节点间 x 方向的距离差
+        Ax = np.subtract.outer(X.flatten('F'), X.flatten('F'))
+        # 所有节点间 y 方向的距离差
+        Ay = np.subtract.outer(Y.flatten('F'), Y.flatten('F'))
         A = np.sqrt(Ax**2 + Ay**2 + cRBF**2)
-        #print("A:", A.shape, "\n", A.round(4))
 
-        # 构建矩阵 G - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
-        nNode = mesh.number_of_nodes() # 节点总数
-        P = np.vstack((np.ones(nNode), X.flatten('F'), Y.flatten('F'))).T
+        NN = mesh.number_of_nodes()
+        P = np.vstack((np.ones(NN), X.flatten('F'), Y.flatten('F'))).T
         I = np.zeros((3, 3))
         G_upper = np.hstack((A, P))
         G_lower = np.hstack((P.T, I))
         G = np.vstack((G_upper, G_lower))
-        #print("G:", G.shape, "\n", G.round(4))
 
-        # MQ 样条在 x 方向上的偏导数组成的矩阵 pGpX - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
-        pGpX_upper = np.hstack((Ax / A, np.tile(np.array([0, 1, 0]), (nNode, 1))))
-        pGpX_lower = np.hstack((np.tile(np.array([[0], [1], [0]]), (1, nNode)), np.zeros((3, 3))))
+        pGpX_upper = np.hstack((Ax / A, np.tile(np.array([0, 1, 0]), (NN, 1))))
+        pGpX_lower = np.hstack((np.tile(np.array([[0], [1], [0]]), (1, NN)), np.zeros((3, 3))))
         pGpX = np.vstack((pGpX_upper, pGpX_lower))
 
-        # MQ 样条在 y 方向上的偏导数组成的矩阵 pGpY - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
-        pGpY_upper = np.hstack((Ay / A, np.tile(np.array([0, 0, 1]), (nNode, 1))))
-        pGpY_lower = np.hstack((np.tile(np.array([[0], [0], [1]]), (1, nNode)), np.zeros((3, 3))))
+        pGpY_upper = np.hstack((Ay / A, np.tile(np.array([0, 0, 1]), (NN, 1))))
+        pGpY_lower = np.hstack((np.tile(np.array([[0], [0], [1]]), (1, NN)), np.zeros((3, 3))))
         pGpY = np.vstack((pGpY_upper, pGpY_lower))
+
+        return A, G, pGpX, pGpY
+
+
+    def rbf_init(self, G, Phi):
+        '''
+        径向基函数初始化
+        
+        Parameters:
+        - G (ndarray - (NN+3, NN+3) ):
+        - Phi ( ndarray - (nely+1, nelx+1) ): 初始的水平集函数，值在 (-3, 3) 之间.
+
+        Returns:
+        - Alpha (ndarray - (NN+3, ) ): The generalized expansion 系数.
+        '''
+        #nelx = self._nelx
+        #nely = self._nely
+        #
+        ## RBF 参数
+        #cRBF = 1e-4
+
+        #node = mesh.entity('node') # 按列增加
+        ## 网格中节点的 x 坐标 - (nely+1, nelx+1)
+        #X = node[:, 0].reshape(nelx+1, nely+1).T
+        ## 网格中节点的 y 坐标 - (nely+1, nelx+1)
+        #Y = node[:, 1].reshape(nelx+1, nely+1).T
+
+        ## MQ 样条组成的矩阵 A - ((nely+1)*(nelx+1), (nely+1)*(nelx+1))
+        #Ax = np.subtract.outer(X.flatten('F'), X.flatten('F')) # 所有节点间 x 方向的距离差
+        #Ay = np.subtract.outer(Y.flatten('F'), Y.flatten('F')) # 所有节点间 y 方向的距离差
+        #A = np.sqrt(Ax**2 + Ay**2 + cRBF**2)
+        ##print("A:", A.shape, "\n", A.round(4))
+
+        ## 构建矩阵 G - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
+        #nNode = mesh.number_of_nodes() # 节点总数
+        #P = np.vstack((np.ones(nNode), X.flatten('F'), Y.flatten('F'))).T
+        #I = np.zeros((3, 3))
+        #G_upper = np.hstack((A, P))
+        #G_lower = np.hstack((P.T, I))
+        #G = np.vstack((G_upper, G_lower))
+        ##print("G:", G.shape, "\n", G.round(4))
+
+        ## MQ 样条在 x 方向上的偏导数组成的矩阵 pGpX - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
+        #pGpX_upper = np.hstack((Ax / A, np.tile(np.array([0, 1, 0]), (nNode, 1))))
+        #pGpX_lower = np.hstack((np.tile(np.array([[0], [1], [0]]), (1, nNode)), np.zeros((3, 3))))
+        #pGpX = np.vstack((pGpX_upper, pGpX_lower))
+
+        ## MQ 样条在 y 方向上的偏导数组成的矩阵 pGpY - ((nely+1)*(nelx+1)+3, (nely+1)*(nelx+1)+3)
+        #pGpY_upper = np.hstack((Ay / A, np.tile(np.array([0, 0, 1]), (nNode, 1))))
+        #pGpY_lower = np.hstack((np.tile(np.array([[0], [0], [1]]), (1, nNode)), np.zeros((3, 3))))
+        #pGpY = np.vstack((pGpY_upper, pGpY_lower))
 
         # 广义展开系数 Alpha - ((nely+1)*(nelx+1)+3, )
         Phi_flat = Phi.flatten('F')
         Alpha = np.linalg.solve(G, np.hstack((Phi_flat, np.zeros(3))))
 
-        return A, G, pGpX, pGpY, Alpha
+        return Alpha
 
     def FE(self, mesh, E, KE, F, fixeddofs):
         """

@@ -153,7 +153,7 @@ fig, ax = plt.subplots()
 image = ax.imshow(-struc, cmap='gray', vmin=-1, vmax=0)
 ax.axis('off')
 
-# 设置  初始的 augmented Lagrangian parameters
+# 设置初始的 augmented Lagrangian parameters
 la = -0.01
 La = 1000
 alpha = 0.9
@@ -169,7 +169,8 @@ for iterNum in range(num):
 
     U, Ue = ts.FE(mesh=mesh, struc=struc, KE=KE, F=F, fixeddofs=fixeddofs)
     print("U:", U.shape, "\n", U.round(4))
-    print("Ue:", Ue.shape, "\n", Ue[620].round(4))
+    print("Ue:", Ue.shape, "\n", Ue.round(4))
+    print("struc:", struc.shape, "\n", struc)
 
     fe_end = time.time()
     fe_time = fe_end - fe_start
@@ -179,6 +180,8 @@ for iterNum in range(num):
     shapeSens[:] = 0
     topSens[:] = 0
 
+    shapeSens_time = 0
+    topSens_time = 0
     for i in range(nLoads):
         # 计算每个单元的柔度的形状灵敏度
         shapeSens_start = time.time()
@@ -188,6 +191,9 @@ for iterNum in range(num):
         temp1 = -np.maximum(struc, stiff)
         temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
         shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
+        
+        solid_elements = np.where(struc.flatten('F')==1)[0]
+        print("solid_elements:", solid_elements.shape)
 
         shapeSens_end = time.time()
         shapeSens_time = shapeSens_end - shapeSens_start
