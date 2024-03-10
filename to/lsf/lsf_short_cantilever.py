@@ -192,8 +192,8 @@ for iterNum in range(num):
         temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
         shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
         
-        solid_elements = np.where(struc.flatten('F')==1)[0]
-        print("solid_elements:", solid_elements.shape)
+        #solid_elements = np.where(struc.flatten('F')==1)[0]
+        #print("solid_elements:", solid_elements.shape)
 
         shapeSens_end = time.time()
         shapeSens_time = shapeSens_end - shapeSens_start

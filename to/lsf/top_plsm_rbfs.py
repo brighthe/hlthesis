@@ -232,6 +232,41 @@ class TopPlsmRBFs:
 
         return uh, ue
 
+    def evolve(self, G, Alpha, gradPhi, dt, delta, lag, Phi, eleComp, eleVol, eleNode):
+
+        nelx = self._nelx
+        nely = self._nely
+
+        # 避免水平集函数的 unbounded growth
+        indexDelta = np.abs(Phi) <= delta
+        DeltaPhi = np.zeros_like(Phi)
+        DeltaPhi[indexDelta] = 0.75 / delta * (1 - Phi[indexDelta] ** 2 / delta ** 2)
+
+        eleComp = eleComp.reshape(nelx, nely).T
+        #print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
+        eleCompLR = np.hstack([eleComp[:, 0:1], eleComp]) + np.hstack([eleComp, eleComp[:, -1:]])
+        #print("eleCompLR:", eleCompLR.shape, "\n", eleCompLR.round(4))
+
+        # 计算节点应变能
+        nodeComp = ( np.vstack([eleCompLR, eleCompLR[-1, :]]) + \
+                    np.vstack([eleCompLR[0, :], eleCompLR]) ) / 4
+        B = ( nodeComp.flatten('F') / np.median(nodeComp) - lag ) * \
+            DeltaPhi.flatten('F') * delta / 0.75
+        #print("B:", B.shape, "\n", B.round(4))
+        B_augmented = np.concatenate([B, np.zeros(3)])
+
+        # 更新方程
+        X = np.linalg.solve(G, B_augmented)
+        Alpha = Alpha + dt * X
+
+        # find out the node numbers of the elements cut by the structural interface
+        condition = (eleVol.flatten('F') < 1) & (eleVol.flatten('F') > 0)
+        unique_nodes = np.unique(eleNode[condition])
+        mean_gradPhi = np.mean(gradPhi[unique_nodes])
+        Alpha = Alpha / mean_gradPhi
+        Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
+
+        return Phi
 
 
 

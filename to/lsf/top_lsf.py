@@ -207,15 +207,15 @@ class TopLsf:
         求解水平集函数演化方程，以模拟网格上界面的移动
         
         Parameters:
-        - v (ndarray): 表示每个网格点的速度场.
-        - g (ndarray): 表示每个网格点的 forcing 项.
-        - lsf (ndarray): 表示界面的水平集函数.
+        - v (ndarray - (nely, nelx) ): 表示每个网格点的速度场.
+        - g (ndarray - (nely, nelx) ): 表示每个网格点的 forcing 项.
+        - lsf (ndarray - (nely+2, nelx+2) ): 表示界面的水平集函数.
         - stepLength (float): The total time for which the level set function should be evolved.
         - w (float): A weighting parameter for the influence of the force term on the evolution.
 
         Returns:
-        - struc ( ndarray - (nely, nelx)): 演化后的更新结构，只能为 0 或 1.
-        - lsf ( ndarray - (nely+2, nelx+2)): 演化的水平集函数.
+        - struc ( ndarray - (nely, nelx) ): 演化后的更新结构，只能为 0 或 1.
+        - lsf ( ndarray - (nely+2, nelx+2) ): 演化的水平集函数.
         """
         # 用零边界填充速度场和 forcing 项
         vFull = np.pad(v, ((1,1),(1,1)), mode='constant', constant_values=0)

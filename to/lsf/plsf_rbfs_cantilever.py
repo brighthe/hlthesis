@@ -138,8 +138,6 @@ for iT in range(nLoop):
     # 有限元分析
     # 构件精细网格 - (21, 21)
     s, t = np.meshgrid(np.arange(-1, 1.1, 0.1), np.arange(-1, 1.1, 0.1))
-    #print("s:", s.shape, "\n", s.round(4))
-    #print("t:", t.shape, "\n", t.round(4))
     c0 = ((1-s.flatten('F')) * (1-t.flatten('F')))[:, np.newaxis]
     c1 = ((1+s.flatten('F')) * (1-t.flatten('F')))[:, np.newaxis]
     c2 = ((1+s.flatten('F')) * (1+t.flatten('F')))[:, np.newaxis]
@@ -155,12 +153,9 @@ for iT in range(nLoop):
     例如 matlab 中是 -5.55111512e-17，而 python 中是 5.55111512e-17，
     因此我们需要确定一个接近零的阈值
     '''
-    # 计算 solid 部分的体积分数
     threshold = 1e-15
     eleVol = np.sum(tmpPhi >= threshold, axis=0) / np.size(s)
     print("eleVol:", eleVol.shape, "\n", eleVol.round(4))
-    vol[iT] = np.sum(eleVol) / (nelx*nely)
-    #print("vol:", vol.shape, "\n", vol.round(4))
 
     # 计算单元刚度矩阵中的等效杨氏模量
     E = Emin + eleVol * (E0 - Emin)
@@ -178,6 +173,10 @@ for iT in range(nLoop):
         #print("temp1:", temp1.shape, "\n", temp1.round(4))
         eleComp = np.einsum('c, c -> c', E, temp1)
         print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
+
+    # 计算 solid 部分的体积分数
+    vol[iT] = np.sum(eleVol) / (nelx*nely)
+    #print("vol:", vol.shape, "\n", vol.round(4))
 
     # 计算目标函数值
     comp[iT] = np.sum(eleComp)
@@ -203,63 +202,48 @@ for iT in range(nLoop):
         np.all( np.abs(comp[iT] - comp[iT-8:iT]) / comp[iT] < 1e-3 ):
         break
 
-    # Lagrange 乘子
+    # 增广 Lagrangian 更新方案
     if iT < nRelax:
         lag = mu * (vol[iT] - vol[0] + (vol[0] - volfrac) * (iT + 1) / nRelax)
     else:
         lag = lag + gamma * (vol[iT] - volfrac)
         gamma = min(gamma + 0.05, 5)
 
-    # 水平集函数演化
+    # 计算水平集函数的梯度
     gradPhi = np.sqrt( (pGpX @ Alpha) ** 2 + (pGpY @ Alpha) ** 2 )
     #print("gradPhi:", gradPhi.shape, "\n", gradPhi.round(4))
 
+    # 水平集函数更新
+    #Phi = ts.evolve(G=G, Alpha=Alpha, gradPhi=gradPhi, dt=dt, delta=delta, lag=lag, Phi=Phi, eleComp=eleComp, eleVol=eleVol, eleNode=eleNode)
+
+    # 避免水平集函数的 unbounded growth
     indexDelta = np.abs(Phi) <= delta
-    #indexDelta = np.abs(Phi.flatten('F')) <= delta
-    #print("indexDelta:", indexDelta.shape, "\n", indexDelta)
     DeltaPhi = np.zeros_like(Phi)
     DeltaPhi[indexDelta] = 0.75 / delta * (1 - Phi[indexDelta] ** 2 / delta ** 2)
-    #print("DeltaPhi:", DeltaPhi.shape, "\n", DeltaPhi.round(5))
 
     eleComp = eleComp.reshape(nelx, nely).T
     #print("eleComp:", eleComp.shape, "\n", eleComp.round(4))
     eleCompLR = np.hstack([eleComp[:, 0:1], eleComp]) + np.hstack([eleComp, eleComp[:, -1:]])
     #print("eleCompLR:", eleCompLR.shape, "\n", eleCompLR.round(4))
 
+    # 计算节点应变能
     nodeComp = ( np.vstack([eleCompLR, eleCompLR[-1, :]]) + \
-                 np.vstack([eleCompLR[0, :], eleCompLR]) ) / 4
-    #print("nodeComp:", nodeComp.shape, "\n", nodeComp.round(4))
-
+                np.vstack([eleCompLR[0, :], eleCompLR]) ) / 4
     B = ( nodeComp.flatten('F') / np.median(nodeComp) - lag ) * \
-            DeltaPhi.flatten('F') * delta / 0.75
+        DeltaPhi.flatten('F') * delta / 0.75
     #print("B:", B.shape, "\n", B.round(4))
-
     B_augmented = np.concatenate([B, np.zeros(3)])
-    X = np.linalg.solve(G, B_augmented)
-    Alpha += dt * X
-    #print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
 
+    # 更新方程
+    X = np.linalg.solve(G, B_augmented)
+    Alpha = Alpha + dt * X
+
+    # find out the node numbers of the elements cut by the structural interface
     condition = (eleVol.flatten('F') < 1) & (eleVol.flatten('F') > 0)
     unique_nodes = np.unique(eleNode[condition])
     mean_gradPhi = np.mean(gradPhi[unique_nodes])
-    Alpha /= mean_gradPhi
-    #print("Alpha:", Alpha.shape, "\n", Alpha.round(4))
-
+    Alpha = Alpha / mean_gradPhi
     Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
-
-    #mesh.nodedata['Phi'] = Phi.flatten('F') # 按列增加
-    #import os
-    #output = './visulaization/'
-    #if not os.path.exists(output):
-    #    os.makedirs(output)
-    #fname = os.path.join(output, 'Phi.vtu')
-    #mesh.to_vtk(fname=fname)
-
-
-    #strucFULL = (Phi > 0).astype(int)
-    #struc = strucFULL[1:-1, 1:-1]
-    #print("Phi:", Phi.shape, "\n", Phi.round(4))
-
 
 plt.ioff()
 plt.show()
