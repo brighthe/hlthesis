@@ -21,6 +21,7 @@ solver = Mimetic(mesh)
 gradh = solver.gard_operator()
 print("gradh:", gradh.shape, "\n", gradh)
 
+print("--------------", solver.M_f().shape)
 # Initialize the level set function $phi0$ and velocity field $u$ on the mesh nodes
 node = mesh.entity('node')
 edge = mesh.entity('edge')

@@ -8,6 +8,11 @@ class Mimetic():
         self.mesh = mesh
     
     def M_f(self, ac=None):
+        """
+
+        Results
+        - result (ndarray, (NE, NE) )
+        """
         mesh = self.mesh
         NC = mesh.number_of_cells()
         NE = mesh.number_of_edges()
@@ -21,7 +26,7 @@ class Mimetic():
         result = np.zeros((NE, NE))
         if ac is None:
             ac = cell_measure
-        
+
         for i in range(NC):
             LNE = len(cell2edge[i])
             cell_out_flag = flag[i][cell2edge[i]] # (LNE, )
@@ -36,11 +41,16 @@ class Mimetic():
             M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])
-            result[indexi, indexj] += M 
+            result[indexi, indexj] += M
 
         return result
     
     def M_c(self):
+        """
+
+        Results
+        - result (ndarray, (NC, NC) )
+        """
         mesh = self.mesh
         cell_measure = mesh.entity_measure("cell")
         result = np.diag(cell_measure)
@@ -48,6 +58,12 @@ class Mimetic():
         return result
     
     def div_operator(self):
+        """
+        离散散度算子
+
+        Results
+        - result (ndarray, (NC, NE) )
+        """
         mesh = self.mesh
         NC = mesh.number_of_cells()
         NE = mesh.number_of_edges()
@@ -59,11 +75,17 @@ class Mimetic():
         for i in range(NC):
             cell_out_flag = flag[i][cell2edge[i]] # (LNE, )
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
-            result[i, cell2edge[i]] = cell_out_flag * cell_edge_measure/cell_measure[i] # (NC, NE)
+            result[i, cell2edge[i]] = cell_out_flag * cell_edge_measure/cell_measure[i]
 
         return result
 
     def gard_operator(self):
+        """
+        离散梯度算子
+
+        Results
+        - result (ndarray, (NE, NN) )
+        """
         mesh = self.mesh
         edge = mesh.entity('edge')
         NE = mesh.number_of_edges()
@@ -79,6 +101,11 @@ class Mimetic():
         return gradh
     
     def source(self, fun, gddof, D):
+        """
+
+        Results
+        - result (ndarray, (NC+NE, ) )
+        """
         mesh = self.mesh
         NE = mesh.number_of_edges()
         cell_centers = mesh.entity_barycenter(etype=2)

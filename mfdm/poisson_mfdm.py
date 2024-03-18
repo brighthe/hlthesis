@@ -11,24 +11,27 @@ pde = SinSinData()
 #pde = CosCos5Data()
 mesh = pde.polygon_mesh_2(n=40)
 NC = mesh.number_of_cells()
+print("NC:", NC)
 NE = mesh.number_of_edges()
+print("NE:", NE)
 EDdof = mesh.ds.boundary_edge_index()
 
 solver = Mimetic(mesh)
 div_operator = solver.div_operator()
 print("div_operator:", div_operator.shape, "\n", div_operator)
 M_c = solver.M_c()
-#print("M_c:", M_c.shape, "\n", M_c)
+print("M_c:", M_c.shape, "\n", M_c)
 M_f = solver.M_f()
 print("M_f:", M_f.shape, "\n", M_f)
 
 b = solver.source(fun=pde.source, gddof=EDdof, D=pde.Dirichlet)
-#print("b:", b.shape, "\n", b)
+print("b:", b.shape, "\n", b)
 
 A10 = -M_c @ div_operator
 A = np.bmat([[M_f, A10.T], [A10, np.zeros((NC, NC))]])
 #print("A:", A.shape, "\n", A)
 
+# 单元的积分平均 - (NC, )
 p = mesh.integral(pde.solution, q=5, celltype=True) / mesh.entity_measure('cell')
 
 #Ddof = mesh.ds.boundary_cell_flag()
@@ -37,7 +40,7 @@ p = mesh.integral(pde.solution, q=5, celltype=True) / mesh.entity_measure('cell'
 x = np.linalg.solve(A, b)
 #print("x:", x.shape, "\n", x)
 ph = x[-NC:]
-#print("ph:", ph.shape, "\n", ph)
+print("ph:", ph.shape, "\n", ph)
 
 error = p - ph
 print(np.max(np.abs(error)))
