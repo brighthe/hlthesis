@@ -191,7 +191,7 @@ class TopLsfShapeGrad:
 
 
 
-    def fe_analysis(self, mesh, E0, E1, nu, ew, eh, Phi):
+    def fe_analysis(self, mesh, E0, E1, nu, ew, eh, Phi, F, fixeddofs):
         """
         有限元计算位移.
 
@@ -209,10 +209,14 @@ class TopLsfShapeGrad:
         from shape_gradient_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
+        from scipy.sparse import spdiags
 
         p = 1
         space = Space(mesh, p=p, doforder='vdims')
         GD = 2
+        uh = space.function(dim=GD)
+        nLoads = F.shape[-1]
+        uh = np.repeat(uh[:, :, np.newaxis], nLoads, axis=2)
         vspace = GD*(space, )
         e0 = E0
         e1 = E1
@@ -221,19 +225,19 @@ class TopLsfShapeGrad:
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
-        print("KK:", KK.shape, "\n", KK)
+        #print("KK:", KK.shape, "\n", KK)
         K = bform.assembly()
-        print("K:", K.shape, "\n", K.toarray())
-        #K = bform.get_matrix()
+        print("K0:", K.shape, "\n", K.toarray())
 
-        #dflag = fixeddofs
-        #F = F - K@uh.reshape(-1, nLoads)
-        #bdIdx = np.zeros(K.shape[0], dtype=np.int_)
-        #bdIdx[dflag.flat] = 1
-        #D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
-        #D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
-        #K = D0@K@D0 + D1
-        #F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
+        dflag = fixeddofs
+        F = F - K@uh.reshape(-1, nLoads)
+        bdIdx = np.zeros(K.shape[0], dtype=np.int_)
+        bdIdx[dflag.flat] = 1
+        D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
+        D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
+        K = D0@K@D0 + D1
+        print("K1:", K.shape, "\n", K.toarray())
+        F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
         ## 线性方程组求解
         #uh.flat[:] = spsolve(K, F)

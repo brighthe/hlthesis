@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.ufunclike import fix
 
 from shape_gradient import TopLsfShapeGrad
 
@@ -79,6 +80,9 @@ F = np.zeros( (vgdof, nLoads) )
 F[vgdof - (nely+1), 0] = 1
 #print("F:", F.shape, "\n", F)
 
+# 位移约束(supports) - short cantilever
+fixeddofs = np.arange(0, 2*(nely+1), 1)
+print("fixeddofs:", fixeddofs)
 
 totalNum = 1
 # 开始循环
@@ -93,7 +97,8 @@ for iterNum in range(totalNum):
     fe_Phi = np.array([1, 2, 3, 4, 5, 0, 0, -0.5, -1, -2, -3, -4])
     print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
     print(fe_cell)
-    U = ts.fe_analysis(mesh=fe_mesh, E0=E0, E1=E1, nu=nu, ew=ew, eh=eh, Phi=fe_Phi)
+    U = ts.fe_analysis(mesh=fe_mesh, E0=E0, E1=E1, nu=nu, ew=ew, eh=eh, Phi=fe_Phi,
+                       F=F, fixeddofs=fixeddofs)
     asd
 
 
