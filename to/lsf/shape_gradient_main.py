@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.lib.ufunclike import fix
 
 from shape_gradient import TopLsfShapeGrad
 
