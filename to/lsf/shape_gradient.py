@@ -123,6 +123,7 @@ class TopLsfShapeGrad:
         from fealpy.fem import BilinearForm
         from fealpy.functionspace import LagrangeFESpace as Space
         from scipy.sparse import spdiags
+        from scipy.sparse.linalg import spsolve
 
         p = 1
         space = Space(mesh, p=p, doforder='vdims')
@@ -140,7 +141,6 @@ class TopLsfShapeGrad:
         KK = integrator.assembly_cell_matrix(space=vspace)
         #print("KK:", KK.shape, "\n", KK)
         K = bform.assembly()
-        print("K0:", K.shape, "\n", K.toarray())
 
         dflag = fixeddofs
         F = F - K@uh.reshape(-1, nLoads)
@@ -149,11 +149,38 @@ class TopLsfShapeGrad:
         D0 = spdiags(1-bdIdx, 0, K.shape[0], K.shape[0])
         D1 = spdiags(bdIdx, 0, K.shape[0], K.shape[0])
         K = D0@K@D0 + D1
-        print("K1:", K.shape, "\n", K.toarray())
         F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
-        ## 线性方程组求解
-        #uh.flat[:] = spsolve(K, F)
+        print("K:", K.shape, "\n", K.toarray())
+        print("F:", F.shape, "\n", F)
+        # 线性方程组求解
+        uh.flat[:] = spsolve(K, F)
+
+        return uh
+
+
+    def matrix4diff(self, Phi):
+        # 初始化与 Phi 同形状的四个矩阵
+        i_minus_1 = np.zeros_like(Phi)
+        i_plus_1 = np.zeros_like(Phi)
+        j_minus_1 = np.zeros_like(Phi)
+        j_plus_1 = np.zeros_like(Phi)
+        
+        # 对于 i 方向的左侧和右侧
+        i_minus_1[:, 1:] = Phi[:, :-1]
+        i_minus_1[:, 0] = Phi[:, -1]
+        i_plus_1[:, :-1] = Phi[:, 1:]
+        i_plus_1[:, -1] = Phi[:, 0]
+        
+        # 对于 j 方向的上侧和下侧
+        j_minus_1[1:, :] = Phi[:-1, :]
+        j_minus_1[0, :] = Phi[-1, :]
+        j_plus_1[:-1, :] = Phi[1:, :]
+        j_plus_1[-1, :] = Phi[0, :]
+        
+        return i_minus_1, i_plus_1, j_minus_1, j_plus_1
+
+
 
 
 

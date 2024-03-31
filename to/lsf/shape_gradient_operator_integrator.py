@@ -102,7 +102,7 @@ class BeamOperatorIntegrator:
             K[inside, :, :] = self.basic_KE(E=E1, nu=nu, a=ew, b=eh)
 
             # Element is outside the boundary
-            outside = np.max(Phi[cell], axis=1) < 0
+            outside = np.max(Phi[cell[:]], axis=1) < 0
             K[outside, :, :] = self.basic_KE(E=E0, nu=nu, a=ew, b=eh)
 
             # Element is cut by the boundary

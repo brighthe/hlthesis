@@ -58,9 +58,24 @@ boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
 ls_Phi[boundary_condition] = -1e-6
 #print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
-# 水平集函数值 Phi 从水平集节点投影到有限元节点
-from scipy.interpolate import griddata
-fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
+# 导入 matlab 的数据
+from scipy.io import loadmat
+mat = loadmat('fe_phi_min.mat')
+data = mat['FENd'][0, 0]
+phi_data = data['Phi'].astype(np.float64)
+fe_Phi = phi_data[:, 0]
+print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+
+#from scipy.io import loadmat
+#mat = loadmat('fe_phi_max.mat')
+#data = mat['FENd'][0, 0]
+#phi_data = data['Phi'].astype(np.float64)
+#fe_Phi = phi_data[:, 0]
+#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+
+## 水平集函数值 Phi 从水平集节点投影到有限元节点
+#from scipy.interpolate import griddata
+#fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
 #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #ts.plot_mesh(x0=ls_x, y0=ls_y, label0='ls_grid', x=fe_x, y=fe_y, z=fe_Phi, label='fe_Phi')
@@ -76,12 +91,17 @@ vgdof = gdof * GD
 # 定义荷载
 nLoads = 1
 F = np.zeros( (vgdof, nLoads) )
-F[vgdof - (nely+1), 0] = 1
+tmp = vgdof - (nely + 1)
+F[tmp, 0] = -1
 #print("F:", F.shape, "\n", F)
 
 # 位移约束(supports) - short cantilever
 fixeddofs = np.arange(0, 2*(nely+1), 1)
 print("fixeddofs:", fixeddofs)
+
+E0 = 1e-3
+E1 = 1.0
+nu = 0.3
 
 totalNum = 1
 # 开始循环
@@ -89,15 +109,17 @@ for iterNum in range(totalNum):
     # 有限元分析
     print(f'Finite Element Analysis No.: {iterNum}')
 
-    E0 = 1e-3
-    E1 = 1.0
-    nu = 0.3
 
-    fe_Phi = np.array([1, 2, 3, 4, 5, 0, 0, -0.5, -1, -2, -3, -4])
-    print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
-    print(fe_cell)
+    #fe_Phi = np.array([1, 2, 3, 4, 5, 0, 0, -0.5, -1, -2, -3, -4])
+    #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
     U = ts.fe_analysis(mesh=fe_mesh, E0=E0, E1=E1, nu=nu, ew=ew, eh=eh, Phi=fe_Phi,
                        F=F, fixeddofs=fixeddofs)
+    print("U:", U.shape, "\n", U)
+    ux = U[:, 0]
+    uy = U[:, 1]
+
+    mean_compliances = F[tmp-1] * U.reshape(-1, 1)[tmp-1]
+    print("mean_compliances:", mean_compliances)
     asd
 
 
