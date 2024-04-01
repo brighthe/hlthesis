@@ -5,8 +5,8 @@ from shape_gradient import TopLsfShapeGrad
 # Cantilever 的默认参数
 domain_width = 3
 domain_hight = 2
-nelx = 3
-nely = 2
+nelx = 30
+nely = 20
 ew = domain_width / nelx
 eh = domain_hight / nely
 volReq = 0.5
@@ -26,6 +26,8 @@ fe_center_x = fe_center_node[:, 0]
 fe_center_y = fe_center_node[:, 1]
 fe_x = fe_node[:, 0]
 fe_y = fe_node[:, 1]
+print("fe_x:", fe_x.shape, "\n", fe_x.round(4))
+print("fe_y:", fe_y.shape, "\n", fe_y.round(4))
 
 #import matplotlib.pyplot as plt
 #fig = plt.figure()
@@ -44,27 +46,49 @@ ls_cell = ls_mesh.entity('cell') # 左下角逆时针
 ls_center_node = ls_mesh.entity_barycenter('cell')
 ls_x = ls_node[:, 0]
 ls_y = ls_node[:, 1]
+print("ls_x:", ls_x.shape, "\n", ls_x.round(4))
+print("ls_y:", ls_y.shape, "\n", ls_y.round(4))
+
+#from scipy.interpolate import griddata
+#def f(x, y):
+#    return np.sin(x) + np.cos(y)
+#ls_values = f(ls_x, ls_y)
+## 插值到有限元网格上
+#points = np.vstack((ls_x, ls_y)).T
+#values = ls_values
+#xi = np.vstack((fe_x, fe_y)).T
+#fe_values_interpolated = griddata(points, values, xi, method='cubic')
+#print("fe_values_interpolated:", fe_values_interpolated)
+## 有限元网格上的精确值
+#fe_values_exact = f(fe_x, fe_y)
+## 计算误差
+#error = np.max(np.abs(fe_values_interpolated - fe_values_exact))
+#print("error:", error)
+#asd
+
+
+
 
 ls_Phi = ts.init_lsf(mesh = ls_mesh)
-#print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
+print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
 #ts.plot(x=ls_x, y=ls_y, z=ls_Phi, label='ls_Phi')
 
-# 边界条件处理
-boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
-                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
-                        <= 100 * np.finfo(float).eps
-#print("boundary_condition:", boundary_condition)
-ls_Phi[boundary_condition] = -1e-6
+## 边界条件处理
+#boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
+#                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
+#                        <= 100 * np.finfo(float).eps
+##print("boundary_condition:", boundary_condition)
+#ls_Phi[boundary_condition] = -1e-6
 #print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
-# 导入 matlab 的数据
-from scipy.io import loadmat
-mat = loadmat('fe_phi_min.mat')
-data = mat['FENd'][0, 0]
-phi_data = data['Phi'].astype(np.float64)
-fe_Phi = phi_data[:, 0]
-print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+## 导入 matlab 的数据
+#from scipy.io import loadmat
+#mat = loadmat('fe_phi_min.mat')
+#data = mat['FENd'][0, 0]
+#phi_data = data['Phi'].astype(np.float64)
+#fe_Phi = phi_data[:, 0]
+#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #from scipy.io import loadmat
 #mat = loadmat('fe_phi_max.mat')
@@ -73,10 +97,11 @@ print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 #fe_Phi = phi_data[:, 0]
 #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
-## 水平集函数值 Phi 从水平集节点投影到有限元节点
-#from scipy.interpolate import griddata
-#fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
-#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+# 水平集函数值 Phi 从水平集节点投影到有限元节点
+from scipy.interpolate import griddata
+fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
+print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+asd
 
 #ts.plot_mesh(x0=ls_x, y0=ls_y, label0='ls_grid', x=fe_x, y=fe_y, z=fe_Phi, label='fe_Phi')
 
