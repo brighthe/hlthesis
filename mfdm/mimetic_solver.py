@@ -55,43 +55,36 @@ class Mimetic():
         node = mesh.entity('node')
         edge = mesh.entity('edge')
         cell = mesh.entity('cell')
-        print("cell:", cell)
-        print("edge:", edge)
+        #print("cell:", cell)
+        #print("edge:", edge)
         NC = mesh.number_of_cells()
         NE = mesh.number_of_edges()
         cell2edge = mesh.ds.cell_to_edge()
-        print("cell2edge:", cell2edge)
+        #print("cell2edge:", cell2edge)
         cell2node = mesh.ds.cell_to_node()
-        print("cell2node:", cell2node)
+        #print("cell2node:", cell2node)
         norm = mesh.edge_unit_normal()
         edge_centers = mesh.entity_barycenter(etype=1)
         cell_centers = mesh.entity_barycenter(etype=2) # (NC, GD)
         flag = np.where(mesh.ds.cell_to_edge_sign().toarray(), 1, -1)
-        print("flag:", flag.shape, "\n", flag)
+        #print("flag:", flag.shape, "\n", flag)
         edge_measure = mesh.entity_measure(etype=1)
         cell_measure = mesh.entity_measure(etype=2)
         edge_norm = mesh.edge_unit_normal()
-        print("edge_norm:", edge_norm.shape, "\n", edge_norm)
+        #print("edge_norm:", edge_norm.shape, "\n", edge_norm)
         result = np.zeros((NE, NE))
         if ac is None:
             ac = cell_measure
 
         u_nodes = velocity(node)
-        print("u_nodes:", u_nodes.shape, "\n", u_nodes)
+        #print("u_nodes:", u_nodes.shape, "\n", u_nodes)
         u_edges = (u_nodes[edge[:, 0]] + u_nodes[edge[:, 1]]) / 2
-        print("u_edges:", u_edges.shape, "\n", u_edges)
-        #u0 = np.einsum('ij, ij -> i', u_edges, edge_norm)
-        #print("u0:", u0.shape, "\n", u0)
+        #print("u_edges:", u_edges.shape, "\n", u_edges)
 
         result = []
         for i in range(NC):
-            #node_c = node[cell2node[i]] # (LNN, )
-            #print("node_c:", node_c.shape, "\n", node_c)
-            #u_nodes = velocity(node_c) # (LNN, 2)
-            #print("u_nodes:", u_nodes)
             edge_c = edge[cell[i]] # (LNE, 2)
             #print("edge_c:", edge_c.shape, "\n", edge_c)
-            #print(edge_c[:, 0])
             u_edges_c = (u_nodes[edge_c[:, 0]] + u_nodes[edge_c[:, 1]]) / 2 # (LNE, 2)
             #print("u_edges_c:", u_edges_c)
             tmp1 = edge_norm[cell2edge[i]]
@@ -114,7 +107,6 @@ class Mimetic():
             M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
 
-            #uhc = uh[cell2edge[i]] # (LNE, )
             uh_c = np.einsum('ij, ij -> i', u_edges_c, edge_norm_c) # (LNE, )
             #print("uh_c:", uh_c) # (LNE, )
 
