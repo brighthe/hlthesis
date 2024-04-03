@@ -13,13 +13,6 @@ pde = ClassicalLsfData()
 mesh = pde.polygon_mesh_2(n=10)
 #mesh = pde.triangle_mesh(domain=[0, 1, 0, 1], nx=10, ny=10)
 
-#fig = plt.figure()
-#axes = fig.gca()
-#mesh.add_plot(axes)
-#mesh.find_node(axes, showindex=True, color='r', marker='o', markersize=12, fontsize=20, fontcolor='r')
-#mesh.find_cell(axes, showindex=True, color='b', marker='o', markersize=12, fontsize=20, fontcolor='b')
-#mesh.find_edge(axes, showindex=True, color='g', marker='o', markersize=12, fontsize=20, fontcolor='g')
-#plt.show()
 
 NN = mesh.number_of_nodes()
 print("NN:", NN)
@@ -30,39 +23,39 @@ print("NC:", NC)
 
 solver = Mimetic(mesh)
 M_c = solver.M_c()
-print("M_c:", M_c.shape, "\n", M_c)
+#print("M_c:", M_c.shape, "\n", M_c)
 M_f = solver.M_f()
-print("M_f:", M_f.shape, "\n", M_f)
+#print("M_f:", M_f.shape, "\n", M_f)
 div_operator = solver.div_operator()
-print("div_operator:", div_operator.shape, "\n", div_operator)
+#print("div_operator:", div_operator.shape, "\n", div_operator)
 gradh = solver.gard_operator()
 #print("gradh:", gradh.shape, "\n", gradh)
 
 node = mesh.entity('node')
-print("node:", node)
-cells = mesh.entity('cell')
-print("cells:", cells)
+#print("node:", node)
+cell = mesh.entity('cell')
+#print("cell:", cell)
 edge = mesh.entity('edge')
-print("edge:", edge)
+#print("edge:", edge)
 
 edge_norm = mesh.edge_unit_normal()
-print("edge_norm:", edge_norm.shape, "\n", edge_norm)
+#print("edge_norm:", edge_norm.shape, "\n", edge_norm)
 cell_measure = mesh.entity_measure('cell') 
-print("cell_measure:", cell_measure.shape, "\n", cell_measure)
+#print("cell_measure:", cell_measure.shape, "\n", cell_measure)
 
 A10 = solver.u_M_f(velocity=pde.velocity_field)
-print("A10:", A10.shape, "\n", A10)
+#print("A10:", A10.shape, "\n", A10)
 
 phi0 = mesh.integral(pde.circle, q=5, celltype=True) / mesh.entity_measure('cell')
 print("phi0:", phi0.shape, "\n", phi0)
 
 cell_centers = mesh.entity_barycenter(etype=2) # (NC, GD)
-print("cell_centers:", cell_centers.shape, "\n", cell_centers)
+#print("cell_centers:", cell_centers.shape, "\n", cell_centers)
 x = cell_centers[:, 0]
 y = cell_centers[:, 1]
-print("x:", x.shape)
+#print("x:", x.shape)
 x, y = np.meshgrid(x, y)
-print("x:", x.shape)
+#print("x:", x.shape)
 
 from fealpy.timeintegratoralg import UniformTimeLine
 T = 1
@@ -78,31 +71,17 @@ for i in range(nt):
     print("t1=", t1)
 
     A01 = -div_operator.T @ M_c
-    #print("A01", A01.shape, "\n", A01)
-    A = np.bmat([ [M_f, A01], [dt*A10, M_c] ])
-    #print("A", A.shape, "\n", A)
+    A = np.bmat([ [M_f, -A01], [-dt*A10, M_c] ])
 
     b1 = cell_measure * phi0
     gamma = np.zeros(NE)
-    b = np.hstack((-gamma, -b1))
-    #print("b:", b.shape, "\n", b)
+    b = np.hstack((-gamma, b1))
 
     x = np.linalg.solve(A, b)
     phi0[:] = x[-NC:]
-    print("phi0:", phi0.shape, "\n", phi0)
+    #print("phi0:", phi0.shape, "\n", phi0)
 
     phi0_values.append(phi0.copy())
-
-
-    #import os
-    #mesh.edgedata['phi'] = phi0
-    #mesh.celldata['velocity'] = u0
-    #output_dir = './visualization/'
-    #file_name_prefix = 'lsf'
-    #timestep = i+1
-    #fname = os.path.join(output_dir, f'{file_name_prefix}_{timestep:010}.vtu')
-    #mesh.to_vtk(fname=fname)
-
 
     # Move to the next time level
     timeline.advance()

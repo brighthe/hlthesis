@@ -88,14 +88,14 @@ class Mimetic():
             u_edges_c = (u_nodes[edge_c[:, 0]] + u_nodes[edge_c[:, 1]]) / 2 # (LNE, 2)
             #print("u_edges_c:", u_edges_c)
             tmp1 = edge_norm[cell2edge[i]]
-            print("tmp1:", tmp1)
+            #print("tmp1:", tmp1)
             tmp2 = flag[i, cell2edge[i]].reshape(-1, 1)
-            print("tmp2:", tmp2)
+            #print("tmp2:", tmp2)
             edge_norm_c = tmp1 * tmp2
-            print("edge_norm_c:", edge_norm_c) # (LNE, 2)
+            #print("edge_norm_c:", edge_norm_c) # (LNE, 2)
             LNE = len(cell2edge[i])
             cell_out_flag = flag[i][cell2edge[i]] # (LNE, )
-            print("cell_out_flag:", cell_out_flag)
+            #print("cell_out_flag:", cell_out_flag)
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
 
@@ -104,7 +104,8 @@ class Mimetic():
             N = norm[cell2edge[i], :] # (LNE, GD)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
-            M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
+            #M_stability = np.trace(R@R.T) /cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
+            M_stability = cell_measure[i] * (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
 
             uh_c = np.einsum('ij, ij -> i', u_edges_c, edge_norm_c) # (LNE, )
