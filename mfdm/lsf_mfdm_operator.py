@@ -80,7 +80,7 @@ for iter in range(maxit):
     #print("approx_values_new:", approx_values_new.shape, "\n", approx_values_new)
 
     errorMatrix[0, iter] = np.max(np.abs(exact_values - approx_values_new))
-    #print("error_new:", error_new)
+    print("errorMatrix:", errorMatrix)
 
     #error = np.max(np.abs(exact_values - approx_values))
     #print("error:", error)

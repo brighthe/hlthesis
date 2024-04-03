@@ -58,10 +58,7 @@ class ClassicalLsfData():
         u[..., 1] = -np.sin((np.pi*y))**2 * np.sin(2*np.pi*x) * np.cos(np.pi*t)
         return u
 
-
-
-
-# Initial level set function $\phi0$ representing the circle
+    # Initial level set function $\phi0$ representing the circle
     @cartesian
     def circle(self, p, index=None):
         x = p[...,0]
@@ -69,3 +66,26 @@ class ClassicalLsfData():
         val = np.sqrt((x-0.5)**2 + (y-0.75)**2) - 0.15
 
         return val
+
+    @cartesian
+    def grad_circle(self, p, index=None):
+        x = p[..., 0]
+        y = p[..., 1]
+        val = np.zeros(p.shape, dtype=np.float64)
+        denom = np.sqrt((x - 0.5)**2 + (y - 0.75)**2)
+        denom[denom == 0] = 1e-12
+
+        val[..., 0] = (x - 0.5) / denom
+        val[..., 1] = (y - 0.75) / denom
+
+        return val
+
+
+    @cartesian
+    def scalar_product(self, p, index=None):
+        u = self.velocity_field(p)
+        grad_phi = self.grad_circle(p)
+        dot_product = np.sum(u * grad_phi, axis=-1)
+
+        return dot_product
+
