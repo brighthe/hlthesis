@@ -5,8 +5,8 @@ from shape_gradient import TopLsfShapeGrad
 # Cantilever 的默认参数
 domain_width = 3
 domain_hight = 2
-nelx = 30
-nely = 20
+nelx = 3
+nely = 2
 ew = domain_width / nelx
 eh = domain_hight / nely
 volReq = 0.5
@@ -26,8 +26,8 @@ fe_center_x = fe_center_node[:, 0]
 fe_center_y = fe_center_node[:, 1]
 fe_x = fe_node[:, 0]
 fe_y = fe_node[:, 1]
-print("fe_x:", fe_x.shape, "\n", fe_x.round(4))
-print("fe_y:", fe_y.shape, "\n", fe_y.round(4))
+#print("fe_x:", fe_x.shape, "\n", fe_x.round(4))
+#print("fe_y:", fe_y.shape, "\n", fe_y.round(4))
 
 #import matplotlib.pyplot as plt
 #fig = plt.figure()
@@ -46,49 +46,29 @@ ls_cell = ls_mesh.entity('cell') # 左下角逆时针
 ls_center_node = ls_mesh.entity_barycenter('cell')
 ls_x = ls_node[:, 0]
 ls_y = ls_node[:, 1]
-print("ls_x:", ls_x.shape, "\n", ls_x.round(4))
-print("ls_y:", ls_y.shape, "\n", ls_y.round(4))
-
-#from scipy.interpolate import griddata
-#def f(x, y):
-#    return np.sin(x) + np.cos(y)
-#ls_values = f(ls_x, ls_y)
-## 插值到有限元网格上
-#points = np.vstack((ls_x, ls_y)).T
-#values = ls_values
-#xi = np.vstack((fe_x, fe_y)).T
-#fe_values_interpolated = griddata(points, values, xi, method='cubic')
-#print("fe_values_interpolated:", fe_values_interpolated)
-## 有限元网格上的精确值
-#fe_values_exact = f(fe_x, fe_y)
-## 计算误差
-#error = np.max(np.abs(fe_values_interpolated - fe_values_exact))
-#print("error:", error)
-#asd
-
-
-
+#print("ls_x:", ls_x.shape, "\n", ls_x.round(4))
+#print("ls_y:", ls_y.shape, "\n", ls_y.round(4))
 
 ls_Phi = ts.init_lsf(mesh = ls_mesh)
-print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
+print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
 #ts.plot(x=ls_x, y=ls_y, z=ls_Phi, label='ls_Phi')
 
-## 边界条件处理
-#boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
-#                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
-#                        <= 100 * np.finfo(float).eps
-##print("boundary_condition:", boundary_condition)
-#ls_Phi[boundary_condition] = -1e-6
-#print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
+# 边界条件处理
+boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
+                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
+                        <= 100 * np.finfo(float).eps
+#print("boundary_condition:", boundary_condition)
+ls_Phi[boundary_condition] = -1e-6
+print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
-## 导入 matlab 的数据
-#from scipy.io import loadmat
-#mat = loadmat('fe_phi_min.mat')
-#data = mat['FENd'][0, 0]
-#phi_data = data['Phi'].astype(np.float64)
-#fe_Phi = phi_data[:, 0]
-#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+# 导入 matlab 的数据
+from scipy.io import loadmat
+mat = loadmat('fe_phi_min.mat')
+data = mat['FENd'][0, 0]
+phi_data = data['Phi'].astype(np.float64)
+fe_Phi = phi_data[:, 0]
+print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #from scipy.io import loadmat
 #mat = loadmat('fe_phi_max.mat')
@@ -97,11 +77,17 @@ print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
 #fe_Phi = phi_data[:, 0]
 #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
-# 水平集函数值 Phi 从水平集节点投影到有限元节点
-from scipy.interpolate import griddata
-fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
-print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
-asd
+distances = (ls_x[None, :] - fe_center_x[:, None])**2 + \
+            (ls_y[None, :] - fe_center_y[:, None])**2
+print("distances:", distances.shape, "\n", distances)
+
+# 有限元网格单元中心对应的水平集网格节点的索引
+ele_lsgrid_id = np.argmin(distances, axis=1)
+print("ele_lsgrid_id:", ele_lsgrid_id.shape, "\n", ele_lsgrid_id)
+## 水平集函数值 Phi 从水平集节点投影到有限元节点
+#from scipy.interpolate import griddata
+#fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
+#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #ts.plot_mesh(x0=ls_x, y0=ls_y, label0='ls_grid', x=fe_x, y=fe_y, z=fe_Phi, label='fe_Phi')
 
@@ -117,8 +103,9 @@ vgdof = gdof * GD
 nLoads = 1
 F = np.zeros( (vgdof, nLoads) )
 tmp = vgdof - (nely + 1)
+print("tmp:", tmp)
 F[tmp, 0] = -1
-#print("F:", F.shape, "\n", F)
+print("F:", F.shape, "\n", F)
 
 # 位移约束(supports) - short cantilever
 fixeddofs = np.arange(0, 2*(nely+1), 1)
@@ -127,13 +114,15 @@ print("fixeddofs:", fixeddofs)
 E0 = 1e-3
 E1 = 1.0
 nu = 0.3
+lagV = 10;
+lagCur = 0.1;
+fea_Intercal = 10;
 
 totalNum = 1
 # 开始循环
 for iterNum in range(totalNum):
     # 有限元分析
     print(f'Finite Element Analysis No.: {iterNum}')
-
 
     #fe_Phi = np.array([1, 2, 3, 4, 5, 0, 0, -0.5, -1, -2, -3, -4])
     #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
@@ -143,8 +132,31 @@ for iterNum in range(totalNum):
     ux = U[:, 0]
     uy = U[:, 1]
 
-    mean_compliances = F[tmp-1] * U.reshape(-1, 1)[tmp-1]
+    print("F[tmp]:", F[tmp])
+    mean_compliances = F[tmp] * U.reshape(-1, 1)[tmp]
     print("mean_compliances:", mean_compliances)
+
+    phi = ls_Phi.reshape(nelx+2, nely+2).T
+    ls_curv = ts.calc_curvature(phi=phi, dx=ew, dy=eh)
+
+    ls_Beta = ts.sensi_analysis(fe_mesh=fe_mesh, ls_mesh=ls_mesh, E1=E1, E0=E0, \
+                                u=ux, v=uy, ew=ew, eh=eh, nu=nu, lag4Vol=lagV, lag4Curv=lagCur, \
+                                ele_lsgrid_id=ele_lsgrid_id, phi=ls_Phi, curvature=ls_curv)
+
+    # 得到速度场
+    ls_Vn = ls_Beta / np.max(np.abs(ls_Beta))
+    print("ls_Vn:", ls_Vn.shape, "\n", ls_Vn)
+
+    # 水平集界面更新
+    phi0 = ls_Phi.reshape(nelx+2, nely+2).T
+    vn = ls_Vn.reshape(nelx+2, nely+2).T
+    ls_Phi = ts.level_set_evolve(phi0=phi0, vn=vn, dx=ew, dy=eh, loop_num=fea_Intercal)
+
+    # 水平集界面重置化
+    if (iterNum == 0) or ((iterNum+1) % 5 == 0):
+        phi0 = ls_Phi.reshape(nelx+2, nely+2).T
+        ls_Phi = ts.reinitialize(phi0=phi0, dx=ew, dy=eh, loop_num=20)
+
     asd
 
 
@@ -165,13 +177,6 @@ for iterNum in range(totalNum):
 #plt.axis('equal')
 #plt.show()
 
-distances = (ls_x[None, :] - fe_center_x[:, None])**2 + \
-            (ls_y[None, :] - fe_center_y[:, None])**2
-print("distances:", distances.shape, "\n", distances)
-
-# 有限元网格单元中心对应的水平集网格节点的索引
-ele_lsgrid_id = np.argmin(distances, axis=1)
-print("ele_lsgrid_id:", ele_lsgrid_id.shape, "\n", ele_lsgrid_id)
 
 ## 定义 17 个孔洞的圆心位置
 #cx = domain_width/200 * np.array([33.33,  100,  166.67,   0,    66.67, 133.33,
@@ -235,260 +240,3 @@ print("ele_lsgrid_id:", ele_lsgrid_id.shape, "\n", ele_lsgrid_id)
 #plt.legend()
 #plt.grid(True)
 #plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 定义初始结构为 entirely solid
-struc = np.ones((nely, nelx))
-print("struc:", struc.shape, "\n", struc)
-
-# 水平集函数的初始化
-#r = nely * 0.1 # 初始孔洞的半径
-#lsf = ts.lsf_init(mesh = mesh, r=r)
-lsf = ts.reinit(struc = struc)
-print("lsf0:", lsf.shape, "\n", lsf.round(4))
-strucFULL = (lsf < 0).astype(int)
-struc = strucFULL[1:-1, 1:-1]
-print("struc:", struc.shape, "\n", struc)
-asd
-
-# 初始化灵敏度
-shapeSens = np.zeros((nely, nelx))
-
-def stiff_matrix(nu, E0):
-    """
-    单元刚度矩阵.
-    
-    Parameters:
-    - nu (flaot): Poisson 比.
-    - E0 (int): 杨氏模量.
-
-    Returns:
-    - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
-
-    Note:
-        考虑四个单元的四边形网格中的 0 号单元：
-        0,1 - 6,7
-        2,3 - 8,9
-        拓扑 : cell2dof : 0,1,6,7,8,9,2,3
-        FEALPy : cell2dof : 0,1,2,3,6,7,8,9
-    """
-    k = np.array([1/2 - nu/6,   1/8 + nu/8,   -1/4 - nu/12, -1/8 + 3 * nu/8,
-                -1/4 + nu/12,  -1/8 - nu/8,    nu/6,         1/8 - 3 * nu/8])
-    KE = E0 / (1 - nu**2) * np.array([
-        [k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]],
-        [k[1], k[0], k[7], k[6], k[5], k[4], k[3], k[2]],
-        [k[2], k[7], k[0], k[5], k[6], k[3], k[4], k[1]],
-        [k[3], k[6], k[5], k[0], k[7], k[2], k[1], k[4]],
-        [k[4], k[5], k[6], k[7], k[0], k[1], k[2], k[3]],
-        [k[5], k[4], k[3], k[2], k[1], k[0], k[7], k[6]],
-        [k[6], k[3], k[4], k[1], k[2], k[7], k[0], k[5]],
-        [k[7], k[2], k[1], k[4], k[3], k[6], k[5], k[0]]
-    ])
-
-    return KE
-
-def lame(nu, E0):
-    """
-    Lame 常数.
-
-    Parameters:
-    - nu (flaot): Poisson 比.
-    - E0 (int): 杨氏模量.
-    """
-    lambda_ = E0 * nu / ((1 + nu) * (1 - nu))
-    mu = E0 / (2 * (1 + nu))
-
-    return lambda_, mu
-
-E0 = 1.0
-nu = 0.3
-KE = stiff_matrix(nu=nu, E0=E0)
-lambda_, mu = lame(nu=nu, E0=E0)
-
-from fealpy.functionspace import LagrangeFESpace as Space
-p = 1
-space = Space(mesh, p=p, doforder='vdims')
-GD = 2
-vspace = GD*(space, )
-gdof = vspace[0].number_of_global_dofs()
-vgdof = gdof * GD
-# 定义荷载 - medium cantilever
-nLoads = 1
-F = np.zeros( (vgdof, nLoads) )
-nodal_loads_index = 2*( (nely+1)*nelx + int(np.ceil(nely/2)) ) + 1
-F[nodal_loads_index, 0] = -1
-
-# 位移约束(supports) - medium cantilever
-fixeddofs = np.arange(0, 2*(nely+1), 1)
-
-# Load Bearing 单元的索引 - short cantilever
-loadBearingIndices = (-1, -1)
-
-import time
-time_stats = {
-    'FE_computation': [],
-    'shapeSens_computation': [],
-    'plot': [],
-    'augmented_lag': [],
-    'design_update': [],
-    'reinit_lsf': [],
-    'iteration_time': []
-}
-
-# 绘制结果图
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-
-# 设置初始的 augmented Lagrangian parameters
-la = -0.01
-La = 1000
-alpha = 0.9
-# 优化循环的最大迭代次数
-num = 200
-# 初始化 compliance objective value
-objective = np.zeros(num)
-for iterNum in range(num):
-    iter_start_time = time.time()
-
-    # 有限元计算全局位移和局部单元位移
-    fe_start = time.time()
-
-    U, Ue = ts.FE(mesh=mesh, struc=struc, KE=KE, F=F, fixeddofs=fixeddofs)
-
-    fe_end = time.time()
-    fe_time = fe_end - fe_start
-    time_stats['FE_computation'].append(fe_time)
-
-    # 添加来自每个荷载的灵敏度之前，将形状和拓扑灵敏度设置为 0
-    shapeSens[:] = 0
-
-    shapeSens_time = 0
-    #topSens_time = 0
-    for i in range(nLoads):
-        # 计算每个单元的柔度的形状灵敏度
-        shapeSens_start = time.time()
-
-        stiff = 0.0001 # 0.0001: Stiffness of the void phase compared to the solid phase
-                    # 可以为零，但较小的非零值可以提高算法的稳健性
-        temp1 = -np.maximum(struc, stiff)
-        temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
-        shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
-
-        shapeSens_end = time.time()
-        shapeSens_time = shapeSens_end - shapeSens_start
-        time_stats['shapeSens_computation'].append(shapeSens_time)
-
-    # 存储当前迭代的 compliance objective
-    objective[iterNum] = -np.sum(shapeSens)
-
-    # 计算当前的 volume fraction
-    volCurr = np.sum(struc) / (nelx*nely)
-
-    # 打印当前迭代的结果
-    print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Volfrac.: {volCurr:.3f}')
-
-    # 更新图像
-    plot_start = time.time()
-
-    # 白色区域：void 部分, 黑色区域：solid 部分
-    cmap = mcolors.ListedColormap(['white', 'black'])
-    bounds = [-np.inf, 0, np.inf]
-    norm = mcolors.BoundaryNorm(bounds, cmap.N)
-    fig = plt.figure(1)
-    contourf = plt.contourf(lsf, levels=bounds, cmap=cmap, norm=norm)
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
-    plt.axis('equal')
-    plt.draw()
-    plt.pause(1e-5)
-
-    plot_end = time.time()
-    plot_time = plot_end - plot_start
-    time_stats['plot'].append(plot_time)
-
-
-    # 五次迭代后执行收敛性检查
-    start_num = 5 # Number of iterations at the start of the optimization 
-                # for which the convergence criteria are not checked
-    vol_tor = 0.005 # Tolerance for satisfaction of the volume constraint
-    rel_tor = 0.01 # Relative tolerance on the objective values for termination of the algorithm
-    if iterNum > start_num and (abs(volCurr-volReq) < vol_tor) and \
-        np.all( np.abs(objective[iterNum] - objective[iterNum-start_num:iterNum]) \
-               < rel_tor * np.abs(objective[iterNum]) ):
-        break
-
-    # 设置  augmented Lagrangian parameters
-    lag_start = time.time()
-
-    if iterNum == 0:
-        pass
-    else:
-        # TODO 与理论不一致
-        la = la - 1/La * (volCurr - volReq)
-        La = alpha * La
-
-    # Update the sensitivities with augmented Lagrangian terms
-    # TODO 与理论不一致
-    shapeSens = shapeSens - la + 1/La * (volCurr - volReq)
-
-    lag_end = time.time()
-    lag_time = lag_end - lag_start
-    time_stats['augmented_lag'].append(lag_time)
-
-    # 执行设计更新
-    update_start = time.time()
-
-    struc, lsf = ts.updateStep(lsf=lsf, shapeSens=shapeSens, stepLength=stepLength, loadBearingIndices=loadBearingIndices)
-
-    update_end = time.time()
-    update_time = update_end - update_start
-    time_stats['design_update'].append(update_time)
-
-    # 在特定的迭代步重置化水平集函数
-    reinit_time = 0
-    if (iterNum+1) % numReinit == 0:
-        reinit_start = time.time()
-
-        lsf = ts.reinit(struc)
-        print("reinit_lsf:\n", lsf.shape, "\n", lsf.round(4))
-
-        reinit_end = time.time()
-        reinit_time = reinit_end - reinit_start
-        time_stats['reinit_lsf'].append(reinit_time)
-
-    iter_end_time = time.time()
-    total_iter_time = iter_end_time - iter_start_time
-    time_stats['iteration_time'].append(total_iter_time)
-
-    reinit_time_str = f", Reinit_lsf: {reinit_time:.4f}" if reinit_time > 0 else ""
-    print(f'Total: {total_iter_time:.4f}, FE: {fe_time:.4f}, '
-          f'ShapeSens: {shapeSens_time:.4f}, '
-          f'plot: {plot_time:.4f}, AugmentedLag: {lag_time:.4f}, '
-          f'Update: {update_time:.4f}{reinit_time_str}, '
-          f'iter_time: {total_iter_time - plot_time:.4f}')
-
-plt.ioff()
-plt.show()
