@@ -3,19 +3,17 @@ import numpy as np
 from shape_gradient import TopLsfShapeGrad
 
 # Cantilever 的默认参数
-domain_width = 3
-domain_hight = 2
+domain_width = 3 # 设计区域的宽度
+domain_hight = 2 # 设计区域的高度
 nelx = 3
 nely = 2
+lagV = 0.1
+lagCur = 0.01
+ts = TopLsfShapeGrad(domain_width = domain_width, domain_hight = domain_hight, \
+                     nelx = nelx, nely = nely, lagV = lagV, lagCur = lagCur)
+# 数据初始化
 ew = domain_width / nelx
 eh = domain_hight / nely
-volReq = 0.5
-stepLength = 2;
-numReinit = 3
-ts = TopLsfShapeGrad(domain_width = domain_width, domain_hight = domain_hight, \
-                     nelx = nelx, nely = nely, \
-                     volReq=volReq, stepLength=stepLength, numReinit=3)
-
 fe_domain = [0, domain_width, 0, domain_hight]
 fe_mesh = ts.generate_mesh(domain=fe_domain, nelx=nelx, nely=nely)
 fe_NC = fe_mesh.number_of_cells()
@@ -26,8 +24,6 @@ fe_center_x = fe_center_node[:, 0]
 fe_center_y = fe_center_node[:, 1]
 fe_x = fe_node[:, 0]
 fe_y = fe_node[:, 1]
-#print("fe_x:", fe_x.shape, "\n", fe_x.round(4))
-#print("fe_y:", fe_y.shape, "\n", fe_y.round(4))
 
 #import matplotlib.pyplot as plt
 #fig = plt.figure()
@@ -46,9 +42,16 @@ ls_cell = ls_mesh.entity('cell') # 左下角逆时针
 ls_center_node = ls_mesh.entity_barycenter('cell')
 ls_x = ls_node[:, 0]
 ls_y = ls_node[:, 1]
-#print("ls_x:", ls_x.shape, "\n", ls_x.round(4))
-#print("ls_y:", ls_y.shape, "\n", ls_y.round(4))
 
+distances = (ls_x[None, :] - fe_center_x[:, None])**2 + \
+            (ls_y[None, :] - fe_center_y[:, None])**2
+#print("distances:", distances.shape, "\n", distances)
+
+# 有限元网格单元中心对应的水平集网格节点的索引
+ele_lsgrid_id = np.argmin(distances, axis=1)
+print("ele_lsgrid_id:", ele_lsgrid_id.shape, "\n", ele_lsgrid_id)
+
+# 初始化水平集函数
 ls_Phi = ts.init_lsf(mesh = ls_mesh)
 print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
@@ -62,13 +65,13 @@ boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
 ls_Phi[boundary_condition] = -1e-6
 print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
-# 导入 matlab 的数据
-from scipy.io import loadmat
-mat = loadmat('fe_phi_min.mat')
-data = mat['FENd'][0, 0]
-phi_data = data['Phi'].astype(np.float64)
-fe_Phi = phi_data[:, 0]
-print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+## 导入 matlab 的数据
+#from scipy.io import loadmat
+#mat = loadmat('fe_phi_min.mat')
+#data = mat['FENd'][0, 0]
+#phi_data = data['Phi'].astype(np.float64)
+#fe_Phi = phi_data[:, 0]
+#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #from scipy.io import loadmat
 #mat = loadmat('fe_phi_max.mat')
@@ -77,20 +80,12 @@ print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 #fe_Phi = phi_data[:, 0]
 #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
-distances = (ls_x[None, :] - fe_center_x[:, None])**2 + \
-            (ls_y[None, :] - fe_center_y[:, None])**2
-print("distances:", distances.shape, "\n", distances)
-
-# 有限元网格单元中心对应的水平集网格节点的索引
-ele_lsgrid_id = np.argmin(distances, axis=1)
-print("ele_lsgrid_id:", ele_lsgrid_id.shape, "\n", ele_lsgrid_id)
-## 水平集函数值 Phi 从水平集节点投影到有限元节点
-#from scipy.interpolate import griddata
-#fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
-#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
+# 水平集函数值 Phi 从水平集节点投影到有限元节点
+from scipy.interpolate import griddata
+fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
+print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 #ts.plot_mesh(x0=ls_x, y0=ls_y, label0='ls_grid', x=fe_x, y=fe_y, z=fe_Phi, label='fe_Phi')
-
 
 from fealpy.functionspace import LagrangeFESpace as Space
 p = 1
@@ -111,34 +106,37 @@ print("F:", F.shape, "\n", F)
 fixeddofs = np.arange(0, 2*(nely+1), 1)
 print("fixeddofs:", fixeddofs)
 
-E0 = 1e-3
-E1 = 1.0
-nu = 0.3
-lagV = 10;
-lagCur = 0.1;
+E0 = 1e-3 # Young's modulus of void material
+E1 = 1.0 # Young's modulus of elastic material
+nu = 0.3 # 泊松比
 fea_Intercal = 10;
 
-totalNum = 1
+# 绘制结果图
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+totalNum = 100 # 总的迭代次数
 # 开始循环
 for iterNum in range(totalNum):
     # 有限元分析
     print(f'Finite Element Analysis No.: {iterNum}')
 
-    #fe_Phi = np.array([1, 2, 3, 4, 5, 0, 0, -0.5, -1, -2, -3, -4])
-    #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
-    U = ts.fe_analysis(mesh=fe_mesh, E0=E0, E1=E1, nu=nu, ew=ew, eh=eh, Phi=fe_Phi,
-                       F=F, fixeddofs=fixeddofs)
+    U = ts.fe_analysis(mesh=fe_mesh, E0=E0, E1=E1, nu=nu, ew=ew, eh=eh,
+                       phi=fe_Phi, F=F, fixeddofs=fixeddofs)
     print("U:", U.shape, "\n", U)
     ux = U[:, 0]
     uy = U[:, 1]
 
-    print("F[tmp]:", F[tmp])
     mean_compliances = F[tmp] * U.reshape(-1, 1)[tmp]
     print("mean_compliances:", mean_compliances)
 
-    phi = ls_Phi.reshape(nelx+2, nely+2).T
+    phi = ls_Phi.reshape(nelx+2, nely+2).T # 左下角为 0 号单元，从下往上按列增加
+    print("ls_Phi1:", phi.shape, "\n", phi.round(4))
+    # 计算几何量
     ls_curv = ts.calc_curvature(phi=phi, dx=ew, dy=eh)
+    print("ls_curv:", ls_curv.shape, "\n", ls_curv)
 
+    # 形状灵敏度分析
     ls_Beta = ts.sensi_analysis(fe_mesh=fe_mesh, ls_mesh=ls_mesh, E1=E1, E0=E0, \
                                 u=ux, v=uy, ew=ew, eh=eh, nu=nu, lag4Vol=lagV, lag4Curv=lagCur, \
                                 ele_lsgrid_id=ele_lsgrid_id, phi=ls_Phi, curvature=ls_curv)
@@ -157,7 +155,19 @@ for iterNum in range(totalNum):
         phi0 = ls_Phi.reshape(nelx+2, nely+2).T
         ls_Phi = ts.reinitialize(phi0=phi0, dx=ew, dy=eh, loop_num=20)
 
-    asd
+
+    # 白色区域：void 部分, 黑色区域：solid 部分
+    cmap = mcolors.ListedColormap(['white', 'black'])
+    bounds = [-np.inf, 0, np.inf]
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    fig = plt.figure(1)
+    contourf = plt.contourf(phi, levels=bounds, cmap=cmap, norm=norm)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.axis('off')
+    plt.axis('equal')
+    plt.draw()
+    plt.pause(1e-5)
+
 
 
 

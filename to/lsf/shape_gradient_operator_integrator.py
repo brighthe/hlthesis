@@ -1,7 +1,7 @@
 import numpy as np
 
 class BeamOperatorIntegrator:
-    def __init__(self, E0, E1, nu, ew, eh, Phi):
+    def __init__(self, E0, E1, nu, ew, eh, phi):
         """
         初始化 BeamOperatorIntegrator 类
 
@@ -14,7 +14,7 @@ class BeamOperatorIntegrator:
         self.nu = nu
         self.ew = ew
         self.eh = eh
-        self.Phi = Phi
+        self.phi = phi
 
 
     def basic_KE(self, E, nu, a, b):
@@ -24,13 +24,13 @@ class BeamOperatorIntegrator:
         采用平面应力假设，根据二维线弹性理论计算局部刚度矩阵.
         
         Parameters:
-        - E : Young's modulus, 代表材料的刚性
+        - E : Young's modulus, 代表材料的刚性;
         - nu: Poisson ratio;
-        - a: 有限元单元的几何宽度.
+        - a: 有限元单元的几何宽度;
         - b: 有限元单元的几何高度.
         
         Returns:
-        - KE : a 8-by-8 stiffness matrix.
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
         """
         # 刚度矩阵的系数
         k = np.array([-1/(6*a*b) * ( nu*a**2 - 2*b**2 - a**2 ), 1/8*nu + 1/8,
@@ -53,7 +53,6 @@ class BeamOperatorIntegrator:
         idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
         KE = KE[idx, :][:, idx]
 
-
         return KE
 
 
@@ -71,7 +70,7 @@ class BeamOperatorIntegrator:
         - Optional[ndarray - (NC, ldof*GD, ldof*GD) ]: 如果 out 参数为 None，则返回梁的单元刚度矩阵，否则不返回.
         """
 
-        Phi = self.Phi
+        phi = self.phi
         E1 = self.E1
         E0 = self.E0
         nu = self.nu
@@ -98,11 +97,11 @@ class BeamOperatorIntegrator:
         elif space[0].doforder == 'vdims':
 
             # Element is inside the boundary
-            inside = np.min(Phi[cell[:]], axis=1) > 0
+            inside = np.min(phi[cell[:]], axis=1) > 0
             K[inside, :, :] = self.basic_KE(E=E1, nu=nu, a=ew, b=eh)
 
             # Element is outside the boundary
-            outside = np.max(Phi[cell[:]], axis=1) < 0
+            outside = np.max(phi[cell[:]], axis=1) < 0
             K[outside, :, :] = self.basic_KE(E=E0, nu=nu, a=ew, b=eh)
 
             # Element is cut by the boundary
@@ -113,14 +112,14 @@ class BeamOperatorIntegrator:
             c1 = ( (1 + s.flatten('F')) * (1 - t.flatten('F')) )[:, np.newaxis]
             c2 = ( (1 + s.flatten('F')) * (1 + t.flatten('F')) )[:, np.newaxis]
             c3 = ( (1 - s.flatten('F')) * (1 + t.flatten('F')) )[:, np.newaxis]
-            tmpPhi = c0 / 4 * Phi.flatten('F')[cell[cut, 0]] + \
-                     c1 / 4 * Phi.flatten('F')[cell[cut, 1]] + \
-                     c2 / 4 * Phi.flatten('F')[cell[cut, 2]] + \
-                     c3 / 4 * Phi.flatten('F')[cell[cut, 3]]
-            print("tmpPhi:", tmpPhi.shape, "\n", tmpPhi.round(4))
+            tmpPhi = c0 / 4 * phi.flatten('F')[cell[cut, 0]] + \
+                     c1 / 4 * phi.flatten('F')[cell[cut, 1]] + \
+                     c2 / 4 * phi.flatten('F')[cell[cut, 2]] + \
+                     c3 / 4 * phi.flatten('F')[cell[cut, 3]]
+            #print("tmpPhi:", tmpPhi.shape, "\n", tmpPhi.round(4))
             # 计算覆盖材料区域的面积比
             area_ratio = np.sum(tmpPhi >= 0, axis=0) / len(s.flatten('F'))
-            print("area_ratio:", area_ratio)
+            #print("area_ratio:", area_ratio)
             K[cut, :, :] = area_ratio.reshape(-1, 1, 1) * self.basic_KE(E=E1, nu=nu, a=ew, b=eh)
 
         if out is None:

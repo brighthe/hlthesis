@@ -4,30 +4,25 @@ from fealpy.mesh import QuadrangleMesh
 
 class TopLsfShapeGrad:
 
-    def __init__(self, domain_width, domain_hight, nelx, nely, volReq, stepLength, numReinit):
+    def __init__(self, domain_width, domain_hight, nelx, nely, lagV, lagCur):
         '''
         初始化拓扑优化问题 - 形状梯度的水平集方法
 
-        Parameters: 
-        - domain: 设计区域.
-        - nelx (int): 沿设计区域水平方向的单元数.
-        - nely (int): 沿设计区域垂直方向的单元数.
-        - volReq (float) : 最终设计所需的体积分数. 0.2 < volReq < 0.7.
-        - stepLength (int): 每次迭代中求解演化方程的 CFL 时间步长.
-                            min(nelx,nely)/10 < stepLength < max(nelx,nely)/5.
-        - numReinit (int): 水平集函数重置化为符号距离函数的频率. 2 < numReinit < 6.
-
-        Note:
-            numReinit 和 topWeight 会影响设计中形成孔洞的能力.
+        Parameters:
+        - domain_width: 设计区域的宽度;
+        - domain_hight: 设计区域的高度;
+        - nelx (int): 沿设计区域水平方向的单元数;
+        - nely (int): 沿设计区域垂直方向的单元数;
+        - lagV: Lagrange multiplier for volume constraint;
+        - lagCur: Lagrange multiplier for perimeter constraint whose shape sensitivity is curvature;
         '''
 
         self.domain_width = domain_width
         self.domain_hight = domain_hight
         self.nelx = nelx
         self.nely = nely
-        self._volReq = volReq
-        self._stepLength = stepLength
-        self._numReinit = numReinit
+        self.lagV = lagV
+        self.lagCur = lagCur
 
     def generate_mesh(self, domain, nelx, nely):
 
@@ -71,13 +66,13 @@ class TopLsfShapeGrad:
         初始化设计区域内的水平集函数，以分布初始孔洞的符号距离函数表示.
 
         该函数通过定义一系列圆形孔洞，并计算网格点到这些孔洞边界的最短距离，来初始化水平集函数
-        水平集函数在孔洞内部为负，在孔洞外部为正
+        水平集函数在孔洞内部为负，在孔洞外部为正.
 
         Parameters:
         - mesh (object): 初始的水平集网格.
 
         Returns:
-        - ls_Phi ( ndarray - ( (domain_width+1)*(domain_hight+1), ) ): 初始的水平集函数.
+        - ls_Phi (ndarray - ((nelx+2)*(nely+2), )): 初始的水平集函数.
 
         '''
         domain_width = self.domain_width
@@ -85,6 +80,7 @@ class TopLsfShapeGrad:
         ls_node = mesh.entity('node')
         ls_x = ls_node[:, 0]
         ls_y = ls_node[:, 1]
+
         # 定义初始孔洞的圆心
         cx = domain_width/200 * np.array([33.33,  100,  166.67,   0,    66.67,  133.33,
                                            200,  33.33,  100,   166.67,   0,    66.67,
@@ -104,20 +100,24 @@ class TopLsfShapeGrad:
         return ls_Phi
 
 
-    def fe_analysis(self, mesh, E0, E1, nu, ew, eh, Phi, F, fixeddofs):
+    def fe_analysis(self, mesh, E0, E1, nu, ew, eh, phi, F, fixeddofs):
         """
         有限元计算位移.
 
         Parameters:
-        - mesh:
-        - struc ( ndarray - (nely, nelx) ): 表示结构的 solid(1) 和 void(0) 单元.
-        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵.
-        - F ( ndarray - (gdof*GD, nLoads) ): 节点荷载.
+        - mesh (object): 初始的水平集网格;
+        - E0 (float): Young's modulus of void material;
+        - E1 (float): Young's modulus of elastic material;
+        - nu (float): 泊松比;
+        - ew (float): 有限元单元的几何宽度;
+        - eh (float): 有限元单元的几何高度;
+        - phi ( ndarray - (nely+2, nelx+2) ): 水平集函数在有限元网格节点上的值;
+        - KE ( ndarray - (ldof*GD, ldof*GD) ): 单元刚度矩阵;
+        - F ( ndarray - (gdof*GD, nLoads) ): 节点荷载;
         - fixeddofs (ndarray): 位移约束(supports).
 
         Returns:
         - uh ( ndarray - (gdof, GD, nLoads) ): 总位移.
-        - ue ( ndarray - (NC, ldof*GD, nLoads) ): 单元位移.
         """
         from shape_gradient_operator_integrator import BeamOperatorIntegrator
         from fealpy.fem import BilinearForm
@@ -134,8 +134,7 @@ class TopLsfShapeGrad:
         vspace = GD*(space, )
         e0 = E0
         e1 = E1
-        phi = Phi
-        integrator = BeamOperatorIntegrator(E0=e0, E1=e1, nu=nu, ew=ew, eh=eh, Phi=phi)
+        integrator = BeamOperatorIntegrator(E0=e0, E1=e1, nu=nu, ew=ew, eh=eh, phi=phi)
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
@@ -151,8 +150,8 @@ class TopLsfShapeGrad:
         K = D0@K@D0 + D1
         F[dflag.flat] = uh.reshape(-1, nLoads)[dflag.flat]
 
-        print("K:", K.shape, "\n", K.toarray())
-        print("F:", F.shape, "\n", F)
+        #print("K:", K.shape, "\n", K.toarray())
+        #print("F:", F.shape, "\n", F)
         # 线性方程组求解
         uh.flat[:] = spsolve(K, F)
 
@@ -164,14 +163,14 @@ class TopLsfShapeGrad:
         使用迎风格式计算向前和向后有限差分.
 
         Parameters:
-        - phi (ndarray): 标量场.
-        - d (float): x 或 y 方向上相邻网格的间距, 取决于 'direction' 参数.
+        - phi ( ndarray - (nely+2, nlex+2) ): 水平集函数在水平集网格点上的值;
+        - d (float): x 或 y 方向上相邻网格的间距, 取决于 'direction' 参数;
         - direction (str): 'x': 沿 x 方向计算差分, 'y': 表示沿 y 方向计算差分.
 
         Returns:
-        - back_diff (ndarray): 向后差分矩阵: ( phi(i, j) - phi(i-1, j) ) / dx
+        - back_diff ( ndarray - (nely+2, nlex+2) ): 向后差分矩阵: ( phi(i, j) - phi(i-1, j) ) / dx
                                或 ( phi(i, j) - phi(i, j-1) ) / dx, 取决于 'direction'.
-        - fawd_diff (ndarray): 向前差分矩阵: ( phi(i+1, j) - phi(i, j) ) / dx
+        - fawd_diff ( ndarray - (nely+2, nlex+2) ): 向前差分矩阵: ( phi(i+1, j) - phi(i, j) ) / dx
                                或 ( phi(i, j+1) - phi(i, j) ) / dx, 取决于 'direction'.
         """
 
@@ -198,32 +197,27 @@ class TopLsfShapeGrad:
         """
         计算水平集函数的曲率.
 
-        参数:
-        - phi (numpy): 水平集函数.
-        - dx (float): x 轴方向上相邻网格的间距.
+        Parameters:
+        - phi ( ndarray - (nely+2, nlex+2) ): 水平集函数在水平集网格点上的值;
+        - dx (float): x 轴方向上相邻网格的间距;
         - dy (float): y 轴方向上相邻网格的间距.
 
-        返回:
-        - ls_curv (ndarray): 每个网格点处的平均曲率值.
+        Returns:
+        - ls_curv ( ndarray - (ls_NC, ) ): 水平集网格点处的平均曲率值.
         """
         # 计算 phi 关于 x 和 y 的一阶偏导数
-        print("phi:\n", phi)
         x_minus_1 = np.roll(phi, 1, axis=1) # x 方向向右位移
-        print("x_minus_1:\n", x_minus_1) 
         x_plus_1 = np.roll(phi, -1, axis=1) # x 方向向左位移
-        print("x_plus_1:\n", x_plus_1)
         phix = (x_plus_1 - x_minus_1) / (2 * dx)
-        print("phix:\n", phix)
+        #print("phix:\n", phix)
         y_minus_1 = np.roll(phi, 1, axis=0) # y 方向向下位移
-        print("y_minus_1:\n", y_minus_1)
         y_plus_1 = np.roll(phi, -1, axis=0) # y 方向向上位移
-        print("y_plus_1:\n", y_plus_1)
         phiy = (y_plus_1 - y_minus_1) / (2 * dy)
-        
+
         # 使用迎风差分格式计算 phiy 关于 x 的偏导数
         phiyx_bk, phiyx_fw = self.upwind_diff(phiy, dx, 'x')
-        print("phiyx_bk:\n", phiyx_bk)
-        print("phiyx_fw:\n", phiyx_fw)
+        #print("phiyx_bk:\n", phiyx_bk)
+        #print("phiyx_fw:\n", phiyx_fw)
         phixy = (phiyx_bk + phiyx_fw) / 2
         
         # 计算 phi 的二阶偏导数
@@ -233,9 +227,8 @@ class TopLsfShapeGrad:
         # 根据曲率公式计算每个点的曲率
         curvature = (phixx * phiy**2 - 2*phix*phiy*phixy + phiyy * phix**2) / \
                     (np.power(phix**2 + phiy**2, 1.5) + 100*np.finfo(float).eps)
-        print("curvature:\n", curvature)
+        #print("curvature:\n", curvature)
         ls_curv = curvature.flatten('F')
-        print("ls_curv:", ls_curv)
         
         return ls_curv
 
@@ -243,40 +236,31 @@ class TopLsfShapeGrad:
     def sensi_analysis(self, fe_mesh, ls_mesh, E1, E0, u, v, ew, eh, nu, lag4Vol, lag4Curv,
                              ele_lsgrid_id, phi, curvature,):
         """
-        计算特定水平集函数网格上的速度场.
+        计算应变能和特定水平集函数网格上的速度场.
 
         Parameters:
-        - E1: Young's modulus of elastic material;
-        - E0: Young's modulus of void material;
+        - E1 (float): Young's modulus of elastic material;
+        - E0 (float): Young's modulus of void material;
         - u: 网格节点的位移向量的 x 分量;
         - v: 网格节点的位移向量的 y 分量;
-        - ew:
-        - eh:
-        - nu: 泊松比;
-        - lag4Vol: Lagrange multiplier for volume constraint;
-        - lag4Curv: Lagrange multiplier for perimeter constraint whose shape sensitivity is curvature;
-        - ele_lsgrid_id: 
-        - phi: 水平集函数的值;
-        - curvature: 水平集函数的曲率.
+        - ew (float): 有限元单元的几何宽度;
+        - eh (float): 有限元单元的几何高度;
+        - nu (float): 泊松比;
+        - lag4Vol (float): Lagrange multiplier for volume constraint;
+        - lag4Curv (float): Lagrange multiplier for perimeter constraint whose shape sensitivity is curvature;
+        - ele_lsgrid_id ( ndarray - (ls_NC, ) ): 有限元网格单元中心对应的水平集网格节点的索引;
+        - phi ( ndarray - (nely+2, nlex+2) ): 水平集函数在水平集网格点上的值;
+        - curvature ( ndarray - (ls_NC, ) ): 水平集函数的曲率.
 
         Returns:
-        - beta: 计算得到的速度场.
+        - beta ( ndarray - (ls_NC, ) ): 计算得到的速度场.
         """
         fe_cell2node = fe_mesh.ds.cell_to_node()
         fe_NC = fe_mesh.number_of_cells()
         ae = np.zeros((fe_NC, 8))
         ae[:, ::2] = u[fe_cell2node].reshape(fe_NC, 4) # 偶数索引处填充 u
         ae[:, 1::2] = v[fe_cell2node].reshape(fe_NC, 4) # 奇数索引处填充 v
-        #for i in range(NC):
-        #    ae[i] = np.array([u[fe_cell2node[i, 0]], v[fe_cell2node[i, 0]],
-        #                      u[fe_cell2node[i, 1]], v[fe_cell2node[i, 1]],
-        #                      u[fe_cell2node[i, 2]], v[fe_cell2node[i, 2]],
-        #                      u[fe_cell2node[i, 3]], v[fe_cell2node[i, 3]]])
-        #ae = np.array([u[fe_cell2node[:, 0]], v[fe_cell2node[:, 0]],
-        #               u[fe_cell2node[:, 1]], v[fe_cell2node[:, 1]],
-        #               u[fe_cell2node[:, 2]], v[fe_cell2node[:, 2]],
-        #               u[fe_cell2node[:, 3]], v[fe_cell2node[:, 3]]])
-        print("ae:", ae.shape, "\n", ae)
+        #print("ae:", ae.shape, "\n", ae)
 
         # 构建应变矩阵 B
         ew = ew
@@ -288,33 +272,30 @@ class TopLsfShapeGrad:
         
         # 计算应变
         strain = np.einsum('ij, kj -> ki', B, ae)
-        #strain = B @ ae
         print("strain:", strain.shape, "\n", strain)
         
         ls_NC = ls_mesh.number_of_nodes()
         beta = np.zeros(ls_NC)
-        print("beta:", beta.shape)
-        print("curvature:", curvature.shape, "\n", curvature)
-        print("ele_lsgrid_id:", ele_lsgrid_id)
         phi = phi[ele_lsgrid_id]
         curvature = curvature[ele_lsgrid_id]
-        print("ew:", 0.75*ew)
-        print("phi:", phi.shape, "\n", phi)
+
         # 根据 phi 值确定材料的弹性模量 E
         E = np.zeros_like(phi)
 
-        E[phi > 0.75 * ew] = E1
-        E[phi < -0.75 * ew] = E0
+        delta = 0.75 * ew
+        E[phi > delta] = E1
+        E[phi < -delta] = E0
 
         # 对于界面区域内的材料属性进行插值
         density_min = 1e-3
-        mask = (phi <= 0.75 * ew) & (phi >= -0.75 * ew)
-        xd = phi[mask] / (0.75 * ew)
-        E[mask] = E1 * 0.75 * (1.0 - density_min) * (xd - xd**3 / 3.0) + 0.5 * (1 + density_min)
+        mask = (phi <= delta) & (phi >= -delta)
+        xd = phi[mask] / delta
+        E[mask] = E1 * 0.75 * (1.0 - density_min) * (xd - xd**3/3.0) + 0.5 * (1 + density_min)
         print("E:", E.shape, "\n", E)
 
-      # 构建本构矩阵 D
-        D = E[:, np.newaxis, np.newaxis] / (1 - nu**2) * np.array([[1,  nu,    0],
+        # 构建本构矩阵 D
+        D = E[:, np.newaxis, np.newaxis] / (1 - nu**2) * \
+                              np.array([[1,  nu,    0],
                                         [nu, 1,     0],
                                         [0,  0, (1-nu)/2]], dtype=np.float64)
         print("D:", D.shape, "\n", D)
