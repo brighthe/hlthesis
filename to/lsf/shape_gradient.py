@@ -11,8 +11,8 @@ class TopLsfShapeGrad:
         Parameters:
         - domain_width: 设计区域的宽度;
         - domain_hight: 设计区域的高度;
-        - nelx (int): 沿设计区域水平方向的单元数;
-        - nely (int): 沿设计区域垂直方向的单元数;
+        - nelx (int): x 方向的单元数;
+        - nely (int): y 方向的单元数;
         - lagV: Lagrange multiplier for volume constraint;
         - lagCur: Lagrange multiplier for perimeter constraint whose shape sensitivity is curvature;
         '''
@@ -24,41 +24,12 @@ class TopLsfShapeGrad:
         self.lagV = lagV
         self.lagCur = lagCur
 
+
     def generate_mesh(self, domain, nelx, nely):
 
         mesh = QuadrangleMesh.from_box(box = domain, nx = nelx, ny = nely)
 
         return mesh
-
-    def plot(self, x, y, z, label):
-
-        import matplotlib.pyplot as plt
-
-        plt.scatter(x, y, c=z, cmap='viridis', label=label, edgecolors='k', s=50)
-
-        plt.colorbar(label='Phi values')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.axis('equal')
-        plt.legend()
-        plt.grid(True)
-        plt.show()
-
-    def plot_mesh(self, x0, y0, label0, x, y, z, label):
-
-        import matplotlib.pyplot as plt
-
-        plt.scatter(x, y, c=z, cmap='cool', label=label, edgecolors='r', marker='s', s=50)
-
-        plt.scatter(x0, y0, color='green', marker='o', label=label0)
-
-        plt.colorbar(label='Phi values')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.axis('equal')
-        plt.legend()
-        plt.grid(True)
-        plt.show()
 
 
     def init_lsf(self, mesh):
@@ -72,7 +43,7 @@ class TopLsfShapeGrad:
         - mesh (object): 初始的水平集网格.
 
         Returns:
-        - ls_Phi (ndarray - ((nelx+2)*(nely+2), )): 初始的水平集函数.
+        - ls_Phi ( ndarray - (ls_NC, ) ): 初始的水平集函数.
 
         '''
         domain_width = self.domain_width
@@ -138,7 +109,6 @@ class TopLsfShapeGrad:
         bform = BilinearForm(vspace)
         bform.add_domain_integrator(integrator)
         KK = integrator.assembly_cell_matrix(space=vspace)
-        #print("KK:", KK.shape, "\n", KK)
         K = bform.assembly()
 
         dflag = fixeddofs
@@ -216,8 +186,6 @@ class TopLsfShapeGrad:
 
         # 使用迎风差分格式计算 phiy 关于 x 的偏导数
         phiyx_bk, phiyx_fw = self.upwind_diff(phiy, dx, 'x')
-        #print("phiyx_bk:\n", phiyx_bk)
-        #print("phiyx_fw:\n", phiyx_fw)
         phixy = (phiyx_bk + phiyx_fw) / 2
         
         # 计算 phi 的二阶偏导数
@@ -255,11 +223,21 @@ class TopLsfShapeGrad:
         Returns:
         - beta ( ndarray - (ls_NC, ) ): 计算得到的速度场.
         """
+        from fealpy.functionspace import LagrangeFESpace as Space
+
+        p = 1
+        space = Space(fe_mesh, p=p, doforder='vdims')
+        GD = 2
+        vspace = GD*(space, )
+        ldof = vspace[0].number_of_local_dofs()
+        vldof = ldof * GD
         fe_cell2node = fe_mesh.ds.cell_to_node()
         fe_NC = fe_mesh.number_of_cells()
-        ae = np.zeros((fe_NC, 8))
-        ae[:, ::2] = u[fe_cell2node].reshape(fe_NC, 4) # 偶数索引处填充 u
-        ae[:, 1::2] = v[fe_cell2node].reshape(fe_NC, 4) # 奇数索引处填充 v
+
+        # 计算单元内每个自由度处的位移
+        ae = np.zeros((fe_NC, vldof))
+        ae[:, ::2] = u[fe_cell2node].reshape(fe_NC, ldof) # 偶数索引处填充 u
+        ae[:, 1::2] = v[fe_cell2node].reshape(fe_NC, ldof) # 奇数索引处填充 v
         #print("ae:", ae.shape, "\n", ae)
 
         # 构建应变矩阵 B
@@ -268,11 +246,11 @@ class TopLsfShapeGrad:
         B = 1/2 * np.array([[-1/ew,   0,   1/ew,   0,   1/ew,  0,   -1/ew,  0],
                             [  0,   -1/eh,  0,   -1/eh,  0,   1/eh,   0,   1/eh],
                             [-1/eh, -1/ew, -1/eh, 1/ew, 1/eh, 1/ew, 1/eh, -1/ew]], dtype=np.float64)
-        print("B:", B.shape, "\n", B)
+        #print("B:", B.shape, "\n", B)
         
         # 计算应变
         strain = np.einsum('ij, kj -> ki', B, ae)
-        print("strain:", strain.shape, "\n", strain)
+        #print("strain:", strain.shape, "\n", strain)
         
         ls_NC = ls_mesh.number_of_nodes()
         beta = np.zeros(ls_NC)
@@ -291,23 +269,21 @@ class TopLsfShapeGrad:
         mask = (phi <= delta) & (phi >= -delta)
         xd = phi[mask] / delta
         E[mask] = E1 * 0.75 * (1.0 - density_min) * (xd - xd**3/3.0) + 0.5 * (1 + density_min)
-        print("E:", E.shape, "\n", E)
+        #print("E:", E.shape, "\n", E)
 
         # 构建本构矩阵 D
         D = E[:, np.newaxis, np.newaxis] / (1 - nu**2) * \
                               np.array([[1,  nu,    0],
                                         [nu, 1,     0],
                                         [0,  0, (1-nu)/2]], dtype=np.float64)
-        print("D:", D.shape, "\n", D)
+        #print("D:", D.shape, "\n", D)
 
         # 计算变形能量
         strain_energy = np.einsum('ki, kij, kj -> k', strain, D, strain)
-        #strain_energy = strain.T @ D @ strain
-        print("strain_energy:", strain_energy.shape, "\n", strain_energy)
+        #print("strain_energy:", strain_energy.shape, "\n", strain_energy)
 
         # 计算速度场 beta
         beta[ele_lsgrid_id] = lag4Vol - strain_energy - lag4Curv * curvature
-        print("beta:", beta)
 
         return beta
 
@@ -324,7 +300,7 @@ class TopLsfShapeGrad:
         - loop_num: 演化的循环次数.
 
         Returns:
-        - phi1: 演化后的水平集界面.
+        - phi1 (ndarray - (ls_NN, )): 演化后的水平集界面.
         """
         detT = 0.5 * min(dx, dy) / np.max(np.abs(vn))
         for _ in range(loop_num):
@@ -339,7 +315,6 @@ class TopLsfShapeGrad:
             phi0 = phi0 - detT * (np.maximum(vn, 0) * grad_Plus + np.minimum(vn, 0) * grad_Minus)
 
         phi1 = phi0.flatten('F')
-        print("phi1:", phi1.shape, "\n", phi1)
 
         return phi1
 
@@ -352,60 +327,37 @@ class TopLsfShapeGrad:
         - phi0: 演化前的水平集界面;
         - dx: 有限元单元的宽度;
         - dy: 有限元单元的高度;
-        - loop_num: 重初始化的迭代次数.
+        - loop_num: 重初始化的时间步数.
 
         Returns:
-        - sign_dist_phi: 重置化后的水平集界面.
+        - sign_dist_phi (ndarray - (ls_NN, )): 重置化后的水平集界面.
         """
         for _ in range(loop_num + 1):
+            # 水平集函数沿 x 和 y 方向的向前和向后差分算子
             dx_L, dx_R = self.upwind_diff(phi0, dx, 'x')
             dy_L, dy_R = self.upwind_diff(phi0, dy, 'y')
             
+            # 水平集函数沿 x 和 y 方向的中心差分算子
             dx_C = (dx_L + dx_R) / 2
             dy_C = (dy_L + dy_R) / 2
             
-            S = phi0 / (np.sqrt(phi0**2 + (dx_C**2 + dy_C**2) * dx**2) + np.finfo(float).eps)
-            detT = 0.5 * min(dx, dy) / np.max(np.abs(S))
+            # sign(Phi) 的数值计算
+            signPhi = phi0 / (np.sqrt(phi0**2 + (dx_C**2 + dy_C**2) * dx**2) + np.finfo(float).eps)
+
+            # CFL 时间步长
+            detT = 0.5 * min(dx, dy) / np.max(np.abs(signPhi))
             
             grad_plus = np.sqrt(np.maximum(dx_L, 0)**2 + np.minimum(dx_R, 0)**2 +
                                 np.maximum(dy_L, 0)**2 + np.minimum(dy_R, 0)**2)
             grad_minus = np.sqrt(np.minimum(dx_L, 0)**2 + np.maximum(dx_R, 0)**2 +
                                  np.minimum(dy_L, 0)**2 + np.maximum(dy_R, 0)**2)
 
-            phi0 = phi0 - detT * (np.maximum(S, 0) * grad_plus + np.minimum(S, 0) * grad_minus - S)
+            phi0 = phi0 - detT * \
+                (np.maximum(signPhi, 0)*grad_plus + np.minimum(signPhi, 0)*grad_minus - signPhi)
 
         sign_dist_phi = phi0.flatten('F')
-        print("sign_dist_phi:", sign_dist_phi.shape, "\n", sign_dist_phi)
 
         return sign_dist_phi
-
-
-
-
-
-
-
-
-        #def matrix4diff(self, Phi):
-        #    # 初始化与 Phi 同形状的四个矩阵
-        #    i_minus_1 = np.zeros_like(Phi)
-        #    i_plus_1 = np.zeros_like(Phi)
-        #    j_minus_1 = np.zeros_like(Phi)
-        #    j_plus_1 = np.zeros_like(Phi)
-        #    
-        #    # 对于 i 方向的左侧和右侧
-        #    i_minus_1[:, 1:] = Phi[:, :-1]
-        #    i_minus_1[:, 0] = Phi[:, -1]
-        #    i_plus_1[:, :-1] = Phi[:, 1:]
-        #    i_plus_1[:, -1] = Phi[:, 0]
-        #    
-        #    # 对于 j 方向的上侧和下侧
-        #    j_minus_1[1:, :] = Phi[:-1, :]
-        #    j_minus_1[0, :] = Phi[-1, :]
-        #    j_plus_1[:-1, :] = Phi[1:, :]
-        #    j_plus_1[-1, :] = Phi[0, :]
-        #    
-        #    return i_minus_1, i_plus_1, j_minus_1, j_plus_1
 
 
 

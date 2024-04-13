@@ -18,20 +18,13 @@ fe_domain = [0, domain_width, 0, domain_hight]
 fe_mesh = ts.generate_mesh(domain=fe_domain, nelx=nelx, nely=nely)
 fe_NC = fe_mesh.number_of_cells()
 fe_node = fe_mesh.entity('node') # 左下角按列增加
+print("fe_node:", fe_node.shape)
 fe_cell = fe_mesh.entity('cell') # 左下角逆时针
 fe_center_node = fe_mesh.entity_barycenter('cell')
 fe_center_x = fe_center_node[:, 0]
 fe_center_y = fe_center_node[:, 1]
 fe_x = fe_node[:, 0]
 fe_y = fe_node[:, 1]
-
-#import matplotlib.pyplot as plt
-#fig = plt.figure()
-#axes = fig.gca()
-#fe_mesh.add_plot(axes)
-#fe_mesh.find_node(axes, showindex=True, markersize=6, fontsize=6, fontcolor='r')
-#fe_mesh.find_cell(axes, showindex=True, markersize=8, fontsize=8, fontcolor='k')
-#plt.show()
 
 ls_domain = [-ew/2, domain_width+ew/2, -eh/2, domain_hight+eh/2]
 ls_mesh = ts.generate_mesh(domain=ls_domain, nelx=nelx+1, nely=nely+1)
@@ -53,67 +46,30 @@ ele_lsgrid_id = np.argmin(distances, axis=1)
 
 # 初始化水平集函数
 ls_Phi = ts.init_lsf(mesh = ls_mesh)
-print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi)
-asd
-
 
 # 边界条件处理
 boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
                      (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
                         <= 100 * np.finfo(float).eps
-#print("boundary_condition:", boundary_condition)
 ls_Phi[boundary_condition] = -1e-6
-#print("ls_Phi1:", ls_Phi.shape, "\n", ls_Phi.round(4))
-
-## 导入 matlab 的数据
-#from scipy.io import loadmat
-#mat = loadmat('fe_phi_min.mat')
-#data = mat['FENd'][0, 0]
-#phi_data = data['Phi'].astype(np.float64)
-#fe_Phi = phi_data[:, 0]
-#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
-
-#from scipy.io import loadmat
-#mat = loadmat('fe_phi_max.mat')
-#data = mat['FENd'][0, 0]
-#phi_data = data['Phi'].astype(np.float64)
-#fe_Phi = phi_data[:, 0]
-#print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
 # 水平集函数值 Phi 从水平集节点投影到有限元节点
 from scipy.interpolate import griddata
 fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
-#print("fe_Phi0:", fe_Phi.shape, "\n", fe_Phi.round(4))
+print("fe_Phi0:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
+fe_mesh.nodedata['phi0'] = fe_Phi
 
-#fe_Phi0 = ts.mesh0(hx=5, hy=3, r=0.5)
-#print("fe_Phi0:", fe_Phi0.shape, "\n", fe_Phi0.round(4))
-#
-#fe_node_x = fe_x.reshape(nelx+1, nely+1).T
-#fe_node_y = fe_y.reshape(nelx+1, nely+1).T
-#fe_node_Phi = fe_Phi.reshape(nelx+1, nely+1).T
-#ls_node_x = ls_x.reshape(nelx+2, nely+2).T
-#ls_node_y = ls_y.reshape(nelx+2, nely+2).T
-#ls_node_Phi = ls_Phi.reshape(nelx+2, nely+2).T
-#
-#import matplotlib.pyplot as plt
-#from matplotlib import cm
-#import matplotlib.colors as mcolors
-#fig = plt.figure(figsize=(12, 6))
-#ax1 = fig.add_subplot(121)
-#ax2 = fig.add_subplot(122, projection='3d')
-#cmap = mcolors.ListedColormap(['white', 'black'])
-#bounds = [-np.inf, 0, np.inf]
-#norm = mcolors.BoundaryNorm(bounds, cmap.N)
-#
-#ax1.contourf(fe_node_x, fe_node_y, -fe_Phi0, \
-#                levels=bounds, cmap=cmap, norm=norm)
-#ax1.set_aspect('equal', adjustable='box')
-#ax1.grid(True)
-#plt.show()
-#asd
+ls_Phi = ts.reinitialize(phi0=ls_Phi.reshape(nelx+2, nely+2).T,
+                            dx=ew, dy=eh, loop_num=50)
+print("ls_NC:", ls_NN)
+print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
+fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
+print("fe_Phi1:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
+fe_mesh.nodedata['phi00'] = fe_Phi
+fe_mesh.to_vtk(fname='wang_phi.vtu')
 
 from fealpy.functionspace import LagrangeFESpace as Space
 p = 1
@@ -161,7 +117,9 @@ norm = mcolors.BoundaryNorm(bounds, cmap.N)
 
 plt.ion()
 
+import os
 totalNum = 20 # 总的迭代次数
+mean_compliances = np.zeros(totalNum)
 # 开始循环
 for iterNum in range(totalNum):
     # 有限元分析
@@ -170,9 +128,13 @@ for iterNum in range(totalNum):
     #print("U:", U.shape, "\n", U)
     ux = U[:, 0]
     uy = U[:, 1]
+    fe_mesh.nodedata['u1'] = ux.flatten('F')
+    fe_mesh.nodedata['u2'] = uy.flatten('F')
+    fname = os.path.join('./visulaization/', f'wang_u_{iterNum:010}.vtu')
+    fe_mesh.to_vtk(fname=fname)
 
-    mean_compliances = F[tmp] * U.reshape(-1, 1)[tmp]
-    print("mean_compliances:", mean_compliances)
+    mean_compliances[iterNum] = F[tmp] * U.reshape(-1, 1)[tmp]
+    print(f'Iter: {iterNum}, Compliance.: {mean_compliances[iterNum]:.4f}')
 
     # 计算几何量
     ls_curv = ts.calc_curvature(phi=ls_Phi.reshape(nelx+2, nely+2).T, dx=ew, dy=eh)
