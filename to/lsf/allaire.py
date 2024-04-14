@@ -75,6 +75,22 @@ class TopLsfShapeGrad:
         return np.sqrt(np.maximum(u1, 0)**2 + np.minimum(u2, 0)**2 + 
                     np.maximum(v1, 0)**2 + np.minimum(v2, 0)**2)
 
+    def minmod(self, phi1, phi2):
+        """
+        The minmod limiter function, which is used to prevent numerical
+        oscillations in high-resolution shock-capturing schemes.
+        
+        Args:
+        phi1, phi2 (numpy arrays): Input values to compare.
+        
+        Returns:
+        numpy array: Minmod value of phi1 and phi2.
+        """
+        sphi1 = np.sign(phi1)
+        sphi2 = np.sign(phi2)
+        mout = np.maximum(0, sphi1 * sphi2) * sphi1 * np.minimum(np.abs(phi1), np.abs(phi2))
+        return mout
+
     def mesh00(self, phi, RIiter):
         """
         重初始化水平集函数
@@ -327,3 +343,144 @@ class TopLsfShapeGrad:
         totperim = 0.5 * np.sum(np.sqrt(dsxx**2 + dsxy**2)) * dx * dy
 
         return totperim
+
+    def regularize(self, phi, V, e2):
+        nelx, nely, xlength = self.nelx, self.nely, self.xlength
+        dx = xlength / nelx  # x 方向的步长
+        dy = dx  # y 方向的步长，与 x 方向相同
+        
+        k1 = e2 / (dx**2)
+        k2 = e2 / (dy**2)
+
+        # Calculate the surface Dirac function
+        epsperim = min(dx, dy) / 20
+        sx = phi / np.sqrt(phi**2 + epsperim**2)
+        
+        dsxx = (np.roll(sx, -1, axis=1) - np.roll(sx, 1, axis=1)) / (2 * dx)
+        dsxy = (np.roll(sx, -1, axis=0) - np.roll(sx, 1, axis=0)) / (2 * dy)
+        
+        delta = 0.5 * np.sqrt(dsxx**2 + dsxy**2)
+        
+        b = -V * delta
+        b = b.ravel()  # Flatten the matrix to a vector
+
+        from scipy.sparse import lil_matrix
+        from scipy.sparse.linalg import spsolve
+        from scipy.linalg import LinAlgError
+# Create the regularization matrix M with Neumann conditions
+        M = lil_matrix(((nelx+1) * (nely+1), (nelx+1) * (nely+1)))
+        for j in range(nelx+1):
+            for i in range(nely+1):
+                k = j * (nely+1) + i
+                M[k, k] = 1 + 2 * k1 + 2 * k2
+                
+                if i > 0:
+                    M[k, k-1] = -k2
+                if i < nely:
+                    M[k, k+1] = -k2
+                if j > 0:
+                    M[k, k-(nely+1)] = -k1
+                if j < nelx:
+                    M[k, k+(nely+1)] = -k1
+    # Solve the linear system
+        M = M.tocsr()  # Convert to CSR format for solving
+        J = spsolve(M, b)
+
+        # Reshape back to matrix form and invert the direction
+        v = -J.reshape((nely+1, nelx+1))
+
+        return v
+
+
+    def curv(self, phi):
+        """
+        Calculate the mean curvature of a level set function.
+        
+        Args:
+        phi (numpy.ndarray): Level set function.
+        dx (float): Grid spacing in the x-direction.
+        dy (float): Grid spacing in the y-direction.
+        
+        Returns:
+        numpy.ndarray: Mean curvature of the level set function.
+        """
+        nelx, nely, xlength = self.nelx, self.nely, self.xlength
+        dx = xlength / nelx  # x 方向的步长
+        dy = dx  # y 方向的步长，与 x 方向相同
+        # Ensure the gradient of phi never goes to 0
+        epscurv = min(dx, dy) / 20
+        
+        # First derivatives to find the gradient of phi
+        phin = np.roll(phi, -1, axis=0)  # Shift north
+        phis = np.roll(phi, 1, axis=0)   # Shift south
+        phie = np.roll(phi, -1, axis=1)  # Shift east
+        phiw = np.roll(phi, 1, axis=1)   # Shift west
+        
+        dphix = (phiw - phie) / (2 * dx)
+        dphiy = (phin - phis) / (2 * dy)
+        
+        # Magnitude of the gradient of phi
+        mag = np.sqrt(dphix**2 + dphiy**2 + epscurv**2)
+        nx = dphix / mag
+        ny = dphiy / mag
+        
+        # Divergence of the normal vector field
+        nxe = np.roll(nx, -1, axis=1)  # East shift of nx
+        nxw = np.roll(nx, 1, axis=1)   # West shift of nx
+        nyn = np.roll(ny, -1, axis=0)  # North shift of ny
+        nys = np.roll(ny, 1, axis=0)   # South shift of ny
+        
+        divnx = (nxw - nxe) / (2 * dx)
+        divny = (nyn - nys) / (2 * dy)
+        
+        # Mean curvature
+        H = divnx + divny
+        
+        return H
+
+    def solvelevelset(self, phi, V, dt, HJiter, lagP):
+        nelx, nely, xlength = self.nelx, self.nely, self.xlength
+        dx = xlength / nelx  # x 方向的步长
+        dy = dx  # y 方向的步长，与 x 方向相同
+        Vp = np.maximum(V, 0)
+        Vm = np.minimum(V, 0)
+        
+        for _ in range(HJiter):
+            # 计算一阶导数
+            phin = np.roll(phi, -1, axis=0)
+            phis = np.roll(phi, 1, axis=0)
+            phie = np.roll(phi, -1, axis=1)
+            phiw = np.roll(phi, 1, axis=1)
+            
+            # 计算二阶导数
+            dxm = (phi - phie) / dx
+            dxp = (phiw - phi) / dx
+            dym = (phi - phis) / dy
+            dyp = (phin - phi) / dy
+            
+            dxmxm = (phi - 2 * phie + np.roll(phie, -1, axis=1)) / (dx**2)
+            dxpxp = (np.roll(phiw, 1, axis=1) - 2 * phiw + phi) / (dx**2)
+            dymym = (phi - 2 * phis + np.roll(phis, 1, axis=0)) / (dy**2)
+            dypyp = (np.roll(phin, -1, axis=0) - 2 * phin + phi) / (dy**2)
+            
+            # 应用通量函数
+            partA = dxm + 0.5 * dx * self.minmod(dxmxm, dxm - dxp)
+            partB = dxp - 0.5 * dx * self.minmod(dxpxp, dxp - dxm)
+            partC = dym + 0.5 * dy * self.minmod(dymym, dym - dyp)
+            partD = dyp - 0.5 * dy * self.minmod(dypyp, dyp - dym)
+
+            delp2 = self.g(partA, partB, partC, partD)
+            delm2 = self.g(partB, partA, partD, partC)
+
+            # 计算梯度的模 |grad(phi)|
+            epscurv = min(dx, dy) / 20
+            dphix = (phiw - phie) / (2 * dx)
+            dphiy = (phin - phis) / (2 * dy)
+            mag = np.sqrt(dphix**2 + dphiy**2 + epscurv**2)
+
+            # 更新水平集函数
+            phi = phi - dt * (delp2 * Vp + delm2 * Vm) + dt * lagP * self.curv(phi) * mag
+
+        solvephi = phi
+        return solvephi
+

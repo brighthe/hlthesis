@@ -51,12 +51,14 @@ mesh.nodedata['phi00'] = phi00.flatten('F')
 
 phi = phi00
 
+import os
 # 基于 phi 定义单元密度
 fe_theta = ts.fe_density(phi, eps)
 print("fe_theta:", fe_theta.shape, "\n", fe_theta)
 
 mesh.celldata['fe_theta'] = fe_theta.flatten('F')
-mesh.to_vtk(fname='allaire_phi0.vtu')
+fname = os.path.join('./visulaization/', "allaire_phi0.vtu")
+mesh.to_vtk(fname = fname)
 
 def stiff_matrix(nu, E0):
     """
@@ -112,27 +114,66 @@ F[tmp, 0] = -1
 # 位移约束(supports) - short cantilever
 fixeddofs = np.arange(0, 2*(nely+1), 1)
 
+e3 = 1
 
-num = 1
+from scipy.sparse import lil_matrix
+# 有限差分矩阵
+K1 = lil_matrix(((nelx + 1) * (nely + 1), (nelx + 1) * (nely + 1))) # 速度正则化的矩阵
+
+num = 20
 objective = np.zeros(num)
 fea_eueu = np.zeros((nely, nelx))
 for iterNum in range(num):
     U, Ue = ts.fe_analysis(mesh=mesh, fe_theta=fe_theta, KE=KE, F=F, fixeddofs=fixeddofs)
-    print("U:", U.shape, "\n", U)
-    print("Ue:", Ue.shape, "\n", Ue)
+    #print("U:", U.shape, "\n", U)
+    #print("Ue:", Ue.shape, "\n", Ue)
 
+    # 计算每个单元的应变能密度
     for i in range(nLoads):
         temp = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
         fea_eueu[:] = fea_eueu[:] + np.einsum('ij, ij -> ij', fe_theta, temp)
-    print("fea_eueu:", fea_eueu.shape, "\n", fea_eueu)
+
+        # 创建一个比fea_eueu大一圈的数组，外围填充零
+        padded = np.pad(fea_eueu, ((1, 1), (1, 1)), mode='edge')
+        lvlAeueu = np.zeros((nely+1, nelx+1))
+        # 累加四个角的应变能密度
+        lvlAeueu += padded[:-1, :-1]   # 从左上角开始
+        lvlAeueu += padded[:-1, 1:]  # 从右上角开始
+        lvlAeueu += padded[1:, :-1]  # 从左下角开始
+        lvlAeueu += padded[1:, 1:] # 从右下角开始
+        # 计算平均值
+        lvlAeueu /= 4
+    #print("fea_eueu:", fea_eueu.shape, "\n", fea_eueu)
+    #print("lvlAeueu:", lvlAeueu.shape, "\n", lvlAeueu)
+
+    # 定义速度场
+    v = lvlAeueu / (dx*dy) - lagV
+    #print("v:", v.shape, "\n", v)
+    v = ts.regularize(phi=phi, V=v, e2=e2)
+    #print("v1:", v.shape, "\n", v)
+
+    # 速度场的正则化
 
     # 计算目标函数
     totcomp = np.sum(fea_eueu)
     totvol = ts.volume(fe_theta)
     objective[iterNum] = lagV * totvol + totcomp + lagP * ts.perimeter(phi)
-    print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}')
+    print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Totvol.: {totvol:.3f}')
 
+    dt = 0.5 * e3 * min(dx, dy) / np.max(np.abs(v)) ;
+    phi = ts.solvelevelset(phi, v, dt, HJiter0, lagP) ;
+    #print("phi:", phi.shape, "\n", phi)
 
+    if (iterNum+1) % 5 == 0:
+        phi = ts.mesh00(phi=phi, RIiter=50)
+
+    fe_theta = ts.fe_density(phi, eps)
+    #print("fe_theta:", fe_theta.shape, "\n", fe_theta)
+
+    mesh.celldata['fe_theta'] = fe_theta.flatten('F')
+    mesh.nodedata['phi'] = phi.flatten('F')
+    fname = os.path.join('./visulaization/', f'allarie_{iterNum:010}.vtu')
+    mesh.to_vtk(fname=fname)
 
 
 
@@ -147,7 +188,6 @@ asd
 '''
 KE = ts.lk() # 刚度矩阵
 print("KE:", KE.shape, "\n", KE)
-from scipy.sparse import lil_matrix
 K = lil_matrix((2 * (nelx + 1) * (nely + 1), 2 * (nelx + 1) * (nely + 1))) # 全局刚度矩阵
 F = lil_matrix((2 * (nely + 1) * (nelx + 1), 2)) # 力矩阵
 U = lil_matrix((2 * (nely + 1) * (nelx + 1), 2)) # 位移向量矩阵

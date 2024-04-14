@@ -18,7 +18,7 @@ fe_domain = [0, domain_width, 0, domain_hight]
 fe_mesh = ts.generate_mesh(domain=fe_domain, nelx=nelx, nely=nely)
 fe_NC = fe_mesh.number_of_cells()
 fe_node = fe_mesh.entity('node') # 左下角按列增加
-print("fe_node:", fe_node.shape)
+print("fe_NC:", fe_NC)
 fe_cell = fe_mesh.entity('cell') # 左下角逆时针
 fe_center_node = fe_mesh.entity_barycenter('cell')
 fe_center_x = fe_center_node[:, 0]
@@ -128,10 +128,6 @@ for iterNum in range(totalNum):
     #print("U:", U.shape, "\n", U)
     ux = U[:, 0]
     uy = U[:, 1]
-    fe_mesh.nodedata['u1'] = ux.flatten('F')
-    fe_mesh.nodedata['u2'] = uy.flatten('F')
-    fname = os.path.join('./visulaization/', f'wang_u_{iterNum:010}.vtu')
-    fe_mesh.to_vtk(fname=fname)
 
     mean_compliances[iterNum] = F[tmp] * U.reshape(-1, 1)[tmp]
     print(f'Iter: {iterNum}, Compliance.: {mean_compliances[iterNum]:.4f}')
@@ -148,7 +144,6 @@ for iterNum in range(totalNum):
 
     # 归一化法向速度场
     ls_Vn = ls_Beta / np.max(np.abs(ls_Beta))
-    #print("ls_Vn:", ls_Vn.shape, "\n", ls_Vn)
 
     # 水平集界面更新
     ls_Phi = ts.level_set_evolve(phi0 = ls_Phi.reshape(nelx+2, nely+2).T,
@@ -165,26 +160,31 @@ for iterNum in range(totalNum):
     fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
     #print("fe_Phi:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
+    fe_mesh.nodedata['u1'] = ux.flatten('F')
+    fe_mesh.nodedata['u2'] = uy.flatten('F')
+    fe_mesh.nodedata['fe_Phi'] = fe_Phi.flatten('F')
+    fname = os.path.join('./visulaization/', f'wang{iterNum:010}.vtu')
+    fe_mesh.to_vtk(fname=fname)
 
-    fe_node_Phi = fe_Phi.reshape(nelx+1, nely+1).T
-    ls_node_Phi = ls_Phi.reshape(nelx+2, nely+2).T
+    #fe_node_Phi = fe_Phi.reshape(nelx+1, nely+1).T
+    #ls_node_Phi = ls_Phi.reshape(nelx+2, nely+2).T
 
-    ax1.clear()
-    ax2.clear()
+    #ax1.clear()
+    #ax2.clear()
 
-    ax1.contourf(fe_node_x, fe_node_y, fe_node_Phi, \
-                 levels=bounds, cmap=cmap, norm=norm)
-    ax1.set_aspect('equal', adjustable='box')
-    ax1.grid(True)
+    #ax1.contourf(fe_node_x, fe_node_y, fe_node_Phi, \
+    #             levels=bounds, cmap=cmap, norm=norm)
+    #ax1.set_aspect('equal', adjustable='box')
+    #ax1.grid(True)
 
-    surf = ax2.plot_surface(ls_node_x, ls_node_y, ls_node_Phi, \
-                            cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    ax2.view_init(30, 37.5)
-    ax2.grid(True)
-    ax2.axis('equal')
+    #surf = ax2.plot_surface(ls_node_x, ls_node_y, ls_node_Phi, \
+    #                        cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    #ax2.view_init(30, 37.5)
+    #ax2.grid(True)
+    #ax2.axis('equal')
 
-    plt.draw()
-    plt.pause(1e-3)
+    #plt.draw()
+    #plt.pause(1e-3)
 
-plt.ioff()
-plt.show()
+#plt.ioff()
+#plt.show()
