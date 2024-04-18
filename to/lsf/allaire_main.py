@@ -1,6 +1,8 @@
 from operator import xor
 import numpy as np
+import os
 
+# Cantilever 的默认参数
 nelx = 80
 nely = 40
 xlength = 2  # 工作域长度
@@ -12,7 +14,6 @@ hx = 5  # x 方向孔洞数
 hy = 3  # y 方向孔洞数
 r = 0.5  # 孔洞大小（介于0和1之间）
 
-eps = 0.001 # "hole" (or ersatz) material density
 lagV = 50 # Lagrange multiplier for volume constraint
 lagP = 0 # Lagrange multiplier for perimeter constraint 
 e2 = 4*dx**2 # coefficient for the regularization in front of the Laplacian
@@ -31,33 +32,41 @@ HJiter0 = 20 # original number of transport time steps
 entire = 20 # total number of optimization iterations
 allow = 0.01 # fraction that the objective function can increase
 
-from allaire import TopLsfShapeGrad
-ts = TopLsfShapeGrad(nelx=nelx, nely=nely, xlength=xlength, yheight=yheight)
-
-# 初始化
-phi0 = ts.mesh0(hx, hy, r)
-print("phi0:", phi0.shape, "\n", phi0.reshape(nelx+1, nely+1).T)
+from allaire import TopLSM
+ts = TopLSM(nelx=nelx, nely=nely, xlength=xlength, yheight=yheight)
 
 from fealpy.mesh import QuadrangleMesh
 domain = [0, xlength, 0, yheight]
 mesh = QuadrangleMesh.from_box(box = domain, nx = nelx, ny = nely)
+
+# 初始化
+#phi0 = ts.init_lsf(mesh)
+phi0 = ts.mesh0(hx, hy, r)
+print("phi0:", phi0.shape, "\n", phi0.reshape(nelx+1, nely+1).T)
+
 mesh.nodedata['phi0'] = phi0.flatten('F')
+#mesh.nodedata['phi1'] = phi1.flatten('F')
+
 
 # 重置化水平集函数
-phi00 = ts.mesh00(phi=phi0, RIiter=50)
+#phi00 = ts.mesh00(phi=phi0, RIiter=50)
+#print("phi00:", phi00.shape, "\n", phi00)
+phi0 = phi0.reshape((nelx+1, nely+1)).T
+phi00 = ts.reinitialize(phi0=phi0, dx=dx, dy=dy, loop_num=50)
 print("phi00:", phi00.shape, "\n", phi00)
 
 mesh.nodedata['phi00'] = phi00.flatten('F')
+#mesh.nodedata['phi11'] = phi11.flatten('F')
 
 phi = phi00
 
-import os
 # 基于 phi 定义单元密度
-fe_theta = ts.fe_density(phi, eps)
+eps = 0.001 # "hole" (or ersatz) material density
+fe_theta = ts.fe_density(phi.reshape(nelx+1, nely+1).T, eps)
 print("fe_theta:", fe_theta.shape, "\n", fe_theta)
 
 mesh.celldata['fe_theta'] = fe_theta.flatten('F')
-fname = os.path.join('./visulaization/', "allaire_phi0.vtu")
+fname = os.path.join('./visulaization/', "allaire.vtu")
 mesh.to_vtk(fname = fname)
 
 def stiff_matrix(nu, E0):
@@ -120,7 +129,7 @@ from scipy.sparse import lil_matrix
 # 有限差分矩阵
 K1 = lil_matrix(((nelx + 1) * (nely + 1), (nelx + 1) * (nely + 1))) # 速度正则化的矩阵
 
-num = 20
+num = 50
 objective = np.zeros(num)
 fea_eueu = np.zeros((nely, nelx))
 for iterNum in range(num):
@@ -148,8 +157,8 @@ for iterNum in range(num):
 
     # 定义速度场
     v = lvlAeueu / (dx*dy) - lagV
-    #print("v:", v.shape, "\n", v)
-    v = ts.regularize(phi=phi, V=v, e2=e2)
+    print("v:", v.shape, "\n", v)
+    #v = ts.regularize(phi=phi, V=v, e2=e2)
     #print("v1:", v.shape, "\n", v)
 
     # 速度场的正则化
@@ -157,11 +166,11 @@ for iterNum in range(num):
     # 计算目标函数
     totcomp = np.sum(fea_eueu)
     totvol = ts.volume(fe_theta)
-    objective[iterNum] = lagV * totvol + totcomp + lagP * ts.perimeter(phi)
+    objective[iterNum] = lagV * totvol + totcomp + lagP * ts.perimeter(phi.reshape(nelx+1, nely+1).T)
     print(f'Iter: {iterNum}, Compliance.: {objective[iterNum]:.4f}, Totvol.: {totvol:.3f}')
 
     dt = 0.5 * e3 * min(dx, dy) / np.max(np.abs(v)) ;
-    phi = ts.solvelevelset(phi, v, dt, HJiter0, lagP) ;
+    phi = ts.solvelevelset(phi.reshape(nelx+1, nely+1).T, v, dt, HJiter0, lagP) ;
     #print("phi:", phi.shape, "\n", phi)
 
     if (iterNum+1) % 5 == 0:

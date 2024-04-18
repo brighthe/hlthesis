@@ -2,7 +2,7 @@ import numpy as np
 from fealpy.mesh import QuadrangleMesh
 
 
-class TopLsfShapeGrad:
+class TopLSM:
     def __init__(self, nelx, nely, xlength, yheight):
 
         self.nelx = nelx
@@ -35,6 +35,51 @@ class TopLsfShapeGrad:
 
         return KE
 
+    def init_lsf(self, mesh):
+        '''
+        初始化设计区域内的水平集函数，以分布初始孔洞的符号距离函数表示.
+
+        该函数通过定义一系列圆形孔洞，并计算网格点到这些孔洞边界的最短距离，来初始化水平集函数
+        水平集函数在孔洞内部为负，在孔洞外部为正.
+
+        Parameters:
+        - mesh (object): 初始的水平集网格.
+
+        Returns:
+        - ls_Phi ( ndarray - (ls_NC, ) ): 初始的水平集函数.
+
+        '''
+        xlength, yheight, mesh = self.xlength, self.yheight, self.mesh
+        node = mesh.entity('node')
+        nodex = node[:, 0]
+        nodey = node[:, 1]
+        ls_node = mesh.entity('node')
+
+        # 定义初始孔洞的圆心
+        cx = xlength/200 * np.array([33.33,  100,  166.67,   0,    66.67,  133.33,
+                                           200,  33.33,  100,   166.67,   0,    66.67,
+                                         133.33,  200,  33.33,   100,   166.67], dtype=np.float64)
+        cy = yheight/100 * np.array([0,  0,  0,   25,  25, 25,
+                                          25, 50, 50,  50,  75, 75,
+                                          75, 75, 100, 100, 100], dtype=np.float64)
+        # 定义初始孔洞的半径
+        cr = yheight / 10
+
+        # 计算每个网格点与所有圆心的欧式距离
+        tmpPhi = np.sqrt((nodex[:, None] - cx)**2 + (nodey[:, None] - cy)**2) - cr # (NN, 17)
+
+        # 对于每个节点，取其到所有圆心距离的最小值
+        ls_Phi = np.min(tmpPhi, axis=1)
+        #print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi)
+
+        # 调整阈值，将材料密度标准化到 -0.1（孔洞） 和 0.1（实体材料）
+        ls_Phi = 0.2 * np.ceil(np.maximum(ls_Phi, 0)) - 0.1
+        #print("ls_Phi:", ls_Phi.shape, "\n", ls_Phi)
+
+
+        return ls_Phi
+
+
     def mesh0(self, hx, hy, r):
         """
         网格中均匀分布孔洞, 使用三角函数来在结构的设计区域内创建周期性的孔洞模式
@@ -45,7 +90,7 @@ class TopLsfShapeGrad:
         - r: 孔洞的尺寸调整参数，范围 (0, 1)，其中较小的值产生小孔洞，较大的值产生大孔洞
 
         Returns:
-        - phi - (ndarray-(nely+1, nelx+1)): 设计区域中每点的材料密度，其中 0.1 表示孔洞，-0.1 表示实体材料
+        - phi - ( ndarray - (nely+1, nelx+1) ): 设计区域中每点的材料密度，其中 0.1 表示孔洞，-0.1 表示实体材料
 
         """
         nelx, nely, xlength, yheight, mesh = self.nelx, self.nely, self.xlength, self.yheight, self.mesh
@@ -61,10 +106,87 @@ class TopLsfShapeGrad:
         phi0 = -np.cos((hy + 1) * (nodey * np.pi) / yheight) * \
                 np.cos((hx + 1) * (nodex * np.pi) / xlength) + r - 1
 
-        # 调整阈值，将材料密度标准化到 0.1（孔洞） 和 -0.1（实体材料）
+        # 调整阈值，将材料密度标准化到 -0.1（孔洞） 和 0.1（实体材料）
         phi0 = 0.2 * np.ceil(np.maximum(phi0, 0)) - 0.1
+        phi0 = -phi0
 
         return phi0
+
+
+    def upwind_diff(self, phi, d, direction):
+        """
+        使用迎风格式计算向前和向后有限差分.
+
+        Parameters:
+        - phi ( ndarray - (nely+2, nlex+2) ): 水平集函数在水平集网格点上的值;
+        - d (float): x 或 y 方向上相邻网格的间距, 取决于 'direction' 参数;
+        - direction (str): 'x': 沿 x 方向计算差分, 'y': 表示沿 y 方向计算差分.
+
+        Returns:
+        - back_diff ( ndarray - (nely+2, nlex+2) ): 向后差分矩阵: ( phi(i, j) - phi(i-1, j) ) / dx
+                               或 ( phi(i, j) - phi(i, j-1) ) / dx, 取决于 'direction'.
+        - fawd_diff ( ndarray - (nely+2, nlex+2) ): 向前差分矩阵: ( phi(i+1, j) - phi(i, j) ) / dx
+                               或 ( phi(i, j+1) - phi(i, j) ) / dx, 取决于 'direction'.
+        """
+
+        # 根据指定的方向计算后向和前向差分
+        if direction == 'x':
+            x_minus_1 = np.roll(phi, 1, axis=1) # x 方向向右位移
+            x_plus_1 = np.roll(phi, -1, axis=1) # x 方向向左位移
+            dx = d
+            back_diff = (phi - x_minus_1) / dx
+            fawd_diff = (x_plus_1 - phi) / dx
+        elif direction == 'y':
+            y_minus_1 = np.roll(phi, 1, axis=0) # y 方向向下位移
+            y_plus_1 = np.roll(phi, -1, axis=0) # y 方向向上位移
+            dy = d
+            back_diff = (phi - y_minus_1) / dy
+            fawd_diff = (y_plus_1 - phi) / dy
+        else:
+            raise ValueError("direction 必须是 'x' 或 'y'")
+        
+        return back_diff, fawd_diff
+
+
+    def reinitialize(self, phi0, dx, dy, loop_num):
+        """ 
+        将水平集函数重初始化为符号距离函数.
+
+        parameters:
+        - phi0: 演化前的水平集界面;
+        - dx: 有限元单元的宽度;
+        - dy: 有限元单元的高度;
+        - loop_num: 重初始化的时间步数.
+
+        returns:
+        - sign_dist_phi (ndarray - (ls_nn, )): 重置化后的水平集界面.
+        """
+        for _ in range(loop_num + 1):
+            # 水平集函数沿 x 和 y 方向的向前和向后差分算子
+            dx_l, dx_r = self.upwind_diff(phi0, dx, 'x')
+            dy_l, dy_r = self.upwind_diff(phi0, dy, 'y')
+            
+            # 水平集函数沿 x 和 y 方向的中心差分算子
+            dx_c = (dx_l + dx_r) / 2
+            dy_c = (dy_l + dy_r) / 2
+            
+            # sign(phi) 的数值计算
+            signphi = phi0 / (np.sqrt(phi0**2 + (dx_c**2 + dy_c**2) * dx**2) + np.finfo(float).eps)
+
+            # cfl 时间步长
+            dett = 0.5 * min(dx, dy) / np.max(np.abs(signphi))
+            
+            grad_plus = np.sqrt(np.maximum(dx_l, 0)**2 + np.minimum(dx_r, 0)**2 +
+                                np.maximum(dy_l, 0)**2 + np.minimum(dy_r, 0)**2)
+            grad_minus = np.sqrt(np.minimum(dx_l, 0)**2 + np.maximum(dx_r, 0)**2 +
+                                 np.minimum(dy_l, 0)**2 + np.maximum(dy_r, 0)**2)
+
+            phi0 = phi0 - dett * \
+                (np.maximum(signphi, 0)*grad_plus + np.minimum(signphi, 0)*grad_minus - signphi)
+
+        sign_dist_phi = phi0.flatten('f')
+
+        return sign_dist_phi
 
 
     def g(self, u1, u2, v1, v2):
@@ -174,9 +296,9 @@ class TopLsfShapeGrad:
                 phis = [phi[i, j], phi[i, j + 1], phi[i + 1, j + 1], phi[i + 1, j]]
                 phis_sign_sum = np.sum(np.sign(phis))
 
-                if phis_sign_sum == -4:
+                if phis_sign_sum == 4:
                     fe_theta[i, j] = 1  # 全部节点均为负值，单元完全由材料填充
-                elif phis_sign_sum == 4:
+                elif phis_sign_sum == -4:
                     fe_theta[i, j] = eps  # 全部节点均为正值，单元几乎为空洞
                 else:
                     # 通过切割单元的两条主对角线将单元分割成四个三角形
@@ -199,9 +321,9 @@ class TopLsfShapeGrad:
                     # 处理每个三角形
                     for tri in triMat:
                         tri_sign_sum = np.sum(np.sign(tri))
-                        if tri_sign_sum == -3:
+                        if tri_sign_sum == 3:
                             fe_theta[i, j] += 0.25
-                        elif tri_sign_sum == 3:
+                        elif tri_sign_sum == -3:
                             fe_theta[i, j] += 0.25 * eps
                         else:
                             # 使用线性插值估算密度贡献
@@ -439,6 +561,7 @@ class TopLsfShapeGrad:
         return H
 
     def solvelevelset(self, phi, V, dt, HJiter, lagP):
+        #print("phi:", phi.shape)
         nelx, nely, xlength = self.nelx, self.nely, self.xlength
         dx = xlength / nelx  # x 方向的步长
         dy = dx  # y 方向的步长，与 x 方向相同

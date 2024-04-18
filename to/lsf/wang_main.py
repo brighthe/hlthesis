@@ -1,15 +1,16 @@
 import numpy as np
+import os
 
-from shape_gradient import TopLsfShapeGrad
+from wang import TopLSM
 
 # Cantilever 的默认参数
 domain_width = 2 # 设计区域的宽度
 domain_hight = 1 # 设计区域的高度
-nelx = 80 # x 方向的单元数
-nely = 40 # y 方向的单元数
-lagV = 50
+nelx = 8 # x 方向的单元数
+nely = 4 # y 方向的单元数
+lagV = 50 # Lagrange multiplier for volume constraint
 lagCur = 0 # Lagrange multiplier for perimeter constraint whose shape sensitivity is curvature
-ts = TopLsfShapeGrad(domain_width = domain_width, domain_hight = domain_hight, \
+ts = TopLSM(domain_width = domain_width, domain_hight = domain_hight, \
                      nelx = nelx, nely = nely, lagV = lagV, lagCur = lagCur)
 # 数据初始化
 ew = domain_width / nelx
@@ -46,30 +47,45 @@ ele_lsgrid_id = np.argmin(distances, axis=1)
 
 # 初始化水平集函数
 ls_Phi = ts.init_lsf(mesh = ls_mesh)
+print("ls_Phi:", ls_Phi)
+
+ls_mesh.nodedata['ls_phi0'] = ls_Phi.flatten('f')
 
 # 边界条件处理
-boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
-                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
-                        <= 100 * np.finfo(float).eps
-ls_Phi[boundary_condition] = -1e-6
+#boundary_condition = (ls_x - np.min(ls_x)) * (ls_x - np.max(ls_x)) * \
+#                     (ls_y - np.max(ls_y)) * (ls_y - np.min(ls_y)) \
+#                        <= 100 * np.finfo(float).eps
+is_bd_node = ls_mesh.ds.boundary_node_flag()
+#print("boundary_condition:", boundary_condition)
+ls_Phi[is_bd_node] = -1e-6
+
+ls_mesh.nodedata['ls_phi1'] = ls_Phi.flatten('f')
 
 # 水平集函数值 Phi 从水平集节点投影到有限元节点
 from scipy.interpolate import griddata
 fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
 print("fe_Phi0:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
-fe_mesh.nodedata['phi0'] = fe_Phi
+fe_mesh.nodedata['fe_phi0'] = fe_Phi
 
 ls_Phi = ts.reinitialize(phi0=ls_Phi.reshape(nelx+2, nely+2).T,
                             dx=ew, dy=eh, loop_num=50)
 print("ls_NC:", ls_NN)
 print("ls_Phi0:", ls_Phi.shape, "\n", ls_Phi.round(4))
 
+ls_mesh.nodedata['ls_phi2'] = ls_Phi.flatten('f')
+
+
+fname = os.path.join('./visulaization/', 'wang_ls.vtu')
+ls_mesh.to_vtk(fname=fname)
+
 fe_Phi = griddata((ls_x, ls_y), ls_Phi, (fe_x, fe_y), method='cubic')
 print("fe_Phi1:", fe_Phi.shape, "\n", fe_Phi.round(4))
 
-fe_mesh.nodedata['phi00'] = fe_Phi
-fe_mesh.to_vtk(fname='wang_phi.vtu')
+fe_mesh.nodedata['fe_Phi1'] = fe_Phi
+
+fname = os.path.join('./visulaization/', 'wang_fe.vtu')
+fe_mesh.to_vtk(fname=fname)
 
 from fealpy.functionspace import LagrangeFESpace as Space
 p = 1
@@ -97,29 +113,10 @@ fea_Intercal = 20; # 指定有限元单元的频率
 reIter = 10 # 重初始化的时间步数
 
 
-fe_node_x = fe_x.reshape(nelx+1, nely+1).T
-fe_node_y = fe_y.reshape(nelx+1, nely+1).T
-fe_node_Phi = fe_Phi.reshape(nelx+1, nely+1).T
-ls_node_x = ls_x.reshape(nelx+2, nely+2).T
-ls_node_y = ls_y.reshape(nelx+2, nely+2).T
-ls_node_Phi = ls_Phi.reshape(nelx+2, nely+2).T
-
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import matplotlib.colors as mcolors
-
-fig = plt.figure(figsize=(12, 6))
-ax1 = fig.add_subplot(121)
-ax2 = fig.add_subplot(122, projection='3d')
-cmap = mcolors.ListedColormap(['white', 'black'])
-bounds = [-np.inf, 0, np.inf]
-norm = mcolors.BoundaryNorm(bounds, cmap.N)
-
-plt.ion()
-
 import os
-totalNum = 20 # 总的迭代次数
+totalNum = 50 # 总的迭代次数
 mean_compliances = np.zeros(totalNum)
+objective = np.zeros(totalNum)
 # 开始循环
 for iterNum in range(totalNum):
     # 有限元分析
@@ -130,11 +127,13 @@ for iterNum in range(totalNum):
     uy = U[:, 1]
 
     mean_compliances[iterNum] = F[tmp] * U.reshape(-1, 1)[tmp]
+
     print(f'Iter: {iterNum}, Compliance.: {mean_compliances[iterNum]:.4f}')
 
     # 计算几何量
     ls_curv = ts.calc_curvature(phi=ls_Phi.reshape(nelx+2, nely+2).T, dx=ew, dy=eh)
-    #print("ls_curv:", ls_curv.shape, "\n", ls_curv)
+    print("ls_curv:", ls_curv.shape, "\n", ls_curv)
+    asd
 
     # 形状灵敏度分析
     ls_Beta = ts.sensi_analysis(fe_mesh=fe_mesh, ls_mesh=ls_mesh, E1=E1, E0=E0, \
@@ -153,6 +152,7 @@ for iterNum in range(totalNum):
 
     # 水平集界面重置化
     if (iterNum == 0) or ((iterNum+1) % 5 == 0):
+        print("iterNum:", iterNum)
         ls_Phi = ts.reinitialize(phi0=ls_Phi.reshape(nelx+2, nely+2).T, 
                                  dx=ew, dy=eh, loop_num=reIter)
         #print("re_ls_Phi:", ls_Phi.shape, "\n", ls_Phi)

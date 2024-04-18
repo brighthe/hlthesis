@@ -50,9 +50,6 @@ class BeamOperatorIntegrator:
             idx = np.array([0, 1, 6, 7, 2, 3, 4, 5], dtype=np.int_)
             KE = KE[idx, :][:, idx]
 
-            # 确保矩阵非奇异
-            struc = np.maximum(struc, 0.0001)
-
             # 在将结构乘上去时，注意单元是按列排序的，所以 struc 要按列展开
             K[:] = np.einsum('i, jk -> ijk', struc.flatten(order='F'), KE)
 
