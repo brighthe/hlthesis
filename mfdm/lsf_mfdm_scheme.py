@@ -15,9 +15,16 @@ mesh = pde.polygon_mesh_2(n=ns)
 maxit = 5
 errorType = ['$|| u - u_h||_{\\Omega,0}$', 
         '$||\\nabla u - \\nabla u_h||_{\\Omega, 0}$']
-errorMatrix = np.zeros((1, maxit), dtype=np.float64)
+errorMatrix = np.zeros((2, maxit), dtype=np.float64)
 NDof = np.zeros(maxit, dtype=np.int_)
 
+phi0_values = []  # 用于存储每一步的 phi0 值
+
+from fealpy.timeintegratoralg import UniformTimeLine
+T = 1
+nt = 10000
+timeline = UniformTimeLine(0, T, nt)
+dt = timeline.dt
 for iter in range(maxit):
 
     NN = mesh.number_of_nodes()
@@ -26,6 +33,8 @@ for iter in range(maxit):
     print("NE:", NE)
     NC = mesh.number_of_cells()
     print("NC:", NC)
+
+    phi0 = mesh.integral(pde.circle, q=5, celltype=True) / mesh.entity_measure('cell')
 
     solver = Mimetic(mesh)
     M_c = solver.M_c()
@@ -41,42 +50,32 @@ for iter in range(maxit):
     cell_measure = mesh.entity_measure('cell') 
 
     A10 = solver.u_M_f(velocity=pde.velocity_field)
-    #print("A10:", A10.shape, "\n", A10)
 
-    exact_values = mesh.integral(u=pde.scalar_product, q=3, celltype=True)
-    #print("exact_values:", exact_values.shape, "\n", exact_values)
+    A01 = -div_operator.T @ M_c
+    A = np.bmat([ [M_f, -A01], [-dt*A10, M_c] ])
 
-    K_nodes = pde.grad_circle(node)
-    cell2edge = mesh.ds.cell_to_edge()
-    flag = np.where(mesh.ds.cell_to_edge_sign().toarray(), 1, -1)
-    result = []
-    K_h = np.zeros(NE, )
-    for i in range(NC):
-        edge_c = edge[cell[i]] # (LNE, 2)
-        K_edges_c = (K_nodes[edge_c[:, 0]] + K_nodes[edge_c[:, 1]]) / 2 # (LNE, 2)
-        tmp1 = edge_norm[cell2edge[i]]
-        tmp2 = flag[i, cell2edge[i]].reshape(-1, 1)
-        edge_norm_c = tmp1 * tmp2
-        K_c = np.einsum('ij, ij -> i', K_edges_c, edge_norm_c) # (LNE, )
-        result.append(K_c)
-        K_h[cell2edge[i]] = K_c
+    b1 = cell_measure * phi0
+    gamma = np.zeros(NE)
+    b = np.hstack((-gamma, b1))
 
-    approx_values_new = A10 @ K_h
-    #print("approx_values_new:", approx_values_new.shape, "\n", approx_values_new)
+    x = np.linalg.solve(A, b)
+    phi0[:] = x[-NC:]
 
-    errorMatrix[0, iter] = np.max(np.abs(exact_values - approx_values_new))
-    print("errorMatrix:", errorMatrix)
-
-    #error = np.max(np.abs(exact_values - approx_values))
-    #print("error:", error)
+    phi0_values.append(phi0.copy())
 
     if iter < maxit-1:
-        #mesh.uniform_refine()
         print("iter:", iter)
         ns = ns*2
         mesh = pde.polygon_mesh_2(n=ns)
 
     NDof[iter] = NN
+
+phi0_differences = []  # 用于存储每次网格细化后的 phi0 差异
+
+for i in range(1, len(phi0_values)):
+    difference = np.linalg.norm(phi0_values[i] - phi0_values[i-1], ord=2)  # 计算二范数
+    phi0_differences.append(difference)
+print("phi0_values:", phi0_values)
 
 import matplotlib.pyplot as plt
 from fealpy.tools.show import showmultirate
