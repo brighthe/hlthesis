@@ -70,7 +70,7 @@ class TopLsf:
         """
         from scipy import ndimage
 
-        nely, nelx = struc.shape
+        nely, nelx = self._nely, self._nelx
         strucFull = np.zeros((nely + 2, nelx + 2))
         strucFull[1:-1, 1:-1] = struc
         print("strucFull:", strucFull.shape, "\n", strucFull)
