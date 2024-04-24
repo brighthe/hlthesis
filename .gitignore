@@ -2,3 +2,4 @@
 *.mat
 *.mp4
 __pycache__/
+visualization/
