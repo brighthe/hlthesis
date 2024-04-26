@@ -1,20 +1,29 @@
 import numpy as np
 
+from fealpy.decorator import cartesian
 from poisson_model import SinSinData, SinSin5Data, CosCos5Data
 from mimetic_solver import Mimetic
 
 pde = SinSinData()
 #pde = SinSin5Data()
 #pde = CosCos5Data()
-ns = 2
-mesh = pde.polygon_mesh()
-#mesh = pde.polygon_mesh_2(n=ns)
+ns = 4
+#mesh = pde.polygon_mesh()
+mesh = pde.polygon_mesh_2(n=ns)
 import matplotlib.pyplot as plt
 
 #fig = plt.figure()
 #axes = fig.gca()
 #mesh.add_plot(axes)
 #plt.show()
+
+@cartesian
+def fun(p, index=None):
+    x = p[..., 0]
+    y = p[..., 1]
+    val = x + y
+
+    return val
 
 maxit = 1
 errorType = ['$|| p - p_h||_{\\Omega,0}$']
@@ -34,15 +43,17 @@ for iter in range(maxit):
 
     solver = Mimetic(mesh)
 
-    MV = solver.gmv()
-    print("MV:", MV.shape, "\n", MV.round(3))
+    MV, t2 = solver.gmv()
+    print("t2:", t2.shape, "\n", t2)
+    #print("MV:", MV.shape, "\n", MV.round(3))
 
     ME = solver.gme()
 
     grad_h = solver.grad_operator()
 
-    t1 = mesh.integral(pde.solution, q=5, celltype=True)
+    t1 = mesh.integral(fun, q=5, celltype=True)
     print("t1:", t1.shape, "\n", t1)
+    print("error:", np.sum(np.abs(t1 - t2)))
     asd
 
     A = grad_h.T @ ME @ grad_h

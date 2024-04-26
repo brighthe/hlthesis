@@ -83,8 +83,7 @@ class Mimetic():
             indexi, indexj = np.meshgrid(cell2node[i], cell2node[i])
             MV[indexi, indexj] += M
 
-        print("t2:", t2)
-        return MV
+        return MV, np.array(t2)
 
     def gme(self):
         """
