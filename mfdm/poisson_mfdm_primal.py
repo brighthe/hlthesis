@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 #mesh.add_plot(axes)
 #plt.show()
 
-maxit = 3
+maxit = 1
 errorType = ['$|| p - p_h||_{\\Omega,0}$']
 errorMatrix = np.zeros((2, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
@@ -41,38 +41,46 @@ for iter in range(maxit):
 
     grad_h = solver.grad_operator()
 
+    t1 = mesh.integral(pde.solution, q=5, celltype=True)
+    print("t1:", t1.shape, "\n", t1)
+    asd
+
     A = grad_h.T @ ME @ grad_h
     print("A:", A.shape, "\n", A.round(3))
+
+    node = mesh.entity('node')
+    p = pde.solution(node)
+    print("p:", p.shape, "\n", p.round(3))
+
+    node = mesh.entity('node')
+    rhs = pde.source(node)
+    ph = np.zeros(NN)
+    ph[nDdof] = pde.solution(node[nDdof])
+    b = MV @ rhs
+    b = b - A @ ph
+    print("b:", b.shape, "\n", b.round(3))
 
     bdIdx = np.zeros(A.shape[0], dtype=np.int_)
     bdIdx[nDdof.flat] = 1
     from scipy.sparse import spdiags
     D0 = spdiags(1-bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     D1 = spdiags(bdIdx, 0, A.shape[0], A.shape[0]).toarray()
-    A = D0 @ A + D1
+    A = D0 @ A @ D0 + D1
     print("A:", A.shape, "\n", A.round(3))
 
-    node = mesh.entity('node')
-    rhs = pde.source(node)
-    #rhs = solver.source_primal(fun=pde.source, gddof=nDdof, D=pde.Dirichlet)
-    b = MV @ rhs
-    print("b:", b.shape, "\n", b.round(3))
+
     b[nDdof] = pde.Dirichlet(node[nDdof])
     print("b:", b.shape, "\n", b.round(3))
 
     ph = np.linalg.solve(A, b)
     print("ph:", ph.shape, "\n", ph.round(3))
 
-    node = mesh.entity('node')
-    p = pde.solution(node)
-    print("p:", p.shape, "\n", p.round(3))
 
     errorMatrix[0, iter] = np.max(np.abs(p - ph))
     errorMatrix[1, iter] = np.max(np.abs(p[nDdof] - ph[nDdof]))
     print("errorMatrix:\n", errorMatrix)
 
     if iter < maxit-1:
-        #mesh.uniform_refine()
         print("iter:", iter)
         ns = ns*2
         mesh = pde.polygon_mesh_2(n=ns)

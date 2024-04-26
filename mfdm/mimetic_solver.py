@@ -1,5 +1,6 @@
 import numpy as np
 
+from fealpy.decorator import cartesian
 from scipy.sparse import diags, lil_matrix,csr_matrix
 from scipy.sparse import spdiags
 
@@ -7,6 +8,14 @@ class Mimetic():
     def __init__(self, mesh):
         self.mesh = mesh
     
+    @cartesian
+    def fun(self, p, index=None):
+        x = p[..., 0]
+        y = p[..., 1]
+        val = x + y
+
+        return val
+
     def gmv(self):
         """
         MV 质量矩阵
@@ -15,6 +24,10 @@ class Mimetic():
         - result (ndarray, (NN, NN) )
         """
         mesh = self.mesh
+        node = mesh.entity('node')
+        print("node:", node)
+        edge = mesh.entity('edge')
+        print("edge:", edge)
         edge_centers = mesh.entity_barycenter(etype=1)
         edge_unit_normals = mesh.edge_unit_normal()
         cell2node = mesh.ds.cell_to_node()
@@ -30,6 +43,7 @@ class Mimetic():
         cell_centers = mesh.entity_barycenter(etype=2) # (NC, GD)
         MV = np.zeros((NN, NN))
 
+        t2 = []
         for i in range(NC):
             LNE = len(cell2edge[i])
             cell_edge_unit_normals = edge_unit_normals[cell2edge[i]] # (LNE, GD)
@@ -37,23 +51,39 @@ class Mimetic():
             tmp = flag[i, cell2edge[i]].reshape(-1, 1) # (LNE, 1)
             # 单位外法向量
             cell_unit_outward_normals = cell_edge_unit_normals * tmp # (LNE, GD)
-            #print("cell_unit_outward_normals:", cell_unit_outward_normals.shape, "\n", cell_unit_outward_normals)
+            print("cell_unit_outward_normals:", cell_unit_outward_normals.shape, "\n", cell_unit_outward_normals)
             cell_edge_measure = edge_measure[cell2edge[i]].reshape(-1, 1) # (LNE, 1)
+            print("cell_edge_measure:", cell_edge_measure)
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
+
+            val = self.fun(node[cell2node[i]])
+            print("val:", val)
+            edge_values = []
+            for edge_index in cell2edge[i]:
+                edge_nodes = edge[edge_index]
+                edge_value = val[cell2node[i].tolist().index(edge_nodes[0])] + val[cell2node[i].tolist().index(edge_nodes[1])]
+                edge_values.append(edge_value)
+            print("edge_value:", np.array(edge_values))
 
             R = 0.25 * np.einsum('lg, lg, lk -> lk', cell_unit_outward_normals, \
                             cell_edge_centers - cell_centers[i, :], cell_edge_measure) # (LNE, 1)
+            print("R:", R.shape, "\n", R)
+            t2.append(np.einsum('lk, l ->', R, np.array(edge_values)))
 
             N = np.ones(len(cell2edge[i])).reshape(-1, 1) # (LNE, 1)
+            print("N:", N.shape, "\n", N)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
-            M_stability = np.trace(R @ R.T) / cell_measure[i] * \
+            #M_stability = np.trace(R @ R.T) / cell_measure[i] * \
+            #                                  (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
+            M_stability = np.trace(M_consistency) / cell_measure[i] * \
                                               (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
 
             indexi, indexj = np.meshgrid(cell2node[i], cell2node[i])
             MV[indexi, indexj] += M
 
+        print("t2:", t2)
         return MV
 
     def gme(self):
@@ -112,7 +142,9 @@ class Mimetic():
             #print("R:", R.shape, "\n", R)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
-            M_stability = np.trace(R @ R.T) / cell_measure[i] * \
+            #M_stability = np.trace(R @ R.T) / cell_measure[i] * \
+            #                                  (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
+            M_stability = np.trace(M_consistency) / cell_measure[i] * \
                                               (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
 
