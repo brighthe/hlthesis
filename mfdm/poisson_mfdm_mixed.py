@@ -10,10 +10,10 @@ pde = SinSinData()
 #pde = SinSin5Data()
 #pde = CosCos5Data()
 ns = 5
-mesh = pde.polygon_mesh()
-#mesh = pde.polygon_mesh_2(n=ns)
+#mesh = pde.polygon_mesh()
+mesh = pde.polygon_mesh_2(n=ns)
 
-maxit = 1
+maxit = 4
 errorType = ['$|| p - p_h||_{\\Omega,0}$']
 errorMatrix = np.zeros((1, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
