@@ -7,7 +7,7 @@ from mimetic_solver import Mimetic
 pde = SinSinData()
 #pde = SinSin5Data()
 #pde = CosCos5Data()
-ns = 4
+ns = 2
 #mesh = pde.polygon_mesh()
 mesh = pde.polygon_mesh_2(n=ns)
 import matplotlib.pyplot as plt
@@ -25,7 +25,8 @@ def fun(p, index=None):
 
     return val
 
-maxit = 1
+
+maxit = 3
 errorType = ['$|| p - p_h||_{\\Omega,0}$']
 errorMatrix = np.zeros((2, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
@@ -54,7 +55,6 @@ for iter in range(maxit):
     t1 = mesh.integral(fun, q=5, celltype=True)
     print("t1:", t1.shape, "\n", t1)
     print("error:", np.sum(np.abs(t1 - t2)))
-    asd
 
     A = grad_h.T @ ME @ grad_h
     print("A:", A.shape, "\n", A.round(3))

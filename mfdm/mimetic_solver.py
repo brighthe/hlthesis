@@ -13,6 +13,8 @@ class Mimetic():
         x = p[..., 0]
         y = p[..., 1]
         val = x + y
+        #val = (1+x) * (1+y)
+        #val = np.sin(np.pi*x)*np.sin(np.pi*y)
 
         return val
 
@@ -25,9 +27,9 @@ class Mimetic():
         """
         mesh = self.mesh
         node = mesh.entity('node')
-        print("node:", node)
+        #print("node:", node)
         edge = mesh.entity('edge')
-        print("edge:", edge)
+        #print("edge:", edge)
         edge_centers = mesh.entity_barycenter(etype=1)
         edge_unit_normals = mesh.edge_unit_normal()
         cell2node = mesh.ds.cell_to_node()
@@ -51,27 +53,27 @@ class Mimetic():
             tmp = flag[i, cell2edge[i]].reshape(-1, 1) # (LNE, 1)
             # 单位外法向量
             cell_unit_outward_normals = cell_edge_unit_normals * tmp # (LNE, GD)
-            print("cell_unit_outward_normals:", cell_unit_outward_normals.shape, "\n", cell_unit_outward_normals)
+            #print("cell_unit_outward_normals:", cell_unit_outward_normals.shape, "\n", cell_unit_outward_normals)
             cell_edge_measure = edge_measure[cell2edge[i]].reshape(-1, 1) # (LNE, 1)
-            print("cell_edge_measure:", cell_edge_measure)
+            #print("cell_edge_measure:", cell_edge_measure)
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
 
             val = self.fun(node[cell2node[i]])
-            print("val:", val)
+            #print("val:", val)
             edge_values = []
             for edge_index in cell2edge[i]:
                 edge_nodes = edge[edge_index]
                 edge_value = val[cell2node[i].tolist().index(edge_nodes[0])] + val[cell2node[i].tolist().index(edge_nodes[1])]
                 edge_values.append(edge_value)
-            print("edge_value:", np.array(edge_values))
+            #print("edge_value:", np.array(edge_values))
 
             R = 0.25 * np.einsum('lg, lg, lk -> lk', cell_unit_outward_normals, \
                             cell_edge_centers - cell_centers[i, :], cell_edge_measure) # (LNE, 1)
-            print("R:", R.shape, "\n", R)
+            #print("R:", R.shape, "\n", R)
             t2.append(np.einsum('lk, l ->', R, np.array(edge_values)))
 
             N = np.ones(len(cell2edge[i])).reshape(-1, 1) # (LNE, 1)
-            print("N:", N.shape, "\n", N)
+            #print("N:", N.shape, "\n", N)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
             #M_stability = np.trace(R @ R.T) / cell_measure[i] * \
@@ -99,9 +101,9 @@ class Mimetic():
 
         node = mesh.entity('node')
         cell2node = mesh.ds.cell_to_node()
-        #print("cell2node:", cell2node)
+        print("cell2node:", cell2node)
         cell2edge = mesh.ds.cell_to_edge()
-        #print("cell2edge:", cell2edge)
+        print("cell2edge:", cell2edge)
         edge2node = mesh.ds.edge_to_node()
         #print("edge2node:", edge2node)
 
@@ -119,7 +121,28 @@ class Mimetic():
 
         ME = np.zeros((NE, NE))
 
+        grad_h = self.grad_operator()
+        #print("grad_h:", grad_h.shape, "\n", grad_h.round(3))
+        LHS = []
         for i in range(NC):
+            # 根据单元内边的全局编号提取行
+            local_grad_h_rows = grad_h[cell2edge[i]]
+            
+            # 提取单元内节点的全局编号，并构建映射表
+            global_to_local = {g: l for l, g in enumerate(cell2node[i])}
+
+            # 构造单元内的梯度算子
+            local_grad_h = np.zeros((len(cell2edge[i]), len(cell2node[i])))
+            for j, row in enumerate(local_grad_h_rows):
+                for global_idx, value in enumerate(row):
+                    if global_idx in global_to_local:
+                        local_grad_h[j, global_to_local[global_idx]] = value
+
+            print("local_grad_h:\n", local_grad_h.shape, "\n", local_grad_h.round(3))
+
+            p_ch = self.fun(node[cell2node[i]])
+            print("p_ch:", p_ch.shape, "\n", p_ch.round(3))
+
             LNE = len(cell2edge[i])
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
@@ -130,6 +153,7 @@ class Mimetic():
                                       -distVec[:, 0][:, np.newaxis]] )) # (LNE, GD)
             #print("rot_distVec:", rot_distVec.shape, "\n", rot_distVec)
             N = edge_unit_tagnet[cell2edge[i], :] # (LNE, GD)
+            print("N:", N.shape, "\n", N.round(3))
 
             cell2node0 = np.append(cell2node[i], cell2node[i][0])
             cell_edge_unit_tagnet = (node[cell2node0[1:]] - node[cell2node0[0:-1]])\
@@ -146,27 +170,36 @@ class Mimetic():
             M_stability = np.trace(M_consistency) / cell_measure[i] * \
                                               (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
+            print("M:", M.shape, "\n", M.round(3))
+
+            lhs = np.einsum('en, n, ee, eg -> g', local_grad_h, p_ch, M, N) # (GD, )
+            print("lhs:", lhs.shape, "\n", lhs.round(3))
+            LHS.append(lhs)
 
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])
             ME[indexi, indexj] += M
 
-        return ME
+        return ME, np.array(LHS)
 
-        #def source_primal(self, fun, gddof, D):
-        #    """
+    def grad_operator(self):
+        """
+        离散梯度算子
 
-        #    Results
-        #    - result (ndarray, (NN, ) )
-        #    """
-        #    mesh = self.mesh
-        #    node = mesh.entity('node')
+        Results
+        - result (ndarray, (NE, NN) )
+        """
+        mesh = self.mesh
+        edge = mesh.entity('edge')
+        NE = mesh.number_of_edges()
+        NN = mesh.number_of_nodes()
+        edge_measure = mesh.entity_measure(etype=1)
 
-        #    rhs = fun(node)
+        gradh = np.zeros((NE, NN))
+        for i in range(NE):
+            gradh[i, edge[i, 0]] = -1 / edge_measure[i]
+            gradh[i, edge[i, 1]] = 1 / edge_measure[i]
 
-        #    rhs[gddof] = D(node[gddof])
-
-        #    return rhs
-
+        return gradh
 
 
     def M_f(self):
@@ -240,25 +273,6 @@ class Mimetic():
 
         return result
 
-    def grad_operator(self):
-        """
-        离散梯度算子
-
-        Results
-        - result (ndarray, (NE, NN) )
-        """
-        mesh = self.mesh
-        edge = mesh.entity('edge')
-        NE = mesh.number_of_edges()
-        NN = mesh.number_of_nodes()
-        edge_measure = mesh.entity_measure(etype=1)
-
-        gradh = np.zeros((NE, NN))
-        for i in range(NE):
-            gradh[i, edge[i, 0]] = -1 / edge_measure[i]
-            gradh[i, edge[i, 1]] = 1 / edge_measure[i]
-
-        return gradh
 
 
     def source(self, fun, gddof, D):
