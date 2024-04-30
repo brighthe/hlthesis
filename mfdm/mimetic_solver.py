@@ -103,9 +103,9 @@ class Mimetic():
 
         node = mesh.entity('node')
         cell2node = mesh.ds.cell_to_node()
-        #print("cell2node:", cell2node)
+        print("cell2node:", cell2node[4])
         cell2edge = mesh.ds.cell_to_edge()
-        #print("cell2edge:", cell2edge)
+        print("cell2edge:", cell2edge[4])
         edge2node = mesh.ds.edge_to_node()
         #print("edge2node:", edge2node)
 
@@ -127,7 +127,8 @@ class Mimetic():
         #print("grad_h:", grad_h.shape, "\n", grad_h.round(3))
         LHS = []
         error = []
-        for i in range(NC):
+        #for i in range(NC):
+        for i in range(4,5):
             # 根据单元内边的全局编号提取行
             local_grad_h_rows = grad_h[cell2edge[i]]
             
@@ -163,7 +164,7 @@ class Mimetic():
                 / cell_edge_measure[:, np.newaxis] # (LNE, GD)
             #print("cell_edge_unit_tagnet:", cell_edge_unit_tagnet.shape, "\n", cell_edge_unit_tagnet)
             beta = np.einsum("ij, ij -> i", cell_edge_unit_tagnet, N)
-            #print("beta:", beta)
+            print("beta:", beta.shape, "\n", beta)
             R = np.einsum('l, lg, l -> lg', beta, rot_distVec, cell_edge_measure)
             #print("R:", R.shape, "\n", R)
 
@@ -176,7 +177,7 @@ class Mimetic():
             lhs = np.einsum('en, n, ee, eg -> g', local_grad_h, p_ch, M, N) # (GD, )
             LHS.append(lhs)
 
-            err = np.max(np.abs(M@N-R))
+            err = np.max(np.abs(M @ N - R))
             error.append(err)
 
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])

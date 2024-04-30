@@ -15,8 +15,8 @@ mesh = pde.polygon_mesh_2(n=ns)
 def fun(p, index=None):
     x = p[..., 0]
     y = p[..., 1]
-    #val = x + y
-    val = np.sin(np.pi*x)*np.sin(np.pi*y)
+    val = x + y
+    #val = np.sin(np.pi*x)*np.sin(np.pi*y)
 
     return val
 
