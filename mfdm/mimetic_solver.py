@@ -27,9 +27,7 @@ class Mimetic():
         """
         mesh = self.mesh
         node = mesh.entity('node')
-        #print("node:", node)
         edge = mesh.entity('edge')
-        #print("edge:", edge)
         edge_centers = mesh.entity_barycenter(etype=1)
         edge_unit_normals = mesh.edge_unit_normal()
         cell2node = mesh.ds.cell_to_node()
@@ -45,7 +43,8 @@ class Mimetic():
         cell_centers = mesh.entity_barycenter(etype=2) # (NC, GD)
         MV = np.zeros((NN, NN))
 
-        t2 = []
+        LHS = []
+        error = []
         for i in range(NC):
             LNE = len(cell2edge[i])
             cell_edge_unit_normals = edge_unit_normals[cell2edge[i]] # (LNE, GD)
@@ -59,7 +58,7 @@ class Mimetic():
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
 
             val = self.fun(node[cell2node[i]])
-            #print("val:", val)
+            # 边上两个顶点求和
             edge_values = []
             for edge_index in cell2edge[i]:
                 edge_nodes = edge[edge_index]
@@ -70,7 +69,7 @@ class Mimetic():
             R = 0.25 * np.einsum('lg, lg, lk -> lk', cell_unit_outward_normals, \
                             cell_edge_centers - cell_centers[i, :], cell_edge_measure) # (LNE, 1)
             #print("R:", R.shape, "\n", R)
-            t2.append(np.einsum('lk, l ->', R, np.array(edge_values)))
+            LHS.append(np.einsum('lk, l ->', R, np.array(edge_values)))
 
             N = np.ones(len(cell2edge[i])).reshape(-1, 1) # (LNE, 1)
             #print("N:", N.shape, "\n", N)
@@ -78,14 +77,17 @@ class Mimetic():
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
             #M_stability = np.trace(R @ R.T) / cell_measure[i] * \
             #                                  (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
-            M_stability = np.trace(M_consistency) / cell_measure[i] * \
+            M_stability = np.trace(R @ R.T) / cell_measure[i] * \
                                               (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
+            #print("M:", M.shape, "\n", M.round(3))
 
+            err = np.max(np.abs(M@N-R))
+            error.append(err)
             indexi, indexj = np.meshgrid(cell2node[i], cell2node[i])
             MV[indexi, indexj] += M
 
-        return MV, np.array(t2)
+        return MV, np.array(LHS), np.array(error)
 
     def gme(self):
         """
@@ -101,9 +103,9 @@ class Mimetic():
 
         node = mesh.entity('node')
         cell2node = mesh.ds.cell_to_node()
-        print("cell2node:", cell2node)
+        #print("cell2node:", cell2node)
         cell2edge = mesh.ds.cell_to_edge()
-        print("cell2edge:", cell2edge)
+        #print("cell2edge:", cell2edge)
         edge2node = mesh.ds.edge_to_node()
         #print("edge2node:", edge2node)
 
@@ -124,6 +126,7 @@ class Mimetic():
         grad_h = self.grad_operator()
         #print("grad_h:", grad_h.shape, "\n", grad_h.round(3))
         LHS = []
+        error = []
         for i in range(NC):
             # 根据单元内边的全局编号提取行
             local_grad_h_rows = grad_h[cell2edge[i]]
@@ -138,10 +141,10 @@ class Mimetic():
                     if global_idx in global_to_local:
                         local_grad_h[j, global_to_local[global_idx]] = value
 
-            print("local_grad_h:\n", local_grad_h.shape, "\n", local_grad_h.round(3))
+            #print("local_grad_h:\n", local_grad_h.shape, "\n", local_grad_h.round(3))
 
             p_ch = self.fun(node[cell2node[i]])
-            print("p_ch:", p_ch.shape, "\n", p_ch.round(3))
+            #print("p_ch:", p_ch.shape, "\n", p_ch.round(3))
 
             LNE = len(cell2edge[i])
             cell_edge_measure = edge_measure[cell2edge[i]] # (LNE, )
@@ -153,7 +156,7 @@ class Mimetic():
                                       -distVec[:, 0][:, np.newaxis]] )) # (LNE, GD)
             #print("rot_distVec:", rot_distVec.shape, "\n", rot_distVec)
             N = edge_unit_tagnet[cell2edge[i], :] # (LNE, GD)
-            print("N:", N.shape, "\n", N.round(3))
+            #print("N:", N.shape, "\n", N.round(3))
 
             cell2node0 = np.append(cell2node[i], cell2node[i][0])
             cell_edge_unit_tagnet = (node[cell2node0[1:]] - node[cell2node0[0:-1]])\
@@ -165,21 +168,21 @@ class Mimetic():
             #print("R:", R.shape, "\n", R)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
-            #M_stability = np.trace(R @ R.T) / cell_measure[i] * \
-            #                                  (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
-            M_stability = np.trace(M_consistency) / cell_measure[i] * \
+            M_stability = np.trace(R @ R.T) / cell_measure[i] * \
                                               (np.eye(LNE) - N @ np.linalg.inv(N.T @ N) @ N.T)
             M = M_consistency + M_stability # (LNE, LNE)
-            print("M:", M.shape, "\n", M.round(3))
+            #print("M:", M.shape, "\n", M.round(3))
 
             lhs = np.einsum('en, n, ee, eg -> g', local_grad_h, p_ch, M, N) # (GD, )
-            print("lhs:", lhs.shape, "\n", lhs.round(3))
             LHS.append(lhs)
+
+            err = np.max(np.abs(M@N-R))
+            error.append(err)
 
             indexi, indexj = np.meshgrid(cell2edge[i], cell2edge[i])
             ME[indexi, indexj] += M
 
-        return ME, np.array(LHS)
+        return ME, np.array(LHS), np.array(error)
 
     def grad_operator(self):
         """

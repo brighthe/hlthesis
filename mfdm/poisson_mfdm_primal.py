@@ -10,25 +10,10 @@ pde = SinSinData()
 ns = 2
 #mesh = pde.polygon_mesh()
 mesh = pde.polygon_mesh_2(n=ns)
-import matplotlib.pyplot as plt
 
-#fig = plt.figure()
-#axes = fig.gca()
-#mesh.add_plot(axes)
-#plt.show()
-
-@cartesian
-def fun(p, index=None):
-    x = p[..., 0]
-    y = p[..., 1]
-    val = x + y
-
-    return val
-
-
-maxit = 3
-errorType = ['$|| p - p_h||_{\\Omega,0}$']
-errorMatrix = np.zeros((2, maxit), dtype=np.float64)
+maxit = 4
+errorType = ['$|| p - p_h ||_{\\Omega,0}$']
+errorMatrix = np.zeros((1, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
 
 for iter in range(maxit):
@@ -44,8 +29,7 @@ for iter in range(maxit):
 
     solver = Mimetic(mesh)
 
-    MV, t2 = solver.gmv()
-    print("t2:", t2.shape, "\n", t2)
+    MV, t1, error = solver.gmv()
     #print("MV:", MV.shape, "\n", MV.round(3))
 
     ME = solver.gme()
