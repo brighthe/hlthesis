@@ -82,7 +82,7 @@ class Mimetic():
             M = M_consistency + M_stability # (LNE, LNE)
             #print("M:", M.shape, "\n", M.round(3))
 
-            err = np.max(np.abs(M@N-R))
+            err = np.max(np.abs(M@N - R))
             error.append(err)
             indexi, indexj = np.meshgrid(cell2node[i], cell2node[i])
             MV[indexi, indexj] += M

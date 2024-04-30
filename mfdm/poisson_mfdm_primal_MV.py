@@ -20,9 +20,9 @@ def fun(p, index=None):
 
     return val
 
-maxit = 1
+maxit = 5
 errorType = ['$|| RHS - LHS ||_{\\Omega,0}$']
-errorMatrix = np.zeros((1, maxit), dtype=np.float64)
+errorMatrix = np.zeros((2, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
 
 for iter in range(maxit):
@@ -38,14 +38,14 @@ for iter in range(maxit):
     solver = Mimetic(mesh)
 
     MV, LHS, error = solver.gmv()
-    print("LHS:", LHS.shape, "\n", LHS)
-    print("error:", error.shape, "\n", np.sum(np.abs(error)))
+    #print("LHS:", LHS.shape, "\n", LHS)
+    errorMatrix[0, iter] = np.sum(np.abs(error))
     #print("MV:", MV.shape, "\n", MV.round(3))
 
     RHS = mesh.integral(fun, q=5, celltype=True)
-    print("RHS:", RHS.shape, "\n", RHS)
+    #print("RHS:", RHS.shape, "\n", RHS)
 
-    errorMatrix[0, iter] = np.sum(np.abs(RHS - LHS))
+    errorMatrix[1, iter] = np.sum(np.abs(RHS - LHS))
 
     if iter < maxit-1:
         print("iter:", iter)
@@ -54,7 +54,7 @@ for iter in range(maxit):
 
     nDof[iter] = NN
 
-print("error:", errorMatrix)
+print("errorMatrix:\n", errorMatrix)
 import matplotlib.pyplot as plt
 from fealpy.tools.show import showmultirate
 

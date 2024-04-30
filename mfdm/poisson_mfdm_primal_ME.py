@@ -22,10 +22,11 @@ def fun(p, index=None):
 def grad_fun(p, index=None):
     x = p[..., 0]
     y = p[..., 1]
+    #val = np.array([1.0, 1.0])
     val = np.zeros_like(p)
-    val[:, 0] = 1
-    val[:, 1] = 1
-    pi = np.pi
+    val[..., 0] = 1
+    val[..., 1] = 1
+    #pi = np.pi
     #val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)
     #val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)
 
@@ -59,10 +60,10 @@ for iter in range(maxit):
     errorMatrix[0, iter] = np.sum(np.abs(grad_h@node - edge_unit_tagnet))
 
     RHS = mesh.integral(grad_fun, q=5, celltype=True)
-    #print("RHS:", RHS.shape, "\n", RHS.round(3))
+    print("RHS:", RHS.shape, "\n", RHS.round(3))
 
     ME, LHS, error = solver.gme()
-    #print("LHS:", LHS.shape, "\n", LHS.round(3))
+    print("LHS:", LHS.shape, "\n", LHS.round(3))
 
     errorMatrix[1, iter] = np.sum(np.abs(error))
 
