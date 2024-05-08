@@ -29,7 +29,7 @@ class CosCosData:
     def Dirichlet(self, p):
         x = p[..., 0]
         y = p[..., 1]
-        val = 0
+        val = np.cos(2*np.pi*x)*np.cos(np.pi*y)
         return val
 
 class ExpSinData:
@@ -42,7 +42,6 @@ class ExpSinData:
         x = p[..., 0]
         y = p[..., 1]
         val = np.exp(x) * np.sin(y)
-
         return val
 
     @cartesian
@@ -56,12 +55,12 @@ class ExpSinData:
     def Dirichlet(self, p):
         x = p[..., 0]
         y = p[..., 1]
-        val = 0
+        val = np.exp(x) * np.sin(y)
         return val
 
 class SinSinData:
     """
-    -\\Delta u = 2*pi**2 * uexact
+    -\\Delta u = 2*pi**2 * sin(pi*x)*sin(pi*y)
         uexact = sin(pi*x)*sin(pi*y)
     """
     def __init__(self):
@@ -85,27 +84,28 @@ class SinSinData:
         return val
 
     @cartesian
-    def gradient_u(self, p):
-        x = p[..., 0]
-        y = p[..., 1]
-        pi = np.pi
-        val = np.zeros_like(p)
-        val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)
-        val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)
-        return val # val.shape == p.shape
-
-    @cartesian
-    def div_u(self, p, index=None):
-        x = p[..., 0]
-        y = p[..., 1]
-        value0 = np.pi*np.cos(np.pi*x)*np.sin(np.pi*y)
-        value1 = np.pi*np.sin(np.pi*x)*np.cos(np.pi*y)
-        value = value0+value1
-        return value
-
-    @cartesian
     def Dirichlet(self, p):
         x = p[..., 0]
         y = p[..., 1]
-        val = 0
+        pi = np.pi
+        val = np.sin(pi*x) * np.sin(pi*y)
         return val
+    #@cartesian
+    #def gradient_u(self, p):
+    #    x = p[..., 0]
+    #    y = p[..., 1]
+    #    pi = np.pi
+    #    val = np.zeros_like(p)
+    #    val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)
+    #    val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)
+    #    return val # val.shape == p.shape
+
+    #@cartesian
+    #def div_u(self, p, index=None):
+    #    x = p[..., 0]
+    #    y = p[..., 1]
+    #    value0 = np.pi*np.cos(np.pi*x)*np.sin(np.pi*y)
+    #    value1 = np.pi*np.sin(np.pi*x)*np.cos(np.pi*y)
+    #    value = value0+value1
+    #    return value
+

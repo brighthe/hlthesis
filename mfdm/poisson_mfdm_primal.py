@@ -11,17 +11,19 @@ ns = 4
 mesh = PolygonMesh.from_unit_square(nx=ns, ny=ns)
 
 import matplotlib.pyplot as plt
-fig = plt.figure()
-axes = fig.gca()
-mesh.add_plot(axes)
-plt.show()
+#fig = plt.figure()
+#axes = fig.gca()
+#mesh.add_plot(axes)
+#plt.show()
 
 maxit = 4
-errorType = ['$|| p - p_h ||_{\\Omega,0}$']
-errorMatrix = np.zeros((1, maxit), dtype=np.float64)
+errorType = ['$|| p - p_h ||_{\\Omega, 0}$',
+             '$|| p - p_h||_{\\Omega, \\infty}$']
+errorMatrix = np.zeros((2, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
 
 for iter in range(maxit):
+    print("The {}-th computation:".format(iter))
     NC = mesh.number_of_cells()
     print("NC:", NC)
     NE = mesh.number_of_edges()
@@ -50,6 +52,9 @@ for iter in range(maxit):
 
     ph[nDdof] = pde.solution(node[nDdof])
     b = MV @ rhs
+    print("A:", np.sum(np.abs(A)))
+    print("b:", np.sum(np.abs(b)))
+
     b = b - A @ ph
 
     bdIdx = np.zeros(A.shape[0], dtype=np.int_)
@@ -75,17 +80,25 @@ for iter in range(maxit):
     #D1 = spdiags(bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     #A = D0 @ A + D1
 
+    print("A:", np.sum(np.abs(A)))
+    print("b:", np.sum(np.abs(b)))
     ph = np.linalg.solve(A, b)
+    print("ph:", np.sum(np.abs(ph)))
 
-    errorMatrix[0, iter] = np.sum(np.abs(p - ph)) / NN
-    #errorMatrix[1, iter] = np.sum(np.abs(p[nDdof] - ph[nDdof])) / NN
+    # l2 误差
+    errorMatrix[0, iter] = np.sqrt( np.sum( np.abs(p - ph)**2 ) * 1/NN )
+    # l_infty 误差
+    errorMatrix[1, iter] = np.max( np.abs(p - ph))
 
     if iter < maxit-1:
-        print("iter:", iter)
         ns = ns*2
         mesh = PolygonMesh.from_unit_square(nx=ns, ny=ns)
 
-    nDof[iter] = NN
+    for i, errType in enumerate(errorType):
+        print(errType)
+        print(errorMatrix[i])
+        print('------')
+        nDof[iter] = NN
 
 print("errorMatrix:\n", errorMatrix)
 

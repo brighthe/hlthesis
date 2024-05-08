@@ -37,12 +37,10 @@ class Mimetic():
             cell_edge_measure = edge_measure[cell2edge[i]].reshape(-1, 1) # (LNE, 1)
             cell_edge_centers = edge_centers[cell2edge[i]] # (LNE, GD)
 
-            #R = 0.25 * np.einsum('lg, lg, lk -> lk', cell_unit_outward_normals, \
-            #               cell_edge_centers - cell_centers[i, :], cell_edge_measure) # (LNE, 1)
             R = 0.5 * np.einsum('lg, lg, lk -> lk', cell_unit_outward_normals, \
                             cell_edge_centers - cell_centers[i, :], cell_edge_measure) # (LNE, 1)
 
-            N = np.ones(len(cell2edge[i])).reshape(-1, 1) # (LNE, 1)
+            N = np.ones(LNV).reshape(-1, 1) # (LNE, 1)
 
             M_consistency = R @ np.linalg.inv(R.T @ N) @ R.T
             M_stability = np.trace(M_consistency) * (np.eye(LNV) - N @ np.linalg.inv(N.T @ N) @ N.T) \
