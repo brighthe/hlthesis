@@ -52,8 +52,8 @@ for iter in range(maxit):
 
     ph[nDdof] = pde.solution(node[nDdof])
     b = MV @ rhs
-    print("A:", np.sum(np.abs(A)))
-    print("b:", np.sum(np.abs(b)))
+    #print("A:", np.sum(np.abs(A)))
+    #print("b:", np.sum(np.abs(b)))
 
     b = b - A @ ph
 
@@ -80,10 +80,10 @@ for iter in range(maxit):
     #D1 = spdiags(bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     #A = D0 @ A + D1
 
-    print("A:", np.sum(np.abs(A)))
-    print("b:", np.sum(np.abs(b)))
+    #print("A:", np.sum(np.abs(A)))
+    #print("b:", np.sum(np.abs(b)))
     ph = np.linalg.solve(A, b)
-    print("ph:", np.sum(np.abs(ph)))
+    #print("ph:", np.sum(np.abs(ph)))
 
     # l2 误差
     errorMatrix[0, iter] = np.sqrt( np.sum( np.abs(p - ph)**2 ) * 1/NN )
