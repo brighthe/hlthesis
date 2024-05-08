@@ -1,18 +1,24 @@
 import numpy as np
 
-from fealpy.decorator import cartesian
-from poisson_model import SinSinData, SinSin5Data, CosCos5Data
+from fealpy.mesh.polygon_mesh import PolygonMesh
+from poisson_model import SinSinData, ExpSinData, CosCosData
 from mimetic_solver import Mimetic
 
-pde = SinSinData()
-#pde = SinSin5Data()
-#pde = CosCos5Data()
-ns = 2
-mesh = pde.polygon_mesh_2(n=ns)
+#pde = SinSinData()
+#pde = ExpSinData()
+pde = CosCosData()
+ns = 4
+mesh = PolygonMesh.from_unit_square(nx=ns, ny=ns)
 
-maxit = 5
+import matplotlib.pyplot as plt
+fig = plt.figure()
+axes = fig.gca()
+mesh.add_plot(axes)
+plt.show()
+
+maxit = 4
 errorType = ['$|| p - p_h ||_{\\Omega,0}$']
-errorMatrix = np.zeros((2, maxit), dtype=np.float64)
+errorMatrix = np.zeros((1, maxit), dtype=np.float64)
 nDof = np.zeros(maxit, dtype=np.int_)
 
 for iter in range(maxit):
@@ -28,10 +34,8 @@ for iter in range(maxit):
     solver = Mimetic(mesh)
 
     MV = solver.gmv()
-    print("MV:", MV.shape, "\n", MV)
 
     ME = solver.gme()
-    print("ME:", ME.shape, "\n", ME)
 
     grad_h = solver.grad_operator()
 
@@ -47,7 +51,6 @@ for iter in range(maxit):
     ph[nDdof] = pde.solution(node[nDdof])
     b = MV @ rhs
     b = b - A @ ph
-    print("b:", b.shape, "\n", b)
 
     bdIdx = np.zeros(A.shape[0], dtype=np.int_)
     bdIdx[nDdof.flat] = 1
@@ -55,11 +58,8 @@ for iter in range(maxit):
     D0 = spdiags(1-bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     D1 = spdiags(bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     A = D0 @ A @ D0 + D1
-    print("A:", A.shape, "\n", A)
-
 
     b[nDdof] = pde.Dirichlet(node[nDdof])
-    print("b:", b.shape, "\n", b.round(3))
 
     #f = pde.source(node)
     #b = MV@f
@@ -75,23 +75,20 @@ for iter in range(maxit):
     #D1 = spdiags(bdIdx, 0, A.shape[0], A.shape[0]).toarray()
     #A = D0 @ A + D1
 
-
     ph = np.linalg.solve(A, b)
-    print("ph:", ph.shape, "\n", ph.round(3))
-
 
     errorMatrix[0, iter] = np.sum(np.abs(p - ph)) / NN
-    errorMatrix[1, iter] = np.sum(np.abs(p[nDdof] - ph[nDdof])) / NN
+    #errorMatrix[1, iter] = np.sum(np.abs(p[nDdof] - ph[nDdof])) / NN
 
     if iter < maxit-1:
         print("iter:", iter)
         ns = ns*2
-        mesh = pde.polygon_mesh_2(n=ns)
+        mesh = PolygonMesh.from_unit_square(nx=ns, ny=ns)
 
     nDof[iter] = NN
 
 print("errorMatrix:\n", errorMatrix)
-import matplotlib.pyplot as plt
+
 from fealpy.tools.show import showmultirate
 
 showmultirate(plt, 2, nDof, errorMatrix, errorType, propsize=20, lw=2, ms=4)
