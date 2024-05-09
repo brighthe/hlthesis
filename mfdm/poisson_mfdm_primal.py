@@ -4,9 +4,9 @@ from fealpy.mesh.polygon_mesh import PolygonMesh
 from poisson_model import SinSinData, ExpSinData, CosCosData
 from mimetic_solver import Mimetic
 
-#pde = SinSinData()
+pde = SinSinData()
 #pde = ExpSinData()
-pde = CosCosData()
+#pde = CosCosData()
 ns = 4
 mesh = PolygonMesh.from_unit_square(nx=ns, ny=ns)
 
@@ -105,4 +105,37 @@ print("errorMatrix:\n", errorMatrix)
 from fealpy.tools.show import showmultirate
 
 showmultirate(plt, 2, nDof, errorMatrix, errorType, propsize=20, lw=2, ms=4)
+plt.show()
+
+# Compute error convergence rates
+ratios = errorMatrix[:, 0:-1] / errorMatrix[:, 1:]
+convergence_rates = np.log2(ratios)
+print("convergence_rates:", convergence_rates)
+
+# Create a plotting window with two subplots
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
+
+# Subplot 1: Plotting the errors
+x_dof = nDof
+for i, errType in enumerate(errorType):
+    axes[0].loglog(x_dof, errorMatrix[i], '-o', label=errType)
+axes[0].set_xlabel('DOF')
+axes[0].set_ylabel('Error')
+axes[0].set_title('Errors vs. DOF')
+axes[0].legend()
+axes[0].grid(True, which="both", ls="--", linewidth=0.5)
+
+# Subplot 2: Plotting the convergence rates
+x = np.arange(1, maxit)
+for i, errType in enumerate(errorType):
+    axes[1].plot(x, convergence_rates[i], '-o', label=errType)
+axes[1].set_xlabel('Iteration')
+axes[1].set_ylabel('Convergence Rate')
+axes[1].set_title('Convergence Rates of Errors')
+axes[1].legend()
+axes[1].grid(True, which="both", ls="--", linewidth=0.5)
+plt.xticks(x)
+plt.yticks(np.arange(np.min(convergence_rates), np.max(convergence_rates)+1, step=0.5))
+
+plt.tight_layout()
 plt.show()
