@@ -3,8 +3,8 @@ import numpy as np
 from top_plsm_rbfs import TopPlsmRBFs
 
 # Cantilever
-nelx = 60
-nely = 30
+nelx = 20
+nely = 10
 volfrac = 0.5
 ts = TopPlsmRBFs(nelx=nelx, nely=nely, volfrac=volfrac)
 # 初始化优化参数
@@ -21,13 +21,12 @@ mesh = ts._mesh
 
 node = mesh.entity('node') # 按列增加
 cell = mesh.entity('cell') # 左下角逆时针
-print("node:", node.shape, "\n", node)
-print("cell:", cell.shape, "\n", cell)
+#print("node:", node.shape, "\n", node)
+#print("cell:", cell.shape, "\n", cell)
 
 # 水平集函数的初始化
 r = nely * 0.1 # 初始孔洞的半径
 Phi = ts.lsf_init(mesh = mesh, r=r)
-print("Phi:", Phi.shape, "\n", Phi.round(4))
 
 def output(filename, output, node_val=None, cell_val=None):
     import os
@@ -40,7 +39,7 @@ def output(filename, output, node_val=None, cell_val=None):
     if cell_val is not None:
         pass
 
-output(filename='Phi0', output='./visulaization/', node_val=Phi)
+output(filename='Phi0_test', output='./visulaization/', node_val=Phi)
 
 # 计算 MQ 样条
 A, G, pGpX, pGpY = ts.MQ_spline(mesh=mesh)
@@ -116,7 +115,7 @@ F[nodal_loads_index, 0] = -100
 fixeddofs = np.arange(0, 2*(nely+1), 1)
 
 # 迭代优化
-nLoop = 200 # 优化的最大迭代次数
+nLoop = 1 # 优化的最大迭代次数
 nRelax = 30
 dt = 0.5 # 水平集演化的时间步长
 delta = 10
@@ -163,8 +162,8 @@ for iT in range(nLoop):
 
     # 有限元计算全局位移和局部单元位移
     U, Ue = ts.FE(mesh=mesh, E=E, KE=KE, F=F, fixeddofs=fixeddofs)
-    print("U:", U.shape, "\n", U.round(4))
-    print("Ue:", Ue.shape, "\n", Ue.round(4))
+    #print("U:", U.shape, "\n", U.round(4))
+    #print("Ue:", Ue.shape, "\n", Ue.round(4))
 
     eleComp[:] = 0
     for i in range(nLoads):
@@ -244,6 +243,7 @@ for iT in range(nLoop):
     mean_gradPhi = np.mean(gradPhi[unique_nodes])
     Alpha = Alpha / mean_gradPhi
     Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
+    print("Phi:", Phi.shape, "\n", Phi)
 
 plt.ioff()
 plt.show()

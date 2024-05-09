@@ -6,11 +6,11 @@ from numpy._typing import _8Bit
 from chaills import TopLsf
 
 # Short Cantilever 的默认参数
-nelx = 6
-nely = 4
+nelx = 32
+nely = 20
 volReq = 0.4
-stepLength = 2;
-topWeight = 2;
+stepLength = 2
+topWeight = 2
 numReinit = 3
 ts = TopLsf(nelx=nelx, nely=nely, volReq=volReq, stepLength=stepLength, topWeight=topWeight, numReinit=3)
 

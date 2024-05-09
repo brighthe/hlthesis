@@ -33,6 +33,8 @@ struc = np.ones((nely, nelx))
 
 # 初始化水平集函数
 lsf = ts.reinit(struc = struc)
+print("lsf0:", lsf.shape, "\n", lsf.round(4))
+asd
 
 # 初始化灵敏度
 shapeSens = np.zeros((nely, nelx))
@@ -158,7 +160,7 @@ la = -0.01
 La = 1000
 alpha = 0.9
 # 优化循环的最大迭代次数
-num = 200
+num = 2
 # 初始化 compliance objective value
 objective = np.zeros(num)
 for iterNum in range(num):
@@ -168,9 +170,6 @@ for iterNum in range(num):
     fe_start = time.time()
 
     U, Ue = ts.FE(mesh=mesh, struc=struc, KE=KE, F=F, fixeddofs=fixeddofs)
-    print("U:", U.shape, "\n", U.round(4))
-    print("Ue:", Ue.shape, "\n", Ue.round(4))
-    print("struc:", struc.shape, "\n", struc)
 
     fe_end = time.time()
     fe_time = fe_end - fe_start
@@ -191,9 +190,6 @@ for iterNum in range(num):
         temp1 = -np.maximum(struc, stiff)
         temp2 = np.einsum('ij, jk, ki -> i', Ue[:, :, i], KE, Ue[:, :, i].T).reshape(nelx, nely).T
         shapeSens[:] = shapeSens[:] + np.einsum('ij, ij -> ij', temp1, temp2)
-        
-        #solid_elements = np.where(struc.flatten('F')==1)[0]
-        #print("solid_elements:", solid_elements.shape)
 
         shapeSens_end = time.time()
         shapeSens_time = shapeSens_end - shapeSens_start
@@ -279,8 +275,6 @@ for iterNum in range(num):
     struc, lsf = ts.updateStep(lsf=lsf, shapeSens=shapeSens, topSens=topSens,
                                stepLength=stepLength, topWeight=topWeight,
                                loadBearingIndices=loadBearingIndices)
-    print("lsf:\n", lsf.shape, "\n", lsf.round(4))
-    print("struc:", struc.shape , "\n", struc.round(4))
 
     update_end = time.time()
     update_time = update_end - update_start

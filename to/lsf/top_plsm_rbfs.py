@@ -267,8 +267,3 @@ class TopPlsmRBFs:
         Phi = (G[:-3, :] @ Alpha).reshape(nelx+1, nely+1).T
 
         return Phi
-
-
-
-
-

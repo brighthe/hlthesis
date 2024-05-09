@@ -220,6 +220,8 @@ class TopLsf:
         # 用零边界填充速度场和 forcing 项
         vFull = np.pad(v, ((1,1),(1,1)), mode='constant', constant_values=0)
         gFull = np.pad(g, ((1,1),(1,1)), mode='constant', constant_values=0)
+        print("vFull", vFull.shape)
+        print("lsf", lsf.shape)
 
         # 基于 CFL 值选择演化的时间步
         frac_time_step = 0.1 # Fraction of the CFL time step to use as a time step 
