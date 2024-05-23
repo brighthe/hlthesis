@@ -1,6 +1,8 @@
 *.vtu
 *.mat
 *.mp4
+*.txt
+*.avi
 .*/
 __pycache__/
 visualization/
