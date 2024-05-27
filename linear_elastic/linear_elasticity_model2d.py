@@ -6,7 +6,7 @@ from fealpy.geometry.domain_2d import RectangleDomain
 
 class BoxDomainData2d():
     """
-    @brief 混合边界条件的线弹性问题模型
+    @brief Dirichlet 边界条件的线弹性问题模型
     @note 本模型假设在二维方形区域 [0,1] x [0,1] 内的线性弹性问题
     """
     def __init__(self, E = 1.0, nu = 0.3):
@@ -38,7 +38,7 @@ class BoxDomainData2d():
         return mesh
 
     def triangle_mesh(self):
-        mesh = TriangleMesh.from_box(box=[0, 1, 0, 1], nx=2, ny=2)
+        mesh = TriangleMesh.from_box(box=[0, 1, 0, 1], nx=5, ny=5)
 
         return mesh
 
