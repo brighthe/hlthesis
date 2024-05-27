@@ -24,16 +24,13 @@ class BoxDomainData2d():
     def domain(self):
         return [0, 1, 0, 1]
 
-    def init_mesh(self, n = 1):
+    def init_mesh(self, h = 0.5):
         """
-        @brief 初始化网格
-        @param[in] n 网格加密的次数，默认值为 1
-        @return 返回一个初始化后的网格对象
+        @brief 非结构的三角形网格
         """
-        h = 0.5
+        h = h
         domain = RectangleDomain()
         mesh = TriangleMesh.from_domain_distmesh(domain, h, output=False)
-        mesh.uniform_refine(n)
 
         return mesh
 
