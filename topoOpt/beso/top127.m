@@ -1,5 +1,5 @@
-nx = 80;
-ny = 50;
+nx = 8;
+ny = 5;
 maxedge = 0.2;
 minedge = 0.025;
 E = 1e5;
