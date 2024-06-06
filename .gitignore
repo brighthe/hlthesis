@@ -3,6 +3,7 @@
 *.mp4
 *.txt
 *.avi
+*.asv
 .*/
 __pycache__/
 visualization/
