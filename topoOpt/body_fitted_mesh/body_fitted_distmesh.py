@@ -43,11 +43,11 @@ plt.ylim(-0.25, 0.25)
 plt.gca().set_aspect('equal', adjustable='box')
 plt.show()
 
-hmin = 0.025
-hmax = 0.2
+hmin = 0.0125
+hmax = 0.1
 domain = BoxWithCircleHolesDomain(box=domain, circles=circles, hmin=hmin, hmax=hmax)
 
-maxiter = 50
+maxiter = 200
 mesh = TriangleMesh.from_domain_distmesh(domain, maxit=maxiter)
 
 # 绘制生成的网格
