@@ -19,9 +19,9 @@ class BoxDomainData3d():
     def domain(self):
         return [0, 1, 0, 1, 0, 1]
 
-    def init_mesh(self,n):
-        mesh = TetrahedronMesh.from_box(box=[0, 1, 0, 1, 0, 1], nx=2, ny=2, nz=2)
-        mesh.uniform_refine(n)
+    def init_mesh(self, nx, ny, nz):
+        mesh = TetrahedronMesh.from_box(box=[0, 1, 0, 1, 0, 1], nx=nx, ny=ny, nz=nz)
+        #mesh.uniform_refine(n)
         return mesh
 
     @cartesian
@@ -71,16 +71,3 @@ class BoxDomainData3d():
         flag6 = np.abs(z - 1) < 1e-12
         return np.logical_or(np.logical_or(flag1, flag2),\
                              np.logical_or(np.logical_or(flag3, flag4), np.logical_or(flag5, flag6)))
-    
-    @cartesian
-    def neumann(self, p, n):
-        val = np.array([0.0, -50, 0.0], dtype=np.float64)
-        return val
-
-    @cartesian
-    def is_neumann_boundary(self, p):
-        x = p[..., 0]
-        y = p[..., 1]
-        z = p[..., 2]
-        flag = np.abs(y - 0.2) < 1e-13
-        return flag

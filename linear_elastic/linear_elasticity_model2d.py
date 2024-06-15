@@ -34,8 +34,8 @@ class BoxDomainData2d():
 
         return mesh
 
-    def triangle_mesh(self):
-        mesh = TriangleMesh.from_box(box=[0, 1, 0, 1], nx=5, ny=5)
+    def triangle_mesh(self, nx=5, ny=5):
+        mesh = TriangleMesh.from_box(box=[0, 1, 0, 1], nx=nx, ny=ny)
 
         return mesh
 
