@@ -1,0 +1,390 @@
+% !Mode:: "TeX:UTF-8"
+\documentclass{beamer}
+
+\usetheme{Darmstadt}
+\useinnertheme{rounded}
+
+\usecolortheme{beaver}
+%\usecolortheme{albatross}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+%\usecolortheme{default}
+
+
+\setbeamerfont*{frametitle}{size=\normalsize,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+
+\input{../en_preamble.tex}
+\input{../xecjk_preamble.tex}
+
+\usepackage{biblatex}
+\addbibresource{ref.bib}
+
+\usefonttheme[onlymath]{serif}
+\numberwithin{subsection}{section}
+%\usefonttheme[onlylarge]{structurebold}
+\setbeamercovered{transparent}
+
+\title{基于 FEALPy 的拓扑优化中的自动微分框架} 
+\author{何亮}
+\institute[XTU]{
+学号：202331510117\\
+\vspace{5pt}
+湘潭大学$\bullet$数学与计算科学学院\\
+}
+ 
+\date[XTU]
+{
+    \today
+}
+
+
+\AtBeginSection[]
+{
+  \frame<beamer>{ 
+    \frametitle{Outline}   
+    \tableofcontents[currentsection] 
+  }
+}
+
+\AtBeginSubsection[]
+{
+  \frame<beamer>{ 
+    \frametitle{Outline}   
+    \tableofcontents[currentsubsection] 
+  }
+}
+
+\begin{document}
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{引言}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+\frametitle{研究背景}
+    \begin{itemize}
+	    \item[•]拓扑优化（TO）是一种通过优化材料分布以获得最佳结构性能的技术，在工程设计中具有重要应用价值。
+	    \vspace{0.3cm}
+	    \item[•]自动微分（AD）技术可以高效、准确地计算数值函数的导数，有潜力在拓扑优化中用于灵敏度分析。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+\frametitle{研究动机}
+    \begin{itemize}
+	    \item[•]尽管 AD 技术在机器学习和科学计算中广泛应用，但在拓扑优化中的应用仍较少，尤其是将其与传统方法进行对比的研究更少。
+	    \vspace{0.3cm}
+	    \item[•]现有的自动微分 TO 框架展示了 AD 在拓扑优化中的应用潜力，但其可重用性和扩展性存在局限，需要进一步改进。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+\frametitle{研究目标}
+    \begin{itemize}
+	    \item[•]本研究旨在基于 FEALPy 框架，应用 AD 技术提高拓扑优化的灵敏度分析效率和准确性。
+	    \vspace{0.3cm}
+	    \item[•]实现重用性更好的自动微分拓扑优化框架，并将其与传统变密度方法进行对比，验证 AD 对变密度方法的影响。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+\section{背景与动机}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{背景}
+    \textbf{TO 已有工作}
+    \begin{itemize}
+	    \item[$\bullet$] TO 在近年来得到了广泛关注，主要由于制造能力和计算建模的进步。
+	    \vspace{0.3cm}
+	    \item[$\bullet$] 基于连续体结构的 TO 方法目前分为两大类：变密度方法及其变形（如 SIMP 方法、ESO/BESO 方法）、边界演化方法（如水平集方法、MMC/MMV 方法和相场方法）。
+	    \vspace{0.3cm}
+	    \item[$\bullet$] 这些方法各有优缺点，但在处理大规模问题时通常面临计算效率和灵敏度分析复杂的问题。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{背景}
+    \textbf{AD 已有工作}
+    \begin{itemize}
+	    \item[$\bullet$] AD 是一种强大的技术，通过在计算过程中自动生成导数，避免了手动求导的繁琐和易错。
+	    \vspace{0.3cm}
+	    \item[$\bullet$] AD 已经存在了几十年，被广泛应用于解决各种问题，从分子动力学模拟、流动设计问题到光子晶体的设计等，提高了计算效率和准确性。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+
+	\frametitle{背景}
+    \textbf{AuTO 已有工作}
+    \begin{itemize}
+	    \item[$\bullet$] AuTO（Automatic differentiation in Topology Optimization）框架结合了拓扑优化和自动微分技术，实现了高效的灵敏度分析。
+	    \vspace{0.3cm}
+	    \item[$\bullet$] Aaditya Chandrasekhar 基于高性能 Python 库 JAX，自动计算了用户定义的 TO 问题的灵敏度。
+	    \vspace{0.3cm}
+	    \item[$\bullet$] AuTO 框架展示了在复杂拓扑优化问题中自动微分的应用潜力，但在可重用性和扩展性方面存在局限。
+    \end{itemize}
+    
+\end{frame}
+
+%--------------------------------------------------------------------------------------
+
+\begin{frame}
+    \frametitle{动机}    
+    \textbf{基于 FEALPy 的原因}
+    \begin{itemize}
+        \item[$\bullet$]\textbf{模块化设计}：FEALPy 的模块化设计提供了灵活的数值计算环境，便于算法的开发和测试。
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{丰富的网格生成算法}：FEALPy 中实现了大量的网格生成和优化算法，能够处理复杂的几何结构。
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{Torch 模块与自动微分}：FEALPy 中的 Torch 模块借助 PyTorch 实现 AD，提高了灵敏度分析的效率和准确性。
+    \end{itemize}
+\end{frame}
+
+%--------------------------------------------------------------------------------------
+
+\begin{frame}
+    \frametitle{动机}
+    \textbf{研究价值}
+    \begin{itemize}
+        \item[$\bullet$]\textbf{多计算内核支持}：FEALPy 作为一个开源的软件包，可以使用不同的计算内核（如 JAX、PyTorch）来实现 AuTO。
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{结果对比验证}：FEALPy 基于 Numpy 也实现了很多传统 TO 方法，可以很方便地将两者的结果进行对比验证。
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{探索 AD 技术应用}：探讨 AD 技术在复杂非线性和多物理场问题中的应用，填补现有研究的空白。
+    \end{itemize}
+    
+\end{frame}
+
+%--------------------------------------------------------------------------------------
+
+\section{研究目标}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{研究目标}
+    \begin{block}{总体目标}
+		本研究旨在 FEALPy 框架下，应用 AD 技术提高拓扑优化的灵敏度分析效率和准确性，并实现重用性更好的 AuTO 框架。
+	\end{block}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{研究目标}
+	\textbf{具体目标}
+    \begin{itemize}
+        \item[$\bullet$]\textbf{利用 FEALPy 的模块化设计}
+        \begin{itemize}
+            \item[•]通过模块化设计，实现更加灵活和高效的拓扑优化算法流程，便于拓扑优化算法的开发、测试和扩展。
+        \end{itemize}
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{利用 FEALPy 的 Torch 模块}
+        \begin{itemize}
+	        \item[•]实现基于 Torch 的灵敏度分析模块，通过 PyTorch 实现高效的自动微分，简化求导过程，优化拓扑优化流程。
+        \end{itemize}
+        \vspace{0.3cm}
+        \item[$\bullet$]\textbf{探讨 AD 技术在复杂非线性和多物理场问题中的应用}
+        \begin{itemize}
+            \item[•]扩展 AD 技术在复杂非线性问题中的应用，提高计算稳定性和精度。
+            \item[•]探索 AD 技术在多物理场耦合问题中的应用，解决多物理场问题中的灵敏度分析难题。
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+\section{研究方法}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{研究方法}
+	 \textbf{基于变密度方法的柔顺度最小化问题数学模型}
+	 \begin{itemize}
+	            \item 使用张量分析语言描述变密度方法的柔顺度最小化问题。
+	            \item[•]目标函数
+	            $$\min_{\rho} :C = \int_{\Omega}(E(\rho)\varepsilon(u):\varepsilon(u))~\mathrm{d}x.$$
+	            \item[•]约束条件
+	            $$\int_\Omega\rho(x)~\mathrm{d}x - V_{\max};\quad0<\rho_{\min}\leq\rho\leq1.$$
+	            \item[•]平衡方程
+	            $$\int_{\Omega}(\sigma(u):\varepsilon(v))~\mathrm{d}x = \int_{\Omega}f\cdot{v}~\mathrm{d}x + \int_{\Gamma_N}F_n\cdot{v}~\mathrm{d}s,\quad\mathrm{for~all}~v\in{U}.$$
+	 \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{研究方法}
+	 \textbf{基于 FEALPy 中的 Numpy 模块实现传统变密度方法的算法流程}
+	 \begin{itemize}
+            \item[•]初始化设计变量 $\rho$。
+            \item[•]迭代过程：
+	        \begin{enumerate}
+	            \item[1.]计算当前设计变量下的刚度矩阵 $K(\rho)$。
+	            \item[2.]求解平衡方程 $K(\rho) u = f$ 获得位移场 $u$。
+	            \item[3.]计算目标函数 $C(\rho, u)$。
+	            \item[4.]进行灵敏度分析，计算目标函数对设计变量的导数。
+	            $\frac{\partial C}{\partial \rho}$。
+	            \item[5.]更新设计变量 $\rho$。
+	        \end{enumerate}
+	        \item[•]收敛判定：检查目标函数变化是否满足精度要求或达到最大迭代次数。
+     \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{研究方法}
+	 \textbf{基于 FEALPy 的 Torch 模块实现引入 AD 的变密度方法的算法流程}
+	 \begin{itemize}
+            \item[•]初始化设计变量 $\rho$。
+            \item[•]迭代过程：
+	        \begin{enumerate}
+	            \item[1.]计算当前设计变量下的刚度矩阵 $K(\rho)$。
+	            \item[2.]求解平衡方程 $K(\rho) u = f$ 获得位移场 $u$。
+	            \item[3.]计算目标函数 $C(\rho, u)$。
+	            \item[4.]使用 PyTorch 自动计算目标函数对设计变量的导数。 
+	            $\frac{\partial C}{\partial \rho}$。
+	            \item[5.]更新设计变量 $\rho$。
+	        \end{enumerate}
+	        \item[•]收敛判定：检查目标函数变化是否满足精度要求或达到最大迭代次数。
+     \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{研究方法}
+	 \textbf{比较两者的结果，验证 AD 对于变密度方法的影响}
+    \begin{itemize}
+        \item[•]比较两种方法在计算时间、收敛速度和计算精度上的表现。
+        \vspace{0.3cm}
+        \item[•]分析自动微分在复杂问题中的优势和可能的劣势。
+        \vspace{0.3cm}
+        \item[•]通过数值实验验证自动微分技术在变密度方法中的应用效果。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+\section{研究进展}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{研究进展}
+    \textbf{基于变密度方法的柔顺度最小化问题数学模型的推导}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item[•]完成工作：推导了基于变密度方法的柔顺度最小化问题的数学模型。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{研究进展}
+    \textbf{基于 FEALPy 中的 Numpy 模块实现传统变密度方法}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item[•]计划工作：基于 FEALPy 中的 Numpy 模块，按照推导的数学模型实现传统变密度方法的求解流程。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{研究进展}
+    \textbf{基于 FEALPy 的 Torch 模块实现引入 AD 的变密度方法}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item[•]计划工作：基于 FEALPy 的 Torch 模块，利用 PyTorch 的自动微分功能实现引入 AD 的变密度方法的求解流程。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{研究进展}
+    \textbf{比较两者的结果，验证 AD 对于变密度方法的影响}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item[•]计划工作：完成基于传统变密度方法和引入 AD 的变密度方法的实现后，比较两者在计算时间、收敛速度和计算精度上的表现，验证自动微分技术的应用效果。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+\section{预期结果与贡献}
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{预期结果}
+    \textbf{直接将 AD 引入变密度方法的效果}
+    \begin{itemize}
+        \item[•]\textbf{预期结果}：直接将 AD 技术引入变密度方法的效果可能不好，可能无法超越传统的变密度方法。
+        \vspace{0.3cm}
+        \item[•]\textbf{原因分析}：传统变密度方法经过多年的发展和优化，已经在很多方面达到了较好的效果，直接引入 AD 可能无法立即表现出优势。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{预期结果}
+    \textbf{额外引入正则化项后的效果}
+    \begin{itemize}
+        \item[•]\textbf{预期结果}：在引入正则化项之后，应用 AD 的变密度方法可能比传统的变密度方法效果更好。
+        \vspace{0.3cm}
+        \item[•]\textbf{原因分析}：正则化项可以改善设计变量的分布，使得 AD 的优势在处理复杂问题和提高计算效率方面更加明显。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{贡献}
+    \textbf{引入 AD 技术对拓扑优化研究的贡献}
+    \begin{itemize}
+        \item[•]目前将 AD 引入拓扑优化的研究工作比较少，特别是将其与传统方法进行比较的工作更少。本研究通过对比分析传统变密度方法和引入 AD 的变密度方法，提供了宝贵的实验数据和理论支持。
+        \vspace{0.3cm}
+        \item[•]有利于后续应对 AD 技术在非线性问题和多物理场问题中的应用挑战。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------
+\begin{frame}
+    \frametitle{贡献}
+    \textbf{基于 FEALPy 的实现对拓扑优化研究的贡献}
+    \begin{itemize}
+        \item[•]基于 FEALPy 实现传统的变密度方法和引入 AD 的变密度方法，为后续拓扑优化研究工作的进一步展开提供了坚实的基础。
+        \vspace{0.3cm}
+        \item[•]FEALPy 的模块化设计和多计算内核支持，使得研究成果具有较高的可重用性和扩展性，利于后续研究人员在此基础上进行优化和创新。
+    \end{itemize}
+\end{frame}
+%--------------------------------------------------------------------------------------
+
+
+\end{document}
