@@ -1,5 +1,5 @@
 %%%%%%%%%% FE-Aanlysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [U] = FE(nelx, nely, x, penal)
+function [U] = FE_mbb_beam(nelx, nely, x, penal)
     [KE] = lk;
     K = sparse(2*(nelx+1)*(nely+1), 2*(nelx+1)*(nely+1));
     F = sparse(2*(nely+1)*(nelx+1), 1); U = zeros(2*(nely+1)*(nelx+1), 1);

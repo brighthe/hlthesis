@@ -1,4 +1,4 @@
-nelx = 60;
+nelx = 32;
 nely = 20;
 volfrac = 0.5;
 penal = 3.0;
@@ -23,7 +23,7 @@ while change > 0.01
     loop = loop + 1;
     xold = x;
     % FE-Analysis
-    [U] = FE_mbb_beam(nelx, nely, x, penal);
+    [U] = FE_short_cantilever_beam(nelx, nely, x, penal);
 
     % OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
     [KE] = lk;
