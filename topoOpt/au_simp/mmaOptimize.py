@@ -2,53 +2,52 @@ import numpy as np
 import jax.numpy as jnp
 import time
 import matplotlib.pyplot as plt
-from utilfuncs import  MMA,applySensitivityFilter
+from utilfuncs import MMA, applySensitivityFilter
 
 
 def optimize(mesh, optimizationParams, ft, \
              objectiveHandle, consHandle, numConstraints):
-    rho = np.ones((mesh['nelx']*mesh['nely']));
-    loop = 0;
-    change = 1.;
-    m = numConstraints; # num constraints
-    n = mesh['numElems'] ;
-    mma = MMA();
-    mma.setNumConstraints(numConstraints);
-    mma.setNumDesignVariables(n);
+    rho = np.ones((mesh['nelx']*mesh['nely']))
+    loop = 0
+    change = 1.
+    m = numConstraints
+    n = mesh['numElems']
+    mma = MMA()
+    mma.setNumConstraints(numConstraints)
+    mma.setNumDesignVariables(n)
     mma.setMinandMaxBoundsForDesignVariables\
-        (np.zeros((n,1)),np.ones((n,1)));
+        (np.zeros((n,1)),np.ones((n,1)))
 
     xval = rho[np.newaxis].T
-    xold1, xold2 = xval.copy(), xval.copy();
-    mma.registerMMAIter(xval, xold1, xold2);
-    mma.setLowerAndUpperAsymptotes(np.ones((n,1)), np.ones((n,1)));
+    xold1, xold2 = xval.copy(), xval.copy()
+    mma.registerMMAIter(xval, xold1, xold2)
+    mma.setLowerAndUpperAsymptotes(np.ones((n,1)), np.ones((n,1)))
     mma.setScalingParams(1.0, np.zeros((m,1)), \
                          10000*np.ones((m,1)), np.zeros((m,1)))
-    mma.setMoveLimit(0.2);
+    mma.setMoveLimit(0.2)
 
-    mmaTime = 0;
+    mmaTime = 0
 
-    t0 = time.perf_counter();
+    t0 = time.perf_counter()
 
     while( (change > optimizationParams['relTol']) \
            and (loop < optimizationParams['maxIters'])\
            or (loop < optimizationParams['minIters'])):
-        loop = loop + 1;
+        loop = loop + 1
 
-        J, dJ = objectiveHandle(rho);
+        J, dJ = objectiveHandle(rho)
 
-        vc, dvc = consHandle(rho, loop);
+        vc, dvc = consHandle(rho, loop)
 
         dJ, dvc = applySensitivityFilter(ft, rho, dJ, dvc)
 
         J, dJ = J, dJ[np.newaxis].T
-        tmr = time.perf_counter();
-        mma.setObjectiveWithGradient(J, dJ);
-        mma.setConstraintWithGradient(vc, dvc);
+        tmr = time.perf_counter()
+        mma.setObjectiveWithGradient(J, dJ)
+        mma.setConstraintWithGradient(vc, dvc)
 
-        xval = rho.copy()[np.newaxis].T;
-        # xval = rho.copy().T;
-        mma.mmasub(xval);
+        xval = rho.copy()[np.newaxis].T
+        mma.mmasub(xval)
 
         xmma, _, _ = mma.getOptimalValues();
         xold2 = xold1.copy();
@@ -71,4 +70,4 @@ def optimize(mesh, optimizationParams, ft, \
     print('total time(s): ', totTime);
     print('mma time(s): ', mmaTime);
     print('FE time(s): ', totTime - mmaTime);
-    return rho;
+    return rho

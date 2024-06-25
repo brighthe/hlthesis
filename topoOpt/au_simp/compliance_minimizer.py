@@ -2,8 +2,10 @@ import jax
 import time
 import numpy as np
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 
 from jax import jit, value_and_grad
+
 from mesher import Mesher
 from mma import  MMA
 from util_functions import applySensitivityFilter
@@ -15,6 +17,7 @@ class ComplianceMinimizer:
         self.bc = bc
         self.material = material
         self.globalVolumeConstraint = globalvolCons
+        self.projection = projection
 
         M = Mesher()
         self.edofMat, self.idx = M.getMeshStructure(mesh)
@@ -25,7 +28,7 @@ class ComplianceMinimizer:
         self.consHandle = self.computeConstraints
 
         self.numConstraints = 1
-        self.projection = projection
+        
 
     # Code snippet 2.1
     def computeCompliance(self, rho):
@@ -76,7 +79,7 @@ class ComplianceMinimizer:
 
         return J
         
-    def computeConstraints(self, rho): 
+    def computeConstraints(self, rho, epoch): 
 
         @jit
         # 计算体积约束
@@ -146,9 +149,9 @@ class ComplianceMinimizer:
             print(status)
 
             if(loop%10 == 0):
-            plt.imshow(-np.flipud(rho.reshape((mesh['nelx'], mesh['nely'])).T), cmap='gray');
-            plt.title(status)
-            plt.show()
+                plt.imshow(-np.flipud(rho.reshape((self.mesh['nelx'], self.mesh['nely'])).T), cmap='gray');
+                plt.title(status)
+                plt.show()
             
         totTime = time.perf_counter() - t0;
 
