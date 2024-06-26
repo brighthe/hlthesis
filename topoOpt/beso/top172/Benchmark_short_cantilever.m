@@ -1,15 +1,24 @@
 nx = 80;
 ny = 50;
 ER = 0.05;
+tau = 2e-8;
 Vmax = 0.5;
 maxedge = 0.2;
 minedge = 0.025;
 E = 1e5;
 nu = 0.3;
+
+%% Parameter Check
+if (tau/E > 1e-12) || (ER > 0.1)
+    error('Improper input');
+end
+
+%%  Initialization
 BDY = [-.5*(nx) -.5*(ny); .5*(nx), .5*(ny)] / 100;
 [xn, yn] = meshgrid(BDY(1,1):(BDY(2,1)-BDY(1,1)) / (nx):BDY(2,1),BDY(1,2):(BDY(2,2)-BDY(1,2)) / (ny):BDY(2,2));
 dN = sin(xn/BDY(2, 1) * 6*pi) .* cos(yn/BDY(2, 1) * 6*pi) + 0.5;
 
+%% Main Loop
 for iterNum = 1
     % 生成网格
     [p, t, t1, t2, Ve] = GenerateMesh(xn, yn, dN, maxedge, minedge, BDY, 80);

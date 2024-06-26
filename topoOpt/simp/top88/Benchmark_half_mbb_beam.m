@@ -1,10 +1,10 @@
 %%%% AN 88 LINE TOPOLOGY OPTIMIZATION CODE Nov, 2010 %%%%
-nelx = 150;
-nely = 50;
+nelx = 60;
+nely = 20;
 volfrac = 0.5;
 penal = 3;
-rmin = 6;
-ft = 2;
+rmin = 1.5;
+ft = 1;
 
 %% MATERIAL PROPERTIES
 E0 = 1;
