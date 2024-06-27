@@ -1,15 +1,14 @@
 import numpy as np
 
-from fealpy.decorator  import cartesian 
-from fealpy.mesh import TriangleMesh
-from fealpy.geometry.domain_2d import RectangleDomain
+from fealpy.decorator import cartesian
+from fealpy.mesh import TriangleMesh, UniformMesh2d
 
-class BoxDomainData2d():
+class BoxDomainData2d:
     """
     @brief Dirichlet 边界条件的线弹性问题模型
     @note 本模型假设在二维方形区域 [0,1] x [0,1] 内的线性弹性问题
     """
-    def __init__(self, E = 1.0, nu = 0.3):
+    def __init__(self, E=1.0, nu=0.3):
         """
         @brief 构造函数
         @param[in] E 弹性模量，默认值为 1.0
@@ -18,19 +17,18 @@ class BoxDomainData2d():
         self.E = E 
         self.nu = nu
 
-        self.lam = self.nu*self.E/((1+self.nu)*(1-2*self.nu))
-        self.mu = self.E/(2*(1+self.nu))
+        self.lam = self.nu * self.E / ((1 + self.nu) * (1 - 2*self.nu))
+        self.mu = self.E / (2 * (1+self.nu))
 
     def domain(self):
         return [0, 1, 0, 1]
 
-    def init_mesh(self, h = 0.5):
-        """
-        @brief 非结构的三角形网格
-        """
-        h = h
-        domain = RectangleDomain()
-        mesh = TriangleMesh.from_domain_distmesh(domain, h, output=False)
+    def uniform_mesh_2d(self):
+        nelx, nely = 10, 10
+        domain = [0, 10, 0, 10]
+        hx = (domain[1] - domain[0]) / nelx
+        hy = (domain[3] - domain[2]) / nely
+        mesh = UniformMesh2d(extent=(0, nelx, 0, nely), h=(hx, hy), origin=(domain[0], domain[2]))
 
         return mesh
 
