@@ -172,9 +172,8 @@ def main():
     vc, dvc = value_and_grad(computeGlobalVolumeConstraint)(rho)
     print("vc:", vc)
     print("dvc:", dvc.shape, "\n", dvc)
-    vc, dvc = vc.reshape((1, 1)), dvc.reshape((1, -1))
+    # vc, dvc = vc.reshape((1, 1)), dvc.reshape((1, -1))
     
-
     ft = {'type': 1, 'H': H, 'Hs': Hs}
     dJ, dvc = applySensitivityFilter(ft, rho, dJ, dvc)
     print("dJ_filter:", dJ.shape, "\n", dJ)
