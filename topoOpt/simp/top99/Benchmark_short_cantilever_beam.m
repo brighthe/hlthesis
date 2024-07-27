@@ -39,9 +39,6 @@ while change > 0.01
             dc(ely, elx) = -penal*x(ely, elx)^(penal-1)*Ue'*KE*Ue;
         end
     end
-    F = sparse(2*(nely+1)*(nelx+1), 1);
-    F(2*(nelx+1)*(nely+1), 1) = -1;
-    % c1 = F' * U;
     % Filtering Of Sensitivity
     [dc] = check(nelx, nely, rmin, x, dc);
     % Design Update By The Optimality Criteria Method

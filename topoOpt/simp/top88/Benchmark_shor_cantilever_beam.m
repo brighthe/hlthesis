@@ -43,13 +43,13 @@ for i1 = 1:nelx
         k = k+1;
         iH(k) = e1;
         jH(k) = e2;
-        sH(k) = max(0,rmin-sqrt((i1-i2)^2+(j1-j2)^2));
+        sH(k) = max(0, rmin - sqrt((i1-i2)^2 + (j1 - j2)^2));
       end
     end
   end
 end
-H = sparse(iH,jH,sH);
-Hs = sum(H,2);
+H = sparse(iH, jH, sH);
+Hs = sum(H, 2);
 
 %% INITIALIZE ITERATION
 x = repmat(volfrac,nely,nelx);
@@ -74,13 +74,13 @@ while change > 0.01
   K = sparse(iK,jK,sK); K = (K+K')/2;
   U(freedofs) = K(freedofs,freedofs)\F(freedofs);
   %% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
-  ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2),nely,nelx);
+  ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2), nely, nelx);
   c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));
   dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
-  dv = ones(nely,nelx);
+  dv = ones(nely, nelx);
   %% FILTERING/MODIFICATION OF SENSITIVITIES
   if ft == 1
-    dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
+    dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3, x(:));
   elseif ft == 2
     dc(:) = H*(dc(:)./Hs);
     dv(:) = H*(dv(:)./Hs);
@@ -89,7 +89,7 @@ while change > 0.01
   l1 = 0; l2 = 1e9; move = 0.2;
   while (l2-l1)/(l1+l2) > 1e-3
     lmid = 0.5*(l2+l1);
-    xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
+    xnew = max(0,max(x-move, min(1,min(x+move, x.*sqrt(-dc./dv/lmid)))));
     if ft == 1
       xPhys = xnew;
     elseif ft == 2
@@ -97,11 +97,11 @@ while change > 0.01
     end
     if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
   end
-  change = max(abs(xnew(:)-x(:)));
+  change = max(abs(xnew(:) - x(:)));
   x = xnew;
 
   %% PRINT RESULTS
-  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n',loop,c, ...
+  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, ...
     mean(xPhys(:)),change);
   %% 保存结果到文件
   fprintf(fileID, '%4i\t%10.4f\t%6.3f\t%6.3f\n', loop, c, mean(xPhys(:)), change);
