@@ -7,7 +7,7 @@ nelx = 32
 nely = 20
 volfrac = 0.4
 penal = 3.0
-rmin = 1.2
+rmin = 1.5
 ts = TopSimp(nelx=nelx, nely=nely, volfrac=volfrac, penal=penal, rmin=rmin)
 
 # 初始化优化参数

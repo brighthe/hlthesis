@@ -38,12 +38,12 @@ def oc(nelx, nely, x, volfrac, dc, dv, g):
 
 
 # Default input parameters
-nelx = 180
-nely = 60
-volfrac = 0.4
-rmin = 5.4
+nelx = 6
+nely = 2
+volfrac = 0.5
+rmin = 1.5
 penal = 3.0
-ft = 1 # ft==0 -> sens, ft==1 -> dens
+ft = 0 # ft==0 -> sens, ft==1 -> dens
 
 # Max and min stiffness
 Emin = 1e-9
@@ -93,6 +93,7 @@ for i in range(nelx):
                 cc = cc + 1
 # Finalize assembly and convert to csc format
 H = coo_matrix((sH, (iH, jH)), shape=(nelx*nely, nelx*nely)).tocsc()
+H_dense = H.toarray()
 Hs = H.sum(1)
 # BC's and support
 dofs = np.arange(2 * (nelx + 1) * (nely + 1))
@@ -126,6 +127,9 @@ while change > 0.01 and loop < 2000:
     dv[:] = np.ones(nely * nelx)
     # Sensitivity filtering:
     if ft == 0:
+        temp0 = Hs
+        temp1 = (H * (x * dc))[np.newaxis].T
+        temp2 = np.asarray((H * (x * dc))[np.newaxis].T / Hs)[:, 0]
         dc[:] = np.asarray((H * (x * dc))[np.newaxis].T / Hs)[:, 0] / np.maximum(0.001, x)
     elif ft == 1:
         dc[:] = np.asarray(H * (dc[np.newaxis].T / Hs))[:, 0]
@@ -143,3 +147,5 @@ while change > 0.01 and loop < 2000:
     # Write iteration history to screen (req. Python 2.6 or newer)
     print("it.: {0} , obj.: {1:.3f} Vol.: {2:.3f}, ch.: {3:.3f}".format(
         loop, obj, (g + volfrac * nelx*nely) / (nelx*nely), change))
+    
+

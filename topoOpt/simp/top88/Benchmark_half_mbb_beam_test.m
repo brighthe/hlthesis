@@ -1,9 +1,9 @@
 %%%% AN 88 LINE TOPOLOGY OPTIMIZATION CODE Nov, 2010 %%%%
-nelx = 160;
-nely = 100;
-volfrac = 0.4;
+nelx = 6;
+nely = 2;
+volfrac = 0.5;
 penal = 3;
-rmin = 6;
+rmin = 1.5;
 ft = 1;
 
 %% MATERIAL PROPERTIES
@@ -22,10 +22,10 @@ edofVec = reshape(2*nodenrs(1:end-1,1:end-1)+1,nelx*nely,1);
 edofMat = repmat(edofVec,1,8)+repmat([0 1 2*nely+[2 3 0 1] -2 -1],nelx*nely,1);
 iK = reshape(kron(edofMat,ones(8,1))',64*nelx*nely,1);
 jK = reshape(kron(edofMat,ones(1,8))',64*nelx*nely,1);
-% DEFINE LOADS AND SUPPORTS (Short Cantilever Beam)
-F = sparse(2*(nely+1)*(nelx+1), 1, -1, 2*(nely+1)*(nelx+1), 1);
+% DEFINE LOADS AND SUPPORTS (HALF MBB-BEAM)
+F = sparse(2,1,-1,2*(nely+1)*(nelx+1),1);
 U = zeros(2*(nely+1)*(nelx+1),1);
-fixeddofs = [1:2*nely+1];
+fixeddofs = union([1:2:2*(nely+1)],[2*(nelx+1)*(nely+1)]);
 alldofs = [1:2*(nely+1)*(nelx+1)];
 freedofs = setdiff(alldofs,fixeddofs);
 
@@ -43,13 +43,13 @@ for i1 = 1:nelx
         k = k+1;
         iH(k) = e1;
         jH(k) = e2;
-        sH(k) = max(0, rmin - sqrt((i1-i2)^2 + (j1 - j2)^2));
+        sH(k) = max(0,rmin-sqrt((i1-i2)^2+(j1-j2)^2));
       end
     end
   end
 end
-H = sparse(iH, jH, sH);
-Hs = sum(H, 2);
+H = sparse(iH,jH,sH);
+Hs = sum(H,2);
 
 %% INITIALIZE ITERATION
 x = repmat(volfrac,nely,nelx);
@@ -70,6 +70,7 @@ open(v);
 while change > 0.01
   loop = loop + 1;
   %% FE-ANALYSIS
+  temp = Emin+xPhys(:)'.^penal*(E0-Emin);
   sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),64*nelx*nely,1);
   K = sparse(iK,jK,sK); K = (K+K')/2;
   U(freedofs) = K(freedofs,freedofs)\F(freedofs);
@@ -89,7 +90,7 @@ while change > 0.01
   l1 = 0; l2 = 1e9; move = 0.2;
   while (l2-l1)/(l1+l2) > 1e-3
     lmid = 0.5*(l2+l1);
-    xnew = max(0,max(x-move, min(1,min(x+move, x.*sqrt(-dc./dv/lmid)))));
+    xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
     if ft == 1
       xPhys = xnew;
     elseif ft == 2
@@ -97,11 +98,11 @@ while change > 0.01
     end
     if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
   end
-  change = max(abs(xnew(:) - x(:)));
+  change = max(abs(xnew(:)-x(:)));
   x = xnew;
 
   %% PRINT RESULTS
-  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, ...
+  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n',loop,c, ...
     mean(xPhys(:)),change);
   %% 保存结果到文件
   fprintf(fileID, '%4i\t%10.4f\t%6.3f\t%6.3f\n', loop, c, mean(xPhys(:)), change);
