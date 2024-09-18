@@ -67,12 +67,12 @@ loop = 0;
 change = 1;
 
 % 打开一个文件用于写入
-fileID = fopen('cantilever_minimum_compliance_OC.txt', 'w');
+fileID = fopen('heat_conduction_OC.txt', 'w');
 % 写入标题
 fprintf(fileID, 'Iteration\tObjective\tVolume\tChange\n');
 % 在主循环之前，设置图形窗口的大小并创建视频对象
 figure('Position', [100, 100, 1130, 784]);
-v = VideoWriter('cantilever_minimum_compliance_OC.avi');
+v = VideoWriter('heat_conduction_OC.avi');
 v.FrameRate = 10; % 设置帧率
 open(v);
 

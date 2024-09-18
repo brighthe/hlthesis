@@ -45,12 +45,12 @@ function [g, dgdE, dgdV, fem] = ConstraintFnc(fem,E,V,VolFrac)
             fem.ElemArea(el) = 0.5*sum(vx.*vy([2:end 1])-vy.*vx([2:end 1]));
         end
     end
-    g = sum(fem.ElemArea.*V)/sum(fem.ElemArea)-VolFrac;
+    g = sum(fem.ElemArea .* V) / sum(fem.ElemArea)-VolFrac;
     dgdE = zeros(size(E));
     dgdV = fem.ElemArea/sum(fem.ElemArea);
 end
 
-% ---------------------- OPTIMALITY CRITERIA UPDATE -----------------------
+%% ---------------------- OPTIMALITY CRITERIA UPDATE ----------------------- %%
 function [zNew, Change] = UpdateScheme(dfdz, g, dgdz, z0, opt)
     zMin = opt.zMin; zMax = opt.zMax;
     move = opt.OCMove * (zMax - zMin); eta = opt.OCEta;
