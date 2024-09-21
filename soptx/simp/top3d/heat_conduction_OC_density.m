@@ -4,19 +4,22 @@ nelz = 5;
 volfrac = 0.3;
 penal = 3;
 rmin = 1.4;
+
 % USER-DEFINED LOOP PARAMETERS
 maxloop = 200;    % Maximum number of iterations
 tolx = 0.01;      % Terminarion criterion
 displayflag = 0;  % Display structure flag
+
 % USER-DEFINED MATERIAL PROPERTIES
 k0   = 1;    % Good thermal conductivity
 kmin = 1e-3; % Poor thermal conductivity
+
 % USER-DEFINED SUPPORT FIXED DOFs
 il = nelx/2-nelx/20:nelx/2+nelx/20; jl = nely; kl = 0:nelz;
 fixedxy = il*(nely+1)+(nely+1-jl);
-fixednid = repmat(fixedxy',size(kl)) + ...
-    repmat(kl*(nelx+1)*(nely+1),size(fixedxy,2),1);
+fixednid = repmat(fixedxy', size(kl)) + repmat(kl*(nelx+1)*(nely+1), size(fixedxy,2),1);
 fixeddof = reshape(fixednid, [], 1);
+
 % PREPARE FINITE ELEMENT ANALYSIS
 nele = nelx*nely*nelz;
 ndof = (nelx+1)*(nely+1)*(nelz+1);
@@ -27,13 +30,14 @@ KE = lk_H8_heat(k0);
 nodegrd = reshape(1:(nely+1)*(nelx+1),nely+1,nelx+1);
 nodeids = reshape(nodegrd(1:end-1,1:end-1),nely*nelx,1);
 nodeidz = 0:(nely+1)*(nelx+1):(nelz-1)*(nely+1)*(nelx+1);
-nodeids = repmat(nodeids,size(nodeidz))+repmat(nodeidz,size(nodeids));
+nodeids = repmat(nodeids, size(nodeidz)) + repmat(nodeidz, size(nodeids));
 edofVec = nodeids(:)+1;
-edofMat = repmat(edofVec,1,8)+ ...
-  repmat([0 nely + [1 0] -1 ...
-  (nely+1)*(nelx+1)+[0 nely + [1 0] -1]],nele,1);
-iK = reshape(kron(edofMat,ones(8,1))',8*8*nele,1);
-jK = reshape(kron(edofMat,ones(1,8))',8*8*nele,1);
+edofMat = repmat(edofVec, 1, 8)+ ...
+        repmat([0 nely + [1 0] -1 ...
+        (nely+1)*(nelx+1)+[0 nely + [1 0] -1]], nele, 1);
+iK = reshape(kron(edofMat,ones(8,1))', 8*8*nele, 1);
+jK = reshape(kron(edofMat,ones(1,8))', 8*8*nele, 1);
+
 % PREPARE FILTER
 iH = ones(nele*(2*(ceil(rmin)-1)+1)^2,1);
 jH = ones(size(iH));
@@ -66,32 +70,30 @@ xPhys = x;
 loop = 0; 
 change = 1;
 
-% 打开一个文件用于写入
-fileID = fopen('heat_conduction_OC.txt', 'w');
-% 写入标题
+fileID = fopen('heat_conduction_OC_density.txt', 'w');
 fprintf(fileID, 'Iteration\tObjective\tVolume\tChange\n');
-% 在主循环之前，设置图形窗口的大小并创建视频对象
 figure('Position', [100, 100, 1130, 784]);
-v = VideoWriter('heat_conduction_OC.avi');
-v.FrameRate = 10; % 设置帧率
+v = VideoWriter('heat_conduction_OC_desnity.avi');
+v.FrameRate = 10;
 open(v);
-
-% 存储第一帧的大小
 firstFrame = true;
 frameSize = [0, 0];
 
 % START ITERATION
 while change > tolx && loop < maxloop
-    loop = loop+1;
+    loop = loop + 1;
+
     % FE-ANALYSIS
-    sK = reshape(KE(:)*(kmin+(1-kmin)*xPhys(:)'.^penal),8*8*nele,1);
-    K = sparse(iK,jK,sK); K = (K+K')/2;
-    U(freedofs,:) = K(freedofs,freedofs)\F(freedofs,:);
+    sK = reshape(KE(:) * (kmin + (1-kmin) * xPhys(:)' .^ penal), 8*8*nele, 1);
+    K = sparse(iK, jK, sK); K = (K+K')/2;
+    U(freedofs,:) = K(freedofs,freedofs) \ F(freedofs,:);
+
     % OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
     ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2),[nely,nelx,nelz]);
-    c = sum(sum(sum((kmin+(1-kmin)*xPhys.^penal).*ce)));
-    dc = -penal*(1-kmin)*xPhys.^(penal-1).*ce;
-    dv = ones(nely,nelx,nelz);
+    c = sum(sum(sum((kmin + (1-kmin) * xPhys .^ penal) .* ce)));
+    dc = -penal * (1-kmin) * xPhys .^ (penal-1) .* ce;
+    dv = ones(nely, nelx, nelz);
+
     % FILTERING AND MODIFICATION OF SENSITIVITIES
     dc(:) = H*(dc(:)./Hs);  
     dv(:) = H*(dv(:)./Hs);
@@ -108,10 +110,8 @@ while change > tolx && loop < maxloop
 
     % PRINT RESULTS
     fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, mean(xPhys(:)), change);
-    % 保存结果到文件
     fprintf(fileID, '%4i\t%10.4f\t%6.3f\t%6.3f\n', loop, c, mean(xPhys(:)), change);
 
-    % 可视化当前结果
     if mod(loop, 10) == 0 || loop == 1 || change <= tolx || loop == maxloop
         clf;
         display_3D(xPhys);

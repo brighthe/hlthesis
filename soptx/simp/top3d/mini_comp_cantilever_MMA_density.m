@@ -4,20 +4,22 @@ nelz = 4;
 volfrac = 0.3;
 penal = 3;
 rmin = 1.5;
-ft = 1;
 
 % USER-DEFINED LOOP PARAMETERS
 maxloop = 200;    % Maximum number of iterations
-tolx = 0.01;      % Terminarion criterion
+tolx = 0.001;      % Terminarion criterion
 displayflag = 0;  % Display structure flag
+
 % USER-DEFINED MATERIAL PROPERTIES
 E0 = 1;           % Young's modulus of solid material
 Emin = 1e-9;      % Young's modulus of void-like material
 nu = 0.3;         % Poisson's ratio
+
 % USER-DEFINED LOAD DOFs
 [il, jl, kl] = meshgrid(nelx, 0, 0:nelz);                 % Coordinates
 loadnid = kl*(nelx+1)*(nely+1)+il*(nely+1)+(nely+1-jl); % Node IDs
-loaddof = 3*loadnid(:) - 1;                             % DOFs
+loaddof = 3*loadnid(:) - 1;  
+                           % DOFs
 % USER-DEFINED SUPPORT FIXED DOFs
 [iif, jf, kf] = meshgrid(0, 0:nely, 0:nelz);                  % Coordinates
 fixednid = kf*(nelx+1)*(nely+1)+iif*(nely+1)+(nely+1-jf); % Node IDs
@@ -73,23 +75,32 @@ xPhys = x;
 loop = 0; 
 change = 1;
 
-% 打开一个文件用于写入
-fileID = fopen('minimum_complinace_OC_density_cantilever.txt', 'w');
-% 写入标题
+fileID = fopen('mini_comp_cantilever_MMA_density.txt', 'w');
 fprintf(fileID, 'Iteration\tObjective\tVolume\tChange\n');
-% 在主循环之前，设置图形窗口的大小并创建视频对象
 figure('Position', [100, 100, 1130, 784]);
-v = VideoWriter('minimum_complinace_OC_density_cantilever.avi');
-v.FrameRate = 10; % 设置帧率
+v = VideoWriter('mini_comp_cantilever_MMA_density.avi');
+v.FrameRate = 10;
 open(v);
-
-% 存储第一帧的大小
 firstFrame = true;
 frameSize = [0, 0];
 
+% INITIALIZE MMA OPTIMIZER
+m     = 1;                % The number of general constraints.
+n     = nele;             % The number of design variables x_j.
+xmin  = zeros(n, 1);       % Column vector with the lower bounds for the variables x_j.
+xmax  = ones(n, 1);        % Column vector with the upper bounds for the variables x_j.
+xold1 = x(:);             % xval, one iteration ago (provided that iter>1).
+xold2 = x(:);             % xval, two iterations ago (provided that iter>2).
+low   = ones(n, 1);        % Column vector with the lower asymptotes from the previous iteration (provided that iter>1).
+upp   = ones(n, 1);        % Column vector with the upper asymptotes from the previous iteration (provided that iter>1).
+a0    = 1;                % The constants a_0 in the term a_0*z.
+a     = zeros(m, 1);       % Column vector with the constants a_i in the terms a_i*z.
+c_MMA = 10000 * ones(m, 1);  % Column vector with the constants c_i in the terms c_i*y_i.
+d     = zeros(m, 1);       % Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+
 % START ITERATION
 while change > tolx && loop < maxloop
-    loop = loop+1;
+    loop = loop + 1;
     % FE-ANALYSIS
     sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),24*24*nele,1);
     K = sparse(iK,jK,sK); K = (K+K')/2;
@@ -100,61 +111,47 @@ while change > tolx && loop < maxloop
     dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
     dv = ones(nely,nelx,nelz);
     % FILTERING AND MODIFICATION OF SENSITIVITIES
-    if ft == 1
-        dc(:) = H*(dc(:)./Hs);
-        dv(:) = H*(dv(:)./Hs);
-    elseif ft == 2
-        dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
-    end
-
-    % OPTIMALITY CRITERIA UPDATE
-    l1 = 0; l2 = 1e9; move = 0.2;
-    while (l2-l1)/(l1+l2) > 1e-3
-        lmid = 0.5 * (l2 + l1);
-        xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
-        if ft == 1
-            xPhys(:) = (H*xnew(:))./Hs;
-        elseif ft == 2
-            xPhys = xnew;
-        end
-        if sum(xPhys(:)) > volfrac*nele, l1 = lmid; else l2 = lmid; end
-    end
+    dc(:) = H * (dc(:) ./ Hs);  
+    dv(:) = H * (dv(:) ./ Hs);
+    % METHOD OF MOVING ASYMPTOTES
+    xval  = x(:);
+    f0val = c;
+    df0dx = dc(:);
+    fval  = sum(xPhys(:))/(volfrac*nele) - 1;
+    dfdx  = dv(:)' / (volfrac*nele);
+    [xmma, ~, ~, ~, ~, ~, ~, ~, ~, low,upp] = ...
+    mmasub(m, n, loop, xval, xmin, xmax, xold1, xold2, ...
+    f0val,df0dx,fval,dfdx,low,upp,a0,a,c_MMA,d);
+    % Update MMA Variables
+    xnew     = reshape(xmma,nely,nelx,nelz);
+    xPhys(:) = (H*xnew(:))./Hs;
+    xold2    = xold1(:);
+    xold1    = x(:);
 
     change = max(abs(xnew(:)-x(:)));
     x = xnew;
 
     % PRINT RESULTS
     fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, mean(xPhys(:)), change);
-    % 保存结果到文件
-    fprintf(fileID, '%4i\t%10.4f\t%6.3f\t%6.3f\n', loop, c, mean(xPhys(:)), change);
 
-    % 可视化当前结果
+    fprintf(fileID, '%4i\t%10.4f\t%6.3f\t%6.3f\n', loop, c, mean(xPhys(:)), change);
     if mod(loop, 10) == 0 || loop == 1 || change <= tolx || loop == maxloop
         clf;
         display_3D(xPhys);
         title(sprintf('Iteration: %d, Objective: %.4f', loop, c));
         drawnow;
-        
-        % 获取当前帧
         frame = getframe(gcf);
-        
-        % 检查和调整帧大小
         if firstFrame
             frameSize = size(frame.cdata);
             firstFrame = false;
         else
             frame.cdata = imresize(frame.cdata, [frameSize(1), frameSize(2)]);
         end
-        
-        % 将当前帧添加到视频
         writeVideo(v, frame);
     end
 end
 
-% 关闭视频对象
 close(v);
-
-% 显示最终结果
 clf;
 display_3D(xPhys);
 title('Final Optimized Design');

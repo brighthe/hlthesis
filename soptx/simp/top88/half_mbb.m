@@ -1,10 +1,9 @@
-%%%% AN 88 LINE TOPOLOGY OPTIMIZATION CODE Nov, 2010 %%%%
-nelx = 60;
-nely = 20;
+nelx = 4;
+nely = 3;
 volfrac = 0.5;
 penal = 3;
 rmin = 1.5;
-ft = 1;
+ft = 2;
 
 %% MATERIAL PROPERTIES
 E0 = 1;
@@ -25,7 +24,7 @@ jK = reshape(kron(edofMat,ones(1,8))',64*nelx*nely,1);
 % DEFINE LOADS AND SUPPORTS (HALF MBB-BEAM)
 F = sparse(2,1,-1,2*(nely+1)*(nelx+1),1);
 U = zeros(2*(nely+1)*(nelx+1),1);
-fixeddofs = union([1:2:2*(nely+1)],[2*(nelx+1)*(nely+1)]);
+fixeddofs = union([1:2:2*(nely+1)], [2*(nelx+1)*(nely+1)]);
 alldofs = [1:2*(nely+1)*(nelx+1)];
 freedofs = setdiff(alldofs,fixeddofs);
 
@@ -53,32 +52,37 @@ Hs = sum(H,2);
 
 %% INITIALIZE ITERATION
 x = repmat(volfrac,nely,nelx);
+% x(1) = 0.8;
+% x(12) = 1.5;
 xPhys = x;
 loop = 0;
 change = 1;
 
-% 打开一个文件用于写入
 fileID = fopen('half_mbb.txt', 'w');
-% 写入标题
 fprintf(fileID, 'Iteration\tObjective\tVolume\tChange\n');
-% 创建一个视频写入对象
 v = VideoWriter('half_mbb.avi');
-v.FrameRate = 10; % 设置帧率
+v.FrameRate = 10;
 open(v);
 
 %% START ITERATION
 while change > 0.01
   loop = loop + 1;
+
   %% FE-ANALYSIS
-  temp = Emin+xPhys(:)'.^penal*(E0-Emin);
-  sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),64*nelx*nely,1);
-  K = sparse(iK,jK,sK); K = (K+K')/2;
-  U(freedofs) = K(freedofs,freedofs)\F(freedofs);
+  E = (Emin+xPhys(:)'.^penal*(E0-Emin));
+  sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)), 64*nelx*nely,1);
+  K = sparse(iK, jK, sK); K = (K + K') / 2;
+  FullK = full(K(freedofs,freedofs));
+  FullF = F(freedofs);
+  U(freedofs) = K(freedofs,freedofs) \ F(freedofs);
+
   %% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
+  Ue = U(edofMat);
   ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2), nely, nelx);
   c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));
-  dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
+   dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
   dv = ones(nely, nelx);
+  
   %% FILTERING/MODIFICATION OF SENSITIVITIES
   if ft == 1
     dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3, x(:));
@@ -96,7 +100,9 @@ while change > 0.01
     elseif ft == 2
       xPhys(:) = (H*xnew(:))./Hs;
     end
-    if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
+	g = sum(xPhys(:)) - volfrac*nelx*nely;
+	if g > 0, l1 = lmid; else l2 = lmid; end
+    % if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
   end
   change = max(abs(xnew(:)-x(:)));
   x = xnew;

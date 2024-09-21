@@ -148,4 +148,4 @@ b = P*uxinv + Q*xlinv - fval(:) ;
 %
 %%% Solving the subproblem by a primal-dual Newton method
 [xmma,ymma,zmma,lam,xsi,eta,mu,zet,s] = ...
-subsolv(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);
+subsolve(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);
