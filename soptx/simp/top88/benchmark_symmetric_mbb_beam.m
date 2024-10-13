@@ -1,14 +1,14 @@
-% nelx = 60;
-% nely = 20;
-% rmin = 2.4;
+nelx = 60;
+nely = 20;
+rmin = 2.4;
 
 % nelx = 150;
 % nely = 50;
 % rmin = 6;
 
-nelx = 300;
-nely = 100;
-rmin = 16;
+% nelx = 300;
+% nely = 100;
+% rmin = 16;
 
 volfrac = 0.5;
 penal = 3;
@@ -62,14 +62,16 @@ end
 H = sparse(iH,jH,sH);
 Hs = sum(H,2);
 
-%% INITIALIZE ITERATION
+%%-------------------- INITIALIZE ITERATION --------------------%%
 x = repmat(volfrac, nely, nelx);
 xPhys = x;
+
 loop = 0;
 change = 1;
 
 %% START ITERATION
 while change > 0.01
+  tic;  % Start timing the iteration
   loop = loop + 1;
 
   %% FE-ANALYSIS
@@ -107,7 +109,9 @@ while change > 0.01
   x = xnew;
 
   %% PRINT RESULTS
-  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n',loop, c, mean(xPhys(:)), change);
+  iter_time = toc;  % Stop timing and get iteration time
+  fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f Time:%7.3f sec\n', loop, c, mean(xPhys(:)), change, iter_time);
+  % fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n',loop, c, mean(xPhys(:)), change);
 
   %% PLOT DENSITIES
   colormap(gray); imagesc(1-xPhys); caxis([0 1]); axis equal; axis off; drawnow;
