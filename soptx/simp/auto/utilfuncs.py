@@ -131,7 +131,7 @@ class MMA:
         self.xold1 = xold1;
         self.xold2 = xold2;
     def setNumConstraints(self, numConstraints):
-        self.numConstraints = numConstraints;
+        self.numConstraints = numConstraints
     def setNumDesignVariables(self, numDesVar):
         self.numDesignVariables = numDesVar;
     def setMinandMaxBoundsForDesignVariables(self, xmin, xmax):

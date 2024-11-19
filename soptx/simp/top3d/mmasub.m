@@ -1,10 +1,3 @@
-%-------------------------------------------------------
-%    This is the file mmasub.m
-%
-function [xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,low,upp] = ...
-mmasub(m,n,iter,xval,xmin,xmax,xold1,xold2, ...
-f0val,df0dx,fval,dfdx,low,upp,a0,a,c,d)
-%
 %    Version September 2007 (and a small change August 2008)
 %
 %    Krister Svanberg <krille@math.kth.se>
@@ -17,53 +10,47 @@ f0val,df0dx,fval,dfdx,low,upp,a0,a,c,d)
 %    subject to  f_i(x) - a_i*z - y_i <= 0,  i = 1,...,m
 %                xmin_j <= x_j <= xmax_j,    j = 1,...,n
 %                z >= 0,   y_i >= 0,         i = 1,...,m
+function [xmma, ymma, zmma, lam, xsi, eta, mu, zet, s, low, upp] = mmasub(...
+	m, n, iter, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c, d)
 %*** INPUT:
 %
-%   m    = The number of general constraints.
-%   n    = The number of variables x_j.
-%  iter  = Current iteration number ( =1 the first time mmasub is called).
-%  xval  = Column vector with the current values of the variables x_j.
-%  xmin  = Column vector with the lower bounds for the variables x_j.
-%  xmax  = Column vector with the upper bounds for the variables x_j.
-%  xold1 = xval, one iteration ago (provided that iter>1).
-%  xold2 = xval, two iterations ago (provided that iter>2).
-%  f0val = The value of the objective function f_0 at xval.
-%  df0dx = Column vector with the derivatives of the objective function
-%          f_0 with respect to the variables x_j, calculated at xval.
-%  fval  = Column vector with the values of the constraint functions f_i,
-%          calculated at xval.
-%  dfdx  = (m x n)-matrix with the derivatives of the constraint functions
-%          f_i with respect to the variables x_j, calculated at xval.
-%          dfdx(i,j) = the derivative of f_i with respect to x_j.
-%  low   = Column vector with the lower asymptotes from the previous
-%          iteration (provided that iter>1).
-%  upp   = Column vector with the upper asymptotes from the previous
-%          iteration (provided that iter>1).
-%  a0    = The constants a_0 in the term a_0*z.
-%  a     = Column vector with the constants a_i in the terms a_i*z.
-%  c     = Column vector with the constants c_i in the terms c_i*y_i.
-%  d     = Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+%   m    = 一般约束的数量, 即约束函数 f_i(x) 的个数
+%   n    = 变量 x_j 的数量.
+%  iter  = 当前的迭代次数 (首次调用 mmasub 时, iter=1).
+%  xval  = 当前迭代中设计变量 x_j 的值的列向量.
+%  xmin  = 变量 x_j 的下界, 列向量形式.
+%  xmax  = 变量 x_j 的上界, 列向量形式.
+%  xold1 = 前一次迭代的设计变量 xval（如果 iter > 1）.
+%  xold2 = 前两次迭代的设计变量 xval（如果 iter > 2）.
+%  f0val = 当前设计变量 xval 下, 目标函数 f_0(x) 的值.
+%  df0dx = 目标函数 f_0(x) 对设计变量 x_j 的梯度, 列向量形式, 形状(n, 1).
+%  fval  = 当前设计变量 xval 下, 约束函数 f_i(x) 的值, 列向量形式, 形状(m, 1).
+%  dfdx  = 约束函数 f_i(x) 对设计变量 x_j 的梯度, 矩阵形式, 形状 (m, n),
+% 			其中 dfdx(i, j) = partial f_i / partial x_j.
+%  low   = 下渐近线的值, 列向量形式, 形状 (n, 1), 如果 iter > 1, 使用前一次迭代的值.
+%  upp   = 上渐近线的值, 列向量形式, 形状 (n, 1), 如果 iter > 1, 使用前一次迭代的值..
+%  a0    = 标量, 目标函数的线性项 a_0*z.
+%  a     = 列向量, 形状 (m, 1), 约束的线性项 a_i*z.
+%  c     = 列向量, 形状 (m, 1), 项 c_i*y_i 中的常数 c_i 的列向量.
+%  d     = 项 0.5*d_i*(y_i)^2 中的常数 d_i 的列向量.
 %     
 %*** OUTPUT:
 %
-%  xmma  = Column vector with the optimal values of the variables x_j
-%          in the current MMA subproblem.
-%  ymma  = Column vector with the optimal values of the variables y_i
-%          in the current MMA subproblem.
-%  zmma  = Scalar with the optimal value of the variable z
-%          in the current MMA subproblem.
-%  lam   = Lagrange multipliers for the m general MMA constraints.
-%  xsi   = Lagrange multipliers for the n constraints alfa_j - x_j <= 0.
-%  eta   = Lagrange multipliers for the n constraints x_j - beta_j <= 0.
-%   mu   = Lagrange multipliers for the m constraints -y_i <= 0.
-%  zet   = Lagrange multiplier for the single constraint -z <= 0.
+%  xmma  = 当前 MMA 子问题中变量 x_j 的最优值的列向量.
+%  ymma  = 当前 MMA 子问题中变量 y_i 的最优值的列向量.
+%  zmma  = 当前 MMA 子问题中变量 z 的最优值的标量.
+%  lam   = m 个一般 MMA 约束的拉格朗日乘子.
+%  xsi   =  n 个约束 alpha_j - x_j <= 0 的拉格朗日乘子.
+%  eta   =  n 个约束 x_j - beta_j <= 0 的拉格朗日乘子.
+%   mu   = m 个约束 -y_i <= 0 的拉格朗日乘子.
+%  zet   = 单个约束 -z <= 0 的拉格朗日乘子.
 %   s    = Slack variables for the m general MMA constraints.
-%  low   = Column vector with the lower asymptotes, calculated and used
-%          in the current MMA subproblem.
-%  upp   = Column vector with the upper asymptotes, calculated and used
-%          in the current MMA subproblem.
+%  low   = 当前 MMA 子问题中计算和使用的下渐近线的列向量.
+%  upp   = 当前 MMA 子问题中计算和使用的上渐近线的列向量.
 %
 % epsimin = sqrt(m+n)*10^(-9);
+
+% 常数
 epsimin = 10^(-7);
 raa0 = 0.00001;
 % raa0 = 0.01;
@@ -75,30 +62,31 @@ asyinit = 0.01;
 asyincr = 1.2;
 % asyincr = 0.8;
 asydecr = 0.4;
-eeen = ones(n,1);
-eeem = ones(m,1);
-zeron = zeros(n,1);
+eeen = ones(n, 1);
+eeem = ones(m, 1);
+zeron = zeros(n, 1);
+
 % Calculation of the asymptotes low and upp :
 if iter < 2.5
-    move=0.01;
-  low = xval - asyinit*(xmax-xmin);
-  upp = xval + asyinit*(xmax-xmin);
+	move = 0.01;
+	low = xval - asyinit*(xmax - xmin);
+	upp = xval + asyinit*(xmax - xmin);
 else
-    move=0.01;
-  zzz = (xval-xold1).*(xold1-xold2);
-  factor = eeen;
-  factor(find(zzz > 0)) = asyincr;
-  factor(find(zzz < 0)) = asydecr;
-  low = xval - factor.*(xold1 - low);
-  upp = xval + factor.*(upp - xold1);
-  lowmin = xval - 0.01*(xmax-xmin);
-  lowmax = xval - 0.0001*(xmax-xmin);
-  uppmin = xval + 0.0001*(xmax-xmin);
-  uppmax = xval + 0.01*(xmax-xmin);
-  low = max(low,lowmin);
-  low = min(low,lowmax);
-  upp = min(upp,uppmax);
-  upp = max(upp,uppmin);
+	move=0.01;
+	zzz = (xval-xold1).*(xold1-xold2);
+	factor = eeen;
+	factor(find(zzz > 0)) = asyincr;
+	factor(find(zzz < 0)) = asydecr;
+	low = xval - factor.*(xold1 - low);
+	upp = xval + factor.*(upp - xold1);
+	lowmin = xval - 0.01*(xmax-xmin);
+	lowmax = xval - 0.0001*(xmax-xmin);
+	uppmin = xval + 0.0001*(xmax-xmin);
+	uppmax = xval + 0.01*(xmax-xmin);
+	low = max(low, lowmin);
+	low = min(low, lowmax);
+	upp = min(upp, uppmax);
+	upp = max(upp, uppmin);
 end
 % Calculation of the bounds alfa and beta :
 zzz1 = low + albefa*(xval-low);

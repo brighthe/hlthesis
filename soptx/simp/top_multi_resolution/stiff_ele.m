@@ -3,7 +3,7 @@ function KE = stiff_ele(E, nu, dx, dy)
     % Gauss Points (4 in total)
     egv = [-1/sqrt(3), 1/sqrt(3)]; %2 gauss point x
     ngv = egv;                    %2 gauss point y
-    wg = [1,1];                   %weight
+    wg = [1, 1];                   %weight
     
     % Constitutive matrix
     matC = consti(E, nu);
@@ -25,4 +25,4 @@ function KE = stiff_ele(E, nu, dx, dy)
             KE=KE+wg(eit)*wg(nit)*BKe'*matC*BKe*Jdet;
         end
     end
-    end
+end
