@@ -1,5 +1,5 @@
-nelx = 160;
-nely = 100;
+nelx = 4;
+nely = 3;
 volfrac = 0.4;
 penal = 3;
 rmin = 6;
@@ -25,7 +25,7 @@ jK = reshape(kron(edofMat, ones(1,8))', 64*nelx*nely, 1);
 %% DEFINE LOADS AND SUPPORTS (Short Cantilever Beam)
 F = sparse(2*(nely+1)*(nelx+1), 1, -1, 2*(nely+1)*(nelx+1), 1);
 U = zeros(2*(nely+1)*(nelx+1),1);
-fixeddofs = [1:2*nely+1];
+fixeddofs = [1:2*(nely+1)];
 alldofs = [1:2*(nely+1)*(nelx+1)];
 freedofs = setdiff(alldofs,fixeddofs);
 
@@ -64,9 +64,9 @@ while change > 0.01
 
   %% FE-ANALYSIS
   sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),64*nelx*nely,1);
-  K = sparse(iK,jK,sK); K = (K+K')/2;
-  U(freedofs) = K(freedofs,freedofs)\F(freedofs);
-
+  K = sparse(iK, jK, sK); K = (K+K') / 2;
+  U(freedofs) = K(freedofs,freedofs) \ F(freedofs);
+  Kdense = full(K);
   %% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
   ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2), nely, nelx);
   c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));

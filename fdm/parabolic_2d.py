@@ -111,3 +111,48 @@ class SinSin4PiExpData:
 
         return flag1 | flag2
 
+class SinSinExpPDEData: 
+    def __init__(self, D=[0, 1, 0, 1], T=[0, 1]):
+        self._domain = D 
+        self._duration = T 
+
+    def domain(self):
+        return self._domain
+    
+    def duration(self):
+        return self._duration 
+    
+    @cartesian
+    def solution(self, p, t):
+        pi = np.pi
+        x = p[..., 0]
+        y = p[..., 1]
+        return np.sin(pi*x)*np.sin(pi*y)*np.exp(-2*pi*t) 
+    
+    @cartesian
+    def init_solution(self, p):
+        pi = np.pi
+        x = p[..., 0]
+        y = p[..., 1]
+        return np.sin(pi*x)*np.sin(pi*y)
+    
+    @cartesian
+    def source(self, p, t):
+        pi = np.pi
+        x = p[..., 0]
+        y = p[..., 1]
+        return np.zeros(x.shape)
+    
+    @cartesian
+    def gradient(self, p, t):
+        x = p[..., 0]
+        y = p[..., 1]
+        pi = np.pi
+        val = np.zeros(p.shape, dtype=np.float64)
+        val[..., 0] = pi*np.cos(pi*x)*np.sin(pi*y)*np.exp(-2*pi*t)
+        val[..., 1] = pi*np.sin(pi*x)*np.cos(pi*y)*np.exp(-2*pi*t)
+        return val
+    
+    @cartesian    
+    def dirichlet(self, p, t):
+        return self.solution(p, t)

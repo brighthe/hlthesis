@@ -7,7 +7,6 @@ nelz = 4;
 volfrac = 0.3;
 penal = 3;
 rmin = 1.5;
-ft = 1;
 
 % USER-DEFINED LOOP PARAMETERS
 maxloop = 200;    % Maximum number of iterations
@@ -81,6 +80,7 @@ change = 1;
 
 % START ITERATION
 while change > tolx && loop < maxloop
+    tic;  % Start timing the iteration
     loop = loop + 1;
 
     % FE-ANALYSIS
@@ -96,31 +96,39 @@ while change > tolx && loop < maxloop
     dv = ones(nely,nelx,nelz);
     
     % FILTERING AND MODIFICATION OF SENSITIVITIES
-    if ft == 1
-        dc(:) = H*(dc(:)./Hs);
-        dv(:) = H*(dv(:)./Hs);
-    elseif ft == 2
-        dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
-    end
+    dc(:) = H*(dc(:)./Hs);
+    dv(:) = H*(dv(:)./Hs);
+    % if ft == 1
+    %     dc(:) = H*(dc(:)./Hs);
+    %     dv(:) = H*(dv(:)./Hs);
+    % elseif ft == 2
+    %     dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
+    % end
 
     % OPTIMALITY CRITERIA UPDATE
     l1 = 0; l2 = 1e9; move = 0.2;
     while (l2-l1)/(l1+l2) > 1e-3
         lmid = 0.5 * (l2 + l1);
         xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
-        if ft == 1
-            xPhys(:) = (H*xnew(:))./Hs;
-        elseif ft == 2
-            xPhys = xnew;
-        end
+        xPhys(:) = (H*xnew(:))./Hs;
+        % if ft == 1
+        %     xPhys(:) = (H*xnew(:))./Hs;
+        % elseif ft == 2
+        %     xPhys = xnew;
+        % end
         if sum(xPhys(:)) > volfrac*nele, l1 = lmid; else l2 = lmid; end
     end
 
     change = max(abs(xnew(:)-x(:)));
     x = xnew;
 
-    % PRINT RESULTS
-    fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, mean(xPhys(:)), change);
+	% PRINT RESULTS
+	iter_time = toc;  % Stop timing and get iteration time
+    % meam =  mean(xPhys(:));
+	fprintf(' It.:%5i Obj.:%11.4f Vol.:%16.12f ch.:%7.3f Time:%7.3f sec\n', loop, c, mean(xPhys(:)), change, iter_time);
+
+    % % PRINT RESULTS
+    % fprintf(' It.:%5i Obj.:%11.4f Vol.:%7.3f ch.:%7.3f\n', loop, c, mean(xPhys(:)), change);
     % PLOT DENSITIES
     if displayflag, clf; display_3D(xPhys); end
 end

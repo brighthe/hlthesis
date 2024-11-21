@@ -13,15 +13,15 @@ pde = SinSin4PiExpData()
 
 # 空间离散
 domain = pde.domain()
-nx = 40
-ny = 40
+nx = 10
+ny = 10
 hx = (domain[1] - domain[0])/nx
 hy = (domain[3] - domain[2])/ny
 mesh = UniformMesh2d([0, nx, 0, ny], h=(hx, hy), origin=(domain[0], domain[2]))
 
 # 时间离散
 duration = pde.duration()
-nt = 6400
+nt = 640
 tau = (duration[1] - duration[0])/nt 
 print("网比r_x:", tau/(hx**2)) 
 print("网比r_y:", tau/(hy**2))
@@ -97,6 +97,7 @@ def advance_backward(n):
         u_exact = uI(node)
         e = u_exact - uh0
         emax = np.max(np.abs(e))
+        #e = mesh.error(u_exact, uh0, errortype='max')
         print(f"the max error is {emax}")
 
         return uh0, t

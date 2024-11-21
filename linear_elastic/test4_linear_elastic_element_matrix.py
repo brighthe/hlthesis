@@ -1,22 +1,24 @@
 from fealpy.fem import LinearElasticityOperatorIntegrator
 from fealpy.fem import BilinearForm
-from fealpy.functionspace import LagrangeFESpace as Space
-from fealpy.mesh import UniformMesh2d
+from fealpy.functionspace import LagrangeFESpace
+from fealpy.mesh import TriangleMesh
 
-nelx, nely = 3, 2
-domain = [0, 3, 0, 2]
-hx = (domain[1] - domain[0]) / nelx
-hy = (domain[3] - domain[2]) / nely
-mesh = UniformMesh2d(extent=(0, nelx, 0, nely), h=(hx, hy), origin=(domain[0], domain[2]))
+NX = 4
+NY = 4
+mesh = TriangleMesh.from_box(box=[0, 1, 0, 1], nx=NX, ny=NY)
+NC = mesh.number_of_cells()
+print("NC:", NC)
+NN = mesh.number_of_nodes()
+print("NN:", NN)
+
 p = 1
-space = Space(mesh, p=p, doforder='vdims')
+space = LagrangeFESpace(mesh, p=p, ctype='C', doforder='sdofs')
+
+
 GD = 2
 uh = space.function(dim=GD)
 print("uh:", uh.shape)
-space1 = Space(mesh, p=p, doforder='sdofs')
-GD = 2
-uh1 = space.function(dim=GD)
-print("uh1:", uh1.shape)
+
 # 材料参数
 E0 = 1.0  # 弹性模量
 nu = 0.3  # 泊松比

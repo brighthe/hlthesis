@@ -1,13 +1,15 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
+import time
+import matplotlib.pyplot as plt
+
 from jax import jit, value_and_grad
 
-import numpy as np
-from utilfuncs import computeFilter, Mesher
-
+from utilfuncs import computeFilter, Mesher, MMA, applySensitivityFilter
 from mmaOptimize import optimize
 
-nelx, nely = 6, 3
+nelx, nely = 60, 30
 elemSize = np.array([1., 1.])
 mesh = {'nelx':nelx, 'nely':nely, 'elemSize':elemSize,\
         'ndof':2*(nelx+1)*(nely+1), 'numElems':nelx*nely}
@@ -68,7 +70,7 @@ class ComplianceMinimizer:
                 v1 = np.tanh(self.projection['c0']*self.projection['beta'])
                 nm = v1 + jnp.tanh(self.projection['beta']*(rho-self.projection['c0']))
                 dnm = v1 + jnp.tanh(self.projection['beta']*(1.-self.projection['c0']))
-                return nm/dnm
+                return nm / dnm
             else:
                 return rho
         
@@ -122,11 +124,14 @@ class ComplianceMinimizer:
         optimize(self.mesh, optimizationParams, ft, self.objectiveHandle, self.consHandle, self.numConstraints)
 
 Opt = ComplianceMinimizer(mesh, bc, material, globalVolumeConstraint, projection)
+numConstraints = Opt.numConstraints
+objectiveHandle = Opt.objectiveHandle
+consHandle = Opt.consHandle
 
 rho = np.ones((mesh['nelx'] * mesh['nely']))
 loop = 0
 change = 1.
-m = Opt.numConstraints; # num constraints
+m = numConstraints
 n = mesh['numElems']
 mma = MMA()
 mma.setNumConstraints(numConstraints)
@@ -174,8 +179,7 @@ while( (change > optimizationParams['relTol']) \
     status = 'Iter {:d}; J {:.2F}; vf {:.2F}'.format(loop, J, jnp.mean(rho))
     print(status)
     if(loop%10 == 0):
-        plt.imshow(-np.flipud(rho.reshape((mesh['nelx'], \
-                    mesh['nely'])).T), cmap='gray')
+        plt.imshow(-np.flipud(rho.reshape((mesh['nelx'], mesh['nely'])).T), cmap='gray')
         plt.title(status)
         plt.show()
 

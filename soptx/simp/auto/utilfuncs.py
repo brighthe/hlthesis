@@ -90,15 +90,19 @@ def computeFilter(mesh, rmin):
 
     Hs = np.sum(H,1);
     return H, Hs;
+
 #--------------------------#
 def applySensitivityFilter(ft, x, dc, dv):
     if (ft['type'] == 1):
         dc = np.matmul(ft['H'],\
-                         np.multiply(x, dc)/ft['Hs']/np.maximum(1e-3,x));
+                         np.multiply(x, dc)/ft['Hs']/np.maximum(1e-3,x))
     elif (ft['type'] == 2):
-        dc = np.matmul(ft['H'], (dc/ft['Hs']));
-        dv = np.matmul(ft['H'], (dv/ft['Hs']));
-    return dc, dv;
+        dc = np.matmul(ft['H'], (dc/ft['Hs']))
+        dv = np.matmul(ft['H'], (dv/ft['Hs']))
+        
+    return dc, dv
+
+
 #--------------------------#
 def computeLocalElements(mesh, dist, avgLocality = False):
     nelx, nely = mesh['nelx'], mesh['nely']
@@ -122,46 +126,45 @@ class MMA:
     # The code was modified from [MMA Svanberg 1987]. Please cite the paper if
     # you end up using this code.
     def __init__(self):
-        self.epoch = 0;
+        self.epoch = 0
     def resetMMACounter(self):
-        self.epoch = 0;
+        self.epoch = 0
     def registerMMAIter(self, xval, xold1, xold2):
-        self.epoch += 1;
-        self.xval = xval;
-        self.xold1 = xold1;
-        self.xold2 = xold2;
+        self.epoch += 1
+        self.xval = xval
+        self.xold1 = xold1
+        self.xold2 = xold2
     def setNumConstraints(self, numConstraints):
         self.numConstraints = numConstraints
     def setNumDesignVariables(self, numDesVar):
-        self.numDesignVariables = numDesVar;
+        self.numDesignVariables = numDesVar
     def setMinandMaxBoundsForDesignVariables(self, xmin, xmax):
-        self.xmin = xmin;
-        self.xmax = xmax;
+        self.xmin = xmin
+        self.xmax = xmax
     def setObjectiveWithGradient(self, obj, objGrad):
-        self.objective = obj;
+        self.objective = obj
         self.objectiveGradient = objGrad;
     def setConstraintWithGradient(self, cons, consGrad):
-        self.constraint = cons;
-        self.consGrad = consGrad;
+        self.constraint = cons
+        self.consGrad = consGrad
     def setScalingParams(self, zconst, zscale, ylinscale, yquadscale):
-        self.zconst = zconst;
-        self.zscale = zscale;
-        self.ylinscale = ylinscale;
-        self.yquadscale = yquadscale;
+        self.zconst = zconst
+        self.zscale = zscale
+        self.ylinscale = ylinscale
+        self.yquadscale = yquadscale
     def setMoveLimit(self, movelim):
-        self.moveLimit = movelim;
+        self.moveLimit = movelim
     def setLowerAndUpperAsymptotes(self, low, upp):
-        self.lowAsymp = low;
-        self.upAsymp = upp;
-
+        self.lowAsymp = low
+        self.upAsymp = upp
     def getOptimalValues(self):
-        return self.xmma, self.ymma, self.zmma;
+        return self.xmma, self.ymma, self.zmma
     def getLagrangeMultipliers(self):
-        return self.lam, self.xsi, self.eta, self.mu, self.zet;
+        return self.lam, self.xsi, self.eta, self.mu, self.zet
     def getSlackValue(self):
-        return self.slack;
+        return self.slack
     def getAsymptoteValues(self):
-        return self.lowAsymp, self.upAsymp;
+        return self.lowAsymp, self.upAsymp
 
     # Function for the MMA sub problem
     def mmasub(self, xval):
@@ -247,10 +250,10 @@ class MMA:
         xmma,ymma,zmma,lam,xsi,eta,mu,zet,s = subsolv(m,n,epsimin,low,upp,alfa,\
                                                       beta,p0,q0,P,Q,a0,a,b,c,d)
         # Return values
-        self.xmma, self.ymma, self.zmma = xmma, ymma, zmma;
-        self.lam, self.xsi, self.eta, self.mu, self.zet = lam,xsi,eta,mu,zet;
-        self.slack = s;
-        self.lowAsymp, self.upAsymp = low, upp;
+        self.xmma, self.ymma, self.zmma = xmma, ymma, zmma
+        self.lam, self.xsi, self.eta, self.mu, self.zet = lam,xsi,eta,mu,zet
+        self.slack = s
+        self.lowAsymp, self.upAsymp = low, upp
 
 
 # Function for the GCMMA sub problem
