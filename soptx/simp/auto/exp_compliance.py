@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from jax import jit, value_and_grad
 
 from utilfuncs import computeFilter, Mesher, MMA, applySensitivityFilter
-from mmaOptimize import optimize
 
 nelx, nely = 60, 30
 elemSize = np.array([1., 1.])
@@ -119,9 +118,6 @@ class ComplianceMinimizer:
         c, gradc = c.reshape((1, 1)), gradc.reshape((1, -1))
 
         return c, gradc
-
-    def TO(self, optimizationParams, ft):
-        optimize(self.mesh, optimizationParams, ft, self.objectiveHandle, self.consHandle, self.numConstraints)
 
 Opt = ComplianceMinimizer(mesh, bc, material, globalVolumeConstraint, projection)
 numConstraints = Opt.numConstraints

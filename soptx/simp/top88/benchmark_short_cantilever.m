@@ -1,12 +1,14 @@
-nelx = 4;
-nely = 3;
+% nelx = 160;
+% nely = 100;
+nelx = 8;
+nely = 5;
 volfrac = 0.4;
 penal = 3;
 rmin = 6;
 ft = 1;
 
 %% MATERIAL PROPERTIES
-E0 = 1;
+E0 = 1
 Emin = 1e-9;
 nu = 0.3;
 

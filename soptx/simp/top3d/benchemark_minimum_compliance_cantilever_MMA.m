@@ -92,7 +92,7 @@ d     = zeros(m, 1);         % Column vector with the constants d_i in the terms
 % START ITERATION
 while change > tolx && loop < maxloop
     loop = loop + 1;
-
+   
     % FE-ANALYSIS
     sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),24*24*nele,1);
     K = sparse(iK,jK,sK); 

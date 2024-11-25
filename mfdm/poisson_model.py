@@ -85,11 +85,12 @@ class SinSinData:
 
     @cartesian
     def Dirichlet(self, p):
-        x = p[..., 0]
-        y = p[..., 1]
-        pi = np.pi
-        val = np.sin(pi*x) * np.sin(pi*y)
-        return val
+        return self.solution(p)
+        # x = p[..., 0]
+        # y = p[..., 1]
+        # pi = np.pi
+        # val = np.sin(pi*x) * np.sin(pi*y)
+        # return val
     #@cartesian
     #def gradient_u(self, p):
     #    x = p[..., 0]
@@ -108,4 +109,3 @@ class SinSinData:
     #    value1 = np.pi*np.sin(np.pi*x)*np.cos(np.pi*y)
     #    value = value0+value1
     #    return value
-

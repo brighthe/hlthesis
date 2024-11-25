@@ -35,7 +35,7 @@
 %\usefonttheme[onlylarge]{structurebold}
 \setbeamercovered{transparent}
 
-\title{基于 FEALPy 的拓扑优化中的自动微分框架} 
+\title{基于自动微分的拓扑优化算法、实现与应用的研究} 
 \author{何亮}
 \institute[XTU]{
 学号：202331510117\\
@@ -225,13 +225,13 @@
 	\frametitle{研究方法}
 	 \textbf{基于变密度方法的柔顺度最小化问题数学模型}
 	 \begin{itemize}
-	            \item 使用张量分析语言描述变密度方法的柔顺度最小化问题。
+	            \item 描述变密度方法的柔顺度最小化问题。
 	            \item[•]目标函数
 	            $$\min_{\rho} :C = \int_{\Omega}(E(\rho)\varepsilon(u):\varepsilon(u))~\mathrm{d}x.$$
 	            \item[•]约束条件
 	            $$\int_\Omega\rho(x)~\mathrm{d}x - V_{\max};\quad0<\rho_{\min}\leq\rho\leq1.$$
 	            \item[•]平衡方程
-	            $$\int_{\Omega}(\sigma(u):\varepsilon(v))~\mathrm{d}x = \int_{\Omega}f\cdot{v}~\mathrm{d}x + \int_{\Gamma_N}F_n\cdot{v}~\mathrm{d}s,\quad\mathrm{for~all}~v\in{U}.$$
+	            $$\int_{\Omega}(\sigma(u):\varepsilon(v))~\mathrm{d}x = \int_{\Omega}f{v}~\mathrm{d}x + \int_{\Gamma_N}F_n{v}~\mathrm{d}s,\quad\mathrm{for~all}~v\in{U}.$$
 	 \end{itemize}
 \end{frame}
 %--------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@
 	            \item[1.]计算当前设计变量下的刚度矩阵 $K(\rho)$。
 	            \item[2.]求解平衡方程 $K(\rho) u = f$ 获得位移场 $u$。
 	            \item[3.]计算目标函数 $C(\rho, u)$。
-	            \item[4.]进行灵敏度分析，计算目标函数对设计变量的导数。
+	            \item[4.]进行灵敏度分析，计算目标函数对设计变量的导数
 	            $\frac{\partial C}{\partial \rho}$。
 	            \item[5.]更新设计变量 $\rho$。
 	        \end{enumerate}
@@ -267,7 +267,7 @@
 	            \item[1.]计算当前设计变量下的刚度矩阵 $K(\rho)$。
 	            \item[2.]求解平衡方程 $K(\rho) u = f$ 获得位移场 $u$。
 	            \item[3.]计算目标函数 $C(\rho, u)$。
-	            \item[4.]使用 PyTorch 自动计算目标函数对设计变量的导数。 
+	            \item[4.]使用 PyTorch 自动计算目标函数对设计变量的导数 
 	            $\frac{\partial C}{\partial \rho}$。
 	            \item[5.]更新设计变量 $\rho$。
 	        \end{enumerate}
@@ -280,12 +280,13 @@
 \begin{frame}
 	\frametitle{研究方法}
 	 \textbf{比较两者的结果，验证 AD 对于变密度方法的影响}
+	 \vspace{0.3cm}
     \begin{itemize}
         \item[•]比较两种方法在计算时间、收敛速度和计算精度上的表现。
         \vspace{0.3cm}
-        \item[•]分析自动微分在复杂问题中的优势和可能的劣势。
+        \item[•]分析 AD 在复杂问题中的优势和可能的劣势。
         \vspace{0.3cm}
-        \item[•]通过数值实验验证自动微分技术在变密度方法中的应用效果。
+        \item[•]通过数值实验验证 AD 技术在变密度方法中的应用效果。
     \end{itemize}
 \end{frame}
 %--------------------------------------------------------------------------------------
@@ -295,10 +296,10 @@
 %--------------------------------------------------------------------------------------
 \begin{frame}
     \frametitle{研究进展}
-    \textbf{基于变密度方法的柔顺度最小化问题数学模型的推导}
+    \textbf{求解基于变密度方法的柔顺度最小化问题}
     \vspace{0.3cm}
     \begin{itemize}
-        \item[•]完成工作：推导了基于变密度方法的柔顺度最小化问题的数学模型。
+        \item[•]完成工作：基于变密度方法的柔顺度最小化问题的数学模型；使用最优准则方法和移动渐近线方法分别求解基于变密度方法的柔顺度最小化问题的算法流程。
     \end{itemize}
 \end{frame}
 %--------------------------------------------------------------------------------------
@@ -386,5 +387,12 @@
 \end{frame}
 %--------------------------------------------------------------------------------------
 
+%--------------------------------------------------------------------------------------
+\frame{
+\begin{center}\color{black} \Huge
+\textsl{感谢大家}
+\end{center}
+}
+%--------------------------------------------------------------------------------------
 
 \end{document}
