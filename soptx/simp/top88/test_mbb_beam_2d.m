@@ -13,8 +13,8 @@ rmin = 2.4;
 volfrac = 0.5;
 penal = 3;
 
-% ft = 1;
-ft = 2;
+% ft = 1;   % 灵敏度滤波器
+ft = 2;   % 密度滤波器
 
 % MATERIAL PROPERTIES
 E0 = 1;

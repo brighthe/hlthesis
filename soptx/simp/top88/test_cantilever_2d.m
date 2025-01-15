@@ -1,11 +1,10 @@
 nelx = 160;
 nely = 100;
-% nelx = 8;
-% nely = 5;
 volfrac = 0.4;
 penal = 3;
 rmin = 6;
-ft = 1;
+ft = 1;   % 灵敏度滤波器
+% ft = 2;   % 密度滤波器
 
 %% MATERIAL PROPERTIES
 E0 = 1;
