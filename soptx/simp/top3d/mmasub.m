@@ -58,36 +58,66 @@ raa0 = 0.00001;
 % albefa = 0.4;
 albefa = 0.1;
 % asyinit = 0.1;
-asyinit = 0.01;
+asyinit = 0.5;
 asyincr = 1.2;
 % asyincr = 0.8;
-asydecr = 0.4;
+asydecr = 0.7;
 eeen = ones(n, 1);
 eeem = ones(m, 1);
 zeron = zeros(n, 1);
+move = 0.2;
 
 % Calculation of the asymptotes low and upp :
 if iter < 2.5
-	move = 0.01;
 	low = xval - asyinit*(xmax - xmin);
 	upp = xval + asyinit*(xmax - xmin);
 else
-	move=0.01;
 	zzz = (xval-xold1).*(xold1-xold2);
 	factor = eeen;
-	factor(find(zzz > 0)) = asyincr;
-	factor(find(zzz < 0)) = asydecr;
+    epsilon = 1e-12;
+    factor(find(zzz > epsilon)) = asyincr;
+	factor(find(zzz < -epsilon)) = asydecr;
+	% factor(find(zzz > 0)) = asyincr;
+	% factor(find(zzz < 0)) = asydecr;
+    % small_vals = zzz(abs(zzz) < 1e-10);
+    % fprintf('Near zero values count: %d\n', length(small_vals));
+    % fprintf('Min absolute non-zero value: %e\n', min(abs(zzz(zzz ~= 0))));
 	low = xval - factor.*(xold1 - low);
 	upp = xval + factor.*(upp - xold1);
-	lowmin = xval - 0.01*(xmax-xmin);
-	lowmax = xval - 0.0001*(xmax-xmin);
-	uppmin = xval + 0.0001*(xmax-xmin);
-	uppmax = xval + 0.01*(xmax-xmin);
+    % fprintf('xval: %f\n', mean(xval(:)));
+    % fprintf('factor: %f\n', mean(factor(:)));
+    % fprintf('xold1: %f\n', mean(xold1(:)));
+    % fprintf('xold2: %f\n', mean(xold2(:)));
+    % fprintf('low: %f\n', mean(low(:)));
+    % fprintf('upp: %f\n', mean(upp(:)));
+    % fprintf('upp: %f\n', mean(upp(:)));
+	lowmin = xval - 10*(xmax-xmin);
+	lowmax = xval - 0.01*(xmax-xmin);
+	uppmin = xval + 0.01*(xmax-xmin);
+	uppmax = xval + 10*(xmax-xmin);
 	low = max(low, lowmin);
 	low = min(low, lowmax);
 	upp = min(upp, uppmax);
 	upp = max(upp, uppmin);
+    % fprintf('Positive count: %d\n', sum(zzz > epsilon));
+    % fprintf('Negative count: %d\n', sum(zzz < -epsilon));
+    % fprintf('Zero count: %d\n', sum(abs(zzz) < epsilon));
+    % fprintf('xval: %f\n', mean(xval(:)));
+    % fprintf('Max diff xval-xold1: %e\n', mean(xval-xold1));
+    % fprintf('Max diff xold1-xold2: %e\n', mean(xold1-xold2));
+    % fprintf('zzz: %f\n', mean(zzz(:)));
+    % fprintf('factor: %f\n', mean(factor(:)));
+    % fprintf('low: %f\n', mean(low(:)));   
+    % fprintf('upp: %f\n', mean(upp(:)));
+    % fprintf('upp: %f\n', mean(upp(:)));
+    % fprintf('zzz: %f\n', mean(zzz(:)));
+    % fprintf('xold1: %f\n', mean(xold1(:)));
+    % fprintf('xold2: %f\n', mean(xold2(:)));
+    % fprintf('low: %f\n', mean(low(:)));
+    % fprintf('upp: %f\n', mean(upp(:)));
+    % fprintf('upp: %f\n', mean(upp(:)));
 end
+
 % Calculation of the bounds alfa and beta :
 zzz1 = low + albefa*(xval-low);
 zzz2 = xval - move*(xmax-xmin);
@@ -135,5 +165,5 @@ Q = Q * spdiags(xl2,0,n,n);
 b = P*uxinv + Q*xlinv - fval(:) ;
 %
 %%% Solving the subproblem by a primal-dual Newton method
-[xmma,ymma,zmma,lam,xsi,eta,mu,zet,s] = ...
+[xmma,ymma,zmma,lam,xsi,eta,mu,zet,s] = ...  
 subsolve(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);

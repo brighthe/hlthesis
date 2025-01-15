@@ -8,7 +8,7 @@ from jax import jit, value_and_grad
 
 from utilfuncs import computeFilter, Mesher, MMA, applySensitivityFilter
 
-nelx, nely = 60, 30
+nelx, nely = 6, 3
 elemSize = np.array([1., 1.])
 mesh = {'nelx':nelx, 'nely':nely, 'elemSize':elemSize,\
         'ndof':2*(nelx+1)*(nely+1), 'numElems':nelx*nely}

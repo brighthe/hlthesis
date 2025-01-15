@@ -81,6 +81,8 @@ function [xmma,ymma,zmma,lamma,xsimma,etamma,mumma,zetmma,smma] = ...
         plam = p0 + P'*lam ;
         qlam = q0 + Q'*lam ;
         gvec = P*uxinv1 + Q*xlinv1;
+        GG1 = P * spdiags(uxinv2,0,n,n);
+        GG2 = Q * spdiags(xlinv2,0,n,n);
         GG = P*spdiags(uxinv2,0,n,n) - Q*spdiags(xlinv2,0,n,n);
         dpsidx = plam./ux2 - qlam./xl2 ;
         delx = dpsidx - epsvecn./(x-alfa) + epsvecn./(beta-x);
@@ -93,7 +95,7 @@ function [xmma,ymma,zmma,lamma,xsimma,etamma,mumma,zetmma,smma] = ...
         diagy = d + mu./y;
         diagyinv = eem./diagy;
         diaglam = s./lam;
-        diaglamyi = diaglam+diagyinv;
+        diaglamyi = diaglam + diagyinv;
         if m < n
           blam = dellam + dely./diagy - GG*(delx./diagx);
           bb = [blam' delz]';

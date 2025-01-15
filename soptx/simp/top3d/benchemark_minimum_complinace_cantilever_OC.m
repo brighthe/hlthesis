@@ -1,9 +1,6 @@
 nelx = 60;
 nely = 20;
 nelz = 4;
-% nelx = 2;
-% nely = 1;
-% nelz = 2;
 volfrac = 0.3;
 penal = 3;
 rmin = 1.5;
