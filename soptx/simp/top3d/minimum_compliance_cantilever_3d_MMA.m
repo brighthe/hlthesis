@@ -119,17 +119,18 @@ while change > tolx && loop < maxloop
             mmasub(m, n, loop, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c_MMA, d);
     % Update MMA Variables
     xnew     = reshape(xmma, nely, nelx, nelz);
-    % if loop == 14 || loop == 15 || loop == 16
-    %     fprintf('xval: %11.8f\n', mean(xval(:)));
-    %     fprintf('xPhys: %11.8f\n', mean(xPhys(:)));
-    %     fprintf('fval: %11.8f\n', mean(fval(:)));
-    %     fprintf('f0val: %11.8f\n', mean(f0val(:)));
-    %     fprintf('dfdx: %11.8f\n', mean(dfdx(:)));
-    %     fprintf('low: %11.8f\n', mean(low(:)));
-    %     fprintf('upp: %11.8f\n', mean(upp(:)));
-    %     fprintf('xmma: %11.8f\n', mean(xmma(:)));
-    %     fprintf('--------------------------\n');
-    % end
+    if loop == 14 || loop == 15 || loop == 16
+        fprintf('xval: %11.8f\n', mean(xval(:)));
+        fprintf('xPhys: %11.8f\n', mean(xPhys(:)));
+        fprintf('fval: %11.8f\n', mean(fval(:)));
+        fprintf('f0val: %11.8f\n', mean(f0val(:)))
+        fprintf('df0dx: %11.8f\n', mean(df0dx(:)));
+        fprintf('dfdx: %11.8f\n', mean(dfdx(:)));
+        fprintf('low: %11.8f\n', mean(low(:)));
+        fprintf('upp: %11.8f\n', mean(upp(:)));
+        fprintf('xmma: %11.8f\n', mean(xmma(:)));
+        fprintf('--------------------------\n');
+    end
     xPhys(:) = (H*xnew(:))./Hs;
     xold2    = xold1(:);
     xold1    = x(:);

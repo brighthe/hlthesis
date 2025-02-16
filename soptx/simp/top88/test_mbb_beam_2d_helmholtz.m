@@ -13,8 +13,8 @@ rmin = 2.4;
 volfrac = 0.5;
 penal = 3;
 
-ft = 1;   % 灵敏度滤波器
-% ft = 2;   % 密度滤波器
+% ft = 1;   % 灵敏度滤波器
+ft = 2;   % 密度滤波器
 
 % MATERIAL PROPERTIES
 E0 = 1;
@@ -34,33 +34,27 @@ iK = reshape(kron(edofMat,ones(8,1))',64*nelx*nely,1);
 jK = reshape(kron(edofMat,ones(1,8))',64*nelx*nely,1);
 
 % DEFINE LOADS AND SUPPORTS (HALF MBB-BEAM)
-F = sparse(2,1,-1,2*(nely+1)*(nelx+1),1);
-U = zeros(2*(nely+1)*(nelx+1),1);
+F = sparse(2, 1, -1, 2*(nely+1)*(nelx+1), 1);
+U = zeros(2*(nely+1)*(nelx+1), 1);
 fixeddofs = union([1:2:2*(nely+1)], [2*(nelx+1)*(nely+1)]);
 alldofs = [1:2*(nely+1)*(nelx+1)];
-freedofs = setdiff(alldofs,fixeddofs);
+freedofs = setdiff(alldofs, fixeddofs);
 
 % PREPARE FILTER
-iH = ones(nelx*nely*(2*(ceil(rmin)-1)+1)^2,1);
-jH = ones(size(iH));
-sH = zeros(size(iH));
-k = 0;
-for i1 = 1:nelx
-	for j1 = 1:nely
-		e1 = (i1-1)*nely+j1;
-		for i2 = max(i1-(ceil(rmin)-1),1):min(i1+(ceil(rmin)-1),nelx)
-			for j2 = max(j1-(ceil(rmin)-1),1):min(j1+(ceil(rmin)-1),nely)
-				e2 = (i2-1)*nely+j2;
-				k = k+1;
-				iH(k) = e1;
-				jH(k) = e2;
-				sH(k) = max(0,rmin-sqrt((i1-i2)^2+(j1-j2)^2));
-			end
-		end
-	end
-end
-H = sparse(iH,jH,sH);
-Hs = sum(H,2);
+Rmin = rmin / 2 / sqrt(3);
+KEF = Rmin^2*[4 -1 -2 -1; -1  4 -1 -2; -2 -1  4 -1; -1 -2 -1  4]/6 + ...
+             [4  2  1  2;  2  4  2  1;  1  2  4  2;  2  1  2  4]/36;
+edofVecF = reshape(nodenrs(1:end-1,1:end-1), nelx*nely,1);
+edofMatF = repmat(edofVecF,1,4)+repmat([0 nely+[1:2] 1], nelx*nely,1);
+iKF = reshape(kron(edofMatF,ones(4,1))', 16*nelx*nely,1);
+jKF = reshape(kron(edofMatF,ones(1,4))', 16*nelx*nely,1);
+sKF = reshape(KEF(:)*ones(1,nelx*nely), 16*nelx*nely,1);
+KF = sparse(iKF, jKF, sKF);
+LF = chol(KF, 'lower');
+iTF = reshape(edofMatF, 4*nelx*nely, 1);
+jTF = reshape(repmat([1:nelx*nely], 4, 1)', 4*nelx*nely, 1);
+sTF = repmat(1/4, 4*nelx*nely,1);
+TF = sparse(iTF, jTF, sTF);
 
 %%-------------------- INITIALIZE ITERATION --------------------%%
 x = repmat(volfrac, nely, nelx);
@@ -88,22 +82,23 @@ while change > 0.01
 	
 	% FILTERING/MODIFICATION OF SENSITIVITIES
 	if ft == 1
-		dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3, x(:));
+        dc(:) = (TF' * (LF' \ (LF \ (TF * (dc(:) .* xPhys(:)))))) ...
+                    ./ max(1e-3, xPhys(:));
 	elseif ft == 2
-		dc(:) = H*(dc(:)./Hs);
-		dv(:) = H*(dv(:)./Hs);
+        dc(:) = TF' * (LF' \ (LF \ (TF * dc(:))));
+        dv(:) = TF' * (LF' \ (LF \ (TF * dv(:))));
 	end
 	
 	% OPTIMALITY CRITERIA UPDATE OF DESIGN VARIABLES AND PHYSICAL DENSITIES
 	l1 = 0; l2 = 1e9; move = 0.2;
     % fprintf(' x.:%16.12f\n', mean(x(:)));
 	while (l2-l1)/(l1+l2) > 1e-3
-		lmid = 0.5*(l2+l1);
+		lmid = 0.5 * (l2 + l1);
 		xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
 		if ft == 1
 			xPhys = xnew;
 		elseif ft == 2
-			xPhys(:) = (H*xnew(:))./Hs;
+			xPhys(:) = (TF' * (LF' \ (LF \ (TF * xnew(:)))));
 		end
 		if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
 	end
@@ -112,7 +107,6 @@ while change > 0.01
 
 	% PRINT RESULTS
 	iter_time = toc;  % Stop timing and get iteration time
-    % meam =  mean(xPhys(:));
 	fprintf(' It.:%5i Obj.:%11.4f Vol.:%16.12f ch.:%7.3f Time:%7.3f sec\n', loop, c, mean(xPhys(:)), change, iter_time);
 
 	% PLOT DENSITIES

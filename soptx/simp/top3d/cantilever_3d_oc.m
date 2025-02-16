@@ -1,28 +1,31 @@
+%% 参数设置
 nelx = 60;
 nely = 20;
 nelz = 4;
 volfrac = 0.3;
 penal = 3;
 rmin = 1.5;
+ft = 1;     % 密度滤波器
+% ft = 2;   % 灵敏度滤波器
 
 % USER-DEFINED LOOP PARAMETERS
 maxloop = 200;    % Maximum number of iterations
 tolx = 0.01;      % Terminarion criterion
 displayflag = 0;  % Display structure flag
 
-% USER-DEFINED MATERIAL PROPERTIES
+%% MATERIAL PROPERTIES
 E0 = 1;           % Young's modulus of solid material
 Emin = 1e-9;      % Young's modulus of void-like material
 nu = 0.3;         % Poisson's ratio
 
 % USER-DEFINED LOAD DOFs
 [il, jl, kl] = meshgrid(nelx, 0, 0:nelz);                 % Coordinates
-loadnid = kl*(nelx+1)*(nely+1)+il*(nely+1)+(nely+1-jl); % Node IDs
-loaddof = 3*loadnid(:) - 1;                             % DOFs
+loadnid = kl*(nelx+1)*(nely+1)+il*(nely+1)+(nely+1-jl);   % Node IDs
+loaddof = 3*loadnid(:) - 1;                               % DOFs
 
 % USER-DEFINED SUPPORT FIXED DOFs
 [iif, jf, kf] = meshgrid(0, 0:nely, 0:nelz);                  % Coordinates
-fixednid = kf*(nelx+1)*(nely+1)+iif*(nely+1)+(nely+1-jf); % Node IDs
+fixednid = kf*(nelx+1)*(nely+1)+iif*(nely+1)+(nely+1-jf);     % Node IDs
 fixeddof = [3*fixednid(:); 3*fixednid(:)-1; 3*fixednid(:)-2]; % DOFs
 
 % PREPARE FINITE ELEMENT ANALYSIS
@@ -75,7 +78,7 @@ xPhys = x;
 loop = 0; 
 change = 1;
 
-% START ITERATION
+%% START ITERATION
 while change > tolx && loop < maxloop
     tic;  % Start timing the iteration
     loop = loop + 1;
@@ -92,27 +95,27 @@ while change > tolx && loop < maxloop
     dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
     dv = ones(nely,nelx,nelz);
     
-    % FILTERING AND MODIFICATION OF SENSITIVITIES
-    dc(:) = H*(dc(:)./Hs);
-    dv(:) = H*(dv(:)./Hs);
-    % if ft == 1
-    %     dc(:) = H*(dc(:)./Hs);
-    %     dv(:) = H*(dv(:)./Hs);
-    % elseif ft == 2
-    %     dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
-    % end
+    %% FILTERING/MODIFICATION OF SENSITIVITIES
+    % dc(:) = H*(dc(:)./Hs);
+    % dv(:) = H*(dv(:)./Hs);
+    if ft == 1
+        dc(:) = H*(dc(:)./Hs);
+        dv(:) = H*(dv(:)./Hs);
+    elseif ft == 2
+        dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3,x(:));
+    end
 
-    % OPTIMALITY CRITERIA UPDATE
+    %% OPTIMALITY CRITERIA UPDATE OF DESIGN VARIABLES AND PHYSICAL DENSITIES
     l1 = 0; l2 = 1e9; move = 0.2;
     while (l2-l1)/(l1+l2) > 1e-3
         lmid = 0.5 * (l2 + l1);
         xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
-        xPhys(:) = (H*xnew(:))./Hs;
-        % if ft == 1
-        %     xPhys(:) = (H*xnew(:))./Hs;
-        % elseif ft == 2
-        %     xPhys = xnew;
-        % end
+        % xPhys(:) = (H*xnew(:))./Hs;
+        if ft == 1
+            xPhys(:) = (H*xnew(:))./Hs;
+        elseif ft == 2
+            xPhys = xnew;
+        end
         if sum(xPhys(:)) > volfrac*nele, l1 = lmid; else l2 = lmid; end
     end
 

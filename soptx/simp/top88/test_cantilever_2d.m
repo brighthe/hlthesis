@@ -51,18 +51,14 @@ for i1 = 1:nelx
 end
 H = sparse(iH, jH, sH);
 Hs = sum(H, 2);
-
 %% INITIALIZE ITERATION
 x = repmat(volfrac,nely,nelx);
 xPhys = x;
 loop = 0;
 change = 1;
-
-
 %% START ITERATION
 while change > 0.01
   loop = loop + 1;
-
   %% FE-ANALYSIS
   sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),64*nelx*nely,1);
   K = sparse(iK, jK, sK); K = (K+K') / 2;
@@ -73,7 +69,6 @@ while change > 0.01
   c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));
   dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
   dv = ones(nely, nelx);
-
   %% FILTERING/MODIFICATION OF SENSITIVITIES
   if ft == 1
     dc(:) = H*(x(:).*dc(:))./Hs./max(1e-3, x(:));
@@ -81,7 +76,6 @@ while change > 0.01
     dc(:) = H*(dc(:)./Hs);
     dv(:) = H*(dv(:)./Hs);
   end
-
   %% OPTIMALITY CRITERIA UPDATE OF DESIGN VARIABLES AND PHYSICAL DENSITIES
   l1 = 0; l2 = 1e9; move = 0.2;
   while (l2-l1)/(l1+l2) > 1e-3
