@@ -1,10 +1,10 @@
-nelx = 60;
-nely = 20;
-rmin = 1.8;
+% nelx = 60;
+% nely = 20;
+% rmin = 1.8;
 
-% nelx = 150;
-% nely = 50;
-% rmin = 4.5;
+nelx = 150;
+nely = 50;
+rmin = 4.5;
 
 % nelx = 300;
 % nely = 100;

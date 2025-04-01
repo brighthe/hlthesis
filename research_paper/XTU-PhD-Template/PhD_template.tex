@@ -1,0 +1,49 @@
+\documentclass[UTF8,12pt,oneside,a4paper]{ctexbook}%,fancyhdr,fntef
+%----------------------------------------packages and format-----------------
+%\input{setup/package.tex}
+\usepackage{xeCJK}
+\usepackage{xtuformat}
+\usepackage{enumerate}
+% \usepackage{ctex}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\allowdisplaybreaks
+\pgfplotsset{compat=1.16}
+\graphicspath{{Figures/}}
+\include{preface/ex_shared}
+
+\allowdisplaybreaks
+\begin{document}
+%----------------------------------------cover-------------------------------
+\include{preface/cover}
+\newpage
+\pagestyle{plain}
+\pagenumbering{Roman}
+\include{preface/abstract}
+%----------------------------------------table content-----------------------
+\newpage
+\songti\zihao{-4}
+\tableofcontents
+%----------------------------------------body--------------------------------
+%\include{body/symbols}
+\newpage
+\pagenumbering{arabic}
+% \include{body/Chapter01}
+% \include{body/ChapL}
+% \include{body/ChapHMMs}
+% \include{body/ChapCloak}
+% \include{body/ChapNL}
+% \include{body/ChapLNL}
+\include{body/SummaryProspect}
+%----------------------------------------reference---------------------------
+%\include{reference/references}
+\phantomsection
+\addcontentsline{toc}{chapter}{参考文献}
+% \bibliographystyle{reference/mybibPHD}
+\bibliographystyle{reference/gbt7714-2005-my}
+\bibliography{reference/Library}
+%----------------------------------------thanks------------------------------
+\include{body/thank}
+%\include{body/appendix}
+\include{body/aboutme}
+\end{document}

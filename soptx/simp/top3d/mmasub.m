@@ -52,7 +52,8 @@ function [xmma, ymma, zmma, lam, xsi, eta, mu, zet, s, low, upp] = mmasub(...
 
 % 常数
 epsimin = 10^(-7);
-raa0 = 0.00001;
+% raa0 = 0.00001;
+raa0 = 10^(-5);
 % raa0 = 0.01;
 % move = 1.0;
 % albefa = 0.4;

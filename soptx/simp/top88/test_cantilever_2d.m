@@ -63,7 +63,10 @@ while change > 0.01
   sK = reshape(KE(:)*(Emin+xPhys(:)'.^penal*(E0-Emin)),64*nelx*nely,1);
   K = sparse(iK, jK, sK); K = (K+K') / 2;
   U(freedofs) = K(freedofs,freedofs) \ F(freedofs);
-  Kdense = full(K);
+  % KFULL = full(K);
+  % fprintf('xPhys: %11.10f\n', mean(xPhys(:)));
+  % fprintf('K: %11.10f\n', sum(sum(abs(KFULL))));
+  fprintf('u: %11.10f\n', mean(U(:)));
   %% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
   ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2), nely, nelx);
   c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));
@@ -88,6 +91,11 @@ while change > 0.01
     end
     if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
   end
+
+  % fprintf('xPhys: %11.10f\n', mean(xPhys(:)));
+  % fprintf('u: %11.10f\n', mean(U(:)));
+  % fprintf('xnew: %11.10f\n', mean(xnew(:)))
+
   change = max(abs(xnew(:) - x(:)));
   x = xnew;
 

@@ -1,7 +1,7 @@
 nelx = 60;
 nely = 20;
 rmin = 2.4;
-
+ 
 % nelx = 150;
 % nely = 50;
 % rmin = 6;
@@ -13,8 +13,8 @@ rmin = 2.4;
 volfrac = 0.5;
 penal = 3;
 
-ft = 1;   % 灵敏度滤波器
-% ft = 2;   % 密度滤波器
+% ft = 1;   % 灵敏度滤波器
+ft = 2;   % 密度滤波器
 
 % MATERIAL PROPERTIES
 E0 = 1;
@@ -79,12 +79,15 @@ while change > 0.01
 	K = sparse(iK, jK, sK); K = (K + K') / 2;
 	U(freedofs) = K(freedofs,freedofs) \ F(freedofs);
 
+    % fprintf('xPhys: %11.12f U: %11.12f\n', sum(abs(xPhys(:))), mean(U(:)));
+
 	% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
 	Ue = U(edofMat);
 	ce = reshape(sum((U(edofMat)*KE).*U(edofMat),2), nely, nelx);
 	c = sum(sum((Emin + xPhys.^penal * (E0 - Emin)).*ce));
 	dc = -penal*(E0-Emin)*xPhys.^(penal-1).*ce;
 	dv = ones(nely, nelx);
+    % fprintf('dc: %11.12f\n', sum(abs(dc(:))));
 	
 	% FILTERING/MODIFICATION OF SENSITIVITIES
 	if ft == 1
@@ -92,11 +95,12 @@ while change > 0.01
 	elseif ft == 2
 		dc(:) = H*(dc(:)./Hs);
 		dv(:) = H*(dv(:)./Hs);
-	end
+    end
+    % fprintf('ddc: %11.12f\n', sum(abs(dc(:))));
+    % fprintf('dv: %11.12f\n', sum(abs(dv(:))));
 	
 	% OPTIMALITY CRITERIA UPDATE OF DESIGN VARIABLES AND PHYSICAL DENSITIES
 	l1 = 0; l2 = 1e9; move = 0.2;
-    % fprintf(' x.:%16.12f\n', mean(x(:)));
 	while (l2-l1)/(l1+l2) > 1e-3
 		lmid = 0.5*(l2+l1);
 		xnew = max(0,max(x-move,min(1,min(x+move,x.*sqrt(-dc./dv/lmid)))));
@@ -106,14 +110,15 @@ while change > 0.01
 			xPhys(:) = (H*xnew(:))./Hs;
 		end
 		if sum(xPhys(:)) > volfrac*nelx*nely, l1 = lmid; else l2 = lmid; end
-	end
+    end
+    fprintf('xPhys: %11.12f\n', mean(xPhys(:)));
 	change = max(abs(xnew(:)-x(:)));
 	x = xnew;
 
 	% PRINT RESULTS
 	iter_time = toc;  % Stop timing and get iteration time
     % meam =  mean(xPhys(:));
-	fprintf(' It.:%5i Obj.:%11.4f Vol.:%16.12f ch.:%7.3f Time:%7.3f sec\n', loop, c, mean(xPhys(:)), change, iter_time);
+	fprintf(' It.:%5i Obj.:%11.12f Vol.:%8.4jiay jiay f ch.:%7.3f Time:%7.3f sec\n', loop, c, mean(xPhys(:)), change, iter_time);
 
 	% PLOT DENSITIES
 	colormap(gray); imagesc(1-xPhys); caxis([0 1]); axis equal; axis off; drawnow;
