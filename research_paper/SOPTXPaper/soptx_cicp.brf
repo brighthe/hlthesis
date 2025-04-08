@@ -11,18 +11,20 @@
 \backcite {norgaard2017applications}{{4}{1}{section.1}}
 \backcite {chandrasekhar2021auto}{{4}{1}{section.1}}
 \backcite {bradbury2018jax}{{4}{1}{section.1}}
-\backcite {nicolaides1972class}{{5}{2.2}{subsection.2.2}}
-\backcite {ArnoldFalkWinther2009}{{6}{2.3}{subsection.2.3}}
-\backcite {Chen;Huang:2022FEMcomplex3D}{{6}{2.3}{subsection.2.3}}
-\backcite {ArnoldFalkWinther2009}{{7}{3.1}{subsection.3.1}}
-\backcite {Chen;Huang:2021Geometric}{{7}{3.1}{subsection.3.1}}
-\backcite {nicolaides1972class}{{9}{3.1}{lemma.3.1}}
-\backcite {Chen;Huang:2021Geometric}{{11}{4.1}{subsection.4.1}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{13}{4.2}{equation.4.4}}
-\backcite {CastroDevlooFariasGomesEtAl2016}{{13}{4.2}{equation.4.4}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{13}{4.2}{equation.4.4}}
-\backcite {ArnoldFalkWinther2006}{{15}{5.1}{lemma.5.2}}
-\backcite {Nedelec1986,ArnoldFalkWinther2006}{{17}{5.1}{remark.5.1}}
-\backcite {ArnoldFalkWinther2006}{{18}{5.1}{remark.5.1}}
-\backcite {Chen.L2008c}{{21}{6.1}{subsection.6.1}}
-\backcite {FEALPy}{{25}{7}{section.7}}
+\backcite {fealpy}{{4}{1}{section.1}}
+\backcite {unknown}{{5}{1}{section.1}}
+\backcite {nicolaides1972class}{{7}{2.2}{subsection.2.2}}
+\backcite {ArnoldFalkWinther2009}{{7}{2.3}{subsection.2.3}}
+\backcite {Chen;Huang:2022FEMcomplex3D}{{7}{2.3}{subsection.2.3}}
+\backcite {ArnoldFalkWinther2009}{{9}{3.1}{subsection.3.1}}
+\backcite {Chen;Huang:2021Geometric}{{9}{3.1}{subsection.3.1}}
+\backcite {nicolaides1972class}{{11}{3.1}{lemma.3.1}}
+\backcite {Chen;Huang:2021Geometric}{{12}{4.1}{subsection.4.1}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{15}{4.2}{equation.4.4}}
+\backcite {CastroDevlooFariasGomesEtAl2016}{{15}{4.2}{equation.4.4}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{15}{4.2}{equation.4.4}}
+\backcite {ArnoldFalkWinther2006}{{16}{5.1}{lemma.5.2}}
+\backcite {Nedelec1986,ArnoldFalkWinther2006}{{19}{5.1}{remark.5.1}}
+\backcite {ArnoldFalkWinther2006}{{19}{5.1}{remark.5.1}}
+\backcite {Chen.L2008c}{{23}{6.1}{subsection.6.1}}
+\backcite {FEALPy}{{27}{7}{section.7}}
