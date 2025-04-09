@@ -123,57 +123,139 @@ Building upon this modular foundation, SOPTX seamlessly integrates AD into the T
 
 The remainder of this paper is organized as follows. Section 2 presents the problem formulation and mathematical modeling, including the density-based method, the compliance minimization problem, optimization algorithms, and the theoretical foundation and application of filters. Section 3 elaborates on the design philosophy of the SOPTX framework built on the FEALPy platform, with a particular focus on its modular architecture and unique multi-backend switching mechanism for achieving high-performance and flexible topology optimization. Section 4 provides a step-by-step demonstration of SOPTX installation and usage through the classical 2D cantilever beam problem. In Section 5, the effectiveness and flexibility of SOPTX are comprehensively demonstrated through a series of examples, including the benchmark MBB beam problem, comparative experiments with different filters and optimization algorithms, a three-dimensional cantilever beam case, and performance analyses of fast matrix assembly, AD, and multi-backend switching. Finally, Section 6 concludes the paper and discusses directions for future research.
 
+\section{Density-based Topology Optimization: Formulation, Algorithms, and Regularization}\label{sec:math}
+In this chapter, we first introduce the density-based method widely employed in topology optimization (TO), elucidating the fundamental idea of optimizing material distribution through the definition of a material density function and interpolation models. Next, taking the compliance minimization problem as an example, we explicitly present both continuous and discrete mathematical formulations of this method. Subsequently, we provide detailed descriptions of two classical optimization algorithms commonly used in TO: the Optimality Criteria (OC) method and the Method of Moving Asymptotes (MMA), including their algorithmic implementations and characteristics. Finally, we discuss essential filtering techniques in TO, including sensitivity, density, and the Heaviside projection filters, analyzing how these methods effectively mitigate numerical instabilities and enhance the physical feasibility of optimization results.
 
+\subsection{Density-based Method}
+The core objective of TO is to determine the optimal material distribution within a given design domain to achieve predefined performance targets. Density-based methods are among the most widely used strategies in the field of TO. These methods parameterize the structure by defining a material density function $\rho(x)$, where:
+\begin{itemize}
+	\item $\rho(x) = 1$ indicates regions occupied by solid material;
+	\item $\rho(x) = 0$ represents void regions;
+	\item $0 < \rho(x) < 1$ corresponds to intermediate densities, introduced to avoid the non-convexity inherent in discrete optimization problems by employing continuous design variables.
+\end{itemize}
 
-\section{Preliminaries}\label{sec:pre}
-In this section, we provide essential foundations for our study. We introduce multi-indices, simplicial lattices, and interpolation points. We explain sub-simplices and their relations. Furthermore, we introduce the dictionary ordering of simplicial lattices and the concept of bubble polynomials. 
+In a discretized design domain, the mechanical properties (e.g., stiffness) of material elements transition smoothly between solid and void states via interpolation models\cite{bendsoe1989optimal}. Among these, the power-law interpolation model has been widely adopted due to its implicit penalization of intermediate densities. This method is known as the Solid Isotropic Material with Penalization (SIMP) approach \cite{zhou1991coc}.
 
-\subsection{Simplicial lattice}
-A multi-index of length $n+1$ is an array of non-negative integers: 
-$$
-\boldsymbol\alpha = (\alpha_0, \alpha_1, \ldots, \alpha_{n}), \quad \alpha_i \in \mathbb N, i=0,\ldots, n.
-$$ 
-The degree or sum of the multi-index is 
-$|\boldsymbol \alpha| = \sum_{i = 0}^{n} \alpha_i$ and factorial is 
-$\boldsymbol \alpha! = \prod_{i=0}^n (\alpha_i!)$. 
-The set of all multi-indices of length $n+1$ and degree 
-$k$ will be called a simplicial lattice and denoted by $\mathbb T^n_k$, i.e.,
-$$
-\mathbb T^n_k = \{ \boldsymbol \alpha \in \mathbb N^{n+1}:
-|\boldsymbol \alpha| = k\}.
-$$ 
-The elements in $\mathbb T^n_k$ can be linearly indexed by the 
-dictionary ordering $R_n$:
+The SIMP method establishes a power-law relationship between the material density $\rho$ and Young's modulus $E$:
 \begin{equation*}
-R_n(\boldsymbol \alpha)=\sum_{i=1}^n{\alpha_i+\alpha_{i+1}+\cdots+\alpha_n+n-i \choose n+1-i}.
+	E(\rho) = \rho^p E_0,\quad \rho \in [0,1],
 \end{equation*}
-For example, for an element $\boldsymbol \alpha$ in $\mathbb T^2_k$, the index is given by the mapping:
-$$
-R_2(\boldsymbol \alpha) = \frac{(\alpha_1+\alpha_2)(\alpha_1+\alpha_2+1)}{2} + 
-\alpha_2.
-$$ 
-%can compute the indexing of $\boldsymbol \alpha$ in $\mathbb T^2_k$.
-%For an element $\mathrm{\boldsymbol \alpha}$ in $\mathbb T^3_k$, the 
-%mapping is: 
-%\begin{align*}
-%R_3(\boldsymbol \alpha) = &
-%\frac{(\alpha_1+\alpha_2+\alpha_3)(\alpha_1+\alpha_2+\alpha_3 +1)(\alpha_1+\alpha_2+\alpha_3+2)}{6} \\
-%&+ \frac{(\alpha_2+\alpha_3)(\alpha_2+\alpha_3+1)}{2} + \alpha_3.
-%\end{align*}
-%Below we present the first four lattice nodes in $R_2(\boldsymbol \alpha)$ with $k=4$:
-%$$\begin{matrix}
-%0 : \\
-%1 : \\
-%2 : \\
-%3 : \\
-%\end{matrix}
-%\begin{pmatrix}
-%    4 & 0 & 0  \\
-%    3 & 1 & 0  \\
-%    3 & 0 & 1  \\
-%    2 & 2 & 0  \\
-%\end{pmatrix}.$$
-Notice that $\alpha_0$ is not used in the calculation of $R_n(\bs \alpha)$. 
+where $E_0$ denotes the Young's modulus of solid material, and $p>1$ is the penalization factor. By increasing the relative stiffness cost of intermediate densities, this power-law relationship encourages the optimization results toward a clear $0-1$ distribution.
+
+As the element density $\rho$ approaches zero, the standard SIMP model causes the element stiffness matrix to approach zero, potentially leading to singularities in the global stiffness matrix. To address this issue, the modified SIMP model introduces a minimum Young's modulus $E_{\min}$:
+\begin{equation*}
+	E(\rho) = E_{\min} + \rho^p(E_0 - E_{\min}),\quad \rho \in [0,1],
+\end{equation*}
+where $E_{\min} = 10^{-9} E_0$. This modification ensures that the stiffness matrix remains positive definite at $\rho = 0$, preventing numerical failure \cite{sigmund2007morphology}.
+
+Although the SIMP method suppresses intermediate densities through the penalization factor, optimization results may still contain "gray areas," which lack clear physical correspondence to either material or void regions, potentially causing manufacturing difficulties. In practical applications, the SIMP approach is often combined with Heaviside projection filters to achieve a distinct $0-1$ topology. Additionally, sensitivity or density filtering techniques are typically employed alongside the SIMP model to mitigate numerical instabilities, such as checkerboard patterns.
+
+\subsection{Compliance Minimization Problem}
+The compliance minimization problem with volume constraints aims to minimize the structural compliance (i.e., the total strain energy) under external loads and boundary conditions by optimizing the material distribution within a given design domain $\Omega$, while ensuring that the total material volume does not exceed a specified threshold. Here, compliance is defined as the total strain energy of the structure, which can be physically interpreted as the work done by external loads on the displacement field.
+
+The compliance minimization problem in its continuous form can be formulated as follows:
+\begin{equation}\label{eq:cmpc}
+\begin{aligned}
+	\min_{\rho}:&~c(\rho) = \int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x  \\
+	\mathrm{subject~to}:&~g(\rho) = v(\rho) - V^* = \int_\Omega\rho~\mathrm{d}x - V^*\leq0\\
+	&\rho(x)\in[0,1],\quad\forall{x}\in\Omega\\
+	&\nabla\cdot\sigma(u)+f=0\quad\mathrm{on}~\Omega\\
+	&u=0\quad\mathrm{on}~\Gamma_D,\quad\sigma(u)\cdot{n}=t\quad\mathrm{on}~\Gamma_N
+\end{aligned}
+\end{equation}
+where:
+\begin{itemize} 
+	\item \textbf{Design variable}: $\rho(x)$ represents the material density distribution, and the density function belongs to the function space $L^2(\Omega)$, ensuring square integrability:
+	\begin{equation*}
+		L^2(\Omega)=\{\rho:\Omega\to\mathbb{R}:\Vert \rho\Vert_{L^2(\Omega)}<\infty\},~\Vert \rho\Vert_{L^2(\Omega)}=\left(\int_\Omega|\rho|^2\,\mathrm{d}x\right)^{1/2}
+	\end{equation*}
+	\item \textbf{Displacement field}: $u(x)$ belongs to the function space $H^1(\Omega)$ to accommodate the weak form of equilibrium equations:
+	\begin{equation*}
+		H^1(\Omega)=\{u\in L^2(\Omega):D^1u\in L^2(\Omega)\}
+	\end{equation*}
+	\item \textbf{Strain and stress}: The strain tensor is defined as
+	\begin{equation*}
+		\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)
+	\end{equation*}
+	and the stress tensor as
+	\begin{equation*}
+		\sigma(u) = D(\rho):\varepsilon(u)
+	\end{equation*}
+	where $D(\rho)$ denotes the material stiffness tensor, belonging to the function space $L^\infty(\Omega)$ to ensure boundedness:
+	\begin{equation*}
+		L^\infty(\Omega)=\{D:\Omega\to\mathbb{R}:\Vert D\Vert_{L^\infty(\Omega)}<\infty\},~\Vert D\Vert_{L^\infty(\Omega)}=\sup_{x\in\Omega}|D(x)|
+	\end{equation*}
+	\item \textbf{Volume constraint}: The constraint $g(\rho)\leq0$ restricts the total material volume, with $V^*$ representing the prescribed volume threshold.
+	\item \textbf{Boundary conditions}: $\Gamma_D$ denotes the Dirichlet boundary where displacements are fixed, $\Gamma_N$ denotes the Neumann boundary where surface traction $t$ are applied, $f$ represents the body force, and $n$ is the outward normal direction on the boundary.
+\end{itemize}
+
+To solve the compliance minimization problem numerically, the design domain $\Omega$ is discretized into $N_e$ elements using the finite element method, and each element is assigned a constant density $\rho_e$. This piecewise-constant approximation transforms the continuous formulation into a discrete optimization problem.
+
+The discrete form of the compliance minimization problem can be formulated as follows:
+\begin{equation}\label{eq:cmpd}
+	\begin{aligned} 
+	\min_{\bs{\rho}}:&c(\bs{\rho}) = \bs{F}^T\bs{U} \\ 
+	\mathrm{subject~to}:&\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\
+					&g(\bs{\rho}) = v(\rho) - V^* = \sum_{e=1}^{N_e} v_e\rho_e - V^*\leq0 \\ 
+					&\rho_e\in[0,1],\quad e=1,\ldots,N_e 
+	\end{aligned}
+\end{equation}
+where: 
+\begin{itemize} 
+	\item \textbf{Design variables}: $\bs{\rho} = [\rho_1, \rho_2, \dots, \rho_{N_e}]^T$ represents the density of each element. 
+	\item \textbf{Stiffness matrix}: The global stiffness matrix is defined as $\bs{K}(\bs{\rho}) = \sum_{e=1}^{N_e}\bs{K}_e(\rho_e)$, where the element stiffness matrix $\bs{K}_e(\rho_e) = E(\rho_e)\bs{K}_e^0$, with $\bs{K}_e^0$ being the element stiffness matrix corresponding to unit Young's modulus.
+	 \item \textbf{Load}: The load vector $\bs{F}$ represents the discrete form of the body force $f$ and surface traction $t$. 
+	\item \textbf{Displacement}: The displacement vector $\bs{U}(\bs{\rho})$ is obtained by solving the linear system $\bs{K}(\bs{\rho})\bs{U} = \bs{F}$, providing an approximation to the continuous equilibrium equations. 
+	\item \textbf{Volume constraint}: The constraint $g(\bs{\rho})\leq0$ ensures that the total material volume (weighted sum of element volumes $v_e$ and densities $\rho_e$) does not exceed $V^*$. 
+\end{itemize}
+
+
+
+%A multi-index of length $n+1$ is an array of non-negative integers: 
+%$$
+%\boldsymbol\alpha = (\alpha_0, \alpha_1, \ldots, \alpha_{n}), \quad \alpha_i \in \mathbb N, i=0,\ldots, n.
+%$$ 
+%The degree or sum of the multi-index is 
+%$|\boldsymbol \alpha| = \sum_{i = 0}^{n} \alpha_i$ and factorial is 
+%$\boldsymbol \alpha! = \prod_{i=0}^n (\alpha_i!)$. 
+%The set of all multi-indices of length $n+1$ and degree 
+%$k$ will be called a simplicial lattice and denoted by $\mathbb T^n_k$, i.e.,
+%$$
+%\mathbb T^n_k = \{ \boldsymbol \alpha \in \mathbb N^{n+1}:
+%|\boldsymbol \alpha| = k\}.
+%$$ 
+%The elements in $\mathbb T^n_k$ can be linearly indexed by the 
+%dictionary ordering $R_n$:
+%\begin{equation*}
+%R_n(\boldsymbol \alpha)=\sum_{i=1}^n{\alpha_i+\alpha_{i+1}+\cdots+\alpha_n+n-i \choose n+1-i}.
+%\end{equation*}
+%For example, for an element $\boldsymbol \alpha$ in $\mathbb T^2_k$, the index is given by the mapping:
+%$$
+%R_2(\boldsymbol \alpha) = \frac{(\alpha_1+\alpha_2)(\alpha_1+\alpha_2+1)}{2} + 
+%\alpha_2.
+%$$ 
+%%can compute the indexing of $\boldsymbol \alpha$ in $\mathbb T^2_k$.
+%%For an element $\mathrm{\boldsymbol \alpha}$ in $\mathbb T^3_k$, the 
+%%mapping is: 
+%%\begin{align*}
+%%R_3(\boldsymbol \alpha) = &
+%%\frac{(\alpha_1+\alpha_2+\alpha_3)(\alpha_1+\alpha_2+\alpha_3 +1)(\alpha_1+\alpha_2+\alpha_3+2)}{6} \\
+%%&+ \frac{(\alpha_2+\alpha_3)(\alpha_2+\alpha_3+1)}{2} + \alpha_3.
+%%\end{align*}
+%%Below we present the first four lattice nodes in $R_2(\boldsymbol \alpha)$ with $k=4$:
+%%$$\begin{matrix}
+%%0 : \\
+%%1 : \\
+%%2 : \\
+%%3 : \\
+%%\end{matrix}
+%%\begin{pmatrix}
+%%    4 & 0 & 0  \\
+%%    3 & 1 & 0  \\
+%%    3 & 0 & 1  \\
+%%    2 & 2 & 0  \\
+%%\end{pmatrix}.$$
+%Notice that $\alpha_0$ is not used in the calculation of $R_n(\bs \alpha)$. 
  
 \subsection{Interpolation points}
 Let $\boldsymbol x_0, \boldsymbol x_1, \ldots, \boldsymbol x_n$ be $n+1$ points in $\mathbb R^n$ and 
