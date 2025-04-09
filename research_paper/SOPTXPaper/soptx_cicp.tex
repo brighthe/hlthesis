@@ -1,6 +1,7 @@
 \documentclass[mathpazo]{cicp}
 \input{mysettingCICP.tex}
 
+\usepackage{algorithmic}
 \usepackage{stmaryrd}
 \usepackage{scalefnt}
 \usepackage{graphicx}
@@ -157,7 +158,7 @@ The compliance minimization problem in its continuous form can be formulated as 
 \begin{equation}\label{eq:cmpc}
 \begin{aligned}
 	\min_{\rho}:&~c(\rho) = \int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x  \\
-	\mathrm{subject~to}:&~g(\rho) = v(\rho) - V^* = \int_\Omega\rho~\mathrm{d}x - V^*\leq0\\
+	\text{subject~to}:&~g(\rho) = v(\rho) - V^* = \int_\Omega\rho~\mathrm{d}x - V^*\leq0\\
 	&\rho(x)\in[0,1],\quad\forall{x}\in\Omega\\
 	&\nabla\cdot\sigma(u)+f=0\quad\mathrm{on}~\Omega\\
 	&u=0\quad\mathrm{on}~\Gamma_D,\quad\sigma(u)\cdot{n}=t\quad\mathrm{on}~\Gamma_N
@@ -195,7 +196,7 @@ The discrete form of the compliance minimization problem can be formulated as fo
 \begin{equation}\label{eq:cmpd}
 	\begin{aligned} 
 	\min_{\bs{\rho}}:&c(\bs{\rho}) = \bs{F}^T\bs{U} \\ 
-	\mathrm{subject~to}:&\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\
+	\text{subject~to}:&\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\
 					&g(\bs{\rho}) = v(\rho) - V^* = \sum_{e=1}^{N_e} v_e\rho_e - V^*\leq0 \\ 
 					&\rho_e\in[0,1],\quad e=1,\ldots,N_e 
 	\end{aligned}
@@ -209,53 +210,75 @@ where:
 	\item \textbf{Volume constraint}: The constraint $g(\bs{\rho})\leq0$ ensures that the total material volume (weighted sum of element volumes $v_e$ and densities $\rho_e$) does not exceed $V^*$. 
 \end{itemize}
 
+\subsection{Optimization Algorithms}
+The Optimality Criteria (OC) method is a classical TO algorithm widely used for compliance minimization problems under volume constraints. This method iteratively updates the design variables to improve the structural topology by satisfying the optimality conditions of the optimization problem. The core idea of the OC method is to adjust the material density $\rho_e$ based on the update factor
+\begin{equation*}
+	B_e = -\frac{\partial{c}(\rho)}{\partial\rho_e}\left(\lambda\frac{\partial{g}(\rho)}{\partial\rho_e}\right)^{-1},
+\end{equation*}
+where $\lambda$ is the Lagrange multiplier associated with the volume constraint.
+ 
+Bendsøe \cite{bendsoe1995optimization} proposed a heuristic update scheme for the design variables, given by the following formula:
+\begin{equation*}
+	\rho_e^{\mathrm{new}}=
+	\begin{cases}
+		\max(0,\rho_e-m)\quad&\text{if}\quad \rho_eB_e^\eta\leq\max(0,\rho_e-m)\\
+		\min(1,\rho_e+m)\quad&\text{if}\quad\rho_eB_e^\eta \geq \min(1,\rho_e+m)\\
+		\rho_eB_e^\eta\quad&\text{if}\quad\text{otherwise}
+	\end{cases}
+\end{equation*}
+where: 
+\begin{itemize} 
+	\item $m$ is the move limit, which constrains the maximum allowable change in the design variables,
+	\item $\eta$ is the damping coefficient, which controls the step size and stability of the algorithm. 
+\end{itemize}
 
+The procedure of the OC method is summarized in Algorithm~\ref{alg:oc}.
+%The process of OC method is shown below.
+\begin{FloatAlgo}{OC Pseudo-code}\label{alg:oc}
+	\begin{algorithmic}[1]
+		\STATE \textbf{Input:} 
+		\STATE Initial design variables $\bs{\rho}^{(0)}$ (with $0 \leq \rho_e^{(0)} \leq 1$)
+		\STATE volume constraint $V^*$
+		\STATE move limit $m$, damping factor $\eta$, maximum iterations $\mathrm{MaxIter}$, convergence tolerance $\epsilon$
+		\STATE \textbf{Output:} Optimized design variables $\bs{\rho}$
+		\STATE \textbf{Init:} Set $\bs{\rho}^{(k)} \leftarrow \boldsymbol{\rho}^{(0)}$, $k \leftarrow 0$
+		\WHILE{not converged}
+		\STATE Compute $c(\bs{\rho}^{(k)})$ and $g(\bs{\rho}^{(k)})$
+		\STATE Compute $\nabla c(\bs{\rho}^{(k)})$ and $\nabla g(\bs{\rho}^{(k)})$
+		\STATE (Optional) Filter sensitivities
+		\STATE Update $\lambda$ using bisection method
+		\STATE Update $\bs{\rho}^{\text{new}}$
+		\STATE (Optional) Filter $\bs{\rho}^{\text{new}}$
+		\STATE Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$
+		\ENDWHILE
+	\end{algorithmic}
+	\smallskip
+	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \mathrm{MaxIter}$ is reached or the maximum change in design variables $|\boldsymbol{\rho}^{(k+1)} - \boldsymbol{\rho}^{(k)}|_\infty \leq \epsilon$.
+\end{FloatAlgo}
 
-%A multi-index of length $n+1$ is an array of non-negative integers: 
-%$$
-%\boldsymbol\alpha = (\alpha_0, \alpha_1, \ldots, \alpha_{n}), \quad \alpha_i \in \mathbb N, i=0,\ldots, n.
-%$$ 
-%The degree or sum of the multi-index is 
-%$|\boldsymbol \alpha| = \sum_{i = 0}^{n} \alpha_i$ and factorial is 
-%$\boldsymbol \alpha! = \prod_{i=0}^n (\alpha_i!)$. 
-%The set of all multi-indices of length $n+1$ and degree 
-%$k$ will be called a simplicial lattice and denoted by $\mathbb T^n_k$, i.e.,
-%$$
-%\mathbb T^n_k = \{ \boldsymbol \alpha \in \mathbb N^{n+1}:
-%|\boldsymbol \alpha| = k\}.
-%$$ 
-%The elements in $\mathbb T^n_k$ can be linearly indexed by the 
-%dictionary ordering $R_n$:
-%\begin{equation*}
-%R_n(\boldsymbol \alpha)=\sum_{i=1}^n{\alpha_i+\alpha_{i+1}+\cdots+\alpha_n+n-i \choose n+1-i}.
-%\end{equation*}
-%For example, for an element $\boldsymbol \alpha$ in $\mathbb T^2_k$, the index is given by the mapping:
-%$$
-%R_2(\boldsymbol \alpha) = \frac{(\alpha_1+\alpha_2)(\alpha_1+\alpha_2+1)}{2} + 
-%\alpha_2.
-%$$ 
-%%can compute the indexing of $\boldsymbol \alpha$ in $\mathbb T^2_k$.
-%%For an element $\mathrm{\boldsymbol \alpha}$ in $\mathbb T^3_k$, the 
-%%mapping is: 
-%%\begin{align*}
-%%R_3(\boldsymbol \alpha) = &
-%%\frac{(\alpha_1+\alpha_2+\alpha_3)(\alpha_1+\alpha_2+\alpha_3 +1)(\alpha_1+\alpha_2+\alpha_3+2)}{6} \\
-%%&+ \frac{(\alpha_2+\alpha_3)(\alpha_2+\alpha_3+1)}{2} + \alpha_3.
-%%\end{align*}
-%%Below we present the first four lattice nodes in $R_2(\boldsymbol \alpha)$ with $k=4$:
-%%$$\begin{matrix}
-%%0 : \\
-%%1 : \\
-%%2 : \\
-%%3 : \\
-%%\end{matrix}
-%%\begin{pmatrix}
-%%    4 & 0 & 0  \\
-%%    3 & 1 & 0  \\
-%%    3 & 0 & 1  \\
-%%    2 & 2 & 0  \\
-%%\end{pmatrix}.$$
-%Notice that $\alpha_0$ is not used in the calculation of $R_n(\bs \alpha)$. 
+In TO, in addition to the OC method, the Method of Moving Asymptotes (MMA) is a widely used gradient-based optimization algorithm proposed by Svanberg \cite{svanberg1987method}. It is particularly well-suited for problems involving multiple constraints or complex objective functions. The core idea of MMA is to dynamically adjust the approximation range of the design variables using “moving asymptotes,” thereby transforming the original nonlinear optimization problem into a sequence of convex subproblems. This strategy ensures numerical stability throughout the iterative process.
+
+In the compliance minimization problem, MMA approximates the original problem by the following convex subproblem:
+\begin{equation*}
+	\begin{aligned}
+		\mathrm{minimize}\quad&\tilde{f}_0^{(k)}(\boldsymbol{\rho}) + a_0z + \sum_{i=1}^m(c_iy_i+\frac{1}{2}d_iy_i^2)\\
+		\mathrm{subject~to}\quad&\tilde{f}_i^{(k)}(\boldsymbol{\rho}) - a_iz - y_i \leq 0,\quad&{i}=1,\cdots,m\\
+		\quad&\alpha_j^{(k)}\leq{\rho}_j\leq\beta_j^{(k)},\quad&{j}=1,\cdots,n\\
+		\quad&{y}_i\geq0,\quad&i=1,\cdots,m\\
+		\quad&{z}\geq0,
+	\end{aligned}
+\end{equation*}
+where $m$ is the number of constraints, $n$ is the number of design variables, and $\rho_j$ denotes the $j$-th design variable. The lower and upper bounds of the design variables in the $k$-th iteration are denoted by $\alpha_j^{(k)}$ and $\beta_j^{(k)}$, respectively. The variables $y_i$ and $z$ are auxiliary variables introduced to ensure convex approximations of the objective and constraint functions. The parameters $a_0, a_i, c_i, d_i$ are given constants. 
+
+The convex approximation functions are defined as: 
+\begin{equation*}
+	\tilde{f}_i^{(k)}(\boldsymbol{\rho}) = \sum_{j=1}^n\left(\frac{p_{ij}^{(k)}}{u_{j}^k-\rho_j} + \frac{q_{ij}^{(k)}}{\rho_{j}-l_j^{(k)}}\right) + r_i^{(k)},\quad{i}=0,1,\cdots,m,
+\end{equation*}
+where $l_j^{(k)}$ and $u_j^{(k)}$ are the lower and upper asymptotes (moving bounds) for $\rho_j$ in the $k$-th iteration, and the coefficients $p_{ij}^{(k)}$, $q_{ij}^{(k)}$, and $r_i^{(k)}$ are computed based on the gradient information at the current iteration. Here, $i = 0$ corresponds to the approximation of the objective function, and $i \geq 1$ corresponds to the approximations of the constraint functions.
+
+Compared to the OC method, which is primarily suitable for problems with a single constraint, MMA is capable of efficiently handling multiple constraints and thus offers broader applicability.
+
+The process of MMA is shown below.
  
 \subsection{Interpolation points}
 Let $\boldsymbol x_0, \boldsymbol x_1, \ldots, \boldsymbol x_n$ be $n+1$ points in $\mathbb R^n$ and 
