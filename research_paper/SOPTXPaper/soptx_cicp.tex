@@ -233,7 +233,6 @@ where:
 \end{itemize}
 
 The procedure of the OC method is summarized in Algorithm~\ref{alg:oc}.
-%The process of OC method is shown below.
 \begin{FloatAlgo}{OC Pseudo-code}\label{alg:oc}
 	\begin{algorithmic}[1]
 		\STATE \textbf{Input:} 
@@ -253,7 +252,7 @@ The procedure of the OC method is summarized in Algorithm~\ref{alg:oc}.
 		\ENDWHILE
 	\end{algorithmic}
 	\smallskip
-	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \mathrm{MaxIter}$ is reached or the maximum change in design variables $|\boldsymbol{\rho}^{(k+1)} - \boldsymbol{\rho}^{(k)}|_\infty \leq \epsilon$.
+	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \text{MaxIter}$ is reached or the maximum change in design variables $|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}|_\infty \leq \epsilon$.
 \end{FloatAlgo}
 
 In TO, in addition to the OC method, the Method of Moving Asymptotes (MMA) is a widely used gradient-based optimization algorithm proposed by Svanberg \cite{svanberg1987method}. It is particularly well-suited for problems involving multiple constraints or complex objective functions. The core idea of MMA is to dynamically adjust the approximation range of the design variables using “moving asymptotes,” thereby transforming the original nonlinear optimization problem into a sequence of convex subproblems. This strategy ensures numerical stability throughout the iterative process.
@@ -278,7 +277,34 @@ where $l_j^{(k)}$ and $u_j^{(k)}$ are the lower and upper asymptotes (moving bou
 
 Compared to the OC method, which is primarily suitable for problems with a single constraint, MMA is capable of efficiently handling multiple constraints and thus offers broader applicability.
 
-The process of MMA is shown below.
+The procedure of the MMA method is summarized in Algorithm~\ref{alg:mma}.
+
+\begin{FloatAlgo}{MMA Pseudo-code}\label{alg:mma}
+	\begin{algorithmic}[1]
+		\STATE \textbf{Input:} 
+		\STATE Initial design variables $\bs{\rho}^{(0)}$
+		\STATE Problem-specific parameters
+		\STATE MMA parameters
+		\STATE \textbf{Output:} Optimized design variables $\bs{\rho}$
+		\STATE \textbf{Init:} Set $\bs{\rho}^{(k)} \leftarrow \bs{\rho}^{(0)}$, $k \leftarrow 0$
+		\WHILE{not converged}
+		\STATE Compute sensitivities $\nabla f_0(\bs{\rho}^{(k)})$ and $\nabla f_i(\bs{\rho}^{(k)}),~i=1,\dots,m$
+		\STATE (Optional) Filter sensitivities
+		\STATE Update asymptote bounds $l_j^{(k+1)}$ and $u_j^{(k+1)}$
+		\STATE Define variable bounds $\alpha_j^{(k)}$ and $\beta_j^{(k)}$
+		\STATE Construct the MMA subproblem using convex approximations $\tilde{f}_i^{(k)}(\bs{\rho})$
+		\STATE Solve the subproblem using a primal-dual Newton method to obtain $\bs{\rho}^{\text{new}}$
+		\STATE (Optional) Filter $\bs{\rho}^{\text{new}}$
+		\STATE Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$
+		\ENDWHILE
+	\end{algorithmic}
+	\smallskip
+	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \text{MaxIter}$ is reached or the maximum change in design variables $|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}|_\infty \leq \epsilon$.
+\end{FloatAlgo}
+
+\subsection{Filtering}
+
+
  
 \subsection{Interpolation points}
 Let $\boldsymbol x_0, \boldsymbol x_1, \ldots, \boldsymbol x_n$ be $n+1$ points in $\mathbb R^n$ and 
@@ -298,7 +324,7 @@ that the indexing map $R_n(\bs\alpha)$ is only a local ordering of the
 interpolation points on one $n$-simplex. In Section \ref{sec:implementation}, we will discuss the global
 indexing of all interpolation points on the triangulation composed of simplexes.
 
-
+{\tiny }
 \begin{figure}[htp]
 \centering
 \includegraphics[width=0.5\textwidth]{figures/tridof-4.pdf}

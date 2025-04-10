@@ -18,18 +18,18 @@
 \backcite {sigmund2007morphology}{{7}{2.1}{subsection.2.1}}
 \backcite {bendsoe1995optimization}{{9}{2.3}{subsection.2.3}}
 \backcite {svanberg1987method}{{9}{2.3}{ALC@unique.15}}
-\backcite {nicolaides1972class}{{11}{2.4}{subsection.2.4}}
-\backcite {ArnoldFalkWinther2009}{{12}{2.5}{subsection.2.5}}
-\backcite {Chen;Huang:2022FEMcomplex3D}{{12}{2.5}{subsection.2.5}}
-\backcite {ArnoldFalkWinther2009}{{13}{3.1}{subsection.3.1}}
-\backcite {Chen;Huang:2021Geometric}{{13}{3.1}{subsection.3.1}}
+\backcite {nicolaides1972class}{{12}{2.5}{subsection.2.5}}
+\backcite {ArnoldFalkWinther2009}{{12}{2.6}{subsection.2.6}}
+\backcite {Chen;Huang:2022FEMcomplex3D}{{12}{2.6}{subsection.2.6}}
+\backcite {ArnoldFalkWinther2009}{{14}{3.1}{subsection.3.1}}
+\backcite {Chen;Huang:2021Geometric}{{14}{3.1}{subsection.3.1}}
 \backcite {nicolaides1972class}{{15}{3.1}{lemma.3.1}}
-\backcite {Chen;Huang:2021Geometric}{{16}{4.1}{subsection.4.1}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{19}{4.2}{equation.4.4}}
-\backcite {CastroDevlooFariasGomesEtAl2016}{{19}{4.2}{equation.4.4}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{19}{4.2}{equation.4.4}}
-\backcite {ArnoldFalkWinther2006}{{20}{5.1}{lemma.5.2}}
-\backcite {Nedelec1986,ArnoldFalkWinther2006}{{23}{5.1}{remark.5.1}}
-\backcite {ArnoldFalkWinther2006}{{23}{5.1}{remark.5.1}}
+\backcite {Chen;Huang:2021Geometric}{{17}{4.1}{subsection.4.1}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{20}{4.2}{equation.4.4}}
+\backcite {CastroDevlooFariasGomesEtAl2016}{{20}{4.2}{equation.4.4}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{20}{4.2}{equation.4.4}}
+\backcite {ArnoldFalkWinther2006}{{21}{5.1}{lemma.5.2}}
+\backcite {Nedelec1986,ArnoldFalkWinther2006}{{24}{5.1}{remark.5.1}}
+\backcite {ArnoldFalkWinther2006}{{24}{5.1}{remark.5.1}}
 \backcite {Chen.L2008c}{{27}{6.1}{subsection.6.1}}
 \backcite {FEALPy}{{31}{7}{section.7}}
