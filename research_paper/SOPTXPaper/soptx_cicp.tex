@@ -1,18 +1,23 @@
 \documentclass[mathpazo]{cicp}
 \input{mysettingCICP.tex}
 
-\usepackage{algorithmic}
+\let\listofalgorithms\relax
+\let\listalgorithmname\relax
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{stmaryrd}
 \usepackage{scalefnt}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{caption}
+
 \newcommand{\Oplus}{\ensuremath{\vcenter{\hbox{\scalebox{1.5}{$\oplus$}}}}}
-%\DeclareMathOperator*{\prox}{Prox}
 \newcommand{\prox}{\operatorname{Prox}}
+
+\renewcommand{\thealgorithm}{2.\arabic{algorithm}}     % 若这是第 2 章
+
 \lstset{basicstyle=\ttfamily}
 \captionsetup[figure]{font=rm}
-
 
 %%%%% author macros %%%%%%%%%
 % place your own macros HERE
@@ -233,27 +238,33 @@ where:
 \end{itemize}
 
 The procedure of the OC method is summarized in Algorithm~\ref{alg:oc}.
-\begin{FloatAlgo}{OC Pseudo-code}\label{alg:oc}
-	\begin{algorithmic}[1]
-		\STATE \textbf{Input:} 
-		\STATE Initial design variables $\bs{\rho}^{(0)}$ (with $0 \leq \rho_e^{(0)} \leq 1$)
-		\STATE volume constraint $V^*$
-		\STATE move limit $m$, damping factor $\eta$, maximum iterations $\mathrm{MaxIter}$, convergence tolerance $\epsilon$
-		\STATE \textbf{Output:} Optimized design variables $\bs{\rho}$
-		\STATE \textbf{Init:} Set $\bs{\rho}^{(k)} \leftarrow \boldsymbol{\rho}^{(0)}$, $k \leftarrow 0$
-		\WHILE{not converged}
-		\STATE Compute $c(\bs{\rho}^{(k)})$ and $g(\bs{\rho}^{(k)})$
-		\STATE Compute $\nabla c(\bs{\rho}^{(k)})$ and $\nabla g(\bs{\rho}^{(k)})$
-		\STATE (Optional) Filter sensitivities
-		\STATE Update $\lambda$ using bisection method
-		\STATE Update $\bs{\rho}^{\text{new}}$
-		\STATE (Optional) Filter $\bs{\rho}^{\text{new}}$
-		\STATE Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$
-		\ENDWHILE
-	\end{algorithmic}
-	\smallskip
-	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \text{MaxIter}$ is reached or the maximum change in design variables $|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}|_\infty \leq \epsilon$.
-\end{FloatAlgo}
+\vspace{-1ex}
+\begin{algorithm}[H]
+	\caption{OC pseudo-code}
+	\label{alg:oc}
+	\begin{minipage}{\textwidth}
+		\KwIn{Initial design variables $\bs{\rho}^{(0)}$ (with $0 \leq \rho_e^{(0)} \leq 1$), volume constraint $V^*$, move limit $m$, damping factor $\eta$, maximum iterations $\text{MaxIter}$, convergence tolerance $\epsilon$}
+		\KwOut{Optimized design variables $\bs{\rho}$}
+		Set $\bs{\rho}^{(k)} \leftarrow \bs{\rho}^{(0)}$, $k \leftarrow 0$\;
+		
+		\While{$k < \mathrm{MaxIter}$ and $\|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}\|_\infty > \epsilon$}{
+			Evaluate the objective function $c(\bs{\rho}^{(k)})$ and the volume constraint $g(\bs{\rho}^{(k)})$\;
+			
+			Compute the sensitivities $\nabla c(\bs{\rho}^{(k)})$ and $\nabla g(\bs{\rho}^{(k)})$\;
+			
+			(Optional) Apply a filter to the sensitivities\;
+			
+			Update the Lagrange multiplier $\lambda$ using the bisection method\;
+			
+			Update the design variables $\bs{\rho}^{\text{new}}$ using the optimality criterion\;
+			
+			(Optional) Apply a filter to $\bs{\rho}^{\text{new}}$\;
+			
+			Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$\;
+		}
+	\end{minipage}
+\end{algorithm}
+\vspace{-1ex}
 
 In TO, in addition to the OC method, the Method of Moving Asymptotes (MMA) is a widely used gradient-based optimization algorithm proposed by Svanberg \cite{svanberg1987method}. It is particularly well-suited for problems involving multiple constraints or complex objective functions. The core idea of MMA is to dynamically adjust the approximation range of the design variables using “moving asymptotes,” thereby transforming the original nonlinear optimization problem into a sequence of convex subproblems. This strategy ensures numerical stability throughout the iterative process.
 
@@ -278,29 +289,35 @@ where $l_j^{(k)}$ and $u_j^{(k)}$ are the lower and upper asymptotes (moving bou
 Compared to the OC method, which is primarily suitable for problems with a single constraint, MMA is capable of efficiently handling multiple constraints and thus offers broader applicability.
 
 The procedure of the MMA method is summarized in Algorithm~\ref{alg:mma}.
-
-\begin{FloatAlgo}{MMA Pseudo-code}\label{alg:mma}
-	\begin{algorithmic}[1]
-		\STATE \textbf{Input:} 
-		\STATE Initial design variables $\bs{\rho}^{(0)}$
-		\STATE Problem-specific parameters
-		\STATE MMA parameters
-		\STATE \textbf{Output:} Optimized design variables $\bs{\rho}$
-		\STATE \textbf{Init:} Set $\bs{\rho}^{(k)} \leftarrow \bs{\rho}^{(0)}$, $k \leftarrow 0$
-		\WHILE{not converged}
-		\STATE Compute sensitivities $\nabla f_0(\bs{\rho}^{(k)})$ and $\nabla f_i(\bs{\rho}^{(k)}),~i=1,\dots,m$
-		\STATE (Optional) Filter sensitivities
-		\STATE Update asymptote bounds $l_j^{(k+1)}$ and $u_j^{(k+1)}$
-		\STATE Define variable bounds $\alpha_j^{(k)}$ and $\beta_j^{(k)}$
-		\STATE Construct the MMA subproblem using convex approximations $\tilde{f}_i^{(k)}(\bs{\rho})$
-		\STATE Solve the subproblem using a primal-dual Newton method to obtain $\bs{\rho}^{\text{new}}$
-		\STATE (Optional) Filter $\bs{\rho}^{\text{new}}$
-		\STATE Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$
-		\ENDWHILE
-	\end{algorithmic}
-	\smallskip
-	\textit{Convergence criteria}: The algorithm stops when the maximum number of iterations $k \geq \text{MaxIter}$ is reached or the maximum change in design variables $|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}|_\infty \leq \epsilon$.
-\end{FloatAlgo}
+\vspace{-1ex} % 可调节
+\begin{algorithm}[H]
+	\caption{MMA pseudo-code}
+	\label{alg:mma}
+	\begin{minipage}{\textwidth}
+		\KwIn{Initial design variables $\bs{\rho}^{(0)}$, problem-specific parameters, MMA parameters}
+		\KwOut{Optimized design variables $\bs{\rho}$}
+		Set $\bs{\rho}^{(k)} \leftarrow \bs{\rho}^{(0)}$, $k \leftarrow 0$\;
+		
+		\While{$k < \mathrm{MaxIter}$ and $\|\bs{\rho}^{(k+1)} - \bs{\rho}^{(k)}\|_\infty > \epsilon$}{
+			Compute sensitivities $\nabla f_0(\bs{\rho}^{(k)})$ and $\nabla f_i(\bs{\rho}^{(k)})$, $i = 1, \dots, m$\;
+			
+			(Optional) Apply filter to the sensitivities\;
+			
+			Update asymptotes $l_j^{(k+1)}$ and $u_j^{(k+1)}$\;
+			
+			Define variable bounds $\alpha_j^{(k)}$ and $\beta_j^{(k)}$\;
+			
+			Construct convex approximations $\tilde{f}_i^{(k)}(\bs{\rho})$ to form the MMA subproblem\;
+			
+			Solve the MMA subproblem using a primal-dual Newton method to obtain $\bs{\rho}^{\text{new}}$\;
+			
+			(Optional) Apply filter to $\bs{\rho}^{\text{new}}$\;
+			
+			Set $\bs{\rho}^{(k+1)} \leftarrow \bs{\rho}^{\text{new}}$, $k \leftarrow k + 1$\;
+		}
+	\end{minipage}
+\end{algorithm}
+\vspace{-1ex} % 可调节
 
 \subsection{Filtering Methods}
 In practical computations of TO, pathological issues such as mesh dependency, checkerboard patterns, and local minima are frequently encountered\cite{bendsoe2013topology}. These numerical difficulties can lead to suboptimal or unstable designs. Filtering techniques serve as an important form of regularization by smoothing the spatial distribution of either design variables or sensitivities, thereby suppressing numerical oscillations and improving both the reliability and physical realizability of the optimized structures\cite{sigmund1998numerical}. A comprehensive overview of various filtering methods was provided by Sigmund\cite{sigmund2007morphology}. 
@@ -362,6 +379,37 @@ The choice of the filter radius $r_{\min}$ has a significant impact on the optim
 	\item When $r_{\min} \to 0$, the effect of the filter diminishes, making the optimized structure prone to local oscillations or checkerboard patterns; 
 	\item When $r_{\min} \to \infty$, the filter becomes overly aggressive, leading to excessive smoothing and loss of design details. 
 \end{itemize}
+
+\section{SOPTX Framework Design and Multi-Backend Switching}
+This chapter introduces the design principles and key components of the SOPTX framework, with an emphasis on its support for multi-backend switching to enhance computational performance and flexibility. The chapter is organized into three parts. We first examine the architecture of FEALPy and its role in providing a foundational tensor computation environment. We then describe the modular structure of SOPTX, including its material, solver, filter, and optimization modules. Finally, we discuss the design and advantages of the multi-backend mechanism, which enables compatibility with NumPy, PyTorch, and JAX to meet a range of computational needs. 
+
+\subsection{FEALPy Architecture Design}
+As shown in Figure~\ref{fs_fig1}, FEALPy adopts a layered architecture consisting of four levels, arranged from bottom to top: the tensor level, the common level, the algorithm level, and the field level. Building on this architecture, FEALPy introduces the concept of a \textit{Tensor Backend Manager}, which provides unified management and scheduling of different tensor computation backends. This mechanism offers a consistent tensor operation interface for the upper layers. The interface currently follows the Python Array API Standard v2023.12\cite{arrayapi2023}, and is compatible with multiple backends such as NumPy, PyTorch, and JAX, enabling the same codebase to adapt seamlessly to different software and hardware platforms.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/fealpy_structure.png}
+	\caption{The layered architecture of FEALPy, comprising tensor, common, algorithm, and field levels, progressing from low-level functionalities to high-level applications. Modules in dashed boxes are under development.}
+	
+	\label{fs_fig1}
+\end{figure}
+
+Specifically, the functions of each layer are as follows:
+\begin{itemize} 
+	\item \textbf{Tensor level}: Provides basic tensor operations and manages backend systems such as NumPy, PyTorch, and JAX through the \textit{Tensor Backend Manager}. This mechanism forms the foundation for SOPTX's multi-backend switching. In particular, the automatic differentiation features of PyTorch and JAX enable automatic computation of sensitivities for objective and constraint functions in topology optimization (TO), greatly simplifying the derivative evaluation process.
+	\item \textbf{Common level}: Includes components such as mesh generation and finite element spaces, offering the capability to rapidly construct meshes and function spaces required for finite element analysis in TO. This serves as the foundational support for finite element analysis in SOPTX.
+	\item \textbf{Algorithm level}: Encompasses solvers and optimization algorithms, providing efficient computational support for optimization methods in SOPTX and ensuring both performance and stability during the optimization process.
+	\item \textbf{Field level}: Targets specific physical problems (e.g., linear elasticity), enabling SOPTX to flexibly handle various types of TO problems such as compliance minimization under volume constraints, and offers customized support for application-specific scenarios.
+\end{itemize}
+
+Through this layered design, FEALPy balances functionality, extensibility, and performance. In particular, the introduction of the \textit{Tensor Backend Manager} allows users to focus on upper-level algorithms and application logic without worrying about differences in underlying hardware or computational libraries. Moreover, the modules marked as under development in Figure~\ref{fs_fig1} demonstrate FEALPy’s potential for continuous improvement, and the completion of these modules in the future is expected to further enhance SOPTX’s capabilities in solving complex TO problems.
+
+\subsection{SOPTX Architecture Design}
+The SOPTX framework is positioned within the field level of FEALPy’s layered architecture, targeting structural topology optimization (STO) applications. SOPTX fully inherits and extends FEALPy’s \textit{Tensor Backend Manager}, diverse numerical algorithm components, and general-purpose mesh and geometry handling capabilities. This design not only ensures flexibility and extensibility, but also significantly improves computational efficiency for TO problems.
+
+As shown in Figure~\ref{fs_fig2}, SOPTX adopts a modular architecture consisting of four primary components: the material, solver, filter, and optimizer modules. These components communicate and share data through well-defined interfaces, forming a loosely coupled and easily extensible multi-backend framework for TO.
+
+
+
 
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
 In this section, we present a geometric decomposition for Lagrange finite elements on $n$-dimensional simplices. We introduce the concept of Lagrange interpolation basis functions, where function values at interpolation points serve as degrees of freedom. 
