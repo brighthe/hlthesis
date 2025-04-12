@@ -389,13 +389,12 @@ As shown in Figure~\ref{fs_fig1}, FEALPy adopts a layered architecture consistin
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/fealpy_structure.png}
 	\caption{The layered architecture of FEALPy, comprising tensor, common, algorithm, and field levels, progressing from low-level functionalities to high-level applications. Modules in dashed boxes are under development.}
-	
 	\label{fs_fig1}
 \end{figure}
 
 Specifically, the functions of each layer are as follows:
 \begin{itemize} 
-	\item \textbf{Tensor level}: Provides basic tensor operations and manages backend systems such as NumPy, PyTorch, and JAX through the \textit{Tensor Backend Manager}. This mechanism forms the foundation for SOPTX's multi-backend switching. In particular, the automatic differentiation features of PyTorch and JAX enable automatic computation of sensitivities for objective and constraint functions in topology optimization (TO), greatly simplifying the derivative evaluation process.
+	\item \textbf{Tensor level}: Provides basic tensor operations and manages backend systems such as NumPy, PyTorch, and JAX through the \textit{Tensor Backend Manager}. This mechanism forms the foundation for SOPTX's multi-backend switching. In particular, the automatic differentiation (AD) features of PyTorch and JAX enable automatic computation of sensitivities for objective and constraint functions in topology optimization (TO), greatly simplifying the derivative evaluation process.
 	\item \textbf{Common level}: Includes components such as mesh generation and finite element spaces, offering the capability to rapidly construct meshes and function spaces required for finite element analysis in TO. This serves as the foundational support for finite element analysis in SOPTX.
 	\item \textbf{Algorithm level}: Encompasses solvers and optimization algorithms, providing efficient computational support for optimization methods in SOPTX and ensuring both performance and stability during the optimization process.
 	\item \textbf{Field level}: Targets specific physical problems (e.g., linear elasticity), enabling SOPTX to flexibly handle various types of TO problems such as compliance minimization under volume constraints, and offers customized support for application-specific scenarios.
@@ -407,12 +406,110 @@ Through this layered design, FEALPy balances functionality, extensibility, and p
 The SOPTX framework is positioned within the field level of FEALPy’s layered architecture, targeting structural topology optimization (STO) applications. SOPTX fully inherits and extends FEALPy’s \textit{Tensor Backend Manager}, diverse numerical algorithm components, and general-purpose mesh and geometry handling capabilities. This design not only ensures flexibility and extensibility, but also significantly improves computational efficiency for TO problems.
 
 As shown in Figure~\ref{fs_fig2}, SOPTX adopts a modular architecture consisting of four primary components: the material, solver, filter, and optimizer modules. These components communicate and share data through well-defined interfaces, forming a loosely coupled and easily extensible multi-backend framework for TO.
+% [H] [htp]
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/soptx_structure.png}
+	\caption{SOPTX is organized into four main modules: material, solver, filter, and optimization—forming a modular and extensible architecture. The material module provides the foundation, while the solver and filter modules handle intermediate computations and jointly support the optimization module. Dashed boxes indicate components under development.}
+	\label{fs_fig2}
+\end{figure}
 
+\subsubsection{Material Module}
+In its current version, SOPTX primarily focuses on linear elastic materials. The linear elastic material class is developed based on FEALPy’s corresponding implementation and extends its core functionalities---including the computation of Lamé constants, elasticity matrices, and strain matrices---by introducing additional interfaces tailored for TO. At present, the material module implements the Solid Isotropic Material with Penalization (SIMP) interpolation model, typically using a penalization factor $p = 3$, which effectively transforms continuously varying density fields into discrete material distributions. The module is designed with highly abstract interfaces, ensuring extensibility. This design allows for easy future extensions to support other interpolation models such as the Rational Approximation of Material Properties (RAMP), as well as more complex material behaviors, including anisotropic, hyperelastic, and elastoplastic materials. These extensions can be realized by subclassing the base material class and implementing the required interfaces, without modifying other parts of the framework.
 
+The material module encapsulates the interpolation, update, and evaluation of elastic constants within a unified interface, enabling convenient access to material information for downstream modules. Its main functional interfaces include:
+\begin{enumerate}
+	\item Computing elasticity tensors from a given density field, providing material stiffness data required by the solver module.
+	\item Supporting efficient batch updates of material properties, suitable for repeated evaluations in iterative optimization processes.
+	\item Supplying essential material parameters for the optimization module, such as the elastic constants of the base material.
+\end{enumerate}
+These interfaces maintain a consistent calling convention across different computational backends, while their internal implementations are optimized according to backend-specific characteristics to ensure maximal computational efficiency. With this design, the material module serves as a key component in SOPTX, bridging physical modeling and numerical optimization. It maintains functional independence while providing essential material information throughout the topology optimization workflow. The modular structure not only simplifies the solution of current linear elasticity problems, but also offers a flexible foundation for future extensions to more complex material models.
 
+\subsubsection{Solver Module}
+The solver module serves as the computational core of the SOPTX framework. It is responsible for formulating and solving physical field problems (e.g., displacement fields) given material properties, boundary conditions, and external loads. The key design principle of this module is to construct an efficient, flexible, and backend-independent solver engine that meets the demands of repeatedly solving large-scale linear systems in TO. During iterative optimization, solving the physical field often becomes the main performance bottleneck as the design variables are updated. To address this, the solver module emphasizes computational efficiency through optimized matrix assembly, intelligent caching strategies, and multi-backend acceleration. It achieves high performance across various computational backends (NumPy / PyTorch / JAX). Meanwhile, the module maintains loose coupling with other components by accessing material data and providing results through clearly defined interfaces, ensuring smooth backend switching and modular extensibility.
+
+In the current version, SOPTX primarily focuses on solving linear elasticity equations using the finite element method (FEM). The FEM solver class is developed based on FEALPy's finite element module, inheriting core functionalities such as linear elasticity integrators and finite element computation components. The solver module implements several key features:
+\begin{enumerate}
+	\item \textbf{Dimensional and element adaptability}: It supports various spatial dimensions, element types, and boundary condition formulations, accommodating diverse engineering analysis requirements. In the current version, given that the density field is represented as piecewise constant per element, the displacement field is discretized using linear finite elements to ensure numerical stability and computational efficiency.
+	\item \textbf{Efficient numerical strategies}: In addition to standard finite element integration and matrix assembly, a fast matrix assembly technique is implemented. This approach separates the element-independent and element-dependent parts of the stiffness matrix, avoiding redundant computations common in traditional methods and significantly improving efficiency for large-scale problems. Furthermore, symbolic integration is supported, enabling pre-computed exact expressions without the need for numerical quadrature, thereby further reducing computational cost.
+	\item \textbf{Multiple solution strategies}: The module supports both direct solvers (e.g., MUMPS) and iterative solvers (e.g., Conjugate Gradient, CG), allowing users to select the most suitable algorithm based on problem size and characteristics. Solver strategies are automatically optimized for the underlying backend—for example, leveraging GPUs acceleration for large sparse matrix computations on PyTorch and JAX backends. 
+\end{enumerate}
+
+The solver module is designed with strong extensibility. In terms of physical fields, beyond the current displacement field solver, the framework is planned to support efficient computation of additional fields such as stress. Regarding numerical methods, SOPTX intends to extend beyond the classical FEM to incorporate advanced techniques such as the Virtual Element Method (VEM). Moreover, the framework is extensible to accommodate nonlinear mechanics problems, multiphysics coupling, adaptive mesh refinement strategies, and parallel computing. In particular, as the framework evolves toward multi-resolution topology optimization, it will support intra-element heterogeneous density distributions and corresponding high-order finite element displacement fields, thereby improving both boundary resolution and optimization quality. All these extensions can be realized by extending the base solver class or introducing specialized solvers, without altering the overall architecture of the framework.
+
+The solver module plays a pivotal role in SOPTX by bridging physical analysis and optimization computation. Its interactions and responsibilities are summarized as follows:
+\begin{enumerate}
+	\item \textbf{Interaction with the material module}: The solver module receives material properties such as elasticity matrices from the material module, which are used to assemble the global stiffness matrix. This interaction is handled via unified interfaces, so that the solver does not depend on the specific material interpolation scheme.
+	\item \textbf{Output to the optimization module}: The solver module provides two key types of outputs to the optimization module: the displacement field, which is used to evaluate the objective function, and the stiffness matrix, which is used in sensitivity analysis. These outputs follow consistent interface definitions across different backends, while their internal representations are backend-specific and optimized to ensure efficient downstream computations.
+	\item \textbf{Result reuse}: Given the iterative nature of topology optimization, the solver module incorporates an intelligent caching mechanism to avoid redundant computations of invariant components (e.g., shape function derivative matrices). This significantly reduces computational overhead, particularly in large-scale problems.
+\end{enumerate}
+Through its modular design and clearly defined interfaces, the solver module performs physical field computations efficiently, providing essential computational support for the entire topology optimization process while maintaining consistency and high performance across multi-backend environments.
+
+\subsubsection{Filter Module}
+The filter module is a key component in SOPTX responsible for processing design variables and applying regularization. It plays a dual role in the topology optimization process: eliminating numerical instabilities such as checkerboarding and mesh dependency, and enhancing the manufacturability of the resulting structures. Following the overall loosely coupled design philosophy of the framework, the filter operations are implemented as an independent functional unit, while maintaining efficient data exchange with other modules. Similar to the material and solver modules, the filter module provides a consistent interface across different computational backends (NumPy / PyTorch / JAX), while its internal implementations are optimized according to backend-specific features to ensure maximal computational efficiency.
+
+In the current version of the SOPTX framework, the filter module implements three main types of filtering techniques:
+\begin{enumerate}
+	\item \textbf{Sensitivity filtering}: Applies weighted averaging to the sensitivities of the objective function, effectively suppressing checkerboard patterns.
+	\item \textbf{Density filtering}: Directly filters the design variables by mapping raw design values to physical densities, addressing the locality issues that may arise with sensitivity filtering in some problems.
+	\item \textbf{Heaviside projection filtering}: Builds upon density filtering by applying a smoothed Heaviside function to force intermediate densities toward $0$ or $1$, thereby promoting clear black-and-white structural designs.
+\end{enumerate}
+
+The filter module constructs its filtering matrices using a KD-tree-based neighborhood search algorithm. Traditional linearly decaying filters are typically restricted to structured grids, but by leveraging the KD-tree data structure, SOPTX enables efficient spatial queries for neighboring points. This allows filtering to be seamlessly applied to arbitrary unstructured meshes and complex geometries, greatly expanding the applicability of the framework. To further enhance computational performance, the module adopts several optimization strategies, including precomputation of filter neighborhoods, sparse matrix representations, and backend-specific adaptations. These strategies ensure that filtering operations remain efficient even in large-scale topology optimization problems.
+
+The filter module is designed with strong extensibility. Users can easily incorporate new filtering algorithms by subclassing the base filter class and implementing the required interfaces. Examples include nonlinear filters, PDE-based filters with exponential decay kernels, or filters based on alternative kernel functions. These newly added filters automatically inherit multi-backend compatibility without requiring additional adaptation. Moreover, the SOPTX framework supports chained composition of filters. Users can flexibly configure and combine multiple basic filters to construct complex filtering strategies that meet the specific requirements of different optimization scenarios.
+
+The interactions between the filter module and other components are as follows:
+\begin{enumerate}
+	\item \textbf{Interaction with the solver module}: It receives the raw design variables and outputs the filtered physical density field.
+	\item \textbf{Interaction with the optimizer module}: It takes in the unfiltered sensitivities computed by the optimization algorithm and returns the filtered sensitivities, ensuring numerical stability during the optimization process.
+	\item \textbf{Coordination with the material module}: The filtered physical density is directly used for material interpolation, forming a clear data flow:
+	\begin{equation*}
+		\text{design variables} \to \text{filtering} \to \text{physical density} \to \text{material properties} \to \text{physical response}.
+	\end{equation*}
+\end{enumerate}
+Through this modular design, the filter module effectively addresses numerical instability issues in TO and offers a flexible mechanism for extending various regularization strategies. Within the SOPTX framework, the filter module is not only an essential part of the optimization workflow but also a key enabler for achieving high-quality and manufacturable structural designs.
+
+\subsubsection{Optimization Module}
+The optimization module serves as the computational core of the SOPTX framework, responsible for integrating physical field solutions with optimization objectives to formulate complete mathematical optimization problems and invoke corresponding algorithms for their solution. Closely interacting with the material, solver, and filter modules, it completes the full computational pipeline for TO. Like other modules, the optimization module follows the multi-backend design philosophy of the framework, providing a consistent interface across NumPy, PyTorch, and JAX backends. Its internal implementations are backend-optimized to ensure high performance on each platform.
+
+In the current version, the optimization module focuses on the classical compliance minimization problem under volume constraints and supports two mainstream topology optimization algorithms: Optimality Criteria (OC) and the Method of Moving Asymptotes (MMA). The MMA implementation is based on the standard version proposed by Svanberg in 2007\cite{Svanberg2007MmaAG}, and has been extended in SOPTX to support multiple backend implementations. While preserving mathematical equivalence, backend-specific optimizations have been introduced to improve computational performance, particularly enabling GPUs acceleration in PyTorch and JAX environments.
+
+The design of the optimization module follows two core principles:
+\begin{enumerate}
+	\item \textbf{Separation of problem definition and algorithm}: The definition of the optimization problem---namely, the objective functions, the constraint functions, and their sensitivities---is strictly decoupled from the optimization algorithms. This allows users to flexibly combine different problem formulations with various optimization solvers.
+	\item \textbf{Dual-mode sensitivity computation}: The framework supports both manually derived and automatically differentiated sensitivities. On PyTorch and JAX backends, users can directly leverage AD to avoid complex manual derivations, while still preserving the physical consistency and interpretability offered by hand-derived formulations.
+\end{enumerate}
+
+The optimization module is designed with high extensibility:
+\begin{enumerate}
+	\item \textbf{Problem type extension}: Users can easily define new optimization objectives---such as heat conduction, Compliant mechanism synthesis, or multiphysics problems---and corresponding constraint conditions, such as stress or frequency constraints, by subclassing the base optimization problem class.
+	\item \textbf{Algorithm extensibility}: The framework allows integration of new optimization algorithms, including Sequential Quadratic Programming (SQP), Sequential Linear Programming (SLP), and other gradient-based methods.
+\end{enumerate}
+
+The optimization module serves as a central hub within the SOPTX framework, coordinating closely with other modules through the following interactions:
+\begin{enumerate}
+	\item \textbf{Interaction with the solver module}: It receives physical field outputs such as the displacement field and stiffness matrix, which are used to evaluate the objective function (e.g., compliance) and its corresponding sensitivities.
+	\item \textbf{Interaction with the filter module}: It passes raw sensitivities to the filter module for processing and receives the filtered sensitivities to update the design variables. Additionally, the newly updated design variables are filtered again to obtain the physical density field.
+\end{enumerate}
+
+Through this modular and flexible design, the optimization module not only efficiently solves the classical TO problems supported in the current version, but also lays a solid foundation for future extensions to more complex optimization scenarios. As the decision-making center of the SOPTX framework, it integrates the computational capabilities of all other modules into a complete structural design solution.
+
+\subsubsection{Multi-Backend Switching}
+In the field of STO, improving computational performance has always been a central concern in both research and engineering applications. To effectively address the diverse computational demands of problems at different scales, the SOPTX framework builds upon FEALPy to implement a flexible multi-backend support architecture. This allows users to seamlessly switch between multiple tensor computation backends such as NumPy, PyTorch, and JAX. This design not only enhances the applicability and efficiency of the software but also improves its portability and flexibility across different hardware and software platforms. 
+
+Specifically, different computational backends offer distinct advantages and are suitable for different application scenarios: 
+\begin{itemize} 
+	\item \textbf{NumPy backend}: Suitable for small-scale computational tasks and rapid prototyping. It offers stable performance and broad community support. Due to its lightweight nature and efficient memory management, it is particularly well-suited for fast development and algorithm validation on standard CPUs platforms.
+	\item \textbf{PyTorch and JAX backends}: Both support GPUs acceleration and AD, making them ideal for large-scale or high-dimensional problems. The AD capability greatly simplifies the computation of sensitivities for objective and constraint functions, improving development efficiency and significantly shortening the research cycle. JAX goes one step further by offering more flexible compilation strategies and automatic vectorization, achieving high computational efficiency, especially on GPUs platforms.
+\end{itemize}
 
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
-In this section, we present a geometric decomposition for Lagrange finite elements on $n$-dimensional simplices. We introduce the concept of Lagrange interpolation basis functions, where function values at interpolation points serve as degrees of freedom. 
+In this section, we present a geometric decomposition for Lagrange finite elements on $n$-dimensional simplices. We introduce the concept of Lagrange interpolation basis functions, where function values at interpolation points serve as degrees of freedom.
+
+The multi-backend switching mechanism in SOPTX is built upon FEALPy’s \textit{Tensor Backend Manager}, which unifies tensor operation interfaces and ensures a clear separation between high-level algorithms and low-level implementations. Users can switch between different computational backends seamlessly through a simple configuration, without modifying any algorithmic code. This design significantly reduces the learning curve for new users and lowers the complexity of maintenance and future extensions. Moreover, the multi-backend support enables SOPTX to be easily deployed across various hardware environments. Whether on CPUs or GPUs, from standalone systems to cluster environments, the framework maintains a consistent interface, greatly improving user productivity and software portability.
+
+ 
 
 \subsection{Geometric decomposition}
 For the polynomial space $\mathbb P_k(T)$ with $k\geq 1$ on an $n$-dimensional simplex $T$, we have the following geometric decomposition of Lagrange element~\cite[(2.6)]{ArnoldFalkWinther2009} and a proof can be found in~\cite{Chen;Huang:2021Geometric}. The integral at a vertex is understood as the function value at that vertex and $\mathbb P_k({\bs x}) = \mathbb R$.
