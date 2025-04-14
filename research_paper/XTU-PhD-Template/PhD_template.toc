@@ -1,6 +1,0 @@
-\contentsline {chapter}{摘要}{I}{chapter*.1}%
-\contentsline {chapter}{Abstract}{II}{chapter*.2}%
-\contentsline {chapter}{总结与展望}{1}{chapter*.4}%
-\contentsline {chapter}{致谢}{2}{chapter*.6}%
-\contentsline {chapter}{参考文献}{2}{section*.5}%
-\contentsline {chapter}{个人简历、在学期间发表的学术论文及研究成果}{3}{chapter*.7}%

@@ -504,6 +504,13 @@ Specifically, different computational backends offer distinct advantages and are
 	\item \textbf{PyTorch and JAX backends}: Both support GPUs acceleration and AD, making them ideal for large-scale or high-dimensional problems. The AD capability greatly simplifies the computation of sensitivities for objective and constraint functions, improving development efficiency and significantly shortening the research cycle. JAX goes one step further by offering more flexible compilation strategies and automatic vectorization, achieving high computational efficiency, especially on GPUs platforms.
 \end{itemize}
 
+\section{Getting Started with SOPTX}
+This chapter aims to provide readers with installation instructions and usage guidance for SOPTX, helping them quickly become familiar with the basic operations of the framework and apply it to topology optimization (TO) tasks. As a TO toolkit built on top of FEALPy, SOPTX offers a highly efficient and flexible computational environment through its multi-backend switching mechanism and modular design. The content of this chapter is divided into two parts: first, we present a detailed explanation of the installation steps for SOPTX and its dependency FEALPy, ensuring that readers can correctly configure the development environment; then, we demonstrate the usage workflow of SOPTX through a classical 2D cantilever beam compliance minimization example.
+
+\subsection{Software Installation}
+SOPTX is a TO toolkit built on top of FEALPy, an intelligent CAE simulation engine that provides numerical computing capabilities. Installing FEALPy is a prerequisite, and it is recommended to install it from source. Before installation, ensure that Git and Python are properly installed. It is also recommended to use a virtual environment when installing and running FEALPy. 
+
+
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
 In this section, we present a geometric decomposition for Lagrange finite elements on $n$-dimensional simplices. We introduce the concept of Lagrange interpolation basis functions, where function values at interpolation points serve as degrees of freedom.
 

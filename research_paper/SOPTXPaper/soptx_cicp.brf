@@ -27,15 +27,15 @@
 \backcite {guest2004achieving}{{12}{2.4}{subsection.2.4}}
 \backcite {arrayapi2023}{{14}{3.1}{subsection.3.1}}
 \backcite {Svanberg2007MmaAG}{{20}{3.2.4}{subsubsection.3.2.4}}
-\backcite {ArnoldFalkWinther2009}{{22}{4.1}{subsection.4.1}}
-\backcite {Chen;Huang:2021Geometric}{{22}{4.1}{subsection.4.1}}
-\backcite {nicolaides1972class}{{24}{4.1}{lemma.4.1}}
-\backcite {Chen;Huang:2021Geometric}{{25}{5.1}{subsection.5.1}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{28}{5.2}{equation.5.4}}
-\backcite {CastroDevlooFariasGomesEtAl2016}{{28}{5.2}{equation.5.4}}
-\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{28}{5.2}{equation.5.4}}
-\backcite {ArnoldFalkWinther2006}{{29}{6.1}{lemma.6.2}}
-\backcite {Nedelec1986,ArnoldFalkWinther2006}{{32}{6.1}{remark.6.1}}
-\backcite {ArnoldFalkWinther2006}{{32}{6.1}{remark.6.1}}
-\backcite {Chen.L2008c}{{36}{7.1}{subsection.7.1}}
-\backcite {FEALPy}{{40}{8}{section.8}}
+\backcite {ArnoldFalkWinther2009}{{22}{5.1}{subsection.5.1}}
+\backcite {Chen;Huang:2021Geometric}{{22}{5.1}{subsection.5.1}}
+\backcite {nicolaides1972class}{{24}{5.1}{lemma.5.1}}
+\backcite {Chen;Huang:2021Geometric}{{26}{6.1}{subsection.6.1}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{28}{6.2}{equation.6.4}}
+\backcite {CastroDevlooFariasGomesEtAl2016}{{28}{6.2}{equation.6.4}}
+\backcite {DeSiqueiraDevlooGomes2010, DeSiqueiraDevlooGomes2013}{{28}{6.2}{equation.6.4}}
+\backcite {ArnoldFalkWinther2006}{{30}{7.1}{lemma.7.2}}
+\backcite {Nedelec1986,ArnoldFalkWinther2006}{{32}{7.1}{remark.7.1}}
+\backcite {ArnoldFalkWinther2006}{{33}{7.1}{remark.7.1}}
+\backcite {Chen.L2008c}{{36}{8.1}{subsection.8.1}}
+\backcite {FEALPy}{{40}{9}{section.9}}
