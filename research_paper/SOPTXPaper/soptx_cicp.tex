@@ -548,7 +548,7 @@ Core installation steps:
 
 For the complete installation guide, please refer to the official documentation at: \url{https://github.com/weihuayi/fealpy}.
 
-\subsection{Example: 2D Cantilever Beam} 
+\subsection{Example: 2D Cantilever Beam}\label{sec:exp_canti_beam}
 We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX \cite{bendsoe2013topology}: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever}). The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform 2D mesh is used. The target volume fraction is set to $0.4$, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
 \begin{figure}[htp]
 	\centering
@@ -557,7 +557,7 @@ We use a popular compliance minimization benchmark to demonstrate the usage of S
 	\label{fig:cantilever}
 \end{figure}
 
-As shown in Code~\ref{code:mouldes_pde}, we first import relevant modules from FEALPy---including the backend, mesh, and function space---and from SOPTX, including the material, solver, filter, and optimization modules. Next, we define the partial differential equation (PDE) model of the cantilever beam, which includes the geometric configuration, applied load, and boundary conditions. The standard interface of a PDE model in SOPTX includes initialization, region definition, loading, and boundary conditions. The complete definition of the cantilever beam model \texttt{Cantilever2dData1} is provided in~\ref{sec:canti}
+As shown in Code~\ref{code:mouldes_pde}, we first import relevant modules from FEALPy---including the backend, mesh, and function space---and from SOPTX, including the material, solver, filter, and optimization modules. Next, we define the partial differential equation (PDE) model of the cantilever beam, which includes the geometric configuration, applied load, and boundary conditions. The standard interface of a PDE model in SOPTX includes initialization, region definition, loading, and boundary conditions. The complete definition of the cantilever beam model \texttt{Cantilever2dData1} is provided in~\ref{sec:code_canti}
 \begin{lstlisting}[caption={Module imports and PDE model}, label={code:mouldes_pde}]
 	from fealpy.backend import backend_manager as bm
 	from fealpy.mesh import UniformMesh2d
@@ -690,12 +690,31 @@ Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and
 	\label{fig:canti_1_all}
 \end{figure}
 
+\section{Numerical Examples}
+This chapter presents a series of numerical examples that comprehensively demonstrate the capabilities and performance of the SOPTX framework in topology optimization (TO).  The test cases span from classical 2D Messerschmitt-Bolkow-Blohm (MBB) beam problems to 3D cantilever structures, highlighting the flexibility and robustness of SOPTX in handling different partial differential equation (PDE) models, mesh types, filtering strategies, and optimization algorithms. In addition, this chapter explores the framework’s advanced features, including fast matrix assembly, automatic differentiation (AD), and multi-backend switching, showcasing their significant benefits in improving computational efficiency and simplifying the development workflow.
+
+The chapter is organized into seven sections: first, we present the MBB beam problem to demonstrate the robustness of SOPTX across different mesh resolutions; then, we investigate the impact of different filtering techniques on the optimization results; next, we introduce the algorithm switching interface and a backend-reconstructed version of the MMA optimizer; subsequently, we extend SOPTX to 3D TO; after that, we highlight how fast matrix assembly improves overall runtime efficiency; we then illustrate how AD simplifies the implementation of sensitivity analysis; finally, we discuss the benefits of the multi-backend switching mechanism and demonstrate the GPU acceleration potential. Through these examples, the functionalities of SOPTX are systematically demonstrated, providing readers with guidance for applying the framework in both scientific research and engineering scenarios.
+
+\subsection{MBB Beam}
+The MBB beam is a classical benchmark problem in TO, widely used to verify the effectiveness and robustness of optimization algorithms. In this section, we minimize the structural compliance of the MBB beam (see Figure~\ref{fig:mbb_beam}) to demonstrate the flexibility and consistency of the SOPTX framework in handling different PDE models and mesh settings. The beam is subject to hinged boundary conditions along its left edge and the bottom right corner, where only horizontal displacements are constrained (i.e., zero horizontal movement is enforced while vertical motion is free). A downward concentrated load $T = -1$ is applied to the upper left corner. The target volume fraction is set to $0.5$, and the material parameters are $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the filter radius is $r = 6.0$, which matches the mesh element size to ensure smooth topology and suppress checkerboard patterns.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/mbb_2d.png}
+	\caption{Geometry of the MBB beam: hinged at the left edge and bottom right corner, with a downward concentrated load applied at the top left.}
+	\label{fig:mbb_beam}
+\end{figure}
+
+Compared to the cantilever beam example in Section~\ref{sec:exp_canti_beam}, the SOPTX framework allows users to switch to the MBB beam problem with minimal modifications. Thanks to its modular design, it is sufficient to change the PDE model. The full implementation of the MBB beam model \texttt{MBBBeam2dData1} is provided in Section~\ref{sec:code_mbb}
+\begin{lstlisting}
+	from soptx.pde import MBBBeam2dData1
+	pde = MBBBeam2dData1(xmin=0, xmax=150, ymin=0, ymax=50, T = -1)
+\end{lstlisting}
 
 
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
 In this section, we present a geometric decomposition for Lagrange finite elements on $n$-dimensional simplices. We introduce the concept of Lagrange interpolation basis functions, where function values at interpolation points serve as degrees of freedom.
 
-The multi-backend switching mechanism in SOPTX is built upon FEALPy’s \textit{Tensor Backend Manager}, which unifies tensor operation interfaces and ensures a clear separation between high-level algorithms and low-level implementations. Users can switch between different computational backends seamlessly through a simple configuration, without modifying any algorithmic code. This design significantly reduces the learning curve for new users and lowers the complexity of maintenance and future extensions. Moreover, the multi-backend support enables SOPTX to be easily deployed across various hardware environments. Whether on CPUs or GPUs, from standalone systems to cluster environments, the framework maintains a consistent interface, greatly improving user productivity and software portability.
+%The multi-backend switching mechanism in SOPTX is built upon FEALPy’s \textit{Tensor Backend Manager}, which unifies tensor operation interfaces and ensures a clear separation between high-level algorithms and low-level implementations. Users can switch between different computational backends seamlessly through a simple configuration, without modifying any algorithmic code. This design significantly reduces the learning curve for new users and lowers the complexity of maintenance and future extensions. Moreover, the multi-backend support enables SOPTX to be easily deployed across various hardware environments. Whether on CPUs or GPUs, from standalone systems to cluster environments, the framework maintains a consistent interface, greatly improving user productivity and software portability.
 
  
 
@@ -2441,7 +2460,7 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 \appendix
 \renewcommand{\thesection}{Appendix\,\Alph{section}.}
 \section{Cantilever2dData1}
-\label{sec:canti}
+\label{sec:code_canti}
 \begin{lstlisting}
 	class Cantilever2dData1:
 		def __init__(self, 
@@ -2463,9 +2482,9 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 			x = points[..., 0]
 			y = points[..., 1]
 			coord = (
-			(bm.abs(x - domain[1]) < self.eps) & 
-			(bm.abs(y - domain[2]) < self.eps)
-			)
+				(bm.abs(x - domain[1]) < self.eps) & 
+				(bm.abs(y - domain[2]) < self.eps)
+				)
 			kwargs = bm.context(points)
 			val = bm.zeros(points.shape, **kwargs)
 			val[coord, 1] = self.T
@@ -2491,7 +2510,67 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 			return coord    
 		
 		def threshold(self) -> Tuple[Callable, Callable]:
-			return (self.is_dirichlet_boundary_dof_x, self.is_dirichlet_boundary_dof_y)
+			return (self.is_dirichlet_boundary_dof_x, 
+					self.is_dirichlet_boundary_dof_y)
+\end{lstlisting}
+
+\section{MBBBeam2dData1}
+\label{sec:code_mbb}
+\begin{lstlisting}
+	class MBBBeam2dData1:
+	def __init__(self, 
+				xmin: float=0, xmax: float=60, 
+				ymin: float=0, ymax: float=20,
+				T: float = -1):
+		self.xmin, self.xmax = xmin, xmax
+		self.ymin, self.ymax = ymin, ymax
+		self.T = T
+		self.eps = 1e-12
+	
+	def domain(self) -> list:
+		box = [self.xmin, self.xmax, self.ymin, self.ymax]
+		return box
+	
+	@cartesian
+	def force(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		
+		x = points[..., 0]
+		y = points[..., 1]
+		
+		coord = (
+			(bm.abs(x - domain[0]) < self.eps) & 
+			(bm.abs(y - domain[3]) < self.eps)
+			)
+		kwargs = bm.context(points)
+		val = bm.zeros(points.shape, **kwargs)
+		val[coord, 1] = self.T
+		return val
+	
+	@cartesian
+	def dirichlet(self, points: TensorLike) -> TensorLike:
+		kwargs = bm.context(points)
+		return bm.zeros(points.shape, **kwargs)
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		coord = bm.abs(x - domain[0]) < self.eps
+		return coord
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		y = points[..., 1]
+		coord = ((bm.abs(x - domain[1]) < self.eps) &
+		(bm.abs(y - domain[0]) < self.eps))
+		return coord
+	
+	def threshold(self) -> Tuple[Callable, Callable]:
+		return (self.is_dirichlet_boundary_dof_x, 
+				self.is_dirichlet_boundary_dof_y)
 \end{lstlisting}
 
 %%%% Bibliography  %%%%%%%%%%
