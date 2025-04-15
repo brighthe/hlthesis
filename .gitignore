@@ -36,7 +36,6 @@ visualization/
 # Intermediate PDFs and other output formats
 *.dvi
 *.ps
-*.pdf
 
 # Additional backup files
 *~
