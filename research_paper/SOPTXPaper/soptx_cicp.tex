@@ -10,6 +10,8 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{listings}
+% 明确设置 T1 字体编码
+\usepackage[T1]{fontenc}
 
 \definecolor{darkgreen}{rgb}{0,0.5,0}
 \lstset{
@@ -1855,13 +1857,13 @@ as follows:
 \end{enumerate}
 %\end{definition}
 
-\begin{figure}[htp]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/nedelec.pdf}
-\caption{The left figure shows $\{\bs e_0, \bs e_1\}$ at each interpolation 
-point, the right figure shows $\{\hat{ \bs e}_0, \hat{ \bs e}_1\}$ 
-at each interpolation point.}
-\end{figure}
+%\begin{figure}[htp]
+%\centering
+%\includegraphics[width=0.8\textwidth]{figures/nedelec.pdf}
+%\caption{The left figure shows $\{\bs e_0, \bs e_1\}$ at each interpolation 
+%point, the right figure shows $\{\hat{ \bs e}_0, \hat{ \bs e}_1\}$ 
+%at each interpolation point.}
+%\end{figure}
 
 \subsubsection{3D basis on tetrahedron meshes}
 %\begin{definition}
@@ -1927,20 +1929,20 @@ at each interpolation point.}
 \end{enumerate}
 %\end{definition}
 
-\begin{figure}[htp]
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=0.5\textwidth]{figures/nedelec_dof.pdf}
-  \end{minipage}
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=0.5\textwidth]{figures/nedelec_basis.pdf}
-  \end{minipage}
-  \caption{The left figure shows $\{\bs e_0, \bs e_1, \bs e_2\}$ at each 
-      interpolation point, the right figure shows 
-      $\{\hat{ \bs e}_0, \hat{ \bs e}_1, \hat{\bs e}_2\}$ 
-      at each interpolation point.}
-\end{figure}
+%\begin{figure}[htp]
+%  \begin{minipage}[t]{0.48\textwidth}
+%  \centering
+%  \includegraphics[width=0.5\textwidth]{figures/nedelec_dof.pdf}
+%  \end{minipage}
+%  \begin{minipage}[t]{0.48\textwidth}
+%  \centering
+%  \includegraphics[width=0.5\textwidth]{figures/nedelec_basis.pdf}
+%  \end{minipage}
+%  \caption{The left figure shows $\{\bs e_0, \bs e_1, \bs e_2\}$ at each 
+%      interpolation point, the right figure shows 
+%      $\{\hat{ \bs e}_0, \hat{ \bs e}_1, \hat{\bs e}_2\}$ 
+%      at each interpolation point.}
+%\end{figure}
 
 % \subsection{Geometric decomposition of first family of N\'ed\'elec element}
 % The shape function space of the first family of N\'ed\'elec element is 
@@ -2158,20 +2160,20 @@ ensuring that the point is interior to \(F_0\).
 %&+ \frac{(\mc{m2} + \mc{m3})(\mc{m2} + \mc{m3} + 1)}{2} + \mc{m3}.
 %\end{align*}
 
-\begin{figure}[htp]
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=0.82\textwidth]{figures/assigndof_ex_cell.pdf}
-  \end{minipage}
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[width=0.6\textwidth]{figures/assigndof_ex_face.pdf}
-  \end{minipage}
-  \caption{Local indexing (Left) and global indexing(Right) of DoFs for a face
-  of tetrahedron, where the local vertex order is \mc{[17, 0,
-  21]} and global vertex order is \mc{[0, 17, 21]}. Due to the different ordering of vertices in local and global representation of the face, the ordering of the local indexing and the global indexing is different.}
-  \label{fig:assigndofex}
-\end{figure}
+%\begin{figure}[htp]
+%  \begin{minipage}[t]{0.48\textwidth}
+%  \centering
+%  \includegraphics[width=0.82\textwidth]{figures/assigndof_ex_cell.pdf}
+%  \end{minipage}
+%  \begin{minipage}[t]{0.48\textwidth}
+%  \centering
+%  \includegraphics[width=0.6\textwidth]{figures/assigndof_ex_face.pdf}
+%  \end{minipage}
+%  \caption{Local indexing (Left) and global indexing(Right) of DoFs for a face
+%  of tetrahedron, where the local vertex order is \mc{[17, 0,
+%  21]} and global vertex order is \mc{[0, 17, 21]}. Due to the different ordering of vertices in local and global representation of the face, the ordering of the local indexing and the global indexing is different.}
+%  \label{fig:assigndofex}
+%\end{figure}
 
 Two representations for the face with global index \lstinline{cell2face[i,0]} are subsequently acquired:
 \begin{itemize}
@@ -2348,13 +2350,13 @@ $\boldsymbol u_h \in V_{h,k}^{\div}, p_h \in V_{k-1}$, such that
 \end{align}
 
 
-\begin{figure}[htp]
-\centering
-\includegraphics[width=0.6\textwidth]{figures/poisson.pdf}
-\caption{Errors $\|\bs u - \bs u_h\|_0$ and $\|p - p_h\|_0$ of finite element
-method \eqref{exm2eq1} and \eqref{exm2eq2} on uniformly refined mesh with $k = 2, 3, 4$.}
-\label{exm2fig1}
-\end{figure}
+%\begin{figure}[htp]
+%\centering
+%\includegraphics[width=0.6\textwidth]{figures/poisson.pdf}
+%\caption{Errors $\|\bs u - \bs u_h\|_0$ and $\|p - p_h\|_0$ of finite element
+%method \eqref{exm2eq1} and \eqref{exm2eq2} on uniformly refined mesh with $k = 2, 3, 4$.}
+%\label{exm2fig1}
+%\end{figure}
 
 To test the convergence order of BDM space, we set
 $$
@@ -2405,14 +2407,14 @@ $\boldsymbol E_h \in \mathring{V}_{h,k}^{\curl}$ s.t.
 \boldsymbol v_h \in  \mathring{V}_{h,k}^{\curl}.
 \end{align} 
 
-\begin{figure}[htp] 
-\centering
-\includegraphics[width=0.6\textwidth]{figures/Maxwell.pdf}
-\caption{Errors $\|\bs E - \bs E_h\|_{0}$ and 
-    $\|\nabla \times(\bs E - \bs E_h)\|_{0}$ of finite element
-    method \eqref{exm1:eq1} on uniformly refined mesh with $k = 2, 3, 4$.}
-\label{exm1fig1}
-\end{figure}
+%\begin{figure}[htp] 
+%\centering
+%\includegraphics[width=0.6\textwidth]{figures/Maxwell.pdf}
+%\caption{Errors $\|\bs E - \bs E_h\|_{0}$ and 
+%    $\|\nabla \times(\bs E - \bs E_h)\|_{0}$ of finite element
+%    method \eqref{exm1:eq1} on uniformly refined mesh with $k = 2, 3, 4$.}
+%\label{exm1fig1}
+%\end{figure}
 
 To test the convergence rate of second-kind N\'ed\'elec space, we choose 
 \begin{align*}
