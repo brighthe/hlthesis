@@ -8,12 +8,27 @@
 \usepackage{stmaryrd}
 \usepackage{scalefnt}
 \usepackage{graphicx}
-\usepackage{listings}
 \usepackage{caption}
+\usepackage{listings}
+
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\lstset{
+	language=Python,
+	commentstyle=\color{darkgreen},
+	keywordstyle=\bfseries\color{blue},
+	stringstyle=\color{red},
+	basicstyle=\ttfamily\small,
+	frame=single,
+	rulecolor=\color{black},
+	showstringspaces=false,
+	breaklines=true,
+	% 其他设置...
+}
 
 \newcommand{\Oplus}{\ensuremath{\vcenter{\hbox{\scalebox{1.5}{$\oplus$}}}}}
 \newcommand{\prox}{\operatorname{Prox}}
 
+\renewcommand{\lstlistingname}{Code}
 \renewcommand{\thealgorithm}{2.\arabic{algorithm}}     % 若这是第 2 章
 
 \lstset{basicstyle=\ttfamily}
@@ -384,12 +399,12 @@ The choice of the filter radius $r_{\min}$ has a significant impact on the optim
 This chapter introduces the design principles and key components of the SOPTX framework, with an emphasis on its support for multi-backend switching to enhance computational performance and flexibility. The chapter is organized into three parts. We first examine the architecture of FEALPy and its role in providing a foundational tensor computation environment. We then describe the modular structure of SOPTX, including its material, solver, filter, and optimization modules. Finally, we discuss the design and advantages of the multi-backend mechanism, which enables compatibility with NumPy, PyTorch, and JAX to meet a range of computational needs. 
 
 \subsection{FEALPy Architecture Design}
-As shown in Figure~\ref{fs_fig1}, FEALPy adopts a layered architecture consisting of four levels, arranged from bottom to top: the tensor level, the common level, the algorithm level, and the field level. Building on this architecture, FEALPy introduces the concept of a \textit{Tensor Backend Manager}, which provides unified management and scheduling of different tensor computation backends. This mechanism offers a consistent tensor operation interface for the upper layers. The interface currently follows the Python Array API Standard v2023.12\cite{arrayapi2023}, and is compatible with multiple backends such as NumPy, PyTorch, and JAX, enabling the same codebase to adapt seamlessly to different software and hardware platforms.
+As shown in Figure~\ref{fs:fig1}, FEALPy adopts a layered architecture consisting of four levels, arranged from bottom to top: the tensor level, the common level, the algorithm level, and the field level. Building on this architecture, FEALPy introduces the concept of a \textit{Tensor Backend Manager}, which provides unified management and scheduling of different tensor computation backends. This mechanism offers a consistent tensor operation interface for the upper layers. The interface currently follows the Python Array API Standard v2023.12\cite{arrayapi2023}, and is compatible with multiple backends such as NumPy, PyTorch, and JAX, enabling the same codebase to adapt seamlessly to different software and hardware platforms.
 \begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/fealpy_structure.png}
 	\caption{The layered architecture of FEALPy, comprising tensor, common, algorithm, and field levels, progressing from low-level functionalities to high-level applications. Modules in dashed boxes are under development.}
-	\label{fs_fig1}
+	\label{fs:fig1}
 \end{figure}
 
 Specifically, the functions of each layer are as follows:
@@ -405,13 +420,13 @@ Through this layered design, FEALPy balances functionality, extensibility, and p
 \subsection{SOPTX Architecture Design}
 The SOPTX framework is positioned within the field level of FEALPy’s layered architecture, targeting structural topology optimization (STO) applications. SOPTX fully inherits and extends FEALPy’s \textit{Tensor Backend Manager}, diverse numerical algorithm components, and general-purpose mesh and geometry handling capabilities. This design not only ensures flexibility and extensibility, but also significantly improves computational efficiency for TO problems.
 
-As shown in Figure~\ref{fs_fig2}, SOPTX adopts a modular architecture consisting of four primary components: the material, solver, filter, and optimizer modules. These components communicate and share data through well-defined interfaces, forming a loosely coupled and easily extensible multi-backend framework for TO.
+As shown in Figure~\ref{fs:fig2}, SOPTX adopts a modular architecture consisting of four primary components: the material, solver, filter, and optimizer modules. These components communicate and share data through well-defined interfaces, forming a loosely coupled and easily extensible multi-backend framework for TO.
 % [H] [htp]
 \begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/soptx_structure.png}
 	\caption{SOPTX is organized into four main modules: material, solver, filter, and optimization—forming a modular and extensible architecture. The material module provides the foundation, while the solver and filter modules handle intermediate computations and jointly support the optimization module. Dashed boxes indicate components under development.}
-	\label{fs_fig2}
+	\label{fs:fig2}
 \end{figure}
 
 \subsubsection{Material Module}
@@ -508,7 +523,171 @@ Specifically, different computational backends offer distinct advantages and are
 This chapter aims to provide readers with installation instructions and usage guidance for SOPTX, helping them quickly become familiar with the basic operations of the framework and apply it to topology optimization (TO) tasks. As a TO toolkit built on top of FEALPy, SOPTX offers a highly efficient and flexible computational environment through its multi-backend switching mechanism and modular design. The content of this chapter is divided into two parts: first, we present a detailed explanation of the installation steps for SOPTX and its dependency FEALPy, ensuring that readers can correctly configure the development environment; then, we demonstrate the usage workflow of SOPTX through a classical 2D cantilever beam compliance minimization example.
 
 \subsection{Software Installation}
-SOPTX is a TO toolkit built on top of FEALPy, an intelligent CAE simulation engine that provides numerical computing capabilities. Installing FEALPy is a prerequisite, and it is recommended to install it from source. Before installation, ensure that Git and Python are properly installed. It is also recommended to use a virtual environment when installing and running FEALPy. 
+SOPTX is a TO toolkit built on top of FEALPy, an intelligent CAE simulation engine that provides numerical computing capabilities. Installing FEALPy is a prerequisite, and it is recommended to install it from source. Before installation, ensure that Git and Python are properly installed. It is also recommended to use a virtual environment when installing and running FEALPy.
+ 
+Core installation steps:
+\begin{enumerate} 
+	\item Clone the FEALPy repository from GitHub:
+\begin{lstlisting}[language=bash]
+	git clone https://github.com/weihuayi/fealpy.git
+\end{lstlisting}
+	\item Change into the FEALPy directory and install it in editable mode:
+\begin{lstlisting}[language=bash]
+	cd fealpy
+	pip install -e . 
+\end{lstlisting}
+	\item Similarly, install SOPTX:
+\begin{lstlisting}[language=bash]
+	git clone https://github.com:weihuayi/soptx.git
+	cd soptx
+	pip install -e . 
+\end{lstlisting}
+\end{enumerate}
+
+For the complete installation guide, please refer to the official documentation at: \url{https://github.com/weihuayi/fealpy}.
+
+\subsection{Example: 2D Cantilever Beam} 
+We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX \cite{bendsoe2013topology}: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever}). The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform 2D mesh is used. The target volume fraction is set to $0.4$, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=0.6\textwidth]{figures/cantilever_2d.png}
+	\caption{Cantilever beam geometry: fixed on the left, with a downward concentrated load on the right.}
+	\label{fig:cantilever}
+\end{figure}
+
+As shown in Code~\ref{code:mouldes_pde}, we first import relevant modules from FEALPy---including the backend, mesh, and function space---and from SOPTX, including the material, solver, filter, and optimization modules. Next, we define the partial differential equation (PDE) model of the cantilever beam, which includes the geometric configuration, applied load, and boundary conditions. The standard interface of a PDE model in SOPTX includes initialization, region definition, loading, and boundary conditions. The complete definition of the cantilever beam model \texttt{Cantilever2dData1} is provided in~\ref{sec:canti}
+\begin{lstlisting}[caption={Module imports and PDE model}, label={code:mouldes_pde}]
+	from fealpy.backend import backend_manager as bm
+	from fealpy.mesh import UniformMesh2d
+	from fealpy.functionspace import LagrangeFESpace, TensorFunctionSpace
+	
+	from soptx.material import (DensityBasedMaterialConfig, DensityBasedMaterialInstance)
+	from soptx.solver import (ElasticFEMSolver, AssemblyMethod)
+	from soptx.filter_ import SensitivityBasicFilter
+	from soptx.opt import (ComplianceObjective, ComplianceConfig, VolumeConstraint, VolumeConfig)
+	from soptx.opt import OCOptimizer
+	
+	from soptx.pde import Cantilever2dData1
+	
+	pde = Cantilever2dData1(xmin=0, xmax=160, ymin=0, ymax=100,	T = -1)
+\end{lstlisting}
+
+As shown in Code~\ref{code:mesh_space}, the mesh and finite element function spaces are defined. The displacement field is represented using the first-order continuous Lagrange space, while the density field is defined in the zeroth-order discontinuous Lagrange space.
+\begin{lstlisting}[caption={Mesh and function space definitions}, label={code:mesh_space}]
+	mesh = UniformMesh2d(extent=[0, 160, 0, 100], h=[1, 1], origin=[0, 0])
+	
+	space_C = LagrangeFESpace(mesh=mesh, p=1, ctype='C')
+	tensor_space_C = TensorFunctionSpace(scalar_space=space_C, shape=(-1, 2))
+	space_D = LagrangeFESpace(mesh=mesh, p=0, ctype='D')
+\end{lstlisting}
+
+As shown in Code~\ref{code:material}, the material module is instantiated using the material properties, the SIMP interpolation model, and the TO constants.
+
+\begin{lstlisting}[caption={Material module}, label={code:material}]
+	material_config = DensityBasedMaterialConfig(
+	elastic_modulus=1.0,            
+	minimal_modulus=1e-9,         
+	poisson_ratio=0.3,            
+	plane_assumption="plane_stress",    
+	interpolation_model="SIMP",    
+	penalty_factor=3.0)
+	materials = DensityBasedMaterialInstance(config=material_config)
+\end{lstlisting}
+	
+As shown in Code~\ref{code:solver_filter}, the solver module is instantiated using the material module, the PDE model, the matrix assembly method, and direct linear system solver (MUMPS). Subsequently, the sensitivity filter is initialized using the specified filter radius.
+\begin{lstlisting}[caption={Solver and filter module}, label={code:solver_filter}] 
+	solver = ElasticFEMSolver(
+					materials=materials,
+					tensor_space=tensor_space_C,
+					pde=pde,
+					assembly_method=AssemblyMethod.STANDARD,
+					solver_type='direct',
+					solver_params={'solver_type': 'mumps'})
+	sens_filter = SensitivityBasicFilter(mesh=mesh, rmin=6.0)
+\end{lstlisting}
+
+As shown in Code~\ref{code:optimizer}, the objective function class is instantiated, followed by the volume constraint class based on the specified volume fraction. The optimizer is then initialized using the Optimality Criteria (OC) algorithm with its basic parameters. The maximum number of iterations is set to $200$, and the convergence tolerance is set to $0.01$ to control the termination criteria of the optimization process.
+
+\begin{lstlisting}[caption={Optimization module}, label={code:optimizer}]
+	objective = ComplianceObjective(solver=solver)
+	constraint = VolumeConstraint(solver=solver, volume_fraction=0.4)
+	
+	optimizer = OCOptimizer(objective=objective,
+	constraint=constraint,
+	filter=sens_filter,
+	options={'max_iterations': 200, 'tolerance': 0.01})
+\end{lstlisting}
+
+As shown in Code~\ref{code:main_post}, the initial density field is defined using an interpolation method. The optimization process is then executed, followed by saving the results and plotting the convergence history.
+\begin{lstlisting}[caption={Main program and post-processing}, label={code:main_post}]
+	if __name__ == "__main__":
+		@cartesian
+		def density_func(x):
+			val = bm.ones(x.shape[0])
+			# val = config.volume_fraction * bm.ones(x.shape[0], **kwargs)
+			return val
+		rho = space_D.interpolate(u=density_func)
+		rho_opt, history = optimizer.optimize(rho=rho[:])
+		
+		from soptx.opt import save_optimization_history, plot_optimization_history
+		save_optimization_history(mesh, history)
+		plot_optimization_history(history)
+\end{lstlisting}
+
+The initial material density is uniformly distributed across the design domain, with each element initialized to the target volume fraction of $0.4$. After running the code, Figure~\ref{fig:canti_04_convergence} shows the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$. The compliance $c(\rho)$ drops rapidly from its initial value of approximately $500$ to around $100$ within the first 10 iterations, and then converges smoothly, reaching convergence at iteration 57. The volume fraction $v(\rho)$ remains stably around $0.4$, with only minor fluctuations.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=1.0\textwidth]{figures/cantilever_2d_04_convergence.png}
+	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 2D cantilever beam initialized with a uniform density of $0.4$.}
+	\label{fig:canti_04_convergence}
+\end{figure}
+
+Figure~\ref{fig:canti_04_all} displays the resulting topologies at iterations 3, 30, and 57.
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=145.5753,~v(\rho)=0.3998$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_04_1.png}
+		\label{fig:canti_04_1}
+	}
+	\subfloat[$c(\rho)=61.7084,~v(\rho)=0.3999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_04_2.png}
+		\label{fig:canti_04_2}
+	}
+	\subfloat[$c(\rho)=61.4208,~v(\rho)=0.4000$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_04_3.png}
+		\label{fig:canti_04_3}
+	}
+	\caption{Topology layouts at iterations 3, 30, and 57 during the optimization process. Each subfigure also reports the corresponding compliance and volume fraction values.}
+	\label{fig:canti_04_all}
+\end{figure}
+
+The initial material density is uniformly set to $1$ over the design domain. After running the optimization, Figure~\ref{fig:canti_1_convergence} shows the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$. The volume fraction smoothly decreases from $1$ to the target value of $0.4$ and stabilizes after approximately 5 iterations. The compliance $c(\rho)$ first increases from around $30$ to $500$ and then gradually decreases, converging at iteration 60. Compared with the case initialized at $\rho = 0.4$, the optimization process starting from a fully solid design ($\rho = 1$) requires slightly more iterations to converge, as it first reduces the volume fraction to satisfy the constraint before refining the topology.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=1.0\textwidth]{figures/cantilever_2d_1_convergence.png}
+	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 2D cantilever beam with an initial density of $1$.}
+	\label{fig:canti_1_convergence}
+\end{figure}
+
+Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and 60.
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=185.9530,~v(\rho)=0.4002$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_1_1.png}
+		\label{fig:canti_1_1}
+	}
+	\subfloat[$c(\rho)=61.7084,~v(\rho)=0.3999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_1_2.png}
+		\label{fig:canti_1_2}
+	}
+	\subfloat[$c(\rho)=61.4208,~v(\rho)=0.4000$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_1_3.png}
+		\label{fig:canti_1_3}
+	}
+	\caption{opology layouts at iterations 6, 33, and 60 during the optimization process. Each subfigure includes the compliance and volume fraction.}
+	\label{fig:canti_1_all}
+\end{figure}
+
 
 
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
@@ -2256,6 +2435,62 @@ The second author was supported by NSF DMS-2012465 and DMS-2309785. The third
 author was supported by the National Natural Science Foundation of China (NSFC)
 (Grant No. 12171300), and the Natural Science Foundation of Shanghai (Grant No.
 21ZR1480500).
+
+\appendix
+\renewcommand{\thesection}{Appendix\,\Alph{section}.}
+\section{Cantilever2dData1}
+\label{sec:canti}
+\begin{lstlisting}
+	class Cantilever2dData1:
+		def __init__(self, 
+			xmin: float, xmax: float, 
+			ymin: float, ymax: float,
+			T: float = -1):
+		self.xmin, self.xmax = xmin, xmax
+		self.ymin, self.ymax = ymin, ymax
+		self.T = T 
+		self.eps = 1e-12
+		
+		def domain(self) -> list:
+			box = [self.xmin, self.xmax, self.ymin, self.ymax]
+			return box
+		
+		@cartesian
+		def force(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			y = points[..., 1]
+			coord = (
+			(bm.abs(x - domain[1]) < self.eps) & 
+			(bm.abs(y - domain[2]) < self.eps)
+			)
+			kwargs = bm.context(points)
+			val = bm.zeros(points.shape, **kwargs)
+			val[coord, 1] = self.T
+			return val
+		
+		@cartesian
+		def dirichlet(self, points: TensorLike) -> TensorLike:
+			kwargs = bm.context(points)
+			return bm.zeros(points.shape, **kwargs)
+		
+		@cartesian
+		def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			coord = bm.abs(x - domain[0]) < self.eps
+			return coord
+		
+		@cartesian
+		def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			coord = bm.abs(x - domain[0]) < self.eps
+			return coord    
+		
+		def threshold(self) -> Tuple[Callable, Callable]:
+			return (self.is_dirichlet_boundary_dof_x, self.is_dirichlet_boundary_dof_y)
+\end{lstlisting}
 
 %%%% Bibliography  %%%%%%%%%%
 \bibliographystyle{abbrv}
