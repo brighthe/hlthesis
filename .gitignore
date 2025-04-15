@@ -7,3 +7,52 @@
 .*/
 __pycache__/
 visualization/
+
+# LaTeX temporary files
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.run.xml
+*.bcf
+*.idx
+*.ilg
+*.ind
+*.nav
+*.snm
+*.vrb
+
+# BibTeX temporary files
+*.bak
+
+# Intermediate PDFs and other output formats
+*.dvi
+*.ps
+*.pdf
+
+# Additional backup files
+*~
+*.tid
+*.tms
+*.bak
+*.sav
+
+# Minted package generated files
+_minted*/
+
+# Latexmk generated files
+*.gz
+
+# Custom editor backup files
+.*.swp
+.DS_Store
+
+# Build directories
+build/
