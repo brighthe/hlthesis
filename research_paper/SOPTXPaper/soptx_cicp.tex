@@ -549,7 +549,7 @@ Core installation steps:
 For the complete installation guide, please refer to the official documentation at: \url{https://github.com/weihuayi/fealpy}.
 
 \subsection{Example: 2D Cantilever Beam}\label{sec:exp_canti_beam}
-We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX \cite{bendsoe2013topology}: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever}). The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform 2D mesh is used. The target volume fraction is set to $0.4$, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
+We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX \cite{bendsoe2013topology}: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever}). The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform quadrilateral mesh is used. The target volume fraction is set to $0.4$, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
 \begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/cantilever_2d.png}
@@ -686,7 +686,7 @@ Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_1_3.png}
 		\label{fig:canti_1_3}
 	}
-	\caption{opology layouts at iterations 6, 33, and 60 during the optimization process. Each subfigure includes the compliance and volume fraction.}
+	\caption{Topology layouts at iterations 6, 33, and 60 during the optimization process. Each subfigure includes the compliance and volume fraction.}
 	\label{fig:canti_1_all}
 \end{figure}
 
@@ -695,7 +695,7 @@ This chapter presents a series of numerical examples that comprehensively demons
 
 The chapter is organized into seven sections: first, we present the MBB beam problem to demonstrate the robustness of SOPTX across different mesh resolutions; then, we investigate the impact of different filtering techniques on the optimization results; next, we introduce the algorithm switching interface and a backend-reconstructed version of the MMA optimizer; subsequently, we extend SOPTX to 3D TO; after that, we highlight how fast matrix assembly improves overall runtime efficiency; we then illustrate how AD simplifies the implementation of sensitivity analysis; finally, we discuss the benefits of the multi-backend switching mechanism and demonstrate the GPU acceleration potential. Through these examples, the functionalities of SOPTX are systematically demonstrated, providing readers with guidance for applying the framework in both scientific research and engineering scenarios.
 
-\subsection{MBB Beam}
+\subsection{MBB Beam}\label{sec:exp_mbb_beam}
 The MBB beam is a classical benchmark problem in TO, widely used to verify the effectiveness and robustness of optimization algorithms. In this section, we minimize the structural compliance of the MBB beam (see Figure~\ref{fig:mbb_beam}) to demonstrate the flexibility and consistency of the SOPTX framework in handling different PDE models and mesh settings. The beam is subject to hinged boundary conditions along its left edge and the bottom right corner, where only horizontal displacements are constrained (i.e., zero horizontal movement is enforced while vertical motion is free). A downward concentrated load $T = -1$ is applied to the upper left corner. The target volume fraction is set to $0.5$, and the material parameters are $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the filter radius is $r = 6.0$, which matches the mesh element size to ensure smooth topology and suppress checkerboard patterns.
 \begin{figure}[htp]
 	\centering
@@ -709,6 +709,61 @@ Compared to the cantilever beam example in Section~\ref{sec:exp_canti_beam}, the
 	from soptx.pde import MBBBeam2dData1
 	pde = MBBBeam2dData1(xmin=0, xmax=150, ymin=0, ymax=50, T = -1)
 \end{lstlisting}
+
+To highlight the adaptability and robustness of SOPTX across different mesh types, we perform topology optimization on a $150 \times 50$ uniform quadrilateral mesh and a triangular mesh, both initialized with a uniform material density equal to the target volume fraction $0.5$. The triangular mesh is generated using the following code:
+\begin{lstlisting}
+	from fealpy.mesh import TriangleMesh
+	mesh = TriangleMesh.from_box(box=[0, 150, 0, 50], nx=150, ny=50)
+\end{lstlisting}
+The resulting topologies are shown in Figure~\ref{fig:mbb_2d_all}:
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=219.5199,~v(\rho)=0.5001$]{
+		\includegraphics[width=0.5\textwidth]{figures/mbb_2d_u2.png}
+		\label{fig:mbb_2d_u2}
+	}
+	\subfloat[$c(\rho)=217.6605,~v(\rho)=0.4999$]{
+		\includegraphics[width=0.5\textwidth]{figures/mbb_2d_tri.png}
+		\label{fig:mbb_2d_tri}
+	}
+	\caption{Optimized topologies of the MBB beam using a uniform quadrilateral mesh (left) and a triangular mesh (right).}
+	\label{fig:mbb_2d_all}
+\end{figure}
+
+As shown in Figure~\ref{fig:mbb_2d_all}, the optimized layouts under both mesh types are highly consistent, with relative differences in compliance and volume fraction below $1\%$. This consistency demonstrates the mesh-independence and algorithmic robustness of SOPTX. Such behavior is enabled by its modular architecture, allowing users to easily switch between different PDE models and mesh configurations without modifying other parts of the framework.
+
+\subsection{Different Filtering Methods}
+In TO, the choice of filtering method plays a crucial role in shaping the final structure. Filters help smooth design variables and control structural details, significantly influencing both the quality and manufacturability of the optimized results. Thanks to its modular architecture, SOPTX supports seamless switching between various filtering strategies---users can simply replace the filter class without modifying other components of the framework.
+
+To illustrate the impact of different filters, this section compares the results obtained using the density filter and the Heaviside projection filter. Both experiments are based on the MBB beam problem introduced in Section~\ref{sec:exp_mbb_beam}, with all parameters kept identical except for the choice of filter. Unless otherwise specified, the filter radius is set to $r=6.0$.
+
+The density filter performs weighted averaging of the design variables to achieve a smooth spatial distribution, effectively eliminating small-scale features. This method is well-suited for design tasks that require structural continuity. In SOPTX, the density filter can be applied simply by instantiating the \textit{DensityBasicFilter} class:
+\begin{lstlisting}
+	dens_filter = DensityBasicFilter(mesh=mesh, rmin=6.0)
+\end{lstlisting}
+
+The Heaviside projection filter builds upon the density filter by introducing a projection operation. It employs a continuation strategy to gradually increase the projection parameter $\beta$, driving design variables toward $0$ or $1$ and producing clear black-and-white topologies. This method is particularly suitable for structural design problems with strict manufacturability requirements. To avoid overly wide bar-like structures in the early optimization stages, we slightly reduce the filter radius to $r=4.5$. The filter can be enabled in SOPTX using the following code:
+\begin{lstlisting}
+	heavi_filter = HeavisideProjectionBasicFilter(mesh=mesh, rmin=4.5, beta=1, max_beta=512, continuation_iter=50)   
+\end{lstlisting}
+
+Figure~\ref{fig:mbb_filter_all} shows the final optimized topologies obtained using the two filters:
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=235.7337,~v(\rho)=0.5000$]{
+		\includegraphics[width=0.5\textwidth]{figures/mbb_dens.png}
+		\label{fig:mbb_dens}
+	}
+	\subfloat[$c(\rho)=191.4873,~v(\rho)=0.5000$]{
+		\includegraphics[width=0.5\textwidth]{figures/mbb_heavi.png}
+		\label{fig:mbb_heavi}
+	}
+	\caption{Optimized topologies of the MBB beam using a uniform quadrilateral mesh (left) and a triangular mesh (right).}
+	\label{fig:mbb_filter_all}
+\end{figure}
+As seen in the figure, the two methods yield noticeably different results. 
+
+% The modular architecture of the SOPTX framework allows seamless switching between different filtering strategies. Users can simply replace the filter class to apply a different method without modifying the rest of the code. This section takes the MBB beam example from Section~\ref{sec:exp_mbb_beam} as a test case to demonstrate the flexibility of SOPTX in applying various filters and to compare the resulting topologies. All simulation parameters are kept the same as in Section~\ref{sec:exp_mbb_beam}, using a $150 \times 50$ uniform quadrilateral mesh. Unless otherwise stated, the filter radius is set to $6$.
 
 
 \section{Geometric Decompositions of Lagrange Elements}\label{sec:lagrange}
