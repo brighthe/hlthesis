@@ -847,15 +847,15 @@ The initial material density is uniformly set to the target volume fraction of $
 To better visualize the optimization results, Figure~\ref{fig:canti3d_all} shows the topology layouts at iterations 7, 21, and 54. Only elements with density values $\rho > 0.3$ are rendered to highlight the structural features.
 \begin{figure}[htp]
 	\centering
-	\subfloat[$c(\rho)=185.9530,~v(\rho)=0.4002$]{
+	\subfloat[$c(\rho)=5338.9462,~v(\rho)=0.3001$]{
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_1.png}
 		\label{fig:canti3d_1}
 	}
-	\subfloat[$c(\rho)=61.7084,~v(\rho)=0.3999$]{
+	\subfloat[$c(\rho)=2122.6707,~v(\rho)=0.3000$]{
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_2.png}
 		\label{fig:canti3d_2}
 	}
-	\subfloat[$c(\rho)=61.4208,~v(\rho)=0.4000$]{
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_3.png}
 		\label{fig:canti3d_3}
 	}
@@ -897,6 +897,50 @@ Table~\ref{tab:assembly_comparison} summarizes the performance of different matr
 As shown in Table~\ref{tab:assembly_comparison}, the original matrix assembly method results in an average assembly time of \SI{0.838}{s} per iteration after the first one, accounting for approximately $68\%$ of the total iteration time. This clearly constitutes a performance bottleneck. With the adoption of the fast matrix assembly technique, the average assembly time is reduced to \SI{0.276}{s}---only about $33\%$ of that of the original method. Although the symbolic fast assembly method incurs a longer initialization time of \SI{3.853}{s} during the first iteration, it achieves the lowest average assembly time in subsequent iterations (\SI{0.272}{s}), while ensuring analytical accuracy in integration.
 
 In summary, the matrix fast assembly strategy implemented in SOPTX effectively reduces the computational cost of topology optimization and improves both numerical accuracy and stability. This makes it particularly well suited for solving large-scale topology optimization problems with stringent demands on computational efficiency and precision.
+
+\subsection{Application of Automatic Differentiation}
+Sensitivity analysis is a core component of TO, guiding the update of design variables. Traditional methods typically require manual derivation and implementation of sensitivity formulas, which can be time-consuming and error-prone, especially for complex material models or constraint conditions. The SOPTX framework introduces AD to automate sensitivity computations, allowing users to focus on problem modeling and solution strategies without dealing with tedious mathematical derivations. In this section, we use the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} to demonstrate how SOPTX leverages AD to compute the sensitivities of the compliance objective and the volume constraint. The advantages and application scenarios of AD in TO are also discussed.
+
+The SOPTX framework supports multiple computational backends, including NumPy, PyTorch, and JAX. While FEALPy by default operates with the NumPy backend~\cite{harris2020array}, NumPy does not support AD. Therefore, users need to switch to a backend that supports AD in order to enable this functionality. For example, switching to the PyTorch backend~\cite{paszke2017automatic} requires only a single line of code:
+\begin{lstlisting}[language=bash]
+	bm.set_backend('pytorch')
+\end{lstlisting}
+
+In SOPTX, the mode of sensitivity computation for objective and constraint functions is controlled by the configuration parameter \texttt{diff\_mode}. By default, \texttt{diff\_mode} is set to \texttt{'manual'}, meaning that manually derived sensitivity expressions are used. To enable AD, users simply set \texttt{diff\_mode} to \texttt{'auto'}. The following code snippet shows how to enable AD for the structural compliance objective while retaining manual differentiation for the volume constraint:
+\begin{lstlisting}[language=bash]
+	obj_config = ComplianceConfig(diff_mode='auto')
+	objective = ComplianceObjective(solver=solver, config=obj_config)
+	
+	cons_config = VolumeConfig(diff_mode='manual')
+	constraint = VolumeConstraint(solver=solver, volume_fraction=0.5, config=cons_config)
+\end{lstlisting}
+
+Under this configuration, the sensitivity of the compliance objective is computed automatically via AD, whereas the sensitivity of the volume constraint remains manually derived. This flexibility allows users to selectively choose the most appropriate differentiation method according to the problem requirements. The detailed implementation of the compliance sensitivity computation using AD is provided in~\ref{sec:ad_compliance}
+
+To verify the correctness and effectiveness of AD, we conduct tests using the 3D cantilever beam problem described in Section~\ref{sec:exp_canti3d}. All parameters are kept identical: the mesh size is $60\times20\times4$, the target volume fraction is set to $0.3$,  the initial material density is $0.3$, material properties are $E=1$ and $\nu=0.3$, the SIMP penalty factor is $p=3$, and the sensitivity filter radius is $r=1.5$. The structural compliance sensitivity is computed using AD. Figure~\ref{fig:canti3d_ad_convergence} shows the convergence histories of the compliance and volume fraction, while Figure~\ref{fig:canti3d_ad_topos} presents the topology layouts at iterations 7, 21, and 54.
+
+\begin{figure}[htp] 
+	\centering 
+	\includegraphics[width=0.8\textwidth]{figures/cantilever_3d_convergence_auto.png} \caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam optimization using automatic differentiation.} \label{fig:canti3d_ad_convergence} 
+\end{figure}
+
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=5338.9462,~v(\rho)=0.3001$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_1_auto.png}
+		\label{fig:canti3d_1_auto}
+	}
+	\subfloat[$c(\rho)=2122.6707,~v(\rho)=0.3000$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_2_auto.png}
+		\label{fig:canti3d_2_auto}
+	}
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_3_auto.png}
+		\label{fig:canti3d_3_auto}
+	}
+	\caption{Topology layouts at iterations 7, 21, and 54 during the 3D cantilever beam optimization using AD. Only elements with $\rho>0.3$ are visualized. Each subfigure also reports the compliance and volume fraction.}
+	\label{fig:canti3d_ad_topos}
+\end{figure}
 
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
@@ -1090,6 +1134,31 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 			return (self.is_dirichlet_boundary_dof_x, 
 					self.is_dirichlet_boundary_dof_y,
 					self.is_dirichlet_boundary_dof_z)
+\end{lstlisting}
+
+\section{Automatic Differentiation}
+\label{sec:ad_compliance}
+\begin{lstlisting}
+	def _compute_gradient_auto(self, 
+					rho: TensorLike,
+					u: Optional[TensorLike] = None) -> TensorLike:
+		if u is None:
+			u = self._update_u(rho)
+		
+		ke0 = self.solver.get_base_local_stiffness_matrix()
+		cell2dof = self.solver.tensor_space.cell_to_dof()
+		ue = u[cell2dof] 
+		
+		def compliance_contribution(rho_i: float, ue_i: TensorLike, ke0_i: TensorLike) -> float:
+			E = self.materials.calculate_elastic_modulus(rho_i)
+			c_i = -E * bm.einsum('i, ij, j', ue_i, ke0_i, ue_i)
+			return c_i
+		
+		vmap_grad = bm.vmap(lambda r, u, k: 
+						bm.jacrev(lambda x: compliance_contribution(x, u, k))
+						(r))
+		dc = vmap_grad(rho, ue, ke0)
+		return dc
 \end{lstlisting}
 
 
