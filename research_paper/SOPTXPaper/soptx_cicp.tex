@@ -12,6 +12,8 @@
 \usepackage{listings}
 % 明确设置 T1 字体编码
 \usepackage[T1]{fontenc}
+\usepackage{booktabs}   % 表格包
+\usepackage{siunitx}
 
 \definecolor{darkgreen}{rgb}{0,0.5,0}
 \lstset{
@@ -557,7 +559,7 @@ We use a popular compliance minimization benchmark to demonstrate the usage of S
 	\label{fig:cantilever}
 \end{figure}
 
-As shown in Code~\ref{code:mouldes_pde}, we first import relevant modules from FEALPy---including the backend, mesh, and function space---and from SOPTX, including the material, solver, filter, and optimization modules. Next, we define the partial differential equation (PDE) model of the cantilever beam, which includes the geometric configuration, applied load, and boundary conditions. The standard interface of a PDE model in SOPTX includes initialization, region definition, loading, and boundary conditions. The complete definition of the cantilever beam model \texttt{Cantilever2dData1} is provided in~\ref{sec:code_canti}
+As shown in Code~\ref{code:mouldes_pde}, we first import relevant modules from FEALPy---including the backend, mesh, and function space---and from SOPTX, including the material, solver, filter, and optimization modules. Next, we define the partial differential equation (PDE) model of the cantilever beam, which includes the geometric configuration, applied load, and boundary conditions. The standard interface of a PDE model in SOPTX includes initialization, region definition, loading, and boundary conditions. The complete definition of the cantilever beam model \texttt{Cantilever2dData1} is provided in~\ref{sec:code_canti_2d}
 \begin{lstlisting}[caption={Module imports and PDE model}, label={code:mouldes_pde}]
 	from fealpy.backend import backend_manager as bm
 	from fealpy.mesh import UniformMesh2d
@@ -645,6 +647,7 @@ The initial material density is uniformly distributed across the design domain, 
 \end{figure}
 
 Figure~\ref{fig:canti_04_all} displays the resulting topologies at iterations 3, 30, and 57.
+
 \begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=145.5753,~v(\rho)=0.3998$]{
@@ -704,13 +707,13 @@ The MBB beam is a classical benchmark problem in TO, widely used to verify the e
 	\label{fig:mbb_beam}
 \end{figure}
 
-Compared to the cantilever beam example in Section~\ref{sec:exp_canti_beam}, the SOPTX framework allows users to switch to the MBB beam problem with minimal modifications. Thanks to its modular design, it is sufficient to change the PDE model. The full implementation of the MBB beam model \texttt{MBBBeam2dData1} is provided in Section~\ref{sec:code_mbb}
+Compared to the cantilever beam example in Section~\ref{sec:exp_canti_beam}, the SOPTX framework allows users to switch to the MBB beam problem with minimal modifications. Thanks to its modular design, it is sufficient to change the PDE model. The full implementation of the MBB beam model \texttt{MBBBeam2dData1} is provided in \ref{sec:code_mbb}
 \begin{lstlisting}
 	from soptx.pde import MBBBeam2dData1
 	pde = MBBBeam2dData1(xmin=0, xmax=150, ymin=0, ymax=50, T = -1)
 \end{lstlisting}
 
-To highlight the adaptability and robustness of SOPTX across different mesh types, we perform topology optimization on a $150 \times 50$ uniform quadrilateral mesh and a triangular mesh, both initialized with a uniform material density equal to the target volume fraction $0.5$. The triangular mesh is generated using the following code:
+To highlight the adaptability and robustness of SOPTX across different mesh types, we perform TO on a $150 \times 50$ uniform quadrilateral mesh and a triangular mesh, both initialized with a uniform material density equal to the target volume fraction $0.5$. The triangular mesh is generated using the following code:
 \begin{lstlisting}
 	from fealpy.mesh import TriangleMesh
 	mesh = TriangleMesh.from_box(box=[0, 150, 0, 50], nx=150, ny=50)
@@ -795,7 +798,7 @@ In the MBB beam problem, using the same parameters and sensitivity filter as wit
 	\subfloat[$c(\rho)=220.4377,~v(\rho)=0.4995$]{
 		\includegraphics[width=0.5\textwidth]{figures/mbb_mma_tri.png}
 		\label{fig:mbb_mma_tri}
-i	}
+	}
 	\caption{Optimized topologies of the MBB beam using MMA optimizer on a structured quadrilateral mesh (left) and a triangular mesh (right).}
 	\label{fig:mbb_mma_all}
 \end{figure}
@@ -813,9 +816,87 @@ The MMA algorithm in SOPTX is based on the classical MATLAB implementation provi
 					)
 \end{lstlisting}
 
-Through this refactoring, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in topology optimization.
+Through this refactoring, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in TO.
 
+\subsection{3D Extension}\label{sec:exp_canti3d}
+Thanks to its modular design, SOPTX facilitates a straightforward transition from 2D to 3D models. In this section, we demonstrate the capability of SOPTX in solving 3D TO problems through the compliance minimization of a 3D cantilever beam, as illustrated in Figure~\ref{fig:cantilever_3d}. The beam is fully fixed on the left end, and a downward concentrated load of magnitude $T=-1$ is applied at the bottom of the right end. A structured uniform grid of hexahedral elements with size $60\times20\times4$ is employed. The target volume fraction is set to $0.3$, and the material parameters are $E = 1$ and $\nu = 0.3$. The SIMP penalty factor is chosen as $p=3$. A sensitivity filter with radius $r=1.5$ (matched to the mesh element size) is used to ensure structural smoothness and suppress checkerboard patterns.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=0.6\textwidth]{figures/cantilever_3d.png}
+	\caption{Geometric configuration of the 3D cantilever beam. The left end is fully fixed, and a downward concentrated load is applied at the bottom of the right end.}
+	\label{fig:cantilever_3d}
+\end{figure}
 
+Compared to the 2D cantilever beam example in Section~\ref{sec:exp_canti_beam}, SOPTX can be seamlessly extended to the 3D cantilever beam problem by simply replacing the PDE model and mesh configuration. The 3D cantilever beam model is implemented via the \texttt{Cantilever3dData1} class, as shown below, and the complete code definition is available in \ref{sec:code_canti_3d}
+\begin{lstlisting}
+	from soptx.pde import Cantilever3dData1
+	pde = Cantilever3dData1(xmin=0, xmax=60, ymin=0, ymax=20, zmin=0, zmax=4, T = -1)
+	
+	from fealpy.mesh import UniformMesh3d
+	mesh = UniformMesh3d(extent=[0, 60, 0, 20, 0, 4], h=[1, 1, 1], origin=[0, 0, 0])
+\end{lstlisting}
+
+The initial material density is uniformly set to the target volume fraction of $0.3$. Using the OC optimizer and a sensitivity filter with radius $r=1.5$, the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$ are shown in Figure~\ref{fig:canti_3d_convergence}. The compliance drops rapidly from an initial value of approximately $28000$ to around $5000$ within the first 6 iterations. It then decreases more gradually, fluctuating slightly between iterations 6 and 20 before settling to about $2000$. Smooth convergence is eventually achieved at iteration 54. The volume fraction remains nearly constant around $0.3$ throughout the process, indicating effective constraint control.
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=1.0\textwidth]{figures/cantilever_3d_convergence.png}
+	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam initialized with a uniform density of $0.3$.}
+	\label{fig:canti_3d_convergence}
+\end{figure}
+
+To better visualize the optimization results, Figure~\ref{fig:canti3d_all} shows the topology layouts at iterations 7, 21, and 54. Only elements with density values $\rho > 0.3$ are rendered to highlight the structural features.
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=185.9530,~v(\rho)=0.4002$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_1.png}
+		\label{fig:canti3d_1}
+	}
+	\subfloat[$c(\rho)=61.7084,~v(\rho)=0.3999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_2.png}
+		\label{fig:canti3d_2}
+	}
+	\subfloat[$c(\rho)=61.4208,~v(\rho)=0.4000$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_3.png}
+		\label{fig:canti3d_3}
+	}
+	\caption{Topology layouts at iterations 7, 21, and 54 during the optimization of the 3D cantilever beam. Elements with $\rho > 0.3$ are visualized. Each subfigure also reports the compliance and volume fraction.}
+	\label{fig:canti3d_all}
+\end{figure}
+
+It is worth noting that, compared to 2D problems, 3D TO significantly increases computational complexity. This is particularly evident when using large-scale meshes, where both computational cost and memory requirements grow substantially. The SOPTX framework addresses these challenges through efficient matrix assembly and support for multiple computational backends, demonstrating excellent extensibility and computational performance. The implementation details of these features will be elaborated in the following sections.
+
+\subsection{Application of Fast Matrix Assembly}
+In 3D TO problems, computational efficiency is a central challenge. Taking the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} as a representative case, the mesh consists of $60\times20\times4$ elements, resulting in $19,215$ displacement degrees of freedom and $4,800$ density variables. The optimization process requires 54 iterations in total. In traditional finite element methods, the assembly of the global stiffness matrix often involves a large number of redundant numerical integration operations, which becomes the primary bottleneck in the overall computational workflow.
+
+To overcome this bottleneck, the SOPTX framework incorporates a fast matrix assembly technique, which separates the element-dependent and element-independent parts of stiffness matrix computation. This decomposition enables efficient evaluation and reuse of invariant quantities, significantly accelerating the assembly process. In addition, to further improve the accuracy of matrix assembly, SOPTX implements a symbolic integration precomputation technique. This approach analytically integrates the element-independent components using symbolic computation in advance, eliminating numerical integration errors and enhancing both numerical stability and overall accuracy.
+\begin{itemize} 
+	\item \textbf{Fast matrix assembly}: Accelerates matrix assembly by separating element-dependent and element-independent terms, coupled with efficient numerical integration.
+	\item \textbf{Symbolic integration precomputation}: Further improves accuracy and stability by analytically integrating invariant terms ahead of time.
+\end{itemize}
+
+Moreover, SOPTX employs intelligent caching to store invariant data across iterations, enabling direct reuse and substantially reducing average computational time in later iterations.
+
+Table~\ref{tab:assembly_comparison} summarizes the performance of different matrix assembly techniques under the same problem setting of the 3D cantilever beam optimization described in Section~\ref{sec:exp_canti3d}.
+\begin{table}[htbp]
+	\centering
+%	\setlength{\tabcolsep}{4pt} % 减小列间距
+	\caption{Performance comparison of matrix assembly techniques in the 3D cantilever beam optimization problem. All values are reported in seconds.}
+%	\small % 使用小字体
+	\begin{tabular}{cccccc}
+		\toprule
+		\textbf{Assembly Technique} & \textbf{Total} & \textbf{1st Iter.} & \textbf{1st Assembly} & \textbf{Avg. Iter.} & \textbf{Avg. Assembly} \\
+		\midrule
+		Original Assembly & 68.605 & 3.342 & 1.197 & 1.231 & 0.838 \\
+		Fast Assembly & 39.826 & 2.387 & 0.342 & 0.706 & 0.276 \\
+		Symbolic Fast Assembly & 41.194 & 5.877 & 3.853 & 0.666 & 0.272 \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:assembly_comparison}
+\end{table}
+
+As shown in Table~\ref{tab:assembly_comparison}, the original matrix assembly method results in an average assembly time of \SI{0.838}{s} per iteration after the first one, accounting for approximately $68\%$ of the total iteration time. This clearly constitutes a performance bottleneck. With the adoption of the fast matrix assembly technique, the average assembly time is reduced to \SI{0.276}{s}---only about $33\%$ of that of the original method. Although the symbolic fast assembly method incurs a longer initialization time of \SI{3.853}{s} during the first iteration, it achieves the lowest average assembly time in subsequent iterations (\SI{0.272}{s}), while ensuring analytical accuracy in integration.
+
+In summary, the matrix fast assembly strategy implemented in SOPTX effectively reduces the computational cost of topology optimization and improves both numerical accuracy and stability. This makes it particularly well suited for solving large-scale topology optimization problems with stringent demands on computational efficiency and precision.
 
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
@@ -830,7 +911,7 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 \appendix
 \renewcommand{\thesection}{Appendix\,\Alph{section}.}
 \section{Cantilever2dData1}
-\label{sec:code_canti}
+\label{sec:code_canti_2d}
 \begin{lstlisting}
 	class Cantilever2dData1:
 		def __init__(self, 
@@ -942,6 +1023,75 @@ author was supported by the National Natural Science Foundation of China (NSFC)
 		return (self.is_dirichlet_boundary_dof_x, 
 				self.is_dirichlet_boundary_dof_y)
 \end{lstlisting}
+
+\section{Cantilever3dData1}
+\label{sec:code_canti_3d}
+\begin{lstlisting}
+	class Cantilever3dData1:
+		def __init__(self,
+					xmin: float=0, xmax: float=60, 
+					ymin: float=0, ymax: float=20,
+					zmin: float=0, zmax: float=4,
+					T: float = -1):
+			self.xmin, self.xmax = xmin, xmax
+			self.ymin, self.ymax = ymin, ymax
+			self.zmin, self.zmax = zmin, zmax
+			self.T = T 
+			self.eps = 1e-12
+		
+		def domain(self) -> list:
+			box = [self.xmin, self.xmax, 
+			self.ymin, self.ymax, 
+			self.zmin, self.zmax]
+			return box
+		
+		@cartesian
+		def force(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			y = points[..., 1]
+			z = points[..., 2]
+			coord = (
+					(bm.abs(x - domain[1]) < self.eps) & 
+					(bm.abs(y - domain[2]) < self.eps)
+					)
+			kwargs = bm.context(points)
+			val = bm.zeros(points.shape, **kwargs)
+			val[coord, 1] = self.T
+			return val
+		
+		@cartesian
+		def dirichlet(self, points: TensorLike) -> TensorLike:
+			kwargs = bm.context(points)
+			return bm.zeros(points.shape, **kwargs)
+		
+		@cartesian
+		def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			coord = bm.abs(x - domain[0]) < self.eps
+			return coord
+		
+		@cartesian
+		def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			coord = bm.abs(x - domain[0]) < self.eps
+			return coord
+		
+		@cartesian
+		def is_dirichlet_boundary_dof_z(self, points: TensorLike) -> TensorLike:
+			domain = self.domain()
+			x = points[..., 0]
+			coord = bm.abs(x - domain[0]) < self.eps
+			return coord
+		
+		def threshold(self) -> Tuple[Callable, Callable]:
+			return (self.is_dirichlet_boundary_dof_x, 
+					self.is_dirichlet_boundary_dof_y,
+					self.is_dirichlet_boundary_dof_z)
+\end{lstlisting}
+
 
 %%%% Bibliography  %%%%%%%%%%
 \bibliographystyle{abbrv}
