@@ -898,7 +898,7 @@ As shown in Table~\ref{tab:assembly_comparison}, the original matrix assembly me
 
 In summary, the matrix fast assembly strategy implemented in SOPTX effectively reduces the computational cost of topology optimization and improves both numerical accuracy and stability. This makes it particularly well suited for solving large-scale topology optimization problems with stringent demands on computational efficiency and precision.
 
-\subsection{Application of Automatic Differentiation}
+\subsection{Application of Automatic Differentiation}\label{sec:exp_canti3d_ad}
 Sensitivity analysis is a core component of TO, guiding the update of design variables. Traditional methods typically require manual derivation and implementation of sensitivity formulas, which can be time-consuming and error-prone, especially for complex material models or constraint conditions. The SOPTX framework introduces AD to automate sensitivity computations, allowing users to focus on problem modeling and solution strategies without dealing with tedious mathematical derivations. In this section, we use the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} to demonstrate how SOPTX leverages AD to compute the sensitivities of the compliance objective and the volume constraint. The advantages and application scenarios of AD in TO are also discussed.
 
 The SOPTX framework supports multiple computational backends, including NumPy, PyTorch, and JAX. While FEALPy by default operates with the NumPy backend~\cite{harris2020array}, NumPy does not support AD. Therefore, users need to switch to a backend that supports AD in order to enable this functionality. For example, switching to the PyTorch backend~\cite{paszke2017automatic} requires only a single line of code:
@@ -917,12 +917,14 @@ In SOPTX, the mode of sensitivity computation for objective and constraint funct
 
 Under this configuration, the sensitivity of the compliance objective is computed automatically via AD, whereas the sensitivity of the volume constraint remains manually derived. This flexibility allows users to selectively choose the most appropriate differentiation method according to the problem requirements. The detailed implementation of the compliance sensitivity computation using AD is provided in~\ref{sec:ad_compliance}
 
-To verify the correctness and effectiveness of AD, we conduct tests using the 3D cantilever beam problem described in Section~\ref{sec:exp_canti3d}. All parameters are kept identical: the mesh size is $60\times20\times4$, the target volume fraction is set to $0.3$,  the initial material density is $0.3$, material properties are $E=1$ and $\nu=0.3$, the SIMP penalty factor is $p=3$, and the sensitivity filter radius is $r=1.5$. The structural compliance sensitivity is computed using AD. Figure~\ref{fig:canti3d_ad_convergence} shows the convergence histories of the compliance and volume fraction, while Figure~\ref{fig:canti3d_ad_topos} presents the topology layouts at iterations 7, 21, and 54.
+To verify the correctness and effectiveness of AD, we conduct tests using the 3D cantilever beam problem described in Section~\ref{sec:exp_canti3d}. All parameters are kept identical: the mesh size is $60\times20\times4$, the target volume fraction is set to $0.3$,  the initial material density is $0.3$, material properties are $E=1$ and $\nu=0.3$, the SIMP penalty factor is $p=3$, and the sensitivity filter radius is $r=1.5$. The structural compliance sensitivity is computed using AD. Figure~\ref{fig:canti3d_ad_convergence} shows the convergence histories of the compliance and volume fraction.
 
 \begin{figure}[htp] 
 	\centering 
-	\includegraphics[width=0.8\textwidth]{figures/cantilever_3d_convergence_auto.png} \caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam optimization using automatic differentiation.} \label{fig:canti3d_ad_convergence} 
+	\includegraphics[width=1.0\textwidth]{figures/cantilever_3d_convergence_auto.png} \caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam optimization using automatic differentiation.} \label{fig:canti3d_ad_convergence} 
 \end{figure}
+
+To further illustrate the evolution of the topology during optimization, the layouts at selected iterations are shown in Figure~\ref{fig:canti3d_ad_topos}.
 
 \begin{figure}[htp]
 	\centering
@@ -941,6 +943,84 @@ To verify the correctness and effectiveness of AD, we conduct tests using the 3D
 	\caption{Topology layouts at iterations 7, 21, and 54 during the 3D cantilever beam optimization using AD. Only elements with $\rho>0.3$ are visualized. Each subfigure also reports the compliance and volume fraction.}
 	\label{fig:canti3d_ad_topos}
 \end{figure}
+
+As observed from Figure~\ref{fig:canti3d_ad_convergence} and Figure~\ref{fig:canti3d_ad_topos}, the optimization results obtained using AD are fully consistent with those achieved through manual differentiation in Section~\ref{sec:exp_canti3d}. he compliance converges to approximately $2063.5625$ after 54 iterations, and the volume fraction remains stably around $0.3$. These results confirm that AD accurately computes the sensitivities and effectively guides the optimization process.
+
+To evaluate the computational efficiency of AD, we compare the optimization times of AD and manual differentiation under the same 3D cantilever beam problem setting. The results are summarized in Table~\ref{tab:ad_vs_manual}.
+
+\begin{table}[htbp]
+	\centering
+	%	\setlength{\tabcolsep}{4pt} % 减小列间距
+	\caption{Performance comparison of differentiation methods in the 3D cantilever beam optimization problem. All values are reported in seconds.}
+	%	\small % 使用小字体
+	\begin{tabular}{ccccc}
+		\toprule
+		\textbf{Differentiation Method} & \textbf{Iterations} & \textbf{Total} & \textbf{1st Iter.} & \textbf{Avg. Iter.} \\
+		\midrule
+		Manual Differentiation & 54 & 39.562 & 1.940 & 0.710 \\
+		AD & 54 & 39.865 & 1.832 & 0.718 \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:ad_vs_manual}
+\end{table}
+
+As shown in Table~\ref{tab:ad_vs_manual}, the total optimization time and the average iteration time between manual differentiation and AD are nearly identical. This demonstrates the high efficiency of the AD implementation in SOPTX, which introduces no significant computational overhead while maintaining the same high precision as manual differentiation.
+
+The multi-backend mechanism of SOPTX allows users to flexibly switch between different computational backends. In addition to PyTorch, SOPTX also supports the JAX backend~\cite{bradbury2018jax}, which offers equally powerful AD capabilities. The sensitivity computation code remains identical when using JAX, users simply need to switch to the JAX backend by executing:
+\begin{lstlisting}
+	bm.set_backend('jax')
+\end{lstlisting}
+
+Using AD with the JAX backend, we perform topology optimization for the 3D cantilever beam. The final optimized topology is shown in Figure~\ref{fig:canti3d_ad_jax}.
+
+\begin{figure}[htp] 
+	\centering 
+	\includegraphics[width=0.8\textwidth]{figures/cantilever_3d_auto_jax.png} \caption{Final optimized topology of the 3D cantilever beam using AD with the JAX backend.} \label{fig:canti3d_ad_jax} 
+\end{figure}
+
+It is noteworthy that the final optimization result obtained using JAX is fully consistent with that obtained using PyTorch, demonstrating the stability and feasibility of the SOPTX framework when applying AD across different computational backends.
+
+The application of AD in TO offers several significant advantages:
+\begin{itemize} 
+	\item \textbf{Simplified Model Switching}: In TO, the choice of material interpolation model directly influences the optimization results. Besides the commonly used SIMP model, alternative models such as RAMP~\cite{stolpe2001alternative} are also widely applied in specific scenarios. With AD, users can easily switch between different interpolation models. For instance, when switching from SIMP to RAMP, the material stiffness gradient can be automatically computed by AD without manually deriving complex formulas. This greatly improves development efficiency and enhances the flexibility of model experimentation.
+	\item \textbf{Seamless Constraint Switching}: TO often involves multiple constraints. In addition to volume constraints, manufacturing constraints such as length scale control~\cite{guest2009imposing}, connectivity~\cite{li2016structural}, overhang limitations~\cite{qian2017undercut}, and material usage restrictions~\cite{sanders2018multi} are frequently imposed. Traditionally, adding or modifying constraints requires manually re-deriving sensitivity expressions. By introducing AD, this process becomes fully automated. The system can seamlessly adapt to new constraint settings, significantly improving optimization adaptability and development efficiency.
+	\item \textbf{Support for Complex Problems}: For TO problems involving multiphysics coupling, nonlinear materials, or complex geometric constraints, AD efficiently handles the computation of complicated gradients, allowing users to focus on modeling rather than mathematical derivations. Moreover, AD can automatically manage combined sensitivity computations when using techniques like density filtering and Heaviside projection. This capability further enhances the practical applicability and flexibility of the SOPTX framework in complex engineering scenarios.
+\end{itemize}
+
+Through the optimization example of the 3D cantilever beam, this section has demonstrated the powerful potential of AD within the SOPTX framework. Numerical results show that AD achieves comparable precision and computational efficiency to traditional manual differentiation methods without introducing any significant overhead. The multi-backend support of SOPTX, including PyTorch and JAX, further enhances the flexibility and scalability of the framework. The application of AD not only simplifies sensitivity analysis but also facilitates the exploration of novel material models and constraint conditions. These features make SOPTX a valuable tool in the field of topology optimization, providing robust support for education, research, and engineering applications.
+
+\subsection{Multi-Backend Switching}
+The SOPTX framework supports multi-backend switching, currently offering three computational backends: NumPy, PyTorch, and JAX. Backend switching is managed through the \textit{Tensor Backend Manager}, and users can easily switch between different backends by using the \texttt{set\_backend} function:
+\begin{lstlisting}
+	bm.set_backend('numpy')    # Switch to the NumPy backend
+	bm.set_backend('pytorch')  # Switch to the PyTorch backend
+	bm.set_backend('jax')      # Switch to the JAX backend
+\end{lstlisting}
+
+To verify the consistency and reliability of SOPTX across different computational backends, we conduct tests on the 3D cantilever beam optimization problem described in Sections~\ref{sec:exp_canti3d} and~\ref{sec:exp_canti3d_ad}, using identical parameter settings. The problem is solved separately under the NumPy, PyTorch, and JAX backends. The optimization results show that the convergence histories and final topology layouts are highly consistent across all three backends:
+
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_np.png}
+		\label{fig:canti3d_np}
+	}
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_torch.png}
+		\label{fig:canti3d_torch}
+	}
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.32\textwidth]{figures/cantilever_3d_jax.png}
+		\label{fig:canti3d_jax}
+	}
+	\caption{Final optimized topologies of the 3D cantilever beam using three different backends (elements with $\rho>0.3$ are visualized). Left: NumPy backend; Middle: PyTorch backend; Right: JAX backend.}
+	\label{fig:canti3d_backend_compare}
+\end{figure}
+
+As shown in Figure~\ref{fig:canti3d_backend_compare}, after 54 iterations, the compliance in all three backends converges to approximately $2063.5625$, and the volume fraction stabilizes around $0.3$. The final topology layouts are nearly identical. This consistency highlights the effectiveness of SOPTX's unified numerical abstraction and rigorous testing strategy, ensuring the reliability and stability of the algorithms across different computational backends.
+
+\section{Conclusion}
+This work presents SOPTX, a high-performance topology optimization (TO) framework based on FEALPy. A series of classical benchmark examples have been conducted to validate the effectiveness and practicality of SOPTX in solving TO problems. The development of SOPTX is entirely based on the open-source software FEALPy, without relying on any commercial software.
 
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
