@@ -950,12 +950,12 @@ To evaluate the computational efficiency of AD, we compare the optimization time
 
 \begin{table}[htbp]
 	\centering
-	%	\setlength{\tabcolsep}{4pt} % 减小列间距
-	\caption{Performance comparison of differentiation methods in the 3D cantilever beam optimization problem. All values are reported in seconds.}
+	\setlength{\tabcolsep}{4pt} % 减小列间距
+	\caption{Performance comparison of differentiation methods in the 3D cantilever beam optimization problem.}
 	%	\small % 使用小字体
 	\begin{tabular}{ccccc}
 		\toprule
-		\textbf{Differentiation Method} & \textbf{Iterations} & \textbf{Total} & \textbf{1st Iter.} & \textbf{Avg. Iter.} \\
+		\textbf{Differentiation Method} & \textbf{Iterations} & \textbf{Total Time (s)} & \textbf{1st Iter. Time (s)} & \textbf{Avg. Iter. Time (s)} \\
 		\midrule
 		Manual Differentiation & 54 & 39.562 & 1.940 & 0.710 \\
 		AD & 54 & 39.865 & 1.832 & 0.718 \\
@@ -1033,19 +1033,48 @@ In addition to multi-backend switching, SOPTX also supports computations on GPUs
 	By specifying \texttt{device='cuda'} during mesh creation, all computations related to that mesh are performed on the GPU. This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program if needed.
 \end{enumerate}
 
+GPU acceleration plays a crucial role in 3D TO, as computational complexity increases significantly with the growth of mesh size. Taking the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} as a reference, when the mesh size is doubled to $120\times40\times8$, the number of density design variables rises to $38,400$, and the number of displacement degrees of freedom reaches $133,947$. On the CPU, the optimization process becomes much more time-consuming due to the computational cost associated with matrix assembly and linear solving. In contrast, the parallel computing capability of GPUs can substantially improve efficiency and significantly reduce computation time.
+
+To intuitively demonstrate the effect of GPU acceleration, we compare the computation times between CPU and GPU under the PyTorch backend for the same 3D cantilever beam problem. The parameter settings are kept identical to those in Section~\ref{sec:exp_canti3d}, except that the filter radius is increased from 
+$1.5$ to $3.0$ to ensure structural smoothness given the enlarged physical domain. Additionally, considering the increased problem size, we switch the linear solver from a direct method (e.g., MUMPS) to an iterative method, namely the Conjugate Gradient (CG) method. The CG method offers advantages for solving large-scale sparse linear systems and can leverage the GPU's parallel computing capabilities to efficiently perform matrix-vector operations.
+
+The tests are conducted on an AMD 9950X CPU and an NVIDIA 5070Ti GPU. The optimization results are shown below:
 \begin{figure}[htp]
 	\centering
-	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+	\subfloat[$c(\rho)=3498.8266,~v(\rho)=0.3001$]{
 		\includegraphics[width=0.5\textwidth]{figures/cantilever_3d_cpu.png}
-		\label{fig:canti3d_np}
+		\label{fig:canti3d_cpu}
 	}
-	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+	\subfloat[$c(\rho)=3494.2391,~v(\rho)=0.3000$]{
 		\includegraphics[width=0.5\textwidth]{figures/cantilever_3d_gpu.png}
-		\label{fig:canti3d_torch}
+		\label{fig:canti3d_gpu}
 	}
-	\caption{Final optimized topologies of the 3D cantilever beam using three different backends (elements with $\rho>0.3$ are visualized). Left: NumPy backend; Middle: PyTorch backend; Right: JAX backend.}
-	\label{fig:canti3d_backend_compare}
+	\caption{Optimized topologies of the 3D cantilever beam on CPU (left) and GPU (right), with elements of density $\rho > 0.3$ visualized.}
+	\label{fig:canti3d_device_compare}
 \end{figure}
+
+As shown in Figure~\ref{fig:canti3d_device_compare}, the optimized topologies obtained using the CPU and GPU are highly similar. Although slight differences are observed in the final compliance ($c(\rho)$) and volume fraction ($v(\rho)$)—both within $1\%$---these discrepancies are attributed to minor variations in floating-point arithmetic precision and parallel implementation strategies across different hardware platforms. Nevertheless, in TO, such minor differences are negligible and do not affect the quality or performance of the final design.
+
+Based on the consistency of the optimization results, we further compare the computational efficiency between the CPU and GPU. The detailed performance data are summarized in Table~\ref{tab:device_performance}.
+\begin{table}[htbp]
+	\centering
+	\setlength{\tabcolsep}{4pt} % 减小列间距
+	\caption{Performance comparison between CPU and GPU for the 3D cantilever beam optimization problem.}
+	%	\small % 使用小字体
+	\begin{tabular}{ccccc}
+		\toprule
+		\textbf{Computational Device} & \textbf{Iterations} & \textbf{Total Time (s)} & \textbf{1st Iter. Time (s)} & \textbf{Avg. Iter. Time (s)} \\
+		\midrule
+		CPU (PyTorch) & 155 & 3872.041 & 15.846 & 25.040 \\
+		GPU (PyTorch) & 155 & 479.412 & 2.111 & 3.099 \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:device_performance}
+\end{table}
+
+As shown in Table~\ref{tab:device_performance}, GPU acceleration significantly reduces the total optimization time from \SI{3872.041}{s} on the CPU to \SI{479.412}{s} on the GPU, achieving an approximate speedup of $8.1$ times. The GPU outperforms the CPU in both the first iteration and subsequent iterations, clearly demonstrating its advantages in parallel computing.
+
+When using the CG method, the first iteration time (CPU: \SI{15.846}{s}, GPU: \SI{2.111}{s}) is notably lower than the average subsequent iteration time (CPU: \SI{25.040}{s}, GPU: \SI{3.099}{s}). This behavior is due to the fact that, at the initial stage of optimization, the material density distribution is relatively uniform, resulting in a stiffness matrix with a low condition number, allowing the CG method to converge quickly. As the optimization progresses and the material distribution becomes more heterogeneous, the condition number of the matrix deteriorates, requiring more internal CG iterations for convergence, thus increasing the computational time per iteration.
 
 \section{Conclusion}
 This work presents SOPTX, a high-performance topology optimization (TO) framework based on FEALPy. A series of classical benchmark examples have been conducted to validate the effectiveness and practicality of SOPTX in solving TO problems. The development of SOPTX is entirely based on the open-source software FEALPy, without relying on any commercial software. This fully open-source nature not only lowers the technical barrier but also enables users to easily access, learn, and utilize the framework, making it particularly suitable for academic research and educational purposes.
