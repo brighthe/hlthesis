@@ -989,12 +989,12 @@ The application of AD in TO offers several significant advantages:
 
 Through the optimization example of the 3D cantilever beam, this section has demonstrated the powerful potential of AD within the SOPTX framework. Numerical results show that AD achieves comparable precision and computational efficiency to traditional manual differentiation methods without introducing any significant overhead. The multi-backend support of SOPTX, including PyTorch and JAX, further enhances the flexibility and scalability of the framework. The application of AD not only simplifies sensitivity analysis but also facilitates the exploration of novel material models and constraint conditions. These features make SOPTX a valuable tool in the field of topology optimization, providing robust support for education, research, and engineering applications.
 
-\subsection{Multi-Backend Switching}
+\subsection{Multi-Backend Switching}\label{sec:exp_multi_backend}
 The SOPTX framework supports multi-backend switching, currently offering three computational backends: NumPy, PyTorch, and JAX. Backend switching is managed through the \textit{Tensor Backend Manager}, and users can easily switch between different backends by using the \texttt{set\_backend} function:
 \begin{lstlisting}
-	bm.set_backend('numpy')    # Switch to the NumPy backend
-	bm.set_backend('pytorch')  # Switch to the PyTorch backend
-	bm.set_backend('jax')      # Switch to the JAX backend
+	bm.set_backend('numpy')    
+	bm.set_backend('pytorch') 
+	bm.set_backend('jax')     
 \end{lstlisting}
 
 To verify the consistency and reliability of SOPTX across different computational backends, we conduct tests on the 3D cantilever beam optimization problem described in Sections~\ref{sec:exp_canti3d} and~\ref{sec:exp_canti3d_ad}, using identical parameter settings. The problem is solved separately under the NumPy, PyTorch, and JAX backends. The optimization results show that the convergence histories and final topology layouts are highly consistent across all three backends:
@@ -1019,8 +1019,53 @@ To verify the consistency and reliability of SOPTX across different computationa
 
 As shown in Figure~\ref{fig:canti3d_backend_compare}, after 54 iterations, the compliance in all three backends converges to approximately $2063.5625$, and the volume fraction stabilizes around $0.3$. The final topology layouts are nearly identical. This consistency highlights the effectiveness of SOPTX's unified numerical abstraction and rigorous testing strategy, ensuring the reliability and stability of the algorithms across different computational backends.
 
+In addition to multi-backend switching, SOPTX also supports computations on GPUs to further enhance computational efficiency, especially when solving large-scale 3D TO problems. By default, all computations are performed on the CPU (\texttt{device='cpu'}). However, users can migrate computations to the GPU (e.g., CUDA devices) through two methods:
+\begin{enumerate}
+	\item \textbf{Set the Default Device Globally}: Users can set the default device for all tensors globally by executing:
+	\begin{lstlisting}
+	bm.set_default_device('cuda')
+	\end{lstlisting}
+	This method places all subsequently created tensors on the GPU by default, and all associated computations, such as matrix assembly and linear solving, are performed on the GPU.
+	\item \textbf{Specify the Device When Creating the Mesh}: Alternatively, users can specify the device during mesh initialization:
+	\begin{lstlisting}
+	mesh = UniformMesh3d(extent=extent, h=h, origin=origin, device='cuda')
+	\end{lstlisting}
+	By specifying \texttt{device='cuda'} during mesh creation, all computations related to that mesh are performed on the GPU. This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program if needed.
+\end{enumerate}
+
+\begin{figure}[htp]
+	\centering
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.5\textwidth]{figures/cantilever_3d_cpu.png}
+		\label{fig:canti3d_np}
+	}
+	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
+		\includegraphics[width=0.5\textwidth]{figures/cantilever_3d_gpu.png}
+		\label{fig:canti3d_torch}
+	}
+	\caption{Final optimized topologies of the 3D cantilever beam using three different backends (elements with $\rho>0.3$ are visualized). Left: NumPy backend; Middle: PyTorch backend; Right: JAX backend.}
+	\label{fig:canti3d_backend_compare}
+\end{figure}
+
 \section{Conclusion}
-This work presents SOPTX, a high-performance topology optimization (TO) framework based on FEALPy. A series of classical benchmark examples have been conducted to validate the effectiveness and practicality of SOPTX in solving TO problems. The development of SOPTX is entirely based on the open-source software FEALPy, without relying on any commercial software.
+This work presents SOPTX, a high-performance topology optimization (TO) framework based on FEALPy. A series of classical benchmark examples have been conducted to validate the effectiveness and practicality of SOPTX in solving TO problems. The development of SOPTX is entirely based on the open-source software FEALPy, without relying on any commercial software. This fully open-source nature not only lowers the technical barrier but also enables users to easily access, learn, and utilize the framework, making it particularly suitable for academic research and educational purposes.
+
+The core innovations of SOPTX are reflected in the following three aspects:
+\begin{enumerate} 
+	\item \textbf{Modular Design Framework}: Through a loosely coupled architecture, SOPTX supports topology optimization problems in both two and three dimensions, as well as various mesh types (structured and unstructured). It provides a rich library of combinable components, enabling users to flexibly configure and extend the optimization workflow.
+	\item \textbf{Cross-Platform Multi-Backend Support and Automatic Differentiation}: Numerical results show that GPU computations take only approximately $33\%$ of the CPU time. Leveraging AD, SOPTX enables the automatic computation of gradients for objective and constraint functions, simplifying sensitivity analysis, reducing development difficulty, and improving computational accuracy.
+	\item \textbf{Fast Matrix Assembly Technique}: By optimizing the matrix assembly process, reducing redundant computations, and exploiting matrix sparsity, SOPTX significantly improves finite element matrix assembly efficiency. Benchmark results demonstrate that the average assembly time is reduced from \SI{0.838}{s} to \SI{0.273}{s}, corresponding to approximately $33\%$ of the original method.
+\end{enumerate}
+
+Through the example analyses presented in Sections~\ref{sec:exp_mbb_beam} to~\ref{sec:exp_multi_backend}, SOPTX demonstrates outstanding performance in model switching, filter method selection, optimization algorithm flexibility, three-dimensional extension, computational efficiency enhancement, application of automatic differentiation, and multi-backend switching, fully validating its technical advantages.
+
+Although SOPTX currently focuses primarily on density-based TO, it holds promising potential for future development. Leveraging the capabilities of FEALPy in solving heat conduction and Navier–Stokes equations, SOPTX can be extended to optimize thermo-fluid-structure coupling problems, such as thermal protection system designs in aerospace applications or heat dissipation optimization in electronic devices. 
+
+By integrating FEALPy's level set solver module, SOPTX can also support boundary-clear level set methods, enabling the generation of smooth boundaries suitable for precision manufacturing scenarios. In addition, the incorporation of FEALPy's adaptive mesh refinement techniques—particularly local mesh refinement near boundaries---could further enhance the solution accuracy for complex geometries and improve the geometric details of optimized structures. 
+
+Moreover, SOPTX plans to support stress constraints and manufacturing constraints, especially targeting applications in 3D printing and additive manufacturing. Future extensions may include overhang angle control and support structure optimization, aiming to reduce the use of support materials, improve printing efficiency, and meet the high standards of lightweight design and manufacturability required in fields such as aerospace, automotive engineering, and biomedical engineering.
+
+In summary, SOPTX significantly enhances research and development efficiency in the field of TO through its modular design, automatic differentiation capabilities, and multi-backend support. Its open-source nature further lowers the barrier to adoption. Compared to other implementations, SOPTX exhibits notable advantages in computational efficiency, flexibility, and ease of use, providing a solid foundation for both academic research and industrial applications. Looking ahead, SOPTX is expected to play a greater role in multiphysics optimization, lightweight structural design, and additive manufacturing, accelerating the widespread adoption and application of TO in industrial design and manufacturing.
 
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
