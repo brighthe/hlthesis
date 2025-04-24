@@ -151,7 +151,7 @@ Leveraging this modular foundation, SOPTX seamlessly integrates AD into the topo
 The remainder of this paper is organized as follows. Section 2 introduces the mathematical formulation of TO, covering density-based methods, compliance minimization, optimization algorithms, and filtering techniques. Section 3 presents the design philosophy of SOPTX built on FEALPy, with emphasis on its modular architecture and backend switching for high-performance, flexible implementation. Section 4 demonstrates SOPTX installation and usage via a classical 2D cantilever beam problem. Section 5 showcases its effectiveness through a series of 2D and 3D examples, including comparative studies with different filters and optimization algorithms, and performance analyses of fast matrix assembly, AD, and backend switching. Section 6 concludes the paper and outlines future research directions.
 
 \section{Density-based Topology Optimization: Formulation, Algorithms, and Regularization}\label{sec:math}
-In this chapter, we first introduce the density-based method widely employed in topology optimization (TO), elucidating the fundamental idea of optimizing material distribution through the definition of a material density function and interpolation models. Next, taking the compliance minimization problem as an example, we explicitly present both continuous and discrete mathematical formulations of this method. Subsequently, we provide detailed descriptions of two classical optimization algorithms commonly used in TO: the Optimality Criteria (OC) method and the Method of Moving Asymptotes (MMA), including their algorithmic implementations and characteristics. Finally, we discuss essential filtering techniques in TO, including sensitivity, density, and the Heaviside projection filters, analyzing how these methods effectively mitigate numerical instabilities and enhance the physical feasibility of optimization results.
+In this chapter, we first introduce the density-based method widely employed in topology optimization (TO), elucidating the fundamental idea of optimizing material distribution through the definition of a material density function and interpolation models. Next, taking the compliance minimization problem as an example, we explicitly present both continuous and discrete mathematical formulations of this method. Subsequently, we provide detailed descriptions of two classical optimization algorithms commonly used in TO: the Optimality Criteria (OC) method and the Method of Moving Asymptotes (MMA), including their algorithmic implementations and characteristics. Finally, we discuss critical filtering techniques in TO, including sensitivity, density, and the Heaviside projection filters, analyzing how these methods effectively mitigate numerical instabilities and enhance the physical feasibility of optimization results.
 
 \subsection{Density-based Method}
 The core objective of TO is to determine the optimal material distribution within a given design domain to achieve predefined performance targets. Density-based methods are among the most widely used strategies in the field of TO. These methods parameterize the structure by defining a material density function $\rho(x)$, where:
@@ -161,9 +161,7 @@ The core objective of TO is to determine the optimal material distribution withi
 	\item $0 < \rho(x) < 1$ corresponds to intermediate densities, introduced to avoid the non-convexity inherent in discrete optimization problems by employing continuous design variables.
 \end{itemize}
 
-In a discretized design domain, the mechanical properties (e.g., stiffness) of material elements transition smoothly between solid and void states via interpolation models\cite{bendsoe1989optimal}. Among these, the power-law interpolation model has been widely adopted due to its implicit penalization of intermediate densities. This method is known as the Solid Isotropic Material with Penalization (SIMP) approach \cite{zhou1991coc}.
-
-The SIMP method establishes a power-law relationship between the material density $\rho$ and Young's modulus $E$:
+In a discretized design domain, the mechanical properties (e.g., stiffness) of material elements transition smoothly between solid and void states via interpolation models~\cite{bendsoe1989optimal}. Among these, the power-law interpolation model has been widely adopted due to its implicit penalization of intermediate densities. This method, known as the Solid Isotropic Material with Penalization (SIMP) approach \cite{zhou1991coc}, establishes a power-law relationship between the material density $\rho$ and Young's modulus $E$:
 \begin{equation*}
 	E(\rho) = \rho^p E_0,\quad \rho \in [0,1],
 \end{equation*}
@@ -175,66 +173,100 @@ As the element density $\rho$ approaches zero, the standard SIMP model causes th
 \end{equation*}
 where $E_{\min} = 10^{-9} E_0$. This modification ensures that the stiffness matrix remains positive definite at $\rho = 0$, preventing numerical failure \cite{sigmund2007morphology}.
 
-Although the SIMP method suppresses intermediate densities through the penalization factor, optimization results may still contain "gray areas," which lack clear physical correspondence to either material or void regions, potentially causing manufacturing difficulties. In practical applications, the SIMP approach is often combined with Heaviside projection filters to achieve a distinct $0-1$ topology. Additionally, sensitivity or density filtering techniques are typically employed alongside the SIMP model to mitigate numerical instabilities, such as checkerboard patterns.
+Although the SIMP method suppresses intermediate densities through the penalization factor, optimization results may still contain "gray areas", i.e., regions where the density is neither $0$ nor $1$, lacking clear physical correspondence to either material or void regions, potentially causing manufacturing difficulties. In practical applications, the SIMP approach is often combined with Heaviside projection filters to achieve a distinct $0-1$ topology. Additionally, sensitivity or density filtering techniques are typically employed alongside the SIMP model to mitigate numerical instabilities, such as checkerboard patterns.
 
 \subsection{Compliance Minimization Problem}
-The compliance minimization problem with volume constraints aims to minimize the structural compliance (i.e., the total strain energy) under external loads and boundary conditions by optimizing the material distribution within a given design domain $\Omega$, while ensuring that the total material volume does not exceed a specified threshold. Here, compliance is defined as the total strain energy of the structure, which can be physically interpreted as the work done by external loads on the displacement field.
+The goal of compliance minimization with a volume constraint is to find a material density field $\rho(x)\in[0,1]$ that minimizes the total strain energy of an elastic body occupying a bounded domain $\Omega\subset\mathbb{R}^d(d=2,3)$ under prescribed loads and boundary conditions, while the available material does not exceed a given volume $V^*$. Throughout this paper we assume the displacement $u\in{H}^1(\Omega;\mathbb{R}^d)$, the density $\rho\in{L}^2(\Omega)$ and the material stiffness tensor $D(\rho)\in{L}^{\infty}(\Omega)$.
 
 The compliance minimization problem in its continuous form can be formulated as follows:
 \begin{equation}\label{eq:cmpc}
-\begin{aligned}
-	\min_{\rho}:&~c(\rho) = \int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x  \\
-	\text{subject~to}:&~g(\rho) = v(\rho) - V^* = \int_\Omega\rho~\mathrm{d}x - V^*\leq0\\
-	&\rho(x)\in[0,1],\quad\forall{x}\in\Omega\\
-	&\nabla\cdot\sigma(u)+f=0\quad\mathrm{on}~\Omega\\
-	&u=0\quad\mathrm{on}~\Gamma_D,\quad\sigma(u)\cdot{n}=t\quad\mathrm{on}~\Gamma_N
-\end{aligned}
-\end{equation}
-where:
-\begin{itemize} 
-	\item \textbf{Design variable}: $\rho(x)$ represents the material density distribution, and the density function belongs to the function space $L^2(\Omega)$, ensuring square integrability:
-	\begin{equation*}
-		L^2(\Omega)=\{\rho:\Omega\to\mathbb{R}:\Vert \rho\Vert_{L^2(\Omega)}<\infty\},~\Vert \rho\Vert_{L^2(\Omega)}=\left(\int_\Omega|\rho|^2\,\mathrm{d}x\right)^{1/2}
-	\end{equation*}
-	\item \textbf{Displacement field}: $u(x)$ belongs to the function space $H^1(\Omega)$ to accommodate the weak form of equilibrium equations:
-	\begin{equation*}
-		H^1(\Omega)=\{u\in L^2(\Omega):D^1u\in L^2(\Omega)\}
-	\end{equation*}
-	\item \textbf{Strain and stress}: The strain tensor is defined as
-	\begin{equation*}
-		\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)
-	\end{equation*}
-	and the stress tensor as
-	\begin{equation*}
-		\sigma(u) = D(\rho):\varepsilon(u)
-	\end{equation*}
-	where $D(\rho)$ denotes the material stiffness tensor, belonging to the function space $L^\infty(\Omega)$ to ensure boundedness:
-	\begin{equation*}
-		L^\infty(\Omega)=\{D:\Omega\to\mathbb{R}:\Vert D\Vert_{L^\infty(\Omega)}<\infty\},~\Vert D\Vert_{L^\infty(\Omega)}=\sup_{x\in\Omega}|D(x)|
-	\end{equation*}
-	\item \textbf{Volume constraint}: The constraint $g(\rho)\leq0$ restricts the total material volume, with $V^*$ representing the prescribed volume threshold.
-	\item \textbf{Boundary conditions}: $\Gamma_D$ denotes the Dirichlet boundary where displacements are fixed, $\Gamma_N$ denotes the Neumann boundary where surface traction $t$ are applied, $f$ represents the body force, and $n$ is the outward normal direction on the boundary.
-\end{itemize}
-
-To solve the compliance minimization problem numerically, the design domain $\Omega$ is discretized into $N_e$ elements using the finite element method, and each element is assigned a constant density $\rho_e$. This piecewise-constant approximation transforms the continuous formulation into a discrete optimization problem.
-
-The discrete form of the compliance minimization problem can be formulated as follows:
-\begin{equation}\label{eq:cmpd}
-	\begin{aligned} 
-	\min_{\bs{\rho}}:&c(\bs{\rho}) = \bs{F}^T\bs{U} \\ 
-	\text{subject~to}:&\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\
-					&g(\bs{\rho}) = v(\rho) - V^* = \sum_{e=1}^{N_e} v_e\rho_e - V^*\leq0 \\ 
-					&\rho_e\in[0,1],\quad e=1,\ldots,N_e 
+	\begin{aligned}
+		\min_{\rho}:
+		&~c(\rho) = \int_{\Omega}\sigma(u):\varepsilon(u)~\text{d}x  \\
+		\text{subject~to}:
+		&~\int_\Omega\rho~\text{d}x - V^*\leq0,\quad0\leq\rho(x)\leq1\\
+		&~-\nabla\cdot\sigma(u) = f\quad\text{in}~\Omega\\
+		&~u=0\quad\text{on}~\Gamma_D,\quad\sigma(u)\cdot{n}=t\quad\text{on}~\Gamma_N
 	\end{aligned}
 \end{equation}
-where: 
-\begin{itemize} 
-	\item \textbf{Design variables}: $\bs{\rho} = [\rho_1, \rho_2, \dots, \rho_{N_e}]^T$ represents the density of each element. 
-	\item \textbf{Stiffness matrix}: The global stiffness matrix is defined as $\bs{K}(\bs{\rho}) = \sum_{e=1}^{N_e}\bs{K}_e(\rho_e)$, where the element stiffness matrix $\bs{K}_e(\rho_e) = E(\rho_e)\bs{K}_e^0$, with $\bs{K}_e^0$ being the element stiffness matrix corresponding to unit Young's modulus.
-	 \item \textbf{Load}: The load vector $\bs{F}$ represents the discrete form of the body force $f$ and surface traction $t$. 
-	\item \textbf{Displacement}: The displacement vector $\bs{U}(\bs{\rho})$ is obtained by solving the linear system $\bs{K}(\bs{\rho})\bs{U} = \bs{F}$, providing an approximation to the continuous equilibrium equations. 
-	\item \textbf{Volume constraint}: The constraint $g(\bs{\rho})\leq0$ ensures that the total material volume (weighted sum of element volumes $v_e$ and densities $\rho_e$) does not exceed $V^*$. 
-\end{itemize}
+Here $\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)$ and $\sigma(u) = D(\rho):\varepsilon(u)$, $f$ and $t$ denote body forces and surface tractions, respectively, and $\Gamma_D \cup \Gamma_N = \partial{D}$.
+
+Discretising $\Omega$ into $N_e$ finite elements and letting $\bs{\rho} = [\rho_1, \rho_2, \dots, \rho_{N_e}]^T$ be the element-wise constant densities, the problem becomes
+\begin{equation}\label{eq:cmpd}
+	\begin{aligned} 
+		\min_{\bs{\rho}}:
+		&~c(\bs{\rho}) = \bs{F}^T\bs{U}\\ 
+		\text{subject~to}:
+		&~\sum_{e=1}^{N_e} v_e\rho_e - V^*\leq0,\quad0\leq\rho_e\leq1\\
+		&~\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\ 
+	\end{aligned}
+\end{equation}
+The global stiffness matrix is assembled as
+where $E(\bs{\rho}_e)$ follows the SIMP law described in Section 2.1 and $\bs{K}_0^0$ is the elemental matrix for unit Young’s modulus.
+
+Solving $\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}$ yields the discrete displacement vector $\bs{U}$, after which the objective $c(\bs{\rho})$ and its sensitivities are evaluated for the optimization algorithm.
+
+
+
+
+%
+%The compliance minimization problem with volume constraints aims to minimize the structural compliance (i.e., the total strain energy) under external loads and boundary conditions by optimizing the material distribution within a given design domain $\Omega$, while ensuring that the total material volume does not exceed a specified threshold. Here, compliance is defined as the total strain energy of the structure, which can be physically interpreted as the work done by external loads on the displacement field.
+%
+%The compliance minimization problem in its continuous form can be formulated as follows:
+%%\begin{equation}\label{eq:cmpc}
+%%\begin{aligned}
+%%	\min_{\rho}:&~c(\rho) = \int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x  \\
+%%	\text{subject~to}:&~g(\rho) = v(\rho) - V^* = \int_\Omega\rho~\mathrm{d}x - V^*\leq0\\
+%%	&\rho(x)\in[0,1],\quad\forall{x}\in\Omega\\
+%%	&\nabla\cdot\sigma(u)+f=0\quad\mathrm{on}~\Omega\\
+%%	&u=0\quad\mathrm{on}~\Gamma_D,\quad\sigma(u)\cdot{n}=t\quad\mathrm{on}~\Gamma_N
+%%\end{aligned}
+%%\end{equation}
+%%where:
+%\begin{itemize} 
+%	\item \textbf{Design variable}: $\rho(x)$ represents the material density distribution, and the density function belongs to the function space $L^2(\Omega)$, ensuring square integrability:
+%	\begin{equation*}
+%		L^2(\Omega)=\{\rho:\Omega\to\mathbb{R}:\Vert \rho\Vert_{L^2(\Omega)}<\infty\},~\Vert \rho\Vert_{L^2(\Omega)}=\left(\int_\Omega|\rho|^2\,\mathrm{d}x\right)^{1/2}
+%	\end{equation*}
+%	\item \textbf{Displacement field}: $u(x)$ belongs to the function space $H^1(\Omega)$ to accommodate the weak form of equilibrium equations:
+%	\begin{equation*}
+%		H^1(\Omega)=\{u\in L^2(\Omega):D^1u\in L^2(\Omega)\}
+%	\end{equation*}
+%	\item \textbf{Strain and stress}: The strain tensor is defined as
+%	\begin{equation*}
+%		\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)
+%	\end{equation*}
+%	and the stress tensor as
+%	\begin{equation*}
+%		\sigma(u) = D(\rho):\varepsilon(u)
+%	\end{equation*}
+%	where $D(\rho)$ denotes the material stiffness tensor, belonging to the function space $L^\infty(\Omega)$ to ensure boundedness:
+%	\begin{equation*}
+%		L^\infty(\Omega)=\{D:\Omega\to\mathbb{R}:\Vert D\Vert_{L^\infty(\Omega)}<\infty\},~\Vert D\Vert_{L^\infty(\Omega)}=\sup_{x\in\Omega}|D(x)|
+%	\end{equation*}
+%	\item \textbf{Volume constraint}: The constraint $g(\rho)\leq0$ restricts the total material volume, with $V^*$ representing the prescribed volume threshold.
+%	\item \textbf{Boundary conditions}: $\Gamma_D$ denotes the Dirichlet boundary where displacements are fixed, $\Gamma_N$ denotes the Neumann boundary where surface traction $t$ are applied, $f$ represents the body force, and $n$ is the outward normal direction on the boundary.
+%\end{itemize}
+%
+%To solve the compliance minimization problem numerically, the design domain $\Omega$ is discretized into $N_e$ elements using the finite element method, and each element is assigned a constant density $\rho_e$. This piecewise-constant approximation transforms the continuous formulation into a discrete optimization problem.
+%
+%The discrete form of the compliance minimization problem can be formulated as follows:
+%%\begin{equation}\label{eq:cmpd}
+%%	\begin{aligned} 
+%%	\min_{\bs{\rho}}:&c(\bs{\rho}) = \bs{F}^T\bs{U} \\ 
+%%	\text{subject~to}:&\bs{K}(\bs{\rho})\bs{U}(\bs{\rho}) = \bs{F}\\
+%%					&g(\bs{\rho}) = v(\rho) - V^* = \sum_{e=1}^{N_e} v_e\rho_e - V^*\leq0 \\ 
+%%					&\rho_e\in[0,1],\quad e=1,\ldots,N_e 
+%%	\end{aligned}
+%%\end{equation}
+%where: 
+%\begin{itemize} 
+%	\item \textbf{Design variables}: $\bs{\rho} = [\rho_1, \rho_2, \dots, \rho_{N_e}]^T$ represents the density of each element. 
+%	\item \textbf{Stiffness matrix}: The global stiffness matrix is defined as $\bs{K}(\bs{\rho}) = \sum_{e=1}^{N_e}\bs{K}_e(\rho_e)$, where the element stiffness matrix $\bs{K}_e(\rho_e) = E(\rho_e)\bs{K}_e^0$, with $\bs{K}_e^0$ being the element stiffness matrix corresponding to unit Young's modulus.
+%	 \item \textbf{Load}: The load vector $\bs{F}$ represents the discrete form of the body force $f$ and surface traction $t$. 
+%	\item \textbf{Displacement}: The displacement vector $\bs{U}(\bs{\rho})$ is obtained by solving the linear system $\bs{K}(\bs{\rho})\bs{U} = \bs{F}$, providing an approximation to the continuous equilibrium equations. 
+%	\item \textbf{Volume constraint}: The constraint $g(\bs{\rho})\leq0$ ensures that the total material volume (weighted sum of element volumes $v_e$ and densities $\rho_e$) does not exceed $V^*$. 
+%\end{itemize}
 
 \subsection{Optimization Algorithms}
 The Optimality Criteria (OC) method is a classical TO algorithm widely used for compliance minimization problems under volume constraints. This method iteratively updates the design variables to improve the structural topology by satisfying the optimality conditions of the optimization problem. The core idea of the OC method is to adjust the material density $\rho_e$ based on the update factor
