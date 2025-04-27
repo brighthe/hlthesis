@@ -556,15 +556,14 @@ For the complete installation guide, please refer to the official documentation 
 
 \subsection{Example: 2D Cantilever Beam}\label{sec:exp_canti_beam}
 We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever})~\cite{bendsoe2013topology}. The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform quadrilateral mesh is used. The target volume fraction is set to 0.4, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
-
-\vspace{-0.5ex} % 可调节
-\begin{figure}[H]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.5\textwidth]{figures/cantilever_2d.png}
 	\caption{Cantilever beam geometry: fixed on the left, with a downward concentrated load on the right.}
 	\label{fig:cantilever}
 \end{figure}
-\vspace{-0.5ex} % 可调节
+\vspace{-2ex} % 可调节
 
 To begin, we import essential modules from FEALPy (backend, mesh, function spaces) and SOPTX (material, solver, filter, optimization), as shown in Code~\ref{code:mouldes_pde}. The partial differential equation (PDE) model for the cantilever beam, defined in \texttt{Cantilever2dData1} (see~\ref{sec:code_canti_2d}), specifies the geometry, load, and boundary conditions via standard SOPTX interfaces.
 
@@ -601,11 +600,9 @@ The material module is then instantiated with the specified properties and SIMP 
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python, caption={Material module}, label={code:material}]
 material_config = DensityBasedMaterialConfig(
-				elastic_modulus=1.0, minimal_modulus=1e-9, 
-				poisson_ratio=0.3, 
-				plane_assumption="plane_stress",  
-				interpolation_model="SIMP", 
-				penalty_factor=3.0)
+		elastic_modulus=1.0, minimal_modulus=1e-9, 
+		poisson_ratio=0.3, plane_assumption="plane_stress",  
+		interpolation_model="SIMP", penalty_factor=3.0)
 materials = DensityBasedMaterialInstance(config=material_config)
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
@@ -614,13 +611,11 @@ Subsequently, the solver module is initialized with the material module, PDE mod
 
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python, caption={Solver and filter module}, label={code:solver_filter}] 
-solver = ElasticFEMSolver(
-				materials=materials,
-				tensor_space=tensor_space_C,
-				pde=pde,
-				assembly_method=AssemblyMethod.STANDARD,
-				solver_type='direct',
-				solver_params={'solver_type': 'mumps'})
+solver = ElasticFEMSolver(materials=materials,
+			tensor_space=tensor_space_C, pde=pde,
+			assembly_method=AssemblyMethod.STANDARD,
+			solver_type='direct',
+			solver_params={'solver_type': 'mumps'})
 sens_filter = SensitivityBasicFilter(mesh=mesh, rmin=6.0)
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
@@ -632,9 +627,8 @@ The optimization problem is defined by instantiating the compliance objective an
 objective = ComplianceObjective(solver=solver)
 constraint = VolumeConstraint(solver=solver, volume_fraction=0.4)
 optimizer = OCOptimizer(objective=objective,
-						constraint=constraint,
-						filter=sens_filter,
-						options={'max_iterations': 200, 'tolerance': 0.01})
+			constraint=constraint, filter=sens_filter,
+			options={'max_iterations': 200, 'tolerance': 0.01})
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
 
@@ -658,19 +652,19 @@ if __name__ == "__main__":
 
 Figure~\ref{fig:canti_04_convergence} shows the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$ for an initial density of 0.4. After running the code, Figure~\ref{fig:canti_04_convergence} shows the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$. Compliance decreases rapidly from its initial value of approximately 500 to around 100 in the first 10 iterations, converging by iteration 57. The volume fraction remains stably around 0.4, with only minor fluctuations.
 
-\vspace{-0.5ex} % 可调节
-\begin{figure}[H]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.85\textwidth]{figures/cantilever_2d_04_convergence.png}
 	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 2D cantilever beam initialized with a uniform density of 0.4.}
 	\label{fig:canti_04_convergence}
 \end{figure}
-\vspace{-0.5ex} % 可调节
+\vspace{-2ex} % 可调节
 
 Figure~\ref{fig:canti_04_all} displays the resulting topologies at iterations 3, 30, and 57.
 
-\vspace{-0.5ex} % 可调节
-\begin{figure}[H]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=145.5753,~v(\rho)=0.3998$]{
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_04_1.png}
@@ -687,23 +681,23 @@ Figure~\ref{fig:canti_04_all} displays the resulting topologies at iterations 3,
 	\caption{Topology layouts at iterations 3, 30, and 57 during the optimization process. Each subfigure also reports the corresponding compliance and volume fraction values.}
 	\label{fig:canti_04_all}
 \end{figure}
-\vspace{-0.5ex} % 可调节
+\vspace{-2ex} % 可调节
 
 Figure~\ref{fig:canti_1_convergence} illustrates the convergence behavior for an initial density of 1. The volume fraction decreases from 1 to 0.4 within 5 iterations, while compliance initially increases to around 500 before decreasing to convergence at iteration 60. This process requires slightly more iterations due to the initial adjustment to meet the volume constraint.
 
-\vspace{-0.5ex} % 可调节
-\begin{figure}[H]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.85\textwidth]{figures/cantilever_2d_1_convergence.png}
 	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 2D cantilever beam with an initial density of $1$.}
 	\label{fig:canti_1_convergence}
 \end{figure}
-\vspace{-0.5ex} % 可调节
+\vspace{-2ex} % 可调节
 
 Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and 60.
 
-\vspace{-0.5ex} % 可调节
-\begin{figure}[H]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=185.9530,~v(\rho)=0.4002$]{
 		\includegraphics[width=0.32\textwidth]{figures/cantilever_2d_1_1.png}
@@ -720,7 +714,7 @@ Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and
 	\caption{Topology layouts at iterations 6, 33, and 60 during the optimization process. Each subfigure includes the compliance and volume fraction values.}
 	\label{fig:canti_1_all}
 \end{figure}
-\vspace{-0.5ex} % 可调节
+\vspace{-2ex} % 可调节
 
 These results highlight the robustness of SOPTX in handling different initial conditions and its efficiency in achieving convergence with the OC algorithm.
 
@@ -731,14 +725,14 @@ The chapter is organized as follows: Section~\ref{sec:exp_mbb_beam} tests robust
 
 \subsection{MBB Beam}\label{sec:exp_mbb_beam}
 As introduced, we first validate SOPTX using the MBB beam, a classical benchmark in TO widely used to assess optimization algorithms. This section minimizes the structural compliance of the MBB beam (see Figure~\ref{fig:mbb_beam}), demonstrating SOPTX's adaptability to various PDE models and meshes. The beam is hinged at the left edge and bottom right corner, with horizontal displacements constrained, and a downward load $T = -1$ applied at the upper left corner. The target volume fraction is 0.5, with material properties $E = 1$ and $\nu = 0.3$, penalization factor $p = 3$, and filter radius $r = 6.0$ to ensure smooth topology and suppress checkerboard patterns.
-%\vspace{-0.5cm}
-\begin{figure}[h!]
+\vspace{-2ex} % 可调节
+\begin{figure}[htp]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/mbb_2d.png}
 	\caption{Geometry of the MBB beam: hinged at the left edge and bottom right corner, with a downward concentrated load applied at the top left.}
 	\label{fig:mbb_beam}
 \end{figure}
-%\vspace{-0.5cm}
+\vspace{-2ex} % 可调节
 
 Compared to the cantilever beam in Section~\ref{sec:exp_canti_beam}, SOPTX enables a seamless switch to the MBB beam problem. Users can modify the PDE model as follows:
 \begin{lstlisting}[language=Python]
@@ -776,24 +770,23 @@ The optimized topologies, shown in Figure~\ref{fig:mbb_2d_all}, are consistent a
 \subsection{Different Filtering Methods}
 In TO, filtering methods are essential for smoothing design variables, controlling structural details, and ensuring the quality and manufacturability of the optimized results. Thanks to its modular architecture, SOPTX allows users to seamlessly switch between different filtering strategies by simply replacing the filter class, without modifying other components of the framework.
 
+This section compares the results of two common filters (the density filter and the Heaviside projection filter) applied to the MBB beam problem from Section~\ref{sec:exp_mbb_beam}. All parameters are kept identical except for the filter choice, with the default filter radius set to $r=6.0$.
 
-To illustrate the impact of different filters, this section compares the results obtained using the density filter and the Heaviside projection filter. Both experiments are based on the MBB beam problem introduced in Section~\ref{sec:exp_mbb_beam}, with all parameters kept identical except for the choice of filter. Unless otherwise specified, the filter radius is set to $r=6.0$.
-
-The density filter performs weighted averaging of the design variables to achieve a smooth spatial distribution, effectively eliminating small-scale features. This method is well-suited for design tasks that require structural continuity. In SOPTX, the density filter can be applied simply by instantiating the \texttt{DensityBasicFilter} class:
+The density filter smooths the design variables through weighted averaging, eliminating small-scale features and producing a gradual material transition. This is ideal for designs requiring structural continuity. In SOPTX, it is applied via:
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python]
 dens_filter = DensityBasicFilter(mesh=mesh, rmin=6.0)
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
 
-The Heaviside projection filter builds upon the density filter by introducing a projection operation. It employs a continuation strategy to gradually increase the projection parameter $\beta$, driving design variables toward 0 or 1 and producing clear black-and-white topologies. This method is particularly suitable for structural design problems with strict manufacturability requirements. To avoid overly wide bar-like structures in the early optimization stages, we slightly reduce the filter radius to $r=4.5$. The filter can be enabled in SOPTX using the following code:
+In contrast, the Heaviside projection filter builds on the density filter by adding a projection step. It gradually increases the projection parameter $\beta$ to drive variables toward 0 or 1, yielding a clear black-and-white topology suited for strict manufacturability. To avoid overly thick structures early on, the filter radius is reduced to $r=4.5$. It is enabled in SOPTX with:
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python]
 heavi_filter = HeavisideProjectionBasicFilter(mesh=mesh, rmin=4.5, beta=1, max_beta=512, continuation_iter=50)   
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
 
-Figure~\ref{fig:mbb_filter_all} shows the optimized topologies obtained using both filters:
+The optimized topologies are shown in Figure~\ref{fig:mbb_filter_all}. The density filter yields a smoother design with blurred edges, while the Heaviside projection filter produces a crisp, binarized layout with lower compliance (191.4873 vs. 235.7337), indicating a stiffer structure. However, with the Heaviside projection filter, small holes may still appear due to its focus on global binarization rather than strict local control.
 \vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
@@ -810,27 +803,23 @@ Figure~\ref{fig:mbb_filter_all} shows the optimized topologies obtained using bo
 \end{figure}
 \vspace{-2ex} % 可调节
 
-As illustrated in the figure, the two filtering strategies result in distinctly different topologies and performance metrics. The density filter produces smoother layouts with blurred structural features, making it more suitable for design scenarios that prioritize continuity and gradual material transitions. In contrast, the Heaviside projection filter yields sharply defined boundaries and well-separated regions, leading to a clearly binarized layout with high visual and structural clarity.
-
-Although the Heaviside filter enforces a minimum feature size through the specified filter radius, small holes with sizes below the threshold may still emerge during the optimization process. This is because the filter emphasizes global binarization rather than strict local geometric control, allowing some fine-scale structures to persist.
-
-In summary, the modular design of SOPTX enables users to switch between different filtering strategies simply by modifying a single line of code. This facilitates efficient exploration of various design intents and helps strike a practical balance between structural smoothness, manufacturability, and binary clarity in TO.
+In summary, SOPTX's flexibility allows efficient exploration of filter impacts on design smoothness, manufacturability, and performance.
 
 \subsection{Different Optimization Algorithms}
-In TO, the choice of optimization algorithm directly affects both computational efficiency and the quality of the resulting design. SOPTX adopts a modular design that enables seamless switching between different optimizers, allowing users to easily tailor optimization strategies to specific design requirements. In this section, we take the MBB beam problem as an example to demonstrate the process of switching from the Optimality Criteria (OC) optimizer to the Method of Moving Asymptotes (MMA). We also present the refactored MMA implementation within SOPTX and highlight its distinctive advantages.
+In TO, the choice of optimization algorithm impacts both computational efficiency and design quality. SOPTX’s modular design allows seamless switching between optimizers, such as from the Optimality Criteria (OC) method to the more versatile Method of Moving Asymptotes (MMA). This section demonstrates this process using the MBB beam problem and highlights the refactored MMA in SOPTX.
 
-To address complex constrained optimization problems, SOPTX allows users to easily replace the OC optimizer with the more general MMA optimizer by making a simple modification. The switching process only requires importing the \texttt{MMAOptimizer} class and configuring the associated parameters as follows:
+To switch to MMA, users simply import and configure the \texttt{MMAOptimizer} class:
+\vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python]
-	from soptx.opt import MMAOptimizer
-	
-	optimizer = MMAOptimizer(objective=objective,
-						constraint=constraint,
-						filter_=sens_filter,
-						options={'max_iterations': 200, 
-								 'tolerance': 0.01})
+from soptx.opt import MMAOptimizer
+optimizer = MMAOptimizer(objective=objective, 
+		constraint=constraint, filter_=sens_filter,
+		options={'max_iterations': 200, 'tolerance': 0.01})
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
-In the MBB beam problem, using the same parameters and sensitivity filter as with the OC optimizer, the MMA optimizer produces nearly identical optimized topologies across different meshes. As shown in Figure~\ref{fig:mbb_mma_all}, the relative differences in compliance and volume fraction are both less than $1\%$.  This indicates that although MMA is a more general optimization method, its performance on this specific problem is highly consistent with that of the OC optimizer, demonstrating its reliability and applicability.
+For the MBB beam problem, MMA produces topologies nearly identical to OC’s, with compliance and volume fraction differences below $1\%$, as shown in Figure~\ref{fig:mbb_mma_all}. This consistency confirms MMA’s reliability for single-constraint problems.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=219.4545,~v(\rho)=0.5000$]{
@@ -844,49 +833,54 @@ In the MBB beam problem, using the same parameters and sensitivity filter as wit
 	\caption{Optimized topologies of the MBB beam using MMA optimizer on a structured quadrilateral mesh (left) and a triangular mesh (right).}
 	\label{fig:mbb_mma_all}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-The MMA algorithm in SOPTX is based on the classical MATLAB implementation provided by Krister Svanberg ~\cite{Svanberg2007MmaAG}, and has been extensively refactored. Unlike traditional MMA implementations commonly found in the literature—where the optimizer is typically treated as a “black box” with limited access to internal mechanisms—the refactored version in SOPTX allows users to conveniently adjust internal algorithmic parameters. These include the number of constraints \texttt{m}, the number of design variables \texttt{n}, the lower and upper bounds \texttt{xmin} and \texttt{xmax}, as well as internal control parameters such as \texttt{a0}, \texttt{a}, \texttt{c}, and \texttt{d}:
-\begin{lstlisting}
-	optimizer.options.set_advanced_options(
-					m=1, n=NC,
-					xmin=bm.zeros((NC, 1)),
-					xmax=bm.ones((NC, 1)),
-					a0=1,
-					a=bm.zeros((1, 1)),
-					c=1e4 * bm.ones((1, 1)),
-					d=bm.zeros((1, 1)),
-					)
+SOPTX’s MMA, refactored from Krister Svanberg’s implementation ~\cite{Svanberg2007MmaAG}, allows users to adjust internal parameters, including \texttt{m}, \texttt{n}, \texttt{xmin}, \texttt{xmax}, and control parameters like \texttt{a0}, \texttt{a}, \texttt{c}, \texttt{d}. This provides greater flexibility than traditional \textit{black-box} versions, enhancing performance and adaptability across platforms. An example configuration is shown below:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+optimizer.options.set_advanced_options(m=1, n=NC,
+			xmin=bm.zeros((NC, 1)), xmax=bm.ones((NC, 1)),
+			a0=1, a=bm.zeros((1, 1)),
+			c=1e4 * bm.ones((1, 1)), d=bm.zeros((1, 1)))
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
 Through this refactoring, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in TO.
 
 \subsection{3D Extension}\label{sec:exp_canti3d}
-Thanks to its modular design, SOPTX facilitates a straightforward transition from 2D to 3D models. In this section, we demonstrate the capability of SOPTX in solving 3D TO problems through the compliance minimization of a 3D cantilever beam, as illustrated in Figure~\ref{fig:cantilever_3d}. The beam is fully fixed on the left end, and a downward concentrated load of magnitude $T=-1$ is applied at the bottom of the right end. A structured uniform grid of hexahedral elements with size $60\times20\times4$ is employed. The target volume fraction is set to $0.3$, and the material parameters are $E = 1$ and $\nu = 0.3$. The SIMP penalty factor is chosen as $p=3$. A sensitivity filter with radius $r=1.5$ (matched to the mesh element size) is used to ensure structural smoothness and suppress checkerboard patterns.
+SOPTX’s modular design enables a smooth transition from 2D to 3D TO. This section showcases its capability with a 3D cantilever beam compliance minimization problem (see Figure~\ref{fig:cantilever_3d}). The beam is fixed on the left and bears a downward load $T=-1$ at the bottom right. A $60\times20\times4$ hexahedral mesh is applied, with a target volume fraction of 0.3, material properties $E=1$ and $\nu=0.3$, and a SIMP penalty factor $p=3$. A sensitivity filter (radius $r=1.5$) ensures smooth results.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
-	\includegraphics[width=0.6\textwidth]{figures/cantilever_3d.png}
+	\includegraphics[width=0.5\textwidth]{figures/cantilever_3d.png}
 	\caption{Geometric configuration of the 3D cantilever beam. The left end is fully fixed, and a downward concentrated load is applied at the bottom of the right end.}
 	\label{fig:cantilever_3d}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-Compared to the 2D cantilever beam example in Section~\ref{sec:exp_canti_beam}, SOPTX can be seamlessly extended to the 3D cantilever beam problem by simply replacing the PDE model and mesh configuration. The 3D cantilever beam model is implemented via the \texttt{Cantilever3dData1} class, as shown below, and the complete code definition is available in \ref{sec:code_canti_3d}
-\begin{lstlisting}
-	from soptx.pde import Cantilever3dData1
-	pde = Cantilever3dData1(xmin=0, xmax=60, ymin=0, ymax=20, zmin=0, zmax=4, T = -1)
-	
-	from fealpy.mesh import UniformMesh3d
-	mesh = UniformMesh3d(extent=[0, 60, 0, 20, 0, 4], h=[1, 1, 1], origin=[0, 0, 0])
+Compared to the 2D cantilever beam in Section~\ref{sec:exp_canti_beam}, SOPTX extends to 3D by simply replacing the PDE model and mesh configuration. The 3D cantilever beam model is implemented as follows:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+from soptx.pde import Cantilever3dData1
+pde = Cantilever3dData1(xmin=0, xmax=60, ymin=0, ymax=20, zmin=0, zmax=4, T=-1)
+from fealpy.mesh import UniformMesh3d
+mesh = UniformMesh3d(extent=[0, 60, 0, 20, 0, 4], h=[1, 1, 1], origin=[0, 0, 0])
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
+The complete definition of the \texttt{Cantilever3dData1} model is available in Appendix~\ref{sec:code_canti_3d}.
 
-The initial material density is uniformly set to the target volume fraction of $0.3$. Using the OC optimizer and a sensitivity filter with radius $r=1.5$, the convergence histories of the compliance $c(\rho)$ and the volume fraction $v(\rho)$ are shown in Figure~\ref{fig:canti_3d_convergence}. The compliance drops rapidly from an initial value of approximately $28000$ to around $5000$ within the first 6 iterations. It then decreases more gradually, fluctuating slightly between iterations 6 and 20 before settling to about $2000$. Smooth convergence is eventually achieved at iteration 54. The volume fraction remains nearly constant around $0.3$ throughout the process, indicating effective constraint control.
+The initial material density is uniformly set to the target volume fraction of 0.3. Using the OC optimizer and a sensitivity filter with radius $r=1.5$, the compliance $c(\rho)$ shows a rapid initial decrease, followed by a gradual convergence with slight fluctuations, stabilizing at around 2,000 by iteration 54 (see Figure~\ref{fig:canti_3d_convergence}). The volume fraction remains nearly constant around 0.3 throughout the process, indicating effective constraint control.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
-	\includegraphics[width=1.0\textwidth]{figures/cantilever_3d_convergence.png}
-	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam initialized with a uniform density of $0.3$.}
+	\includegraphics[width=0.85\textwidth]{figures/cantilever_3d_convergence.png}
+	\caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam initialized with a uniform density of 0.3.}
 	\label{fig:canti_3d_convergence}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-To better visualize the optimization results, Figure~\ref{fig:canti3d_all} shows the topology layouts at iterations 7, 21, and 54. Only elements with density values $\rho > 0.3$ are rendered to highlight the structural features.
+To better visualize the optimization results, Figure~\ref{fig:canti3d_all} shows the topology layouts at iterations 7, 21, and 54. Only elements with density values $\rho>0.3$ are rendered to highlight the structural features.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=5338.9462,~v(\rho)=0.3001$]{
@@ -904,21 +898,36 @@ To better visualize the optimization results, Figure~\ref{fig:canti3d_all} shows
 	\caption{Topology layouts at iterations 7, 21, and 54 during the optimization of the 3D cantilever beam. Elements with $\rho > 0.3$ are visualized. Each subfigure also reports the compliance and volume fraction.}
 	\label{fig:canti3d_all}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-It is worth noting that, compared to 2D problems, 3D TO significantly increases computational complexity. This is particularly evident when using large-scale meshes, where both computational cost and memory requirements grow substantially. The SOPTX framework addresses these challenges through efficient matrix assembly and support for multiple computational backends, demonstrating excellent extensibility and computational performance. The implementation details of these features will be elaborated in the following sections.
+3D TO increases computational complexity significantly. SOPTX addresses this with efficient matrix assembly and multi-backend support, enhancing performance for large-scale problems. Details follow in subsequent sections
 
 \subsection{Application of Fast Matrix Assembly}
-In 3D TO problems, computational efficiency is a central challenge. Taking the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} as a representative case, the mesh consists of $60\times20\times4$ elements, resulting in $19,215$ displacement degrees of freedom and $4,800$ density variables. The optimization process requires 54 iterations in total. In traditional finite element methods, the assembly of the global stiffness matrix often involves a large number of redundant numerical integration operations, which becomes the primary bottleneck in the overall computational workflow.
+In 3D TO problems, computational efficiency is critical. For the 3D cantilever beam example (Section~\ref{sec:exp_canti3d}), the mesh of $60\times20\times4$ elements leads to 19,215 displacement degrees of freedom and 4,800 density variables, requiring 54 iterations. Traditional matrix assembly in finite element methods involves redundant computations, creating a bottleneck.
 
-To overcome this bottleneck, the SOPTX framework incorporates a fast matrix assembly technique, which separates the element-dependent and element-independent parts of stiffness matrix computation. This decomposition enables efficient evaluation and reuse of invariant quantities, significantly accelerating the assembly process. In addition, to further improve the accuracy of matrix assembly, SOPTX implements a symbolic integration precomputation technique. This approach analytically integrates the element-independent components using symbolic computation in advance, eliminating numerical integration errors and enhancing both numerical stability and overall accuracy.
+SOPTX addresses this with a fast matrix assembly technique that separates element-dependent and element-independent parts, reusing invariant quantities to accelerate the process. Additionally, symbolic integration precomputation analytically integrates invariant terms in advance, improving accuracy and stability.
+\vspace{-0.5ex} % 可调节
 \begin{itemize} 
-	\item \textbf{Fast matrix assembly}: Accelerates matrix assembly by separating element-dependent and element-independent terms, coupled with efficient numerical integration.
-	\item \textbf{Symbolic integration precomputation}: Further improves accuracy and stability by analytically integrating invariant terms ahead of time.
+	\item \textbf{Fast assembly}: Accelerates matrix assembly by separating element-dependent and element-independent terms, coupled with efficient numerical integration.
+	\item \textbf{Symbolic Fast Assembly}: Further improves accuracy and stability by analytically integrating invariant terms ahead of time.
 \end{itemize}
+\vspace{-0.5ex} % 可调节
 
-Moreover, SOPTX employs intelligent caching to store invariant data across iterations, enabling direct reuse and substantially reducing average computational time in later iterations.
+Users can easily switch between assembly methods by setting the \texttt{assembly\_method} parameter in the solver initialization, as shown below:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+# Fast Assembly
+solver = ElasticFEMSolver(..., assembly_method=AssemblyMethod.FAST, ...)
+# Symbolic Fast Assembly
+solver = ElasticFEMSolver(..., assembly_method=AssemblyMethod.SYMBOLIC, ...)
+\end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
-Table~\ref{tab:assembly_comparison} summarizes the performance of different matrix assembly techniques under the same problem setting of the 3D cantilever beam optimization described in Section~\ref{sec:exp_canti3d}.
+Moreover, SOPTX employs intelligent caching to store invariant data across iterations, significantly reducing computational time in later iterations.
+
+Table~\ref{tab:assembly_comparison} compares the performance of different matrix assembly techniques for the 3D cantilever beam optimization (Section~\ref{sec:exp_canti3d}).
+
+\vspace{-0.5ex} % 可调节
 \begin{table}[htbp]
 	\centering
 %	\setlength{\tabcolsep}{4pt} % 减小列间距
@@ -935,39 +944,43 @@ Table~\ref{tab:assembly_comparison} summarizes the performance of different matr
 	\end{tabular}
 	\label{tab:assembly_comparison}
 \end{table}
+\vspace{-0.5ex} % 可调节
 
-As shown in Table~\ref{tab:assembly_comparison}, the original matrix assembly method results in an average assembly time of \SI{0.838}{s} per iteration after the first one, accounting for approximately $68\%$ of the total iteration time. This clearly constitutes a performance bottleneck. With the adoption of the fast matrix assembly technique, the average assembly time is reduced to \SI{0.276}{s}---only about $33\%$ of that of the original method. Although the symbolic fast assembly method incurs a longer initialization time of \SI{3.853}{s} during the first iteration, it achieves the lowest average assembly time in subsequent iterations (\SI{0.272}{s}), while ensuring analytical accuracy in integration.
+As shown in Table~\ref{tab:assembly_comparison}, the original assembly method has an average assembly time of \SI{0.838}{s} per iteration ($68\%$ of total iteration time), creating a bottleneck. Fast assembly reduces this to \SI{0.276}{s} ($33\%$ of the original), while symbolic integration precomputation, despite a longer first iteration (\SI{3.853}{s}), achieves the fastest average assembly time (\SI{0.272}{s}) with enhanced accuracy.
 
-In summary, the matrix fast assembly strategy implemented in SOPTX effectively reduces the computational cost of topology optimization and improves both numerical accuracy and stability. This makes it particularly well suited for solving large-scale topology optimization problems with stringent demands on computational efficiency and precision.
+In summary, SOPTX's fast assembly strategies significantly reduce computational cost and improve accuracy, making it ideal for large-scale TO problems.
 
 \subsection{Application of Automatic Differentiation}\label{sec:exp_canti3d_ad}
-Sensitivity analysis is a core component of TO, guiding the update of design variables. Traditional methods typically require manual derivation and implementation of sensitivity formulas, which can be time-consuming and error-prone, especially for complex material models or constraint conditions. The SOPTX framework introduces AD to automate sensitivity computations, allowing users to focus on problem modeling and solution strategies without dealing with tedious mathematical derivations. In this section, we use the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} to demonstrate how SOPTX leverages AD to compute the sensitivities of the compliance objective and the volume constraint. The advantages and application scenarios of AD in TO are also discussed.
+Sensitivity analysis is vital in TO to update design variables. Traditional methods rely on manual sensitivity derivation, which is time-consuming and error-prone, especially for complex models. The SOPTX framework introduces AD to streamline this process, enabling users to prioritize problem modeling over mathematical derivations. Here, we demonstrate AD’s application using the 3D cantilever beam example from Section~\ref{sec:exp_canti3d}.
 
-The SOPTX framework supports multiple computational backends, including NumPy, PyTorch, and JAX. While FEALPy by default operates with the NumPy backend~\cite{harris2020array}, NumPy does not support AD. Therefore, users need to switch to a backend that supports AD in order to enable this functionality. For example, switching to the PyTorch backend~\cite{paszke2017automatic} requires only a single line of code:
-\begin{lstlisting}[language=bash]
-	bm.set_backend('pytorch')
+The SOPTX framework supports multiple computational backends(e.g., NumPy, PyTorch, JAX). To enable AD, users must switch from the default NumPy backend to an AD-enabled backend like PyTorch~\cite{paszke2017automatic} with a single line of code:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+bm.set_backend('pytorch')
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
-In SOPTX, the mode of sensitivity computation for objective and constraint functions is controlled by the configuration parameter \texttt{diff\_mode}. By default, \texttt{diff\_mode} is set to \texttt{'manual'}, meaning that manually derived sensitivity expressions are used. To enable AD, users simply set \texttt{diff\_mode} to \texttt{'auto'}. The following code snippet shows how to enable AD for the structural compliance objective while retaining manual differentiation for the volume constraint:
-\begin{lstlisting}[language=bash]
-	obj_config = ComplianceConfig(diff_mode='auto')
-	objective = ComplianceObjective(solver=solver, config=obj_config)
-	
-	cons_config = VolumeConfig(diff_mode='manual')
-	constraint = VolumeConstraint(solver=solver, volume_fraction=0.5, config=cons_config)
+Sensitivity computation is controlled via the \texttt{diff\_mode} parameter: \texttt{'manual'} for hand-derived formulas and \texttt{'auto'} for AD. For example, AD can be enabled for the compliance objective while keeping manual differentiation for the volume constraint:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+obj_config = ComplianceConfig(diff_mode='auto')
+objective = ComplianceObjective(solver=solver, config=obj_config)
+cons_config = VolumeConfig(diff_mode='manual')
+constraint = VolumeConstraint(solver=solver, volume_fraction=0.5, config=cons_config)
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
+This setup allows selective use of AD or manual differentiation. Further details on AD implementation are in Section~\ref{sec:ad_compliance}.
 
-Under this configuration, the sensitivity of the compliance objective is computed automatically via AD, whereas the sensitivity of the volume constraint remains manually derived. This flexibility allows users to selectively choose the most appropriate differentiation method according to the problem requirements. The detailed implementation of the compliance sensitivity computation using AD is provided in~\ref{sec:ad_compliance}
-
-To verify the correctness and effectiveness of AD, we conduct tests using the 3D cantilever beam problem described in Section~\ref{sec:exp_canti3d}. All parameters are kept identical: the mesh size is $60\times20\times4$, the target volume fraction is set to $0.3$,  the initial material density is $0.3$, material properties are $E=1$ and $\nu=0.3$, the SIMP penalty factor is $p=3$, and the sensitivity filter radius is $r=1.5$. The structural compliance sensitivity is computed using AD. Figure~\ref{fig:canti3d_ad_convergence} shows the convergence histories of the compliance and volume fraction.
-
+To verify the correctness and effectiveness of AD, we conduct tests using the 3D cantilever beam problem described in Section~\ref{sec:exp_canti3d}. All parameters are kept identical. The structural compliance sensitivity is computed using AD. Figure~\ref{fig:canti3d_ad_convergence} shows the convergence histories of the compliance and volume fraction.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp] 
 	\centering 
-	\includegraphics[width=1.0\textwidth]{figures/cantilever_3d_convergence_auto.png} \caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam optimization using automatic differentiation.} \label{fig:canti3d_ad_convergence} 
+	\includegraphics[width=0.85\textwidth]{figures/cantilever_3d_convergence_auto.png} \caption{Convergence histories of the compliance $c(\rho)$ and volume fraction $v(\rho)$ for the 3D cantilever beam optimization using automatic differentiation.} \label{fig:canti3d_ad_convergence} 
 \end{figure}
+\vspace{-2ex} % 可调节
 
 To further illustrate the evolution of the topology during optimization, the layouts at selected iterations are shown in Figure~\ref{fig:canti3d_ad_topos}.
-
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=5338.9462,~v(\rho)=0.3001$]{
@@ -985,11 +998,12 @@ To further illustrate the evolution of the topology during optimization, the lay
 	\caption{Topology layouts at iterations 7, 21, and 54 during the 3D cantilever beam optimization using AD. Only elements with $\rho>0.3$ are visualized. Each subfigure also reports the compliance and volume fraction.}
 	\label{fig:canti3d_ad_topos}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-As observed from Figure~\ref{fig:canti3d_ad_convergence} and Figure~\ref{fig:canti3d_ad_topos}, the optimization results obtained using AD are fully consistent with those achieved through manual differentiation in Section~\ref{sec:exp_canti3d}. he compliance converges to approximately $2063.5625$ after 54 iterations, and the volume fraction remains stably around $0.3$. These results confirm that AD accurately computes the sensitivities and effectively guides the optimization process.
+As observed from Figure~\ref{fig:canti3d_ad_convergence} and Figure~\ref{fig:canti3d_ad_topos}, the optimization results obtained using AD are fully consistent with those achieved through manual differentiation in Section~\ref{sec:exp_canti3d}. The compliance converges to approximately 2063.5625 after 54 iterations, and the volume fraction remains stably around 0.3. These results confirm that AD accurately computes the sensitivities and effectively guides the optimization process.
 
-To evaluate the computational efficiency of AD, we compare the optimization times of AD and manual differentiation under the same 3D cantilever beam problem setting. The results are summarized in Table~\ref{tab:ad_vs_manual}.
-
+To evaluate the computational efficiency of AD, we compare the optimization times of AD and manual differentiation under the same 3D cantilever beam problem setting. As shown in Table~\ref{tab:ad_vs_manual}, the total optimization time and average iteration time for both methods are nearly identical, demonstrating that SOPTX’s AD implementation is highly efficient, introducing no significant computational overhead while maintaining the same high precision as manual differentiation.
+\vspace{-0.5ex} % 可调节
 \begin{table}[htbp]
 	\centering
 	\setlength{\tabcolsep}{4pt} % 减小列间距
@@ -1005,42 +1019,46 @@ To evaluate the computational efficiency of AD, we compare the optimization time
 	\end{tabular}
 	\label{tab:ad_vs_manual}
 \end{table}
+\vspace{-0.5ex} % 可调节
 
-As shown in Table~\ref{tab:ad_vs_manual}, the total optimization time and the average iteration time between manual differentiation and AD are nearly identical. This demonstrates the high efficiency of the AD implementation in SOPTX, which introduces no significant computational overhead while maintaining the same high precision as manual differentiation.
-
-The multi-backend mechanism of SOPTX allows users to flexibly switch between different computational backends. In addition to PyTorch, SOPTX also supports the JAX backend~\cite{bradbury2018jax}, which offers equally powerful AD capabilities. The sensitivity computation code remains identical when using JAX, users simply need to switch to the JAX backend by executing:
-\begin{lstlisting}
-	bm.set_backend('jax')
+In addition to PyTorch, SOPTX also supports the JAX backend~\cite{bradbury2018jax}, which offers equally powerful AD capabilities. The sensitivity computation code remains identical when using JAX, users simply need to switch to the JAX backend by executing:
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+bm.set_backend('jax')
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
-Using AD with the JAX backend, we perform topology optimization for the 3D cantilever beam. The final optimized topology is shown in Figure~\ref{fig:canti3d_ad_jax}.
-
+Using AD with the JAX backend, we perform topology optimization for the 3D cantilever beam, achieving results fully consistent with those from the PyTorch backend. This consistency underscores the stability and flexibility of the SOPTX framework across different computational backends. The final optimized topology is shown in Figure~\ref{fig:canti3d_ad_jax}.
+\vspace{-2ex} % 可调节
 \begin{figure}[htp] 
 	\centering 
-	\includegraphics[width=0.8\textwidth]{figures/cantilever_3d_auto_jax.png} \caption{Final optimized topology of the 3D cantilever beam using AD with the JAX backend.} \label{fig:canti3d_ad_jax} 
+	\includegraphics[width=0.75\textwidth]{figures/cantilever_3d_auto_jax.png} \caption{Final optimized topology of the 3D cantilever beam using AD with the JAX backend.} \label{fig:canti3d_ad_jax} 
 \end{figure}
-
-It is noteworthy that the final optimization result obtained using JAX is fully consistent with that obtained using PyTorch, demonstrating the stability and feasibility of the SOPTX framework when applying AD across different computational backends.
+\vspace{-2ex} % 可调节
 
 The application of AD in TO offers several significant advantages:
+\vspace{-0.5ex} % 可调节
 \begin{itemize} 
 	\item \textbf{Simplified Model Switching}: In TO, the choice of material interpolation model directly influences the optimization results. Besides the commonly used SIMP model, alternative models such as RAMP~\cite{stolpe2001alternative} are also widely applied in specific scenarios. With AD, users can easily switch between different interpolation models. For instance, when switching from SIMP to RAMP, the material stiffness gradient can be automatically computed by AD without manually deriving complex formulas. This greatly improves development efficiency and enhances the flexibility of model experimentation.
 	\item \textbf{Seamless Constraint Switching}: TO often involves multiple constraints. In addition to volume constraints, manufacturing constraints such as length scale control~\cite{guest2009imposing}, connectivity~\cite{li2016structural}, overhang limitations~\cite{qian2017undercut}, and material usage restrictions~\cite{sanders2018multi} are frequently imposed. Traditionally, adding or modifying constraints requires manually re-deriving sensitivity expressions. By introducing AD, this process becomes fully automated. The system can seamlessly adapt to new constraint settings, significantly improving optimization adaptability and development efficiency.
 	\item \textbf{Support for Complex Problems}: For TO problems involving multiphysics coupling, nonlinear materials, or complex geometric constraints, AD efficiently handles the computation of complicated gradients, allowing users to focus on modeling rather than mathematical derivations. Moreover, AD can automatically manage combined sensitivity computations when using techniques like density filtering and Heaviside projection. This capability further enhances the practical applicability and flexibility of the SOPTX framework in complex engineering scenarios.
 \end{itemize}
+\vspace{-0.5ex} % 可调节
 
 Through the optimization example of the 3D cantilever beam, this section has demonstrated the powerful potential of AD within the SOPTX framework. Numerical results show that AD achieves comparable precision and computational efficiency to traditional manual differentiation methods without introducing any significant overhead. The multi-backend support of SOPTX, including PyTorch and JAX, further enhances the flexibility and scalability of the framework. The application of AD not only simplifies sensitivity analysis but also facilitates the exploration of novel material models and constraint conditions. These features make SOPTX a valuable tool in the field of topology optimization, providing robust support for education, research, and engineering applications.
 
 \subsection{Multi-Backend Switching}\label{sec:exp_multi_backend}
 The SOPTX framework supports multi-backend switching, currently offering three computational backends: NumPy, PyTorch, and JAX. Backend switching is managed through the \textit{Tensor Backend Manager}, and users can easily switch between different backends by using the \texttt{set\_backend} function:
-\begin{lstlisting}
-	bm.set_backend('numpy')    
-	bm.set_backend('pytorch') 
-	bm.set_backend('jax')     
+\vspace{-0.5ex} % 可调节
+\begin{lstlisting}[language=python]
+bm.set_backend('numpy')    
+bm.set_backend('pytorch') 
+bm.set_backend('jax')     
 \end{lstlisting}
+\vspace{-0.5ex} % 可调节
 
 To verify the consistency and reliability of SOPTX across different computational backends, we conduct tests on the 3D cantilever beam optimization problem described in Sections~\ref{sec:exp_canti3d} and~\ref{sec:exp_canti3d_ad}, using identical parameter settings. The problem is solved separately under the NumPy, PyTorch, and JAX backends. The optimization results show that the convergence histories and final topology layouts are highly consistent across all three backends:
-
+\vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
 	\subfloat[$c(\rho)=2063.5625,~v(\rho)=0.2999$]{
@@ -1058,22 +1076,25 @@ To verify the consistency and reliability of SOPTX across different computationa
 	\caption{Final optimized topologies of the 3D cantilever beam using three different backends (elements with $\rho>0.3$ are visualized). Left: NumPy backend; Middle: PyTorch backend; Right: JAX backend.}
 	\label{fig:canti3d_backend_compare}
 \end{figure}
+\vspace{-2ex} % 可调节
 
-As shown in Figure~\ref{fig:canti3d_backend_compare}, after 54 iterations, the compliance in all three backends converges to approximately $2063.5625$, and the volume fraction stabilizes around $0.3$. The final topology layouts are nearly identical. This consistency highlights the effectiveness of SOPTX's unified numerical abstraction and rigorous testing strategy, ensuring the reliability and stability of the algorithms across different computational backends.
+As shown in Figure~\ref{fig:canti3d_backend_compare}, after 54 iterations, the compliance in all three backends converges to approximately $2063.5625$, and the volume fraction stabilizes around 0.3. The final topology layouts are nearly identical. This consistency highlights the effectiveness of SOPTX's unified numerical abstraction and rigorous testing strategy, ensuring the reliability and stability of the algorithms across different computational backends.
 
 In addition to multi-backend switching, SOPTX also supports computations on GPUs to further enhance computational efficiency, especially when solving large-scale 3D TO problems. By default, all computations are performed on the CPU (\texttt{device='cpu'}). However, users can migrate computations to the GPU (e.g., CUDA devices) through two methods:
+\vspace{-0.5ex} % 可调节
 \begin{enumerate}
 	\item \textbf{Set the Default Device Globally}: Users can set the default device for all tensors globally by executing:
-	\begin{lstlisting}
-	bm.set_default_device('cuda')
-	\end{lstlisting}
+\begin{lstlisting}[language=python]
+bm.set_default_device('cuda')
+\end{lstlisting}
 	This method places all subsequently created tensors on the GPU by default, and all associated computations, such as matrix assembly and linear solving, are performed on the GPU.
 	\item \textbf{Specify the Device When Creating the Mesh}: Alternatively, users can specify the device during mesh initialization:
-	\begin{lstlisting}
-	mesh = UniformMesh3d(extent=extent, h=h, origin=origin, device='cuda')
-	\end{lstlisting}
+\begin{lstlisting}[language=python]
+mesh = UniformMesh3d(extent=extent, h=h, origin=origin, device='cuda')
+\end{lstlisting}
 	By specifying \texttt{device='cuda'} during mesh creation, all computations related to that mesh are performed on the GPU. This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program if needed.
 \end{enumerate}
+\vspace{-0.5ex} % 可调节
 
 GPU acceleration plays a crucial role in 3D TO, as computational complexity increases significantly with the growth of mesh size. Taking the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} as a reference, when the mesh size is doubled to $120\times40\times8$, the number of density design variables rises to $38,400$, and the number of displacement degrees of freedom reaches $133,947$. On the CPU, the optimization process becomes much more time-consuming due to the computational cost associated with matrix assembly and linear solving. In contrast, the parallel computing capability of GPUs can substantially improve efficiency and significantly reduce computation time.
 
@@ -1262,95 +1283,90 @@ def threshold(self) -> Tuple[Callable, Callable]:
 
 \section{Cantilever3dData1}
 \label{sec:code_canti_3d}
-\begin{lstlisting}
-	class Cantilever3dData1:
-		def __init__(self,
-					xmin: float=0, xmax: float=60, 
-					ymin: float=0, ymax: float=20,
-					zmin: float=0, zmax: float=4,
-					T: float = -1):
-			self.xmin, self.xmax = xmin, xmax
-			self.ymin, self.ymax = ymin, ymax
-			self.zmin, self.zmax = zmin, zmax
-			self.T = T 
-			self.eps = 1e-12
-		
-		def domain(self) -> list:
-			box = [self.xmin, self.xmax, 
-			self.ymin, self.ymax, 
-			self.zmin, self.zmax]
-			return box
-		
-		@cartesian
-		def force(self, points: TensorLike) -> TensorLike:
-			domain = self.domain()
-			x = points[..., 0]
-			y = points[..., 1]
-			z = points[..., 2]
-			coord = (
-					(bm.abs(x - domain[1]) < self.eps) & 
-					(bm.abs(y - domain[2]) < self.eps)
-					)
-			kwargs = bm.context(points)
-			val = bm.zeros(points.shape, **kwargs)
-			val[coord, 1] = self.T
-			return val
-		
-		@cartesian
-		def dirichlet(self, points: TensorLike) -> TensorLike:
-			kwargs = bm.context(points)
-			return bm.zeros(points.shape, **kwargs)
-		
-		@cartesian
-		def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
-			domain = self.domain()
-			x = points[..., 0]
-			coord = bm.abs(x - domain[0]) < self.eps
-			return coord
-		
-		@cartesian
-		def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
-			domain = self.domain()
-			x = points[..., 0]
-			coord = bm.abs(x - domain[0]) < self.eps
-			return coord
-		
-		@cartesian
-		def is_dirichlet_boundary_dof_z(self, points: TensorLike) -> TensorLike:
-			domain = self.domain()
-			x = points[..., 0]
-			coord = bm.abs(x - domain[0]) < self.eps
-			return coord
-		
-		def threshold(self) -> Tuple[Callable, Callable]:
-			return (self.is_dirichlet_boundary_dof_x, 
-					self.is_dirichlet_boundary_dof_y,
-					self.is_dirichlet_boundary_dof_z)
+\begin{lstlisting}[language=python]
+class Cantilever3dData1:
+	def __init__(self,
+				xmin: float=0, xmax: float=60, 
+				ymin: float=0, ymax: float=20,
+				zmin: float=0, zmax: float=4,
+				T: float = -1):
+		self.xmin, self.xmax = xmin, xmax
+		self.ymin, self.ymax = ymin, ymax
+		self.zmin, self.zmax = zmin, zmax
+		self.T = T 
+		self.eps = 1e-12
+	
+	def domain(self) -> list:
+		box = [self.xmin, self.xmax, 
+		self.ymin, self.ymax, 
+		self.zmin, self.zmax]
+		return box
+	
+	@cartesian
+	def force(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		y = points[..., 1]
+		z = points[..., 2]
+		coord = ((bm.abs(x - domain[1]) < self.eps) & 
+				 (bm.abs(y - domain[2]) < self.eps))
+		kwargs = bm.context(points)
+		val = bm.zeros(points.shape, **kwargs)
+		val[coord, 1] = self.T
+		return val
+	
+	@cartesian
+	def dirichlet(self, points: TensorLike) -> TensorLike:
+		kwargs = bm.context(points)
+		return bm.zeros(points.shape, **kwargs)
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		coord = bm.abs(x - domain[0]) < self.eps
+		return coord
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		coord = bm.abs(x - domain[0]) < self.eps
+		return coord
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_z(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		coord = bm.abs(x - domain[0]) < self.eps
+		return coord
+	
+	def threshold(self) -> Tuple[Callable, Callable]:
+		return (self.is_dirichlet_boundary_dof_x, 
+				self.is_dirichlet_boundary_dof_y,
+				self.is_dirichlet_boundary_dof_z)
 \end{lstlisting}
 
 \section{Automatic Differentiation}
 \label{sec:ad_compliance}
-\begin{lstlisting}
-	def _compute_gradient_auto(self, 
-					rho: TensorLike,
-					u: Optional[TensorLike] = None) -> TensorLike:
-		if u is None:
-			u = self._update_u(rho)
-		
-		ke0 = self.solver.get_base_local_stiffness_matrix()
-		cell2dof = self.solver.tensor_space.cell_to_dof()
-		ue = u[cell2dof] 
-		
-		def compliance_contribution(rho_i: float, ue_i: TensorLike, ke0_i: TensorLike) -> float:
-			E = self.materials.calculate_elastic_modulus(rho_i)
-			c_i = -E * bm.einsum('i, ij, j', ue_i, ke0_i, ue_i)
-			return c_i
-		
-		vmap_grad = bm.vmap(lambda r, u, k: 
-						bm.jacrev(lambda x: compliance_contribution(x, u, k))
-						(r))
-		dc = vmap_grad(rho, ue, ke0)
-		return dc
+\begin{lstlisting}[language=python]
+def _compute_gradient_auto(self, rho: TensorLike, u: Optional[TensorLike] = None) -> TensorLike:
+	if u is None:
+		u = self._update_u(rho)
+	
+	ke0 = self.solver.get_base_local_stiffness_matrix()
+	cell2dof = self.solver.tensor_space.cell_to_dof()
+	ue = u[cell2dof] 
+	
+	def compliance_contribution(rho_i: float, ue_i: TensorLike, ke0_i: TensorLike) -> float:
+		E = self.materials.calculate_elastic_modulus(rho_i)
+		c_i = -E * bm.einsum('i, ij, j', ue_i, ke0_i, ue_i)
+		return c_i
+	
+	vmap_grad = bm.vmap(lambda r, u, k:bm.jacrev(lambda x: 
+		compliance_contribution(x, u, k))(r))
+	dc = vmap_grad(rho, ue, ke0)
+	return dc
 \end{lstlisting}
 
 
