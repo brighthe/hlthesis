@@ -595,7 +595,7 @@ space_D = LagrangeFESpace(mesh=mesh, p=0, ctype='D')
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
 
-The material module is then instantiated with the specified properties and SIMP interpolation model (Code~\ref{code:material}). This module handles material property computations based on the density field.
+The material module is then instantiated with the specified properties and Solid Isotropic Material with Penalization (SIMP) interpolation model (Code~\ref{code:material}). This module handles material property computations based on the density field.
 
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python, caption={Material module}, label={code:material}]
@@ -848,7 +848,7 @@ optimizer.options.set_advanced_options(m=1, n=NC,
 Through this refactoring, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in TO.
 
 \subsection{3D Extension}\label{sec:exp_canti3d}
-SOPTX’s modular design enables a smooth transition from 2D to 3D TO. This section showcases its capability with a 3D cantilever beam compliance minimization problem (see Figure~\ref{fig:cantilever_3d}). The beam is fixed on the left and bears a downward load $T=-1$ at the bottom right. A $60\times20\times4$ hexahedral mesh is applied, with a target volume fraction of 0.3, material properties $E=1$ and $\nu=0.3$, and a SIMP penalty factor $p=3$. A sensitivity filter (radius $r=1.5$) ensures smooth results.
+SOPTX’s modular design enables a smooth transition from 2D to 3D TO. This section showcases its capability with a 3D cantilever beam compliance minimization problem (see Figure~\ref{fig:cantilever_3d}). The beam is fixed on the left and bears a downward load $T=-1$ at the bottom right. A $60\times20\times4$ hexahedral mesh is applied, with a target volume fraction of 0.3, material properties $E=1$ and $\nu=0.3$, and a Solid Isotropic Material with Penalization (SIMP) penalty factor $p=3$. A sensitivity filter (radius $r=1.5$) ensures smooth results.
 \vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
@@ -1039,16 +1039,16 @@ Using AD with the JAX backend, we perform topology optimization for the 3D canti
 The application of AD in TO offers several significant advantages:
 \vspace{-0.5ex} % 可调节
 \begin{itemize} 
-	\item \textbf{Simplified Model Switching}: In TO, the choice of material interpolation model directly influences the optimization results. Besides the commonly used SIMP model, alternative models such as RAMP~\cite{stolpe2001alternative} are also widely applied in specific scenarios. With AD, users can easily switch between different interpolation models. For instance, when switching from SIMP to RAMP, the material stiffness gradient can be automatically computed by AD without manually deriving complex formulas. This greatly improves development efficiency and enhances the flexibility of model experimentation.
-	\item \textbf{Seamless Constraint Switching}: TO often involves multiple constraints. In addition to volume constraints, manufacturing constraints such as length scale control~\cite{guest2009imposing}, connectivity~\cite{li2016structural}, overhang limitations~\cite{qian2017undercut}, and material usage restrictions~\cite{sanders2018multi} are frequently imposed. Traditionally, adding or modifying constraints requires manually re-deriving sensitivity expressions. By introducing AD, this process becomes fully automated. The system can seamlessly adapt to new constraint settings, significantly improving optimization adaptability and development efficiency.
-	\item \textbf{Support for Complex Problems}: For TO problems involving multiphysics coupling, nonlinear materials, or complex geometric constraints, AD efficiently handles the computation of complicated gradients, allowing users to focus on modeling rather than mathematical derivations. Moreover, AD can automatically manage combined sensitivity computations when using techniques like density filtering and Heaviside projection. This capability further enhances the practical applicability and flexibility of the SOPTX framework in complex engineering scenarios.
+	\item \textbf{Simplified Model Switching}: AD automates gradient computations for material interpolation models like SIMP and Rational Approximation of Material Properties (RAMP)~\cite{stolpe2001alternative}, enabling seamless switching without manual derivation and improving development efficiency.
+	\item \textbf{Seamless Constraint Switching}: AD simplifies sensitivity analysis for constraints such as volume, length scale~\cite{guest2009imposing}, connectivity~\cite{li2016structural}, overhangs~\cite{qian2017undercut}, and material usage~\cite{sanders2018multi}, enhancing optimization adaptability.
+	\item \textbf{Support for Complex Problems}: AD efficiently computes gradients in multi-physics or geometrically constrained TO, automatically handling sensitivity computations for techniques like density filtering and Heaviside projection, allowing users to focus on modeling rather than derivations.
 \end{itemize}
 \vspace{-0.5ex} % 可调节
 
-Through the optimization example of the 3D cantilever beam, this section has demonstrated the powerful potential of AD within the SOPTX framework. Numerical results show that AD achieves comparable precision and computational efficiency to traditional manual differentiation methods without introducing any significant overhead. The multi-backend support of SOPTX, including PyTorch and JAX, further enhances the flexibility and scalability of the framework. The application of AD not only simplifies sensitivity analysis but also facilitates the exploration of novel material models and constraint conditions. These features make SOPTX a valuable tool in the field of topology optimization, providing robust support for education, research, and engineering applications.
+This section highlights AD’s potential in SOPTX, delivering precision and efficiency comparable to manual differentiation without added overhead. SOPTX’s multi-backend support (e.g., PyTorch, JAX) enhances its flexibility, while AD simplifies sensitivity analysis and enables exploration of new models and constraints, making SOPTX a valuable tool for topology optimization in education, research, and engineering.
 
 \subsection{Multi-Backend Switching}\label{sec:exp_multi_backend}
-The SOPTX framework supports multi-backend switching, currently offering three computational backends: NumPy, PyTorch, and JAX. Backend switching is managed through the \textit{Tensor Backend Manager}, and users can easily switch between different backends by using the \texttt{set\_backend} function:
+SOPTX supports multiple computational backends, including NumPy, PyTorch, and JAX. Users can flexibly switch between them using the \texttt{set\_backend} function.
 \vspace{-0.5ex} % 可调节
 \begin{lstlisting}[language=python]
 bm.set_backend('numpy')    
@@ -1057,7 +1057,7 @@ bm.set_backend('jax')
 \end{lstlisting}
 \vspace{-0.5ex} % 可调节
 
-To verify the consistency and reliability of SOPTX across different computational backends, we conduct tests on the 3D cantilever beam optimization problem described in Sections~\ref{sec:exp_canti3d} and~\ref{sec:exp_canti3d_ad}, using identical parameter settings. The problem is solved separately under the NumPy, PyTorch, and JAX backends. The optimization results show that the convergence histories and final topology layouts are highly consistent across all three backends:
+To validate its consistency and reliability across backends, we conducted tests on the 3D cantilever beam optimization problem described in Sections~\ref{sec:exp_canti3d} and~\ref{sec:exp_canti3d_ad}, using identical parameter settings. The problem was solved independently under each backend, and the results, shown in Figure~\ref{fig:canti3d_backend_compare}, demonstrate high consistency: compliance converges to 2063.5625, the volume fraction stabilizes at 0.3, and the topology layouts are almost identical. This confirms SOPTX's stability and robustness across different computational backends.
 \vspace{-2ex} % 可调节
 \begin{figure}[htp]
 	\centering
@@ -1078,28 +1078,25 @@ To verify the consistency and reliability of SOPTX across different computationa
 \end{figure}
 \vspace{-2ex} % 可调节
 
-As shown in Figure~\ref{fig:canti3d_backend_compare}, after 54 iterations, the compliance in all three backends converges to approximately $2063.5625$, and the volume fraction stabilizes around 0.3. The final topology layouts are nearly identical. This consistency highlights the effectiveness of SOPTX's unified numerical abstraction and rigorous testing strategy, ensuring the reliability and stability of the algorithms across different computational backends.
-
-In addition to multi-backend switching, SOPTX also supports computations on GPUs to further enhance computational efficiency, especially when solving large-scale 3D TO problems. By default, all computations are performed on the CPU (\texttt{device='cpu'}). However, users can migrate computations to the GPU (e.g., CUDA devices) through two methods:
+In addition to supporting multi-backend switching, SOPTX enables computations on GPU to enhance efficiency, particularly for large-scale 3D TO problems. By default, computations are performed on the CPU (\texttt{device='cpu'}). Users can migrate computations to a GPU (e.g., CUDA devices) in two ways:
 \vspace{-0.5ex} % 可调节
 \begin{enumerate}
-	\item \textbf{Set the Default Device Globally}: Users can set the default device for all tensors globally by executing:
+	\item Set the default device globally using the following code:
 \begin{lstlisting}[language=python]
 bm.set_default_device('cuda')
 \end{lstlisting}
-	This method places all subsequently created tensors on the GPU by default, and all associated computations, such as matrix assembly and linear solving, are performed on the GPU.
-	\item \textbf{Specify the Device When Creating the Mesh}: Alternatively, users can specify the device during mesh initialization:
+	This method is suitable for scenarios where all computations are to be executed on the GPU.
+	\item Specify the device during mesh creation, as shown below:
 \begin{lstlisting}[language=python]
 mesh = UniformMesh3d(extent=extent, h=h, origin=origin, device='cuda')
 \end{lstlisting}
-	By specifying \texttt{device='cuda'} during mesh creation, all computations related to that mesh are performed on the GPU. This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program if needed.
+	This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program.	
 \end{enumerate}
 \vspace{-0.5ex} % 可调节
 
-GPU acceleration plays a crucial role in 3D TO, as computational complexity increases significantly with the growth of mesh size. Taking the 3D cantilever beam example from Section~\ref{sec:exp_canti3d} as a reference, when the mesh size is doubled to $120\times40\times8$, the number of density design variables rises to $38,400$, and the number of displacement degrees of freedom reaches $133,947$. On the CPU, the optimization process becomes much more time-consuming due to the computational cost associated with matrix assembly and linear solving. In contrast, the parallel computing capability of GPUs can substantially improve efficiency and significantly reduce computation time.
+GPU acceleration is essential for 3D TO due to the significant increase in computational complexity as mesh size grows. For instance, in the 3D cantilever beam example from Section~\ref{sec:exp_canti3d}, doubling the mesh to $120\times40\times8$ increases the density design variables to 38,400 and displacement degrees of freedom to 133,947. On the CPU, this leads to prolonged optimization times due to matrix assembly and linear solving costs. In contrast, GPU's parallel computing capabilities greatly enhance efficiency and reduce computation time.
 
-To intuitively demonstrate the effect of GPU acceleration, we compare the computation times between CPU and GPU under the PyTorch backend for the same 3D cantilever beam problem. The parameter settings are kept identical to those in Section~\ref{sec:exp_canti3d}, except that the filter radius is increased from 
-$1.5$ to $3.0$ to ensure structural smoothness given the enlarged physical domain. Additionally, considering the increased problem size, we switch the linear solver from a direct method (e.g., MUMPS) to an iterative method, namely the Conjugate Gradient (CG) method. The CG method offers advantages for solving large-scale sparse linear systems and can leverage the GPU's parallel computing capabilities to efficiently perform matrix-vector operations.
+To demonstrate this, we compare CPU and GPU computation times under the PyTorch backend for the same problem. Parameters remain consistent with Section~\ref{sec:exp_canti3d}, except for increasing the filter radius from 1.5 to 3.0 to maintain structural smoothness in the larger domain. Additionally, we use the Conjugate Gradient (CG) method instead of a direct solver (e.g., MUMPS) to handle the larger sparse linear systems, leveraging the GPU's parallel processing for efficient matrix-vector operations.
 
 The tests are conducted on an AMD 9950X CPU and an NVIDIA 5070Ti GPU. The optimization results are shown below:
 \begin{figure}[htp]
