@@ -79,20 +79,20 @@
 %\email{{\tt author@email} (O.~Author)}
 
 \author[He L, Wei H Y, T tian, Wang P X]{Liang He \affil{1}, 
-Huayi Wei\affil{2}\comma\corrauth, Tian Tian\affil{3}}
+Huayi Wei\affil{1}\comma\corrauth, Tian Tian\affil{1}}
 \address{
 \affilnum{1}\ 
 School of Mathematics and Computational Science, Xiangtan University; 
 National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
-Computation and Simulation in Science and Engineering Xiangtan 411105, China\\
-\affilnum{2}\ 
-School of Mathematics and Computational Science, Xiangtan University; 
-National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
-Computation and Simulation in Science and Engineering Xiangtan 411105, China\\
-\affilnum{3}\ 
-School of Mathematics and Computational Science, Xiangtan University; 
-National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
 Computation and Simulation in Science and Engineering Xiangtan 411105, China
+%\affilnum{2}\ 
+%School of Mathematics and Computational Science, Xiangtan University; 
+%National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
+%Computation and Simulation in Science and Engineering Xiangtan 411105, China\\
+%\affilnum{3}\ 
+%School of Mathematics and Computational Science, Xiangtan University; 
+%National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
+%Computation and Simulation in Science and Engineering Xiangtan 411105, China
 }
 
 \emails{
@@ -993,36 +993,26 @@ Notably, the Conjugate Gradient (CG) method exhibits faster convergence in early
 This study presents SOPTX, a high-performance topology optimization (TO) framework built on the open-source FEALPy platform. SOPTX addresses key challenges in TO by offering a modular, efficient, and accessible solution for both academic and industrial applications. Its fully open-source design eliminates reliance on commercial software, broadening its accessibility for research and education.
 
 The core innovations of SOPTX are reflected in the following three aspects:
-\vspace{-0.5ex} % 可调节
 \begin{enumerate} 
 	\item \textbf{Modular Architecture}: A loosely coupled design supports 2D and 3D TO problems across structured and unstructured meshes. This flexibility, paired with a rich set of configurable components, empowers users to tailor and extend optimization workflows efficiently.
 	\item \textbf{Multi-Backend Support and Automatic differentiation}: Integration of NumPy, PyTorch, and JAX enables fast central processing units (CPUs) and graphics processing units (GPUs) computation. In benchmark tests, GPU computations reduced time to approximately $12\%$ of CPU time. Automatic differentiation (AD) automates gradient calculations, enhancing accuracy.
 	\item \textbf{Efficient Matrix Assembly}: By optimizing assembly processes and exploiting sparsity, SOPTX reduces average assembly time from \SI{0.838}{s} to \SI{0.273}{s} (approximately $33\%$ of the original), significantly boosting efficiency.
 \end{enumerate}
-\vspace{-0.5ex} % 可调节
 
 The experimental analyses in Sections~\ref{sec:exp_mbb_beam} through~\ref{sec:exp_multi_backend} demonstrate SOPTX's exceptional performance across key areas: seamless model and filter switching, flexible optimization algorithms, 3D problem extension, enhanced computational efficiency, automatic differentiation, and multi-backend support. These results underscore SOPTX's technical strengths and versatility.
 
 Looking forward, SOPTX is set to expand its capabilities:
-\vspace{-0.5ex} % 可调节
 \begin{itemize} 
 	\item \textbf{Level Set Methods}: Integrating FEALPy's level set module will enable boundary-clear optimization, generating smooth, manufacturable designs for precision applications.
 	\item \textbf{Adaptive Mesh Refinement}: Incorporating local refinement near boundaries will improve accuracy and detail in complex geometries.
 	\item \textbf{Multiphysics Optimization}: Leveraging FEALPy's solvers for heat conduction and Navier Stokes equations, SOPTX can address thermo-fluid-structure coupling, optimizing designs like aerospace thermal protection systems or electronic heat dissipation structures.
 	\item \textbf{Manufacturing Constraints}: Future support for stress and additive manufacturing constraints (e.g., overhang control, support minimization) will enhance SOPTX's applicability in aerospace, automotive, and biomedical fields, aligning with lightweight and manufacturability goals.
 \end{itemize}
-\vspace{-0.5ex} % 可调节
 These extensions will solidify SOPTX's role in advancing TO for both research and industry.
 
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
-The first and fourth authors were supported by the National Natural Science
-Foundation of China (NSFC) (Grant No. 12371410, 12261131501), and the
-construction of innovative provinces in Hunan Province (Grant No. 2021GK1010).
-The second author was supported by NSF DMS-2012465 and DMS-2309785. The third
-author was supported by the National Natural Science Foundation of China (NSFC)
-(Grant No. 12171300), and the Natural Science Foundation of Shanghai (Grant No.
-21ZR1480500).
+National Natural Science Foundation of China (NSFC) (Grant Nos. 12371410, 12261131501) the construction of innovative provinces in Hunan Province (Grant No. 2021GK1010)
 
 \appendix
 \renewcommand{\thesection}{Appendix\,\Alph{section}}
