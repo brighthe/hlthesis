@@ -78,21 +78,17 @@
 %Beijing 100875, P.R. China}
 %\email{{\tt author@email} (O.~Author)}
 
-\author[He L, Wei H Y, T tian, Wang P X]{Liang He \affil{1}, 
-Huayi Wei\affil{1}\comma\corrauth, Tian Tian\affil{1}}
+\author[He L, Wei H Y, Tian T]{Liang He \affil{1}, 
+Huayi Wei\affil{2}\comma\corrauth, Tian Tian\affil{3}}
 \address{
 \affilnum{1}\ 
+School of Mathematics and Computational Science, Xiangtan University, Xiangtan 411105, China\\
+\affilnum{2}\ 
 School of Mathematics and Computational Science, Xiangtan University; 
 National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
-Computation and Simulation in Science and Engineering Xiangtan 411105, China
-%\affilnum{2}\ 
-%School of Mathematics and Computational Science, Xiangtan University; 
-%National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
-%Computation and Simulation in Science and Engineering Xiangtan 411105, China\\
-%\affilnum{3}\ 
-%School of Mathematics and Computational Science, Xiangtan University; 
-%National Center of  Applied Mathematics in Hunan, Hunan Key Laboratory for 
-%Computation and Simulation in Science and Engineering Xiangtan 411105, China
+Computation and Simulation in Science and Engineering, Xiangtan 411105, China\\
+\affilnum{3}\ 
+School of Mathematics and Computational Science, Xiangtan University, Xiangtan 411105, China
 }
 
 \emails{
@@ -123,14 +119,14 @@ Computation and Simulation in Science and Engineering Xiangtan 411105, China
 
 %%%%% Begin Abstract %%%%%%%%%%%
 \begin{abstract}
-In recent years, topology optimization (TO) has gained widespread attention as a powerful structural design method. However, its application remains challenging due to the deep expertise and extensive development effort required. Traditional TO methods, tightly coupled with computational mechanics like finite element analysis (FEA), result in intrusive algorithms demanding a comprehensive system understanding. This paper presents SOPTX, a TO package based on FEALPy, which implements a modular architecture that decouples analysis from optimization, supports multiple computational backends (NumPy, PyTorch, JAX), and achieves a non-intrusive design paradigm. Core innovations include: (1)
+In recent years, topology optimization (TO) has gained widespread attention as a powerful structural design method. However, its application remains challenging due to the deep expertise and extensive development effort required. Traditional TO methods, tightly coupled with computational mechanics like finite element method (FEM), result in intrusive algorithms demanding a comprehensive system understanding. This paper presents SOPTX, a TO package based on FEALPy, which implements a modular architecture that decouples analysis from optimization, supports multiple computational backends (NumPy, PyTorch, JAX), and achieves a non-intrusive design paradigm. Core innovations include: (1)
 cross-platform design that supports multiple computational backends, enabling efficient algorithm execution on central processing units (CPUs) and flexible acceleration using graphics processing units (GPUs), while leveraging automatic differentiation (AD) technology for efficient sensitivity computation of objective and constraint functions; (2) fast matrix assembly techniques that overcome the performance bottlenecks of traditional numerical integration methods, significantly accelerating finite element computations and enhancing overall efficiency; (3) a modular framework supporting TO problems for arbitrary dimensions and meshes, allowing flexible configuration and extensibility of optimization workflows through a rich library of composable components. Using the density-based method for the classic compliance minimization problem with volume constraints as an example, numerical experiments demonstrate SOPTX’s high efficiency in computational speed and memory usage, while showcasing its strong potential for research and engineering applications.
 \end{abstract}
 %%%%% end %%%%%%%%%%%
 
 %%%%% AMS/PACs/Keywords %%%%%%%%%%%
 %\pac{}
-\ams{65N30, 35Q60}
+\ams{74P15, 68N30, 65N30}
 \keywords{Topology Optimization, Multiple Computational Backends, Automatic Differentiation, Modular Framework}
 
 %%%% maketitle %%%%%
@@ -139,25 +135,25 @@ cross-platform design that supports multiple computational backends, enabling ef
 
 %%%% Start %%%%%%
 \section{Introduction}
-Topology optimization (TO) is a class of structural optimization techniques aimed at improving structural performance by optimizing material distribution within a given design domain. Widely applied in aerospace, automotive, and civil engineering, TO addresses critical design challenges by efficiently utilizing materials. Among various approaches, density-based methods are particularly popular due to their intuitive concept and practicality. The Solid Isotropic Material with Penalization (SIMP) method, introduced by Bendsøe et al.~\cite{Bendsøe2004}, is the most widely adopted density-based approach, promoting binary (0 - 1) solutions by penalizing intermediate densities and integrating effectively with finite element analysis (FEA).
+Topology optimization (TO) is a class of structural optimization techniques aimed at improving structural performance by optimizing material distribution within a given design domain. Widely applied in aerospace, automotive, and civil engineering, TO addresses critical design challenges by efficiently utilizing materials. Among various approaches, density-based methods are particularly popular due to their intuitive concept and practicality. The Solid Isotropic Material with Penalization (SIMP) method, introduced by Bendsøe et al.~\cite{Bendsøe2004}, is the most widely adopted density-based approach, promoting binary (0 - 1) solutions by penalizing intermediate densities and integrating effectively with finite element method (FEM).
 
 However, TO inherently involves large-scale computations due to the tight coupling between structural analysis and optimization. Each iteration requires solving boundary value problems and performing sensitivity analysis for gradient-based optimization algorithms. For large-scale problems, repeatedly solving large linear systems and evaluating sensitivities imposes significant demands on computational resources. Therefore, improving computational efficiency and scalability without sacrificing accuracy remains a major challenge in TO research and applications.
 
 To lower the entry barrier and promote widespread adoption of TO, researchers have published numerous educational studies and literature. A pioneering example is the 99-line MATLAB code by Sigmund~\cite{sigmund200199}, which demonstrated the fundamentals of a two-dimensional SIMP algorithm in a concise and self-contained manner, profoundly impacting both TO education and research. Subsequently, improved versions of this educational code have emerged, including the more efficient 88-line version proposed by Andreassen et al.~\cite{andreassen2011efficient} and the extended 3D implementation by Liu and Tovar~\cite{liu2014efficient}. These codes convey practical TO knowledge simply and provide self-contained examples of basic numerical algorithms.
 
-Meanwhile, efforts in open-source software development have also advanced TO practices. Chung et al.~\cite{chung2019topology} leveraged OpenMDAO~\cite{gray2019openmdao}, decomposing TO into modular components with automated derivative assembly, enhancing flexibility and extensibility. Gupta et al.~\cite{gupta202055} developed a parallel-enabled implementation using the FEniCS finite element framework~\cite{alnaes2015fenics}, addressing large-scale optimization. Recently, Ferro and Pavanello~\cite{ferro2023simple} provided an efficient 51-line TO implementation integrating FEniCS, Dolfin Adjoint, and Interior Point Optimizer, simplifying the development process. These projects provided standardized interfaces for convenient integration with existing FEA tools, reducing implementation complexity. However, despite improvements, existing open-source TO packages still face limitations in terms of functionality extensibility and flexibility, particularly for complex engineering applications.
+Meanwhile, efforts in open-source software development have also advanced TO practices. Chung et al.~\cite{chung2019topology} leveraged OpenMDAO~\cite{gray2019openmdao}, decomposing TO into modular components with automated derivative assembly, enhancing flexibility and extensibility. Gupta et al.~\cite{gupta202055} developed a parallel-enabled implementation using the FEniCS finite element framework~\cite{alnaes2015fenics}, addressing large-scale optimization. Recently, Ferro and Pavanello~\cite{ferro2023simple} provided an efficient 51-line TO implementation integrating FEniCS, Dolfin Adjoint, and Interior Point Optimizer, simplifying the development process. These projects provided standardized interfaces for convenient integration with existing finite element analysis (FEA) tools, reducing implementation complexity. However, despite improvements, existing open-source TO packages still face limitations in terms of functionality extensibility and flexibility, particularly for complex engineering applications.
 
 To accelerate the development of TO, automating sensitivity analysis has become a critical step. This involves automatically computing derivatives of objectives, constraints, material models, projections, filters, and other components with respect to the design variables. Currently, the common practice involves manually calculating sensitivities, which can be tedious and error-prone despite their theoretical simplicity, often becoming a bottleneck in the development of new TO modules and exploratory research. Automatic differentiation (AD) provides an efficient and accurate approach for evaluating derivatives of numerical functions ~\cite{griewank2008evaluating}. By decomposing complex functions into a series of elementary operations (such as addition and multiplication), AD accurately computes derivatives of arbitrary differentiable functions. In TO, the Jacobian matrices represent sensitivities of objective functions and constraints with respect to design variables, and software can automate this process, relieving developers from manually deriving and implementing sensitivity calculations. With its capability of easily obtaining accurate derivative information, AD offers significant advantages in design optimization, particularly for highly nonlinear optimization problems.
 
 In recent years, the adoption of AD in TO has gradually increased. For instance, Nørgaard et al.~\cite{norgaard2017applications} employed the AD tools CoDiPack and Tapenade to achieve automatic sensitivity analysis in unsteady flow TO, significantly enhancing computational efficiency. Building upon this, Chandrasekhar~\cite{chandrasekhar2021auto} utilized the high-performance Python library JAX~\cite{bradbury2018jax} to apply AD techniques in density-based TO, achieving efficient solutions to classical TO problems, exemplified by compliance minimization.
 
-Although existing TO programs, ranging from educational codes to open-source implementations, have significantly advanced the field, they often employ a procedural programming paradigm that tightly couples analysis modules, such as finite element analysis (FEA), with optimization modules. This tight coupling restricts software extensibility, necessitating invasive changes for new features, and diminishes reusability, complicating integration into broader frameworks like multidisciplinary design optimization (MDO) in aerospace. Consequently, developing a decoupled architecture that enhances both extensibility and reusability without sacrificing accuracy remains a critical challenge in TO.
+Although existing TO programs, ranging from educational codes to open-source implementations, have significantly advanced the field, they often employ a procedural programming paradigm that tightly couples analysis modules, such as FEA, with optimization modules. This tight coupling restricts software extensibility, necessitating invasive changes for new features, and diminishes reusability, complicating integration into broader frameworks like multidisciplinary design optimization (MDO) in aerospace. Consequently, developing a decoupled architecture that enhances both extensibility and reusability without sacrificing accuracy remains a critical challenge in TO.
 
-To address the aforementioned challenges, this paper proposes SOPTX, a high-performance TO framework built upon the FEALPy platform ~\cite{fealpy}. FEALPy is an open-source intelligent CAE computing engine providing an efficient, flexible, and extensible platform for numerical simulation. Its selection as the underlying platform is supported by key advantages:
+To address the aforementioned challenges, this paper proposes SOPTX, a high-performance TO framework built upon the FEALPy platform ~\cite{fealpy}. FEALPy is an open-source intelligent CAX computing engine providing an efficient, flexible, and extensible platform for numerical simulation. Its selection as the underlying platform is supported by key advantages:
 \vspace{-1ex}
 \begin{enumerate}
 	\item FEALPy supports multiple computational backends, including NumPy, PyTorch, and JAX, enabling efficient execution across a wide range of hardware architectures such as central processing units (CPUs) and graphics processing units (GPUs).
-	\item FEALPy supports a broad range of numerical schemes, including finite element methods (FEM) of arbitrary order and dimension, as well as alternative methods such as the virtual element method (VEM) and the finite difference method (FDM).
+	\item FEALPy supports a broad range of numerical schemes, including FEM of arbitrary order and dimension, as well as alternative methods such as the virtual element method (VEM) and the finite difference method (FDM).
 	\item FEALPy adopts highly efficient vectorized operations that fully exploit the computational power of modern processors.
 	\item FEALPy features a clean and extensible API design, which aligns well with our goal of developing a modular and reusable TO framework.
 \end{enumerate}
@@ -171,7 +167,7 @@ Building on this modular foundation, SOPTX seamlessly integrates AD into the TO 
 The remainder of this paper is organized as follows. Section 2 introduces the mathematical formulation of TO, covering density-based methods, compliance minimization, optimization algorithms, and filtering techniques. Section 3 presents the design philosophy of SOPTX built on FEALPy, with emphasis on its modular architecture and backend switching for high-performance, flexible implementation. Section 4 demonstrates SOPTX installation and usage via a classical 2D cantilever beam problem. Section 5 showcases its effectiveness through a series of 2D and 3D examples, including comparative studies with different filters and optimization algorithms, and performance analyses of fast matrix assembly, AD, and backend switching. Section 6 concludes the paper and outlines future research directions.
 
 \section{Density-based Topology Optimization: Formulation, Algorithms, and Regularization}\label{sec:math}
-In this chapter, we introduce the density-based method in topology optimization (TO), explaining how it optimizes material distribution using a density function and interpolation models. Using the compliance minimization problem as an example, we present its continuous and discrete formulations. We then describe two key optimization algorithms in TO: the Optimality Criteria (OC) method and the Method of Moving Asymptotes (MMA), including their implementations and features. Finally, we discuss key filtering techniques in TO, such as sensitivity, density, and Heaviside projection filters, and their role in improving numerical stability and physical feasibility.
+In this section, we introduce the density-based method in topology optimization (TO), explaining how it optimizes material distribution using a density function and interpolation models. Using the compliance minimization problem as an example, we present its continuous and discrete formulations. We then describe two key optimization algorithms in TO: the Optimality Criteria (OC) method and the Method of Moving Asymptotes (MMA), including their implementations and features. Finally, we discuss key filtering techniques in TO, such as sensitivity, density, and Heaviside projection filters, and their role in improving numerical stability and physical feasibility.
 %\paragraph{Notation.}Italic symbols such as $\rho, u, f$ and Greek symbols such as $\sigma, \varepsilon$ denote continuous fields, whereas
 %bold symbols such as $\boldsymbol{\rho}, \mathbf{U}, \mathbf{F}, \mathbf{K}$ denote discrete vectors or matrices arising from the finite-element discretisation.
 
@@ -347,7 +343,7 @@ After applying the Heaviside projection filter, the sensitivities of a function 
 The filter radius $r_{\min}$ significantly affects the result: small $r_{\min}$ leads to oscillations or checkerboard patterns, while large $r_{\min}$ causes excessive smoothing and loss of design details.
 
 \section{SOPTX Framework Design and Multi-Backend Switching}
-This chapter introduces the design principles and key components of the SOPTX framework, emphasizing its multi-backend switching capability for improved computational performance and flexibility on central processing units (CPUs) and graphics processing units (GPUs). The chapter is divided into three parts: an overview of the FEALPy architecture as the tensor computation foundation, a description of SOPTX’s modular structure (material, solver, filter, and optimization modules), and an analysis of the multi-backend mechanism supporting NumPy, PyTorch, and JAX for diverse computational needs.
+This section introduces the design principles and key components of the SOPTX framework, emphasizing its multi-backend switching capability for improved computational performance and flexibility on central processing units (CPUs) and graphics processing units (GPUs). The section is divided into three parts: an overview of the FEALPy architecture as the tensor computation foundation, a description of SOPTX’s modular structure (material, solver, filter, and optimization modules), and an analysis of the multi-backend mechanism supporting NumPy, PyTorch, and JAX for diverse computational needs.
 
 \subsection{FEALPy Architecture Design}
 As shown in Figure~\ref{fs:fig1}, FEALPy adopts a layered architecture with four levels, arranged from bottom to top: tensor, common, algorithm, and field. Building on this, FEALPy introduces the \textit{Tensor Backend Manager}, which unifies the management of computational backends like NumPy, PyTorch, and JAX. This manager provides a consistent tensor operation interface, following the Python Array API Standard v2023.12~\cite{arrayapi2023}, enabling seamless adaptation across various software and hardware platforms.
@@ -470,7 +466,7 @@ Specifically, each backend offers distinct advantages for different scenarios
 \end{itemize}
 
 \section{Getting Started with SOPTX}
-This chapter provides installation instructions and usage guidance for SOPTX, enabling readers to quickly grasp the framework's operations and apply it to topology optimization (TO) tasks. Built on FEALPy, SOPTX leverages a multi-backend switching mechanism and modular design to deliver an efficient and flexible computational environment. The chapter is structured into two sections: first, a detailed guide on installing SOPTX and its dependency FEALPy, ensuring proper configuration of the development environment; second, a demonstration of SOPTX's workflow through a classical 2D cantilever beam compliance minimization example.
+This section provides installation instructions and usage guidance for SOPTX, enabling readers to quickly grasp the framework's operations and apply it to topology optimization (TO) tasks. Built on FEALPy, SOPTX leverages a multi-backend switching mechanism and modular design to deliver an efficient and flexible computational environment. The section is structured into two sections: first, a detailed guide on installing SOPTX and its dependency FEALPy, ensuring proper configuration of the development environment; second, a demonstration of SOPTX's workflow through a classical 2D cantilever beam compliance minimization example.
 
 \subsection{Software Installation}
 SOPTX is a TO toolkit built on top of FEALPy, an intelligent CAE simulation engine that provides numerical computing capabilities. Installing FEALPy is required before SOPTX. For flexibility and the latest features, install both from source. Ensure Git and Python are installed. Use a virtual environment to avoid dependency conflicts.
@@ -509,7 +505,7 @@ To begin, we import essential modules from FEALPy (backend, mesh, function space
 
 \begin{lstlisting}[language=python, caption={Module imports and PDE model}, label={code:mouldes_pde}]
 from fealpy.backend import backend_manager as bm
-from fealpy.mesh import UniformMesh2d
+from fealpy.mesh import UniformMesh
 from fealpy.functionspace import LagrangeFESpace, TensorFunctionSpace
 from soptx.material import DensityBasedMaterialConfig, DensityBasedMaterialInstance
 from soptx.solver import ElasticFEMSolver, AssemblyMethod
@@ -524,7 +520,7 @@ pde = Cantilever2dData1(xmin=0, xmax=160, ymin=0, ymax=100,	T = -1)
 Next, we define the mesh and finite element spaces (Code~\ref{code:mesh_space}). The displacement field uses a first-order continuous Lagrange space, while the density field is represented in a zeroth-order discontinuous Lagrange space, aligning with typical TO discretizations.
 
 \begin{lstlisting}[language=python, caption={Mesh and function space definitions}, label={code:mesh_space}]
-mesh = UniformMesh2d(extent=[0, 160, 0, 100], h=[1, 1], origin=[0, 0])
+mesh = UniformMesh(extent=[0, 160, 0, 100], h=[1, 1], origin=[0, 0])
 space_C = LagrangeFESpace(mesh=mesh, p=1, ctype='C')
 tensor_space_C = TensorFunctionSpace(scalar_space=space_C, shape=(-1, 2))
 space_D = LagrangeFESpace(mesh=mesh, p=0, ctype='D')
@@ -634,9 +630,9 @@ Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and
 These results highlight the robustness of SOPTX in handling different initial conditions and its efficiency in achieving convergence with the OC algorithm.
 
 \section{Numerical Examples}
-This chapter presents numerical examples to validate the SOPTX framework's capabilities in topology optimization (TO), spanning 2D MBB beam problems to 3D cantilever structures. These examples demonstrate SOPTX's versatility across diverse partial differential equation (PDE) models, meshes, filters, and algorithms, while showcasing advanced features like fast matrix assembly, automatic differentiation (AD), and multi-backend switching.
+This section presents numerical examples to validate the SOPTX framework's capabilities in topology optimization (TO), spanning 2D MBB beam problems to 3D cantilever structures. These examples demonstrate SOPTX's versatility across diverse partial differential equation (PDE) models, meshes, filters, and algorithms, while showcasing advanced features like fast matrix assembly, automatic differentiation (AD), and multi-backend switching. All runs are performed on a desktop computer running Ubuntu 24.04, using a CPU AMD Ryzen 9 9950X @ 4.5GHz, 2 × 32 GB of RAM, and an NVIDIA GeForce RTX 5070Ti GPU.
 
-The chapter is organized as follows: Section~\ref{sec:exp_mbb_beam} tests robustness across mesh resolutions; Section 5.2 explores filtering effects; Section 5.3 introduces algorithm switching and an updated MMA optimizer; Section 5.4 extends to 3D TO; Section 5.5 quantifies matrix assembly gains; Section 5.6 highlights AD in sensitivity analysis; and Section 5.7 assesses multi-backend and graphics processing units (GPUs) acceleration benefits. These examples underscore SOPTX's strengths and its potential in research and engineering.
+The section is organized as follows: Section~\ref{sec:exp_mbb_beam} tests robustness across mesh resolutions; Section 5.2 explores filtering effects; Section 5.3 introduces algorithm switching and an updated MMA optimizer; Section 5.4 extends to 3D TO; Section 5.5 quantifies matrix assembly gains; Section 5.6 highlights AD in sensitivity analysis; and Section 5.7 assesses multi-backend and graphics processing units (GPUs) acceleration benefits. These examples underscore SOPTX's strengths and its potential in research and engineering.
 
 \subsection{MBB Beam}\label{sec:exp_mbb_beam}
 As introduced, we first validate SOPTX using the MBB beam, a classical benchmark in TO widely used to assess optimization algorithms. This section minimizes the structural compliance of the MBB beam (see Figure~\ref{fig:mbb_beam}), demonstrating SOPTX's adaptability to various PDE models and meshes. The beam is hinged at the left edge and bottom right corner, with horizontal displacements constrained, and a downward load $T = -1$ applied at the upper left corner. The target volume fraction is 0.5, with material properties $E = 1$ and $\nu = 0.3$, penalization factor $p = 3$, and filter radius $r = 6.0$ to ensure smooth topology and suppress checkerboard patterns.
@@ -756,8 +752,7 @@ Compared to the 2D cantilever beam in Section~\ref{sec:exp_canti_beam}, SOPTX ex
 \begin{lstlisting}[language=python]
 from soptx.pde import Cantilever3dData1
 pde = Cantilever3dData1(xmin=0, xmax=60, ymin=0, ymax=20, zmin=0, zmax=4, T=-1)
-from fealpy.mesh import UniformMesh3d
-mesh = UniformMesh3d(extent=[0, 60, 0, 20, 0, 4], h=[1, 1, 1], origin=[0, 0, 0])
+mesh = UniformMesh(extent=[0, 60, 0, 20, 0, 4], h=[1, 1, 1], origin=[0, 0, 0])
 \end{lstlisting}
 The complete definition of the \texttt{Cantilever3dData1} model is available in Appendix~\ref{sec:code_canti_3d}.
 
@@ -946,7 +941,7 @@ bm.set_default_device('cuda')
 	This method is suitable for scenarios where all computations are to be executed on the GPU.
 	\item Specify the device during mesh creation, as shown below:
 \begin{lstlisting}[language=python]
-mesh = UniformMesh3d(extent=extent, h=h, origin=origin, device='cuda')
+mesh = UniformMesh(extent=extent, h=h, origin=origin, device='cuda')
 \end{lstlisting}
 	This approach offers greater flexibility, allowing users to mix CPU and GPU computations within the same program.	
 \end{enumerate}
@@ -955,7 +950,7 @@ GPU acceleration is essential for 3D TO due to the significant increase in compu
 
 To demonstrate this, we compare CPU and GPU computation times under the PyTorch backend for the same problem. Parameters remain consistent with Section~\ref{sec:exp_canti3d}, except for increasing the filter radius from 1.5 to 3.0 to maintain structural smoothness in the larger domain. Additionally, we use the Conjugate Gradient (CG) method instead of a direct solver (e.g., MUMPS) to handle the larger sparse linear systems, leveraging the GPU's parallel processing for efficient matrix-vector operations.
 
-The tests are conducted on an AMD 9950X CPU and an NVIDIA 5070Ti GPU. As shown in Figure~\ref{fig:canti3d_device_compare}, the optimized topologies using CPU and GPU are nearly identical. Minor differences in compliance and volume fraction, both within $1\%$, arise from variations in floating-point precision and parallel implementation strategies across hardware platforms. These differences are negligible in TO and do not impact the quality or performance of the final design.
+As shown in Figure~\ref{fig:canti3d_device_compare}, the optimized topologies using CPU and GPU are nearly identical. Minor differences in compliance and volume fraction, both within $1\%$, arise from variations in floating-point precision and parallel implementation strategies across hardware platforms. These differences are negligible in TO and do not impact the quality or performance of the final design.
 \begin{figure}[htbp]
 	\centering
 	\subfloat[$c(\rho)=3498.8266,~v(\rho)=0.3001$]{
