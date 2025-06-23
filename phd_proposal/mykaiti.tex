@@ -1,0 +1,342 @@
+% !Mode:: "TeX:UTF-8"
+%---------------------------------------------------------------
+% 文档类设置
+%---------------------------------------------------------------
+\documentclass{beamer}  % 使用beamer文档类创建演示文稿
+
+%---------------------------------------------------------------
+% 主题与样式设置
+%---------------------------------------------------------------
+\usetheme{Darmstadt}      % 使用 Darmstadt 主题
+\useinnertheme{rounded}   % 使用圆角内部主题
+\usecolortheme{beaver}    % 使用 beaver 颜色主题
+
+% 其他可选颜色主题(取消注释以启用)
+%\usecolortheme{albatross}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+%\usecolortheme{default}
+
+%---------------------------------------------------------------
+% beamer设置与调整
+%---------------------------------------------------------------
+\numberwithin{subsection}{section}             % 子节按节编号
+\usefonttheme[onlylarge]{structurebold}        % 仅对大标题使用粗体
+%\usefonttheme[onlymath]{serif}                % 可选：仅数学内容使用衬线字体
+%\setbeamercovered{transparent}                % 可选：设置覆盖项为透明
+
+%---------------------------------------------------------------
+% 文献引用设置
+%---------------------------------------------------------------
+\usepackage[numbers, sort&compress]{natbib}     % 使用natbib包管理参考文献，采用数字引用样式
+% sort - 引用按编号排序；compress - 连续引用压缩为范围（如[1-3]）
+\setcitestyle{numbers}                         % 强制使用数字引用样式，覆盖可能的其他样式设置
+
+
+% 设置帧标题格式
+\setbeamerfont*{frametitle}{size=\normalsize,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}         % 隐藏导航符号
+%\setbeamertemplate{bibliography item}[text]      % 参考文献项使用文本形式
+\setbeamertemplate{bibliography item}[numbered]  % 参考文献项使用编号样式
+
+%---------------------------------------------------------------
+% 导入自定义样式文件
+%---------------------------------------------------------------
+\input{en_preamble.tex}   % 导入英文环境设置
+\input{xecjk_preamble.tex}  % 导入中文环境设置
+
+%---------------------------------------------------------------
+% 标题、作者和机构信息
+%---------------------------------------------------------------
+\title{{\small
+湘潭大学博士研究生开题报告} \\
+~~~~\\
+开源拓扑优化软件包 SOPTX：数值算法实现、应用及性能研究}
+
+\author{
+	\begin{tabular}{rl}
+		报告人: & 何~亮 \\
+		专~~~~业: & 数~学 \\
+		导~~~~师: & 魏华祎~教授 \\
+	\end{tabular}
+}
+
+\institute[XTU]{
+\vspace{5pt}
+湘潭大学$\bullet$数学与计算科学学院\\
+}
+ 
+\date[XTU]{\today}  % 使用当前日期
+
+%---------------------------------------------------------------
+% 节和子节的目录自动生成设置
+%---------------------------------------------------------------
+% 在每节开始添加目录幻灯片
+\AtBeginSection[]
+{
+	\frame<beamer>{ 
+		\frametitle{目录}   
+		\tableofcontents[currentsection] 
+	}
+}
+
+% 在每子节开始添加目录幻灯片
+\AtBeginSubsection[]
+{
+	\frame<beamer>{ 
+		\frametitle{目录}   
+		\tableofcontents[currentsubsection] 
+	}
+}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{目录}
+  \tableofcontents
+\end{frame}
+
+\section{选题背景}
+\begin{frame}
+\frametitle{结构拓扑优化简介}
+\small{
+\begin{itemize}
+	\item \textbf{定义与优势}: 拓扑优化是一种先进的结构设计方法，旨在给定载荷和约束条件下，在设计域内自动寻找最优的材料分布，以实现结构性能的最优。与传统优化方法相比，拓扑优化具有更高的智能化和设计自由度。
+	
+	\item \textbf{计算挑战}:
+	\begin{itemize}
+		\item \textbf{大规模计算}: 结构分析与优化耦合，计算量大。
+		
+		\item \textbf{迭代求解}: 需反复求解边值问题和灵敏度分析。
+		
+		\item \textbf{资源消耗}: 处理大型线性系统，需求高。
+		
+		\item \textbf{核心难题}: 提升效率与可扩展性，兼顾精度。
+	\end{itemize}
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{结构拓扑优化发展概述}
+\small{
+\begin{itemize}
+	\item \textbf{早期解析阶段}:
+	\begin{itemize}
+		\item 1904 年，Michell~\cite{michell1904lviii} 提出最优材料分布理论（桁架结构），奠定理论基础并确立“最优布局”核心思想。
+		
+		\item Prager~\cite{prager1977optimization, rozvany1972optimal} 等人将理论扩展至板和梁结构（解析法），但仅限于简单案例。
+	\end{itemize}
+\end{itemize}
+
+\begin{itemize}
+	\item \textbf{数值方法突破}:
+	\begin{itemize}
+		\item 1984 年，Cheng 与 Olhoff~\cite{cheng1981investigation} 提出首个通用数值拓扑优化方法（固体弹性板），标志着数值方法在该领域的兴起。
+	\end{itemize}
+\end{itemize}
+
+\begin{itemize}
+	\item \textbf{现代发展}:
+	\begin{itemize}
+		\item 1988 年，Bendsøe~\cite{bendsoe1988generating} 引入均匀化方法，为变密度方法奠定基础。
+		
+		\item 如今，拓展出多种数值方法，例如变密度方法、边界演化方法、进化方法等，为不同设计提供技术支持。
+	\end{itemize}
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{结构拓扑优化的应用}
+\small{
+\begin{itemize}
+	\item \textbf{应用领域}: 随着理论和方法的不断完善，拓扑优化作为一种先进的结构设计技术，已在汽车工业、船舶、机器人、生物工程、航空航天和土木工程等多个领域得到广泛应用~\cite{jihong2021review, zhu2016topology, xiao2020design, koper2021topology, mallek2024topological, park2019topology}。
+\end{itemize}
+
+\begin{itemize}
+	\item \textbf{应用场景扩展}: 拓扑优化的应用场景日益多样化，不仅局限于传统的线弹性问题，还逐步扩展至非线性理论框架下的复杂工程问题，例如材料非线性约束~\cite{wang2023improved}，应力约束~\cite{han2021topology}，和几何非线性约束~\cite{zhang2020topology,zhu2020design} 等。
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{结构拓扑优化代码的发展概述}
+\small{
+拓扑优化作为一个跨学科的复杂领域，其理论和方法的多样性为初学者带来挑战。为降低门槛并推动普及，研究人员通过教学论文和开源代码注入活力。
+\begin{itemize}
+	\item 2001 年，Sigmund 发布了首个 99 行 MATLAB 教学代码（top99），简洁且具教学性，标志开源代码发展的开端，极大促进研究与应用。
+	\item 此后，开源代码的数量和质量不断提升，涵盖多种优化方法和技术，为大规模问题求解和实际工程应用提供了重要支持。
+\end{itemize}
+}
+\end{frame}
+
+\section{研究内容}
+\begin{frame}
+\frametitle{研究内容}
+\small{
+本文提出了基于 FEALPy 平台开发的高性能拓扑优化框架 SOPTX。FEALPy 是一款开源的智能 CAE 计算引擎，为 SOPTX 提供了高效且灵活的底层支持。SOPTX 通过模块化设计显著提升了框架的可扩展性和可复用性，为复杂工程应用提供了有力支持。
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{SOPTX 框架设计}
+\small{
+\begin{itemize}
+	\item \textbf{实现层面}: SOPTX 基于 FEALPy 开发，支持 NumPy、PyTorch、Jax 等多种后端，确保框架的灵活性和广泛兼容性。同时，适配 CPU 和 GPU 等设备，利用 FEALPy  高效计算引擎，显著提升大规模拓扑优化问题的求解效率。
+		
+	\item \textbf{算法层面}: SOPTX 支持多种拓扑优化算法，包括变密度方法和水平集方法。其模块化设计便于集成其他先进算法，例如 ESO/BESO、相场方法以及 MMC，从而增强框架的灵活性和可扩展性。
+	 
+	\item \textbf{应用层面}: SOPTX 支持求解多种拓扑优化应用，包括经典的静力学问题、热传导问题以及柔顺机械设计。同时，框架能够处理复杂的工程应用，例如应力约束优化、制造约束、3D 打印优化以及多物理场耦合，为工程设计提供全面支持。
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{SOPTX 的变密度拓扑优化}
+\small{
+\begin{itemize}
+	\item \textbf{任意维数与网格}: SOPTX 支持任意维数的拓扑优化问题，兼容结构化与非结构化网格，提升适应性和精度。
+		
+	\item \textbf{分析与优化解耦}: SOPTX 将结构分析和优化过程分离，提升框架的灵活性和可维护性。
+	
+	\item \textbf{多种优化方法}: SOPTX 支持灵活切换优化算法，例如 OC、MMA、SQP 等，提升优化效率与结果质量。
+	
+	\item \textbf{任意过滤方法}: SOPTX 支持灵活切换过滤方法，例如灵敏度过滤、密度过滤等，提升设计质量和计算稳定性。
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{SOPTX 的水平集拓扑优化}
+\small{
+	\begin{itemize}
+		\item \textbf{分析与演化解耦}: SOPTX 将结构分析和求解演化方程更新水平集的过程分离，提升框架的灵活性和可维护性。
+		
+		\item \textbf{灵活的方程配置}: SOPTX 提供多样化的 Hamilton-Jacobi 方程选择，支持拓扑导数项的包含或排除，以适应不同的拓扑变化需求。
+		
+		\item \textbf{多种水平集方法}: 
+		\begin{itemize}
+			\item 参数化水平集方法：通过参数化表示提升效率，减少重初始化。
+			
+			\item 基于反应扩散方程的水平集方法：引入扩散机制，增强结构演化的平滑性与稳定性。
+		\end{itemize}
+		
+		\item \textbf{结合变密度方法}: SOPTX 支持水平集方法与变密度方法的融合，扩展优化设计的适用性。
+	\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{SOPTX 中的新兴技术}
+\small{
+\begin{itemize}
+	\item \textbf{矩阵快速组装}: 通过分离刚度矩阵计算中的单元相关部分和无关部分，实现高效的计算与缓存。
+	
+	\item \textbf{GPU 加速}: 通过 GPU 并行处理实现计算密集型任务的显著加速，提升大规模问题处理效率。
+	
+	\item \textbf{自动微分}: 精确高效地计算梯度，支持基于梯度的优化方法，确保设计迭代精度。
+	
+	\item \textbf{自适应网格加密}: 动态调整网格分辨率，聚焦关键区域的计算资源，兼顾精度与效率。
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{SOPTX 在拓扑优化中的应用}
+\small{
+	\begin{itemize}
+		\item \textbf{柔顺度最小化}: 优化结构刚度，减少变形，广泛应用于航空航天和汽车设计。
+		
+		\item \textbf{热传导优化}: 提升散热效率，适用于电子设备和能源系统的高性能设计。
+		
+		\item \textbf{柔顺机械设计}: 实现复杂运动与变形控制，用于微机电系统和机器人技术。
+		
+		\item \textbf{屈曲约束优化}: 增强结构稳定性，防止失稳，适用于桥梁和高层建筑。
+		
+		\item \textbf{应力约束优化}: 控制局部应力，确保结构安全性与耐久性。
+	\end{itemize}
+}
+\end{frame}
+
+
+
+\section{工作进展与论文安排}
+\begin{frame}
+\frametitle{工作进展}
+\small{
+\begin{itemize}
+	\item 系统调研了拓扑优化的常用方法、数值不稳定现象及其解决方案，以及拓扑优化问题的基本过程和定义。
+	
+	\item 基于调研成果，形成了变密度拓扑优化的编程数学文档，详细推导了柔顺度最小化的目标函数、密度惩罚模型和灵敏度分析公式。
+	
+	\item 开发了拓扑优化软件包 SOPTX，实现了变密度拓扑优化，支持任意维数、任意网格的柔顺度最小化问题的求解，数值结果达到预期。
+	
+	\item SOPTX 中集成了快速矩阵组装、 GPU 加速、自动微分技术，验证了其在计算精度和效率上的显著提升。
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{未来计划}
+\small{
+\begin{itemize}
+	\item 在 SOPTX 中集成水平集拓扑优化方法，丰富软件的优化算法库，进一步提升其在拓扑优化领域的适用性。
+	
+	\item 在 SOPTX 中引入自适应网格加密技术，提升 SOPTX 在复杂结构优化中的计算精度和效率。
+	
+	\item 扩展 SOPTX 的应用范围，包括热传导优化、柔顺机械设计、以及更复杂的工程应用（如应力约束优化、屈曲约束优化等）。
+\end{itemize}
+}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{论文安排}
+\small{
+\begin{itemize}
+	\item 2025.04-2025.10：调研相关文献资料，解决理论上的难点、实现相关程序，完成论文框架；
+	
+	\item 2025.10-2025.12：撰写论文，完成论文初稿；
+	
+	\item 2026.01-2026.04：修改论文，和老师讨论，完成论文终稿。
+\end{itemize}
+}
+\end{frame}
+
+\section*{参考文献}
+\begin{frame}[allowframebreaks]
+\frametitle{参考文献}
+\tiny
+\bibliographystyle{abbrv}
+\bibliography{cvtxinjiang}
+\end{frame}
+
+\frame{
+\begin{center}\color{black} \Huge
+\textsl{感谢聆听}
+\end{center}
+}
+
+%\begin{frame}
+%\frametitle{参考文献}
+%\tiny
+%\bibliographystyle{abbrv}
+%\bibliography{cvtxinjiang}
+%\end{frame}
+
+\end{document}
+

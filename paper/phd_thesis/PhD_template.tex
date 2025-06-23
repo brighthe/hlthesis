@@ -1,0 +1,67 @@
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass[UTF8, 12pt, oneside, a4paper]{ctexbook}
+%-------------------------------------------------------
+% 包和格式设置
+%-------------------------------------------------------
+\usepackage{ctex}            % 中文支持（已包含 xeCJK 功能）
+\usepackage{xtuformat}       % 学校模板格式
+\usepackage{enumerate}       % 枚举环境
+\usepackage{tikz}            % 绘图
+\usepackage{pgfplots}        % 绘制图表
+
+\pgfplotsset{compat=1.16}
+\graphicspath{{Figures/}}    % 图片路径
+\allowdisplaybreaks          % 允许公式跨页
+
+% 导入共享设置
+\include{preface/ex_shared}
+
+\begin{document}
+%-------------------------------------------------------
+% 前置内容
+%-------------------------------------------------------
+\include{preface/cover}      % 封面
+
+\newpage
+\pagestyle{plain}
+\pagenumbering{Roman}        % 罗马数字页码
+\include{preface/abstract}   % 摘要
+
+% 目录
+\newpage
+\songti\zihao{-4}            % 宋体，小四号
+\tableofcontents
+
+%-------------------------------------------------------
+% 正文内容
+%-------------------------------------------------------
+
+\newpage
+\pagenumbering{arabic}       % 阿拉伯数字页码
+\include{body/Chapter01}
+% \include{body/ChapL}
+% \include{body/ChapHMMs}
+% \include{body/ChapCloak}
+% \include{body/ChapNL}
+% \include{body/ChapLNL}
+\include{body/SummaryProspect}
+
+%-------------------------------------------------------
+% 参考文献
+%-------------------------------------------------------
+\phantomsection
+\addcontentsline{toc}{chapter}{参考文献}
+% \bibliographystyle{reference/mybibPHD}
+\bibliographystyle{reference/gbt7714-2005-my}
+\bibliography{reference/Library}
+
+%-------------------------------------------------------
+% 附加内容
+%-------------------------------------------------------
+\include{body/thank}         % 致谢
+% \include{body/appendix}    % 附录
+\include{body/aboutme}       % 关于作者
+
+\end{document}

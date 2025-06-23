@@ -1,0 +1,41 @@
+%%%%%%%%------------------------------------------------------------------------
+%%%% 必要宏包
+
+%% 数学宏包
+\usepackage{amsmath,amssymb}
+
+%% 颜色支持
+\usepackage{color,xcolor}
+
+%% 超链接
+\usepackage{hyperref}
+
+%% 图形支持
+\usepackage{graphicx}
+\usepackage{subfig}
+
+%% 基本绘图功能
+\usepackage{pgf,tikz}
+\usetikzlibrary{shapes,arrows}
+
+%% 演示文稿中使用的基本数学命令
+\newcommand{\mbR}{{\mathbb R}}
+\newcommand{\mcZ}{{\mathcal Z}}
+\newcommand{\mcV}{{\mathcal V}}
+\newcommand{\bfx}{{\boldsymbol x}}
+\newcommand{\bfz}{{\boldsymbol z}}
+\newcommand{\rmd}{\,\mathrm d}
+
+%% 基本颜色命令
+\newcommand{\red}{\color{red}}
+\newcommand{\blue}{\color{blue}}
+
+%% 为beamer设置参考文献样式
+\makeatletter
+\@ifclassloaded{beamer}{
+	\bibliographystyle{apalike}
+}{
+	\bibliographystyle{abbrv}
+}
+\makeatother
+%%%%%%%%------------------------------------------------------------------------

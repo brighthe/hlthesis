@@ -1,0 +1,47 @@
+%%%%%%%%------------------------------------------------------------------------
+%%%% XeCJK必要设置
+
+\usepackage{xltxtra, fontenc, xunicode}
+\usepackage[slantfont, boldfont]{xeCJK}
+
+\setlength{\parindent}{1.5em} % 中文段落缩进
+
+%% 中文断行设置
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+
+%% 中文标点样式
+\punctstyle{kaiming}
+
+%% 基本中文字体
+\setCJKmainfont[BoldFont={Adobe Heiti Std}, ItalicFont={Adobe Kaiti Std}]{Adobe Song Std}
+
+%% 英文字体
+\setmainfont{DejaVu Serif}
+\setmonofont{DejaVu Sans Mono}
+\setsansfont{DejaVu Sans}
+
+%% 常用中文字体系列
+\setCJKfamilyfont{song}{Adobe Song Std}
+\setCJKfamilyfont{kai}{Adobe Kaiti Std}
+\setCJKfamilyfont{hei}{Adobe Heiti Std}
+
+%% 字体命令
+\newcommand{\song}{\CJKfamily{song}}
+\newcommand{\kai}{\CJKfamily{kai}}
+\newcommand{\hei}{\CJKfamily{hei}}
+
+%% 环境的中文名称
+\renewcommand{\contentsname}{目录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\today}{\number\year 年 \number\month 月 \number\day 日}
+
+\makeatletter
+\@ifclassloaded{book}{
+	\renewcommand{\bibname}{参考文献}
+}{
+	\renewcommand{\refname}{参考文献}
+}
+\makeatother
+%%%%%%%%------------------------------------------------------------------------

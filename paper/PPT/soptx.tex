@@ -1,0 +1,67 @@
+\documentclass{beamer}
+
+% 设置主题
+\usetheme{Warsaw}
+
+% 标题页信息
+\title{SOPTX}
+\author{weihuayi}
+\institute{xiangtan}
+\date{\today}
+
+% 开始文档
+\begin{document}
+	
+	% 生成标题页
+	\begin{frame}
+		\titlepage
+	\end{frame}
+	
+	% 创建目录页
+	\begin{frame}
+		\frametitle{目录}
+		\tableofcontents
+	\end{frame}
+	
+	% 添加引言部分
+	\section{引言}
+	\begin{frame}
+		\frametitle{引言}
+		\begin{itemize}
+			\item 研究背景
+			\item 研究目的
+			\item 研究方法
+		\end{itemize}
+	\end{frame}
+	
+	% 添加实验结果部分
+	\section{实验结果}
+	\begin{frame}
+		\frametitle{实验结果}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.8\textwidth]{example-image}
+			\caption{示例图表}
+		\end{figure}
+	\end{frame}
+	
+	% 添加结论部分
+	\section{结论}
+	\begin{frame}
+		\frametitle{结论}
+		\begin{itemize}
+			\item 主要发现
+			\item 未来工作
+		\end{itemize}
+	\end{frame}
+	
+	% 添加参考文献页
+	\begin{frame}
+		\frametitle{参考文献}
+		\begin{thebibliography}{9}
+			\bibitem{Author1} 作者1. 论文标题. 期刊名, 年份.
+			\bibitem{Author2} 作者2. 论文标题. 期刊名, 年份.
+		\end{thebibliography}
+	\end{frame}
+	
+\end{document}
