@@ -173,9 +173,9 @@
 \newcommand*{\supervisor}[1]{\gdef\@supervisor{#1}}
 \newcommand*{\college}[1]{\gdef\@college{#1}}
 \newcommand*{\program}[1]{\gdef\@program{#1}}
-% \newcommand*{\specialization}[1]{\gdef\@specialization{#1}}
-\newcommand*{\specializationS}[1]{\gdef\@specializationS{#1}}
-\newcommand*{\specializationE}[1]{\gdef\@specializationE{#1}}
+\newcommand*{\specialization}[1]{\gdef\@specialization{#1}}
+%\newcommand*{\specializationS}[1]{\gdef\@specializationS{#1}}
+%\newcommand*{\specializationE}[1]{\gdef\@specializationE{#1}}
 \newcommand*{\degree}[1]{\gdef\@degree{#1}}
 \newcommand*{\university}[1]{\gdef\@university{#1}}
 \newcommand*{\edate}[1]{\gdef\@edate{#1}}
@@ -198,10 +198,14 @@
     \vskip0.7cm
     \makebox[135mm][l]{\textbf{Program}\underline{\makebox[116mm][c]{\@program}}}\\
     \vskip0.7cm
-    % \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\@specialization}}}\\
-    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[105.5mm][c]{\@specializationS}}}\\
-    \vskip0.7cm
-    \makebox[135mm][l]{\hspace{29.5mm}\underline{\makebox[105.5mm][c]{\@specializationE}}}\\
+%    方法 1：标准单行显示
+%    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\@specialization}}}\\
+%    方法 2：两行显示
+    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\parbox{10cm}{\centering\@specialization}}}}\\
+%    方法 3: 两栏显示
+%    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[105.5mm][c]{\@specializationS}}}\\
+%    \vskip0.7cm
+%    \makebox[135mm][l]{\hspace{29.5mm}\underline{\makebox[105.5mm][c]{\@specializationE}}}\\
     \vskip0.7cm
     \makebox[135mm][l]{\textbf{Degree}\underline{\makebox[119.5mm][c]{\@degree}}}\\
     \vskip0.7cm

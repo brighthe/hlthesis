@@ -56,9 +56,10 @@ endif
 .PHONY: clean
 clean:
 	clear
-	@-rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *~ *.tid *.tms *.pdf *.bak *.blg *.bbl *.nav *.snm *.vrb *.thm *.spl *.soc *.bcf *.xml
+	@-rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *~ *.tid *.tms *.bak *.blg *.bbl *.nav *.snm *.vrb *.thm *.spl *.soc *.bcf *.xml *.synctex.gz
 	@-rm -f body/*.aux
 	@-rm -f reference/*.aux
+	@-rm -f preface/*.aux
 	@echo "Hint: Clean Out"
 
 

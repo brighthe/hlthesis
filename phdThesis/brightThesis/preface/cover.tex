@@ -13,13 +13,22 @@
 \makecntitle
 %英文封面
 \entitle{ }
-\candidate{}%
+\candidate{Liang He}%
 \supervisor{Professor }%
 \college{School of Mathematics and Computational Science}
 \program{Mathematics}
-% \specialization{Numerical Methods and Applications for Differential Equations}
-\specializationS{Numerical Methods and Applications for}
-\specializationE{ Differential Equations}
+
+%========== Specialization 字段的几种用法 ==========
+
+% 方法 1：标准单行显示
+% \specialization{\small Numerical Methods and Applications for Differential Equations}
+% 方法 2：两行显示（需要修改 xtuformat.sty）
+% \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\parbox{10cm}{\centering\@specialization}}}}\\
+\specialization{Numerical Methods and Applications \\ for Differential Equations}
+% 方法三: 两栏显示（需要修改 xtuformat.sty）
+%\specializationS{Numerical Methods and Applications for}
+%\specializationE{ Differential Equations}
+
 \degree{Doctor of Science}
 \university{Xiangtan University}
 \edate{May 24, 2026} % 同中文日期
