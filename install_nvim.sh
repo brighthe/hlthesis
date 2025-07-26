@@ -15,9 +15,9 @@ NVIM_CONFIG_TARGET="$HOME/.config/nvim"
 
 # 检查源配置是否存在
 if [ ! -d "$NVIM_CONFIG_SOURCE" ]; then
-	echo -e "${RED}Error: nvim directory not found in $SCRIPT_DIR${NC}"
-	echo -e "${YELLOW}Expected structure: $SCRIPT_DIR/nvim/${NC}"
-	exit 1
+  echo -e "${RED}Error: nvim directory not found in $SCRIPT_DIR${NC}"
+  echo -e "${YELLOW}Expected structure: $SCRIPT_DIR/nvim/${NC}"
+  exit 1
 fi
 
 # 显示将要安装的配置文件
@@ -29,9 +29,9 @@ mkdir -p ~/.config
 
 # 处理现有配置
 if [ -d "$NVIM_CONFIG_TARGET" ] || [ -L "$NVIM_CONFIG_TARGET" ]; then
-	BACKUP_NAME="nvim.backup.$(date +%Y%m%d_%H%M%S)"
-	echo -e "${YELLOW}Existing nvim config found, backing up to ~/.config/$BACKUP_NAME${NC}"
-	mv "$NVIM_CONFIG_TARGET" "$HOME/.config/$BACKUP_NAME"
+  BACKUP_NAME="nvim.backup.$(date +%Y%m%d_%H%M%S)"
+  echo -e "${YELLOW}Existing nvim config found, backing up to ~/.config/$BACKUP_NAME${NC}"
+  mv "$NVIM_CONFIG_TARGET" "$HOME/.config/$BACKUP_NAME"
 fi
 
 # 创建软链接
@@ -39,15 +39,15 @@ ln -sf "$NVIM_CONFIG_SOURCE" "$NVIM_CONFIG_TARGET"
 
 # 验证安装
 if [ -L "$NVIM_CONFIG_TARGET" ] && [ -d "$NVIM_CONFIG_TARGET" ]; then
-	echo -e "${GREEN}✓ Neovim configuration installed successfully!${NC}"
-	echo -e "Config location: ${YELLOW}$NVIM_CONFIG_TARGET${NC} -> ${YELLOW}$NVIM_CONFIG_SOURCE${NC}"
+  echo -e "${GREEN}✓ Neovim configuration installed successfully!${NC}"
+  echo -e "Config location: ${YELLOW}$NVIM_CONFIG_TARGET${NC} -> ${YELLOW}$NVIM_CONFIG_SOURCE${NC}"
 
-	# 显示安装的配置文件
-	echo -e "\n${GREEN}Installed configuration files:${NC}"
-	ls -la "$NVIM_CONFIG_TARGET"
+  # 显示安装的配置文件
+  echo -e "\n${GREEN}Installed configuration files:${NC}"
+  ls -la "$NVIM_CONFIG_TARGET"
 else
-	echo -e "${RED}✗ Installation failed${NC}"
-	exit 1
+  echo -e "${RED}✗ Installation failed${NC}"
+  exit 1
 fi
 
 echo -e "\n${GREEN}Installation complete! You can now use nvim with your custom configuration.${NC}"
