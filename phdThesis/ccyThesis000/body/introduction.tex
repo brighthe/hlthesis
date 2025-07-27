@@ -1,0 +1,433 @@
+﻿﻿\chapter{引~~言}\label{chap:introduction}
+虚单元方法是一种新型的偏微分方程数值求解方法，由 
+L. Beir\~ao da Veiga, F. Brezzi
+等人\cite{BeiraoBrezziCangianiManziniEtAl2013} 于 2013 年提出。
+作为有限元方法的一种扩展，
+虚单元方法可以在任意多边形和多面体的网格上使用，其主要思想是使用局部
+的微分方程来定义形函数空间，通过投影算子将虚单元函数投影到多项式空间中进行计算。
+相比于有限元方法对网格的要求，以及固定的形函数空间，虚单元方法具有更高的灵活性。
+经过最近几年的发展，虚单元方法已经具备了坚实的理论基础，\CC{在前人的工作中
+    \cite{ChenHuang2018, 2018BrennerSung, BeiraodaVeigaLovadinaRusso2017}，
+给出了虚单元方法的逆估计，范数等价性等结果，
+并严格证明了虚单元方法的收敛性，稳定性。}
+另一方面，虚单元方法已经应用于多种偏微分方程模型的数值求解中，
+如电磁问题\cite{2016VeigaBrezziMarini, da2022virtual, 2021CaoChenGuo}、
+流体问题\cite{da2017divergence, 2021WeiHuangLi, da2018virtual, beirao2020stokes, zhao2019divergence}、
+弹性问题\cite{CHI2017148, GAIN2014132, zhang2019nonconforming}等，取得了一定的效果。
+
+首先我们以二维 Poisson 方程为例介绍虚单元方法，考虑如下 Poisson 方程
+\begin{equation}
+\label{eq:poisson}
+\left\{
+\begin{aligned}
+- \Delta u &= f, \quad \text{in} \quad \Omega, \\
+u &= 0, \quad \text{on} \quad \partial \Omega,
+\end{aligned}
+\right.
+\end{equation}
+其中 $\Omega$ 是 $\mathbb{R}^2$ 中的一个多边形区域，
+$f \in L^2(\Omega)$ 是给定的右端项。
+问题 \eqref{eq:poisson} 的弱形式为：找到 $u \in H^1_0(\Omega)$，使得
+\begin{equation}
+\int_{\Omega} \nabla u \cdot \nabla v \, \mathrm{d} x = \int_{\Omega} f v \,
+\mathrm{d} x, \quad \forall v \in H^1_0(\Omega).
+\end{equation}
+虚单元方法首先要将计算区域划分为多边形或多面体网格 $\mathcal{T}_h$，
+在每个单元 $K$ 上定义局部的虚单元
+$(K, V_h(K), \mathcal{N}(K))$，其中局部虚单元空间 $V_h(K)$ 定义为：
+$$
+V_h(K) := \{v \in H^1(K) : -\Delta v = 0, v|_e \in \mathbb{P}_k(e),
+\text{ 对于 $K$ 的任意边 } e.\},
+$$
+自由度集合 $\mathcal{N}(K)$ 为函数在 $K$ 上的顶点值:
+$$
+\mathcal{N}_i(u) := u(\bx_i)
+$$
+其中 $\bx_i$ 是单元 $K$ 的第 $i$ 个顶点。
+根据定义可知，局部虚单元空间 $V_h(K)$ 中的函数是一个局部 Poisson 方程的解，
+对于复杂形状的单元 $K$，显式写出 $V_h(K)$
+中的函数是困难的，
+这正是虚单元方法的一个特点（也是名字中 “虚” 的由来），不需要显式地写出函数形式，
+而是根据自由度将虚单元函数投影到多项式空间中进行计算：定义 $H^1$ 投影算子
+$\Pi_K : V_h(K) \to \mathbb{P}_1(K)$ 满足：
+$$
+\begin{aligned}
+\int_K \nabla \Pi_h v \cdot \nabla q \, \mathrm{d} x & = \int_K \nabla v \cdot
+\nabla q \, \mathrm{d} x,\\
+\sum_{\delta \in \mathcal{V}(K)} \Pi_K v(\delta) & = \sum_{\delta \in
+\mathcal{V}(K)} v(\delta),
+\end{aligned}
+$$
+其中 $\mathcal{V}(K)$ 是单元 $K$ 的所有顶点。
+全局的虚单元空间 $V_h$ 定义为：
+$$
+V_h := \{v \in H^1_0(\Omega) : v|_K \in V_h(K), \forall K \in \mathcal{T}_h\},
+$$
+定义 $\Pi_h : \Pi_h|_K = \Pi_K$ 为全局的 $H^1$ 投影算子，
+离散的虚单元问题为：找到 $u_h \in V_h$，使得
+$$
+a_h(u_h, v_h) = \int_{\Omega} f\ \Pi_hv_h\ \dd x, \quad \forall v_h \in V_h,
+$$
+其中的双线性型 $a_h(u_h, v_h)$ 的定义为：
+$$
+\begin{aligned}
+    a_h(u_h, v_h) & := \sum_{K \in \mathcal{T}_h} a_K(u_h, v_h),\\ 
+    a_K(u_h, v_h) & := \int_K \nabla \Pi_h u_h \cdot \nabla \Pi_h v_h \, \mathrm{d} x 
+    + S_K(u_h - \Pi_h u_h, v_h - \Pi_h v_h)\\
+\end{aligned}
+$$
+其中 $S_K(\cdot, \cdot)$
+是一个稳定项，用来保证虚单元方法的稳定性，需要满足常数 $C_1$ 和 $C_2$ 使得
+$$
+C_1\|\nabla (v - \Pi_h v)\|_K^2 \leq S_K(v - \Pi_h v, v - \Pi_h v)
+\leq C_2\|\nabla (v - \Pi_h v)\|_K^2,\quad \forall v \in V_h(K).
+$$
+加上这一项，离散双线性型 $a_h$ 才会满足强制性。
+
+根据以上过程可以看到，虚单元方法的一个优势是网格的灵活性，
+其对网格单元的形状要求低，
+即使是网格中有悬点的情况，虚单元方法可以将其视为是一个多边形或多面体单元，
+不需要进行特殊处理。对于单元形状较差的网格，虚单元方法也可以保持收敛性\cite{
+2018BrennerSung, 2018CaoChen, 2021CaoChenGuo}。
+虚单元方法另一个优势是其形函数空间的灵活性，
+其可以在任意多边形和多面体网格上定义合适协调性的虚单元空间，
+相比之下有限元方法通常要求网格单元是统一的，如三角形网格或四面体网格，
+其形函数空间是多项式空间，而虚单元方法的形函数空间是根据局部 Poisson
+方程的解定义的，对于任意形状的单元都可以定义合适的虚单元空间，
+这使得一些特殊要求的离散空间使用虚单元方法可以很容易的构造，
+如单纯形网格上 $H^2$ 协调的有限元空间在 $2$
+维情况下至少需要 $5$ 次多项式，在 $3$ 维情况下至少需要 $9$ 次多项式，
+而 $H^2$ 协调的虚单元空间\cite{BeiraodaVeigaDassiRusso2020} 
+在任意维最低只需要 $2$ 次多项式。还有其他的空间如
+divergence free 的有限元、任意次 $H^1$
+非协调有限元等难以构造的有限元，
+其对应的虚单元都可以方便的定义及使用。
+
+另一方面虚单元方法需要添加稳定项 $S_K$ 来保证稳定性的，
+在一些情况下，稳定化项会带来麻烦：
+在\cite{AntoniettiBerroneBorioDAuriaEtAl2022}中对各向异性多边形网格的后验误差分析时，
+稳定化项主导了后验误差估计子，
+使得各向异性后验误差估计子是次优的。
+\cite{BoffiGardiniGastaldi2020} 中指出
+稳定化项显著影响了虚单元方法在Poisson特征值问题中的效率；对于非线性问题，
+在计算过程中需要选择合适的稳定化项参数才能得到正确的结果\cite{XU2023116555}。
+针对非线性弹塑性变形问题
+\cite{HudobivnikAldakheelWriggers2019} 和三维电磁界面问题
+\cite{CaoChenGuo2023}，作者设计了特殊的稳定化项，
+但这些稳定化项不容易推广到其他问题。
+这使得对于不同偏微分方程需要精心选择稳定化项，才能使虚单元方法发挥作用，
+这是一项艰巨的任务，因此研究无稳定化项的虚单元方法是很有必要的。
+
+基于以上讨论，本文
+从单元形状和空间光滑性等方面对虚单元方法进行了研究。
+一方面，针对虚单元方法对网格灵活性方面的优点，
+我们将虚单元方法应用于时谐 Maxwell 方程界面问题以及移动界面问题的数值求解中;
+%界面问题通常要求网格拟合界面，这对网格生成提出了挑战，而对于虚单元方法，
+%最简单的网格生成方法是先在整个区域上生成一个非界面拟合的背景网格，
+%然后使用界面切割背景网格得到界面拟合网格，这样显著降低了网格生成的困难，
+%在这种情况下，界面会切割出一些形状较差的单元，我们对这类网格条件下虚单元方法的收敛性
+%进行了研究。
+另一方面，基于虚单元方在定义形函数空间方面的灵活性，
+我们推广了 \cite{BeiraoManzini2014,AntoniettiManziniVerani2020,
+AntoniettiManziniScacchiVerani2021,BrezziMarini2013} 的工作，构造了任意维 
+$H^m$ 协调的虚单元空间。
+最后，对于稳定化项的问题，我们提出了无稳定化项的 $H^1$ 协调、非协调虚单元方法。
+
+%$H^m$ 协调有限元在 $\mathbb{R}^n$ 中的单形上已被构造，
+%其中多项式次数满足 $k \geq 2^n(m-1)+1$，并且 $m, n \geq 1$ 
+%\cite{HuLinWu2021,ChenHuang2021Cmgeodecomp,AlfeldSchumakerSirvent1992,LaiSchumaker2007}。
+本文的第一个主要工作是在任意维，一般多面体网格上构造 $H^m$ 协调的虚单元空间。
+关于 $H^m$ 协调的方法，
+最近 Hu、Lin 和 Wu\cite{HuLinWu2021} 以统一方式构造了 $d$ 维单纯形网格上的 
+$H^m$ 协调有限元，推广了二维情况下的有限元
+\cite{BrambleZlamal1970,Zenisek1970,ArgyrisFriedScharpf1968}
+以及三维情况下的有限元 \cite{Zenisek1974a,Zhang2009a,Zhang2016a}，
+是该领域的巨大理论创新，极大的推动了光滑元的研究。
+另外
+Chen 和 Huang 也在这方面进行了研究，
+在
+\cite{ChenHuang2021Cmgeodecomp} 中
+对光滑元进行几何分解，
+使得有限元的构造更加清晰，推动了光滑元的程序实现。
+由于多项式函数是无穷光滑的，其自由度必须包含顶点处的 $2^{d-1}(m-1)$
+阶导数，这导致 $H^m$ 协调有限元需要较高的多项式次数 $k
+\geq 2^d(m-1)+1$，这对该方法的实际应用带来了一定的困难。
+在 \cite{Xu2020} 中，Xu 基于神经网络提出了
+$H^m$ 协调的分片多项式，其多项式次数仅需满足 $k \geq
+m$，并进一步发展了有限神经元方法。然而，该方法的实际应用仍受限于求解非线性、
+非凸优化问题的难度。
+
+只要形函数是无穷光滑的，那么构造 $H^m$
+协调元就必定出现超光滑自由度。因此一些研究人员将单元分解为宏单元，
+在宏单元上使用分片多项式构造 $H^m$ 协调元，
+如 \cite{HuZhang2015a} 中的宏超立方体上的
+$H^m$ 协调有限元，\cite{FuGuzmanNeilan2020} 中宏单纯形上的
+$H^2$ 协调有限元。 
+另一方面，关于非协调方法，
+文献 \cite{ChenHuang2020,Huang2020} 提出了$\mathbb{R}^d$ 中一般多面体上的
+$H^m$ 非协调虚单元方法，其多项式次数
+$K$ 仅需满足 $k \geq m$。当 $K$ 为单形且 $1 \leq m \leq d$ 且 $k = m$
+时，该虚单元方法就是为非协调有限元 \cite{WangXu2013,WangXu2006}。
+当 $K$ 为单形且 $m = d+1$ 且 $k = m$ 时，文献 \cite{Huang2020} 提出的虚单元与
+\cite{WuXu2019} 的非协调有限元具有相同的自由度。
+
+在本工作中我们构造了任意维数 
+$d$ 和任意阶导数 $m$ 下的 $H^m$ 协调虚单元：
+$(K, \mathcal{N}_k^m(K), V_k^m(K))$，其中多项式次数 $k \geq m$。
+在二维情形下，
+$H^m$ 协调虚单元已在一系列工作中研究 \cite{BeiraoManzini2014,AntoniettiManziniVerani2020,AntoniettiManziniScacchiVerani2021,BrezziMarini2013}。
+在三维情况下，$H^2$ 协调虚单元（$k \geq 2$）被构造于 \cite{BeiraodaVeigaDassiRusso2020}。
+当 $K$ 为四面体时，$H^2$ 协调虚单元分别在 \cite{ChenHuang2022} 和 \cite{BrennerSung2019} 中以不同方法构造。
+
+我们采用递归拼接低维面上的协调虚单元的方法，构造了一般多面体上的
+$H^m$ 协调虚单元。借助数据空间和 Whitney 数组的概念
+\cite{Verchota1990}，统计了虚单元空间 $V_k^m(K)$ 的维数。
+在最低阶情形 $k = m$ 下，自由度集 $\mathcal{N}_m^m(K)$ 仅涉及 $K$ 顶点处的函数值及其高阶导数（最多到 $m-1$ 阶），这一自由度选择比文献 \cite{ChenHuang2020,Huang2020} 提出的非协调虚单元更加简单。
+若 $K$ 为 $\mathbb{R}^d$ 中的单形，则 $V_m^m(K)$ 的维数为 $(d+1) \dim
+\mathbb{P}_{m-1}(K)$，远小于文献 \cite{HuLinWu2021,ChenHuang2021Cmgeodecomp} 中
+$H^m$ 协调有限元的最低阶情况 $\dim \mathbb{P}_{2^d(m-1)+1}(K)$。
+此外，自由度 $\mathcal{N}_k^m(K)$ 不包含超光滑自由度，
+即所有涉及的导数阶数均小于 $m$，这也是虚单元方法的一大优势。
+
+另外，我们在假设多面体 $K$ 为星形且 $K$ 的所有面直径与 $K$ 的直径等价的条件下，
+建立了 $H^m$ 协调虚单元$(K, \mathcal N_k^m(K), V_k^m(K))$的逆不等式及范数等价性。
+其中，
+逆不等式是通过乘型迹不等式、逆迹定理、多项式的逆不等式以及数学归纳法推导得到的。
+借助逆不等式、迹不等式和Poincar\'e-Friedrichs不等式，我们得到了虚单元空间
+$V_{k}^{m}(K)$及其子空间$\ker(\Pi_k^K)\cap V_{k}^{m}(K)$的若干范数等价性，
+并获得了与有限元方法相同的经典$L^2$范数等价性。
+%进一步的，我们扩展了\cite{BrennerGuanSung2017,BeiraodaVeigaLovadinaRusso2017,ChenHuang2018,BrennerSung2018,HuangYu2021}中关于虚单元方法稳定性的分析。
+
+随后我们将构造的协调虚单元应用于带有低阶项的多重调和方程的离散，
+通过构造了一个拟插值算子，利用$V_{k}^{m}(K)$上的范数等价性推导了插值误差估计
+以及虚单元方法的最优误差估计。我们基于 FEALPy 实现所提的算法，
+并在二维情形下对四阶椭圆问题和六阶椭圆问题进行了数值模拟，验证了理论结果。
+
+%本文的主要工作是针对虚单元方法的优缺点展开研究：
+%\begin{enumerate}
+%    \item  根据虚单元方法对网格的要求低的特点，我们提出了电磁界面问题的虚单元方法，
+%        其中的网格生成方式是先在整个区域上生成一个非界面拟合的背景网格，
+%        然后使用界面切割背景网格得到界面拟合的网格，这样显著降低了网格生成的困难，
+%        我们特别研究了由于非光滑界面导致低正则性解的情况，证明了算法具有最优收敛阶。
+%        进一步的，我们将其应用于移动界面问题，并用于一些物理现象的数值模拟。
+%    \item  
+%        我们推广了  \cite{BeiraoManzini2014,AntoniettiManziniVerani2020,
+%        AntoniettiManziniScacchiVerani2021,BrezziMarini2013} 的工作，
+%        通过递归的方法，从低维到高维，将低维虚单元粘贴到高维多面体的面上
+%        来构造高维的虚单元。给出了任意维任意次任意
+%        $m \ge 0$ 的 $H^m$ 协调虚单元空间的构造方法。
+%        对于最低次数情况 $k = m$，自由度集合
+%        非常简单，仅涉及多面体顶点处的函数值及最高 $m-1$ 阶导数。
+%        如果仅考虑 $d$ 维单纯形，
+%        那么虚单元空间的维数为 $(d+1)\dim\mathbb P_{m-1}(K)$，远小于
+%        \cite{HuLinWu2021,ChenHuang2021Cmgeodecomp} 中最低次数
+%        $H^m$ 协调有限元的维数 $\dim \mathbb P_{2^n(m-1)+1}(K)$。
+%        而且不包含超光滑自由度，这是虚单元的一大优势。
+%
+%        另外，我们还建立了该虚单元的逆不等式和范数等价性。
+%        将 $H^m$
+%        协调虚单元应用于多重调和方程的数值求解，根据建立的逆不等式和范数等价性，
+%        给出了方法的最优误差估计。
+%    \item 针对稳定化项的问题，我们提出了无稳定化项的协调，非协调虚单元方法，
+%        将虚单元函数的梯度投影到一个宏元空间中，投影算子 $Q_K$ 可计算，
+%        且满足范数等价性：
+%        $$
+%        \|Q_K \nabla v\|_K \eqsim \|\nabla v\|_K, \quad \forall v \in V_h(K). 
+%        $$
+%        该方法不需要修改虚单元空间的定义，我们证明了方法的稳定性和收敛性。
+%    \item 对于程序实现的问题，我们在第四章中给出了虚单元方法的程序实现，
+%        详细介绍了虚单元方法的实现细节，使用张量积的方式将虚单元方法中的公式详细展开，
+%        尽量降低科研人员的学习难度。
+%        我们还将这些虚单元方法在偏微分方程数值求解软件库
+%        FEALPy 中实现，在 github 上开源，方便算法开发人员学习和使用。
+%\end{enumerate}
+
+本文的第二个工作是无稳定化项的虚单元方法，
+正如前面所说，稳定化项会带来一些麻烦，
+因此当前有很多研究致力于去除虚单元方法中的稳定化项。
+如在\cite{BerroneBorioMarcon2021}中，作者通过修改标准的虚单元空间，
+使得可以计算虚单元函数梯度到高阶多项式空间的投影，
+从而提出了一种 Poisson 方程的无稳定化项的线性虚单元方法，
+其中投影所使用的多项式次数依赖于多边形的顶点数，
+一般还与多边形的几何形状有关。 
+\cite{BerroneBorioMarcon2022}中的数值算例表明，
+\cite{BerroneBorioMarcon2021}中的虚单元方法在一般凸多边形网格上，
+对各向异性椭圆问题的求解效果优于\cite{BeiraodaVeigaBrezziMariniRusso2016}中的标准方法。
+
+\cite{BerroneBorioMarcon2021}中的思想很难扩展到高维情况，
+而且分析过程也相当复杂。因此，我们希望可以以统一的方式，
+在任意维、任意多项式次数的情况下，构造无稳定化项的虚单元方法。
+
+构造无稳定化项的虚单元方法的关键是，在任意多面体 $K$ 上找到一个合适的
+有限维空间$\mathbb{V}(K)$，以及一个相关的投影算子$Q_K$，使得满足以下条件：
+\begin{enumerate}[(C1)]
+\item 对于任意$v\in V_k(K)$，都有如下范数等价关系
+\begin{equation}\label{intro:gradVknormequiv} 
+\|Q_{K}\nabla v\|_{0,K}\eqsim \|\nabla v\|_{0,K} \quad \forall~v\in V_k(K)
+\end{equation}
+\item 投影$Q_{K}\nabla v$可以基于虚单元的自由度进行计算。
+\end{enumerate}
+式\eqref{intro:gradVknormequiv}中的隐藏常数与$K$的大小无关，
+但可以依赖于多项式的次数、$K$ 的维数以及几何形状。
+我们可以选择关于内积 $(\cdot, \cdot)_K$ 的$L^2$正交投影算子作为 $Q_{K}$。
+范数等价关系\eqref{intro:gradVknormequiv}意味着，
+空间$\mathbb{V}(K)$应该比虚单元空间$V_k(K)$大。
+
+在标准虚单元方法中，对虚单元函数 $v$ 梯度的计算是
+使用 $Q_{k-1}^{K}\nabla v$ \cite{BeiraodaVeigaBrezziMariniRusso2016}
+或$\nabla\Pi_k^{K}v$ 
+\cite{BeiraoBrezziCangianiManziniEtAl2013,BeiraoBrezziMariniRusso2014,AhmadAlsaediBrezziMariniEtAl2013,AyusodeDiosLipnikovManzini2016}，
+其中$Q_{k-1}^{K}$ 是到 $(k-1)$ 次多项式空间$\mathbb P_{k-1}(K; \mathbb{R}^d)$的$L^2$
+正交投影算子，$\Pi_k^{K}$是到 $k$ 次多项式空间$\mathbb P_{k}(K)$的$H^1$投影算子。
+然而，这两个算子仅有
+\[
+\|Q_{k-1}^{K}\nabla v\|_{0,K}\lesssim \|\nabla v\|_{0,K}, \quad \|\nabla\Pi_k^{K}v\|_{0,K}\lesssim \|\nabla v\|_{0,K}
+\]
+成立，而没有范数等价关系\eqref{intro:gradVknormequiv}，这就是稳定化项的由来（保证离散双线性形式强制性）。
+
+为了去除稳定化项，我们假设多面体 $K$ 存在一个规则的单纯形网格划分
+$\mathcal{T}_K$，
+我们使用这个局部网格上的 $k$ 次或 $(k-1)$ 次 $ H(\diver)$ 协调宏有限元作为
+$\mathbb{V}(K)$，对于$k \geq 1$，其形函数空间 $\mathbb{V}_{k}^{\rm
+div}(K)$是 $\mathcal T_K$ 上 $k$ 次 Brezzi-Douglas-Marini
+(BDM)元空间的子空间；对于$k=0$，它是最低阶Raviart-Thomas
+(RT)元空间的某个子空间。为了确保$L^2$投影$Q_{K,k}^{\diver}\nabla
+v$ 可计算，我们要求$\diver\boldsymbol{\phi}\in\mathbb
+P_{\max\{k-1,0\}}(K)$，且在 $K$ 的每个 $(d-1)$维面上，
+$\boldsymbol{\phi}\cdot\boldsymbol{n}$是一个多项式。
+基于这些考虑以及与$\mathbb{V}_{k}^{\rm
+div}(K)$相关的$H(\diver)$ 协调宏有限元空间的直和分解，
+我们提出了$\mathbb{V}_{k}^{\rm div}(K)$的自由度，并建立了$L^2$范数等价性。
+
+基于这样的投影算子 \( Q_{K,k}^{\diver} \)，
+我们提出了任意维二阶椭圆方程的无稳定化项协调、非协调虚单元方法。这些
+虚单元方法可以等效地重新表述为原始混合虚单元方法。
+我们证明了范数等价关系 \eqref{intro:gradVknormequiv} 和无稳定化项虚单元方法
+的适定性，并推导出最优的误差估计。
+
+我们基于 FEALPy 实现所提的算法，通过数值实验，测试了无稳定化项的虚单元方法的
+收敛率、局部刚度矩阵的可逆性、组装时间以及刚度矩阵的条件数，这些结果与现有
+标准虚单元方法相似。
+
+%本研究通过理论分析和数值实验，旨在证明 VEM 可以实现时间调和 Maxwell 方程的最优收敛速率，
+%不仅适用于多边形网格，还适用于高度各向异性的网格。
+%关于电磁问题的 VEM 的研究较少，
+%参见 \cite{2022VeigaMascottoMeng,2016VeigaBrezziMarini,2020BeiroMascotto} 中对 
+%$\bfH(\rot)$ 协调虚单元空间的构造与分析，
+%\cite{2017VeigaBrezziDassiMarini} 中的磁静态模型，以及 \cite{BEIRAODAVEIGA2021} 中的时间相关 Maxwell 方程。
+%值得指出的是，具有一般阶数的 $\bfH(\rot)$ 协调虚单元空间已在文献中广泛研究
+%\cite{2022VeigaMascottoMeng,2016VeigaBrezziMarini,2020BeiroMascotto}，这些研究通常依赖于高度正则的单元形状。
+%在本工作中，由于几何奇异性和由此引起的非光滑解，我们将限制在最低阶的情况进行研究。
+%{据我们所知，关于高度各向异性网格上的此类情形的研究尚未在文献中系统探讨。}
+%此外，由于可能的不定性，
+%VEM 应用于时间调和 Maxwell 方程的应用与分析仍然在很大程度上未被探索。
+
+根据虚单元方法对网格的要求低的特点，本文的第三个主题是将虚单元方法应用于
+低正则性解、Lipschitz 界面的时谐 Maxwell 方程界面问题的数值求解中。
+时谐Maxwell方程在电磁领域具有广泛的应用价值，
+例如各类电磁器件的设计与分析、无损检测技术等方向
+\cite{2015AmmariChenChenVolkov,2020CHENLIANGZOU}。
+这些应用场景往往涉及具有不同电磁特性的多介质环境，即非均匀介质问题。
+针对此类问题，传统有限元方法已经被广泛地研究
+\cite{2023ChenLiXiang,2014CiarletWuZou,1992Monk,
+2003GopalakrishnanPasciak,2009ZhongShuWittumXu}。
+为获得最优计算精度，
+通常需要构建拟合介质界面且满足形状要求的单纯形网格。
+然而，当介质分布复杂导致界面出现高度不规则时，
+生成符合要求的网格是一个极大挑战。
+
+多边形网格方法可以降低网格生成的难度，在处理复杂几何问题时具有独特优势。实际上已有许多关于多边形网格上的
+Maxwell
+方程数值方法的研究\cite{2017ChenQiuShiSolana,2020DuSayasSIAM,2008HermelineLayouniOmnes,2015KretzschmarMoiolaPerugia,2015ChenWang,2004CockburnLiShu}，
+这些方法通常采用间断多项式空间进行逼近，
+对解要求较高的正则性，并对单元形状需要严格约束，
+大多数基于多面体网格的方法通常需要满足两个关键条件：
+(a) 解需具备足够的光滑性，以至少满足 $H^2$ 正则性；
+(b) 多边形单元必须满足形状正则性，它们需要是星形的，
+        并且不包含过小的边或面。
+
+要求这些条件的原因在于：
+多面体网格上的间断空间不可避免地需要引入一个带有 $\mathcal{O}(h^{-1})$ 
+大小的稳定化项，以施加切向连续性条件。
+使用常用的迹不等式方法仅能得到次优的收敛率 $h^{\theta-1}$，
+其中 $\theta$ 为解的 $\bfH^{\theta}$ 正则性阶数 \cite{2016CasagrandeWinkelmannHiptmairOstrowski,2016CasagrandeHiptmairOstrowski}。
+即使对于 $\theta=1$ 这一相对温和的情形，该方法仍可能导致收敛性失效。
+然而，在涉及非均匀介质的 Maxwell 方程中，
+解的正则性普遍较低，在不同介质的界面附近通常仅满足 $\bfH^{\theta}$ 的正则性，$\theta\in(0,1]$ \cite{2016Ciarlet,2004CostabelDaugeNicaise,2018Alberti,1999MartinMoniqueSerge,2000CostabelDauge}。
+
+%事实上，Ben Belgacem、Buffa 和 Maday 首次为非协调网格上的 Maxwell 方程建立了分析，并解释了上述的收敛性问题 \cite{2001BenBuffaMaday}。
+%随后，通过对网格施加某些协调性条件，减少了正则性要求 \cite{2008HuShuZou,2000ChenDuZou}。
+%一些不匹配网格方法还采用非协调的试探函数空间和协调的测试函数空间，以实现对于 $\bfH(\rot)$ 类型问题的最优收敛性 \cite{2023ChenGuoZou,2020GuoLinZou}。
+%高阶不匹配网格方法可以参考 \cite{2023ChenLiXiang,2023LiLiuYang,2020LiuZhangZhangZheng}，这些方法用于 Maxwell 类型问题的研究。
+%在 DG 或惩罚型方法中，已观察到当解缺乏足够平滑性时，收敛阶数丧失 \cite{2016CasagrandeWinkelmannHiptmairOstrowski,2016CasagrandeHiptmairOstrowski}。
+%在单纯形网格上，这一问题可以规避，
+%但相应的分析方法与传统的 DG 框架有很大不同。
+%关键是寻求一个 $\bfH(\rot)$ 协调的子空间，以确保单元边界上的所有跳跃项消失。
+%然而，对于一般的多面体网格，这样的协调子空间可能不存在。
+%关于此方向的研究，请参考 \cite{2004HoustonPerugiaSchotzau,2005HoustonPerugiaSchneebeli} 中的内部惩罚 DG 方法，以及 \cite{2019ChenCuiXu,2020ChenMonkZhang} 中的 HDG 方法。
+%这一事实使得 DG 型方法的一个主要特点——它们可以用于多面体网格——不再适用于 Maxwell 方程。
+
+在本文中，我们对此类问题的虚单元方法进行了研究，结果表明
+只需对网格施加较弱的几何要求，就可以得到最优的收敛率。
+
+在分析中我们使用 \cite{2021CaoChenGuo} 中的 “虚网格”
+技术——假设多边形可以被剖分为满足一定条件的三角形网格。
+该技术能够在几乎任意多边形网格上得到协调的虚单元空间。
+基于此技术，
+我们研究了具有低正则性的 $\bfH^{\theta}$（$\theta \in (1/2,1]$）解的
+时谐 Maxwell 方程的最低阶虚单元方法。
+将经典的 Helmholtz 分解理论和 Hodge 映射被扩展到虚单元空间，
+并使用这种新开发的 Hodge 映射及对偶性论证技术，
+在高度各向异性的网格上获得最优的逼近精度。
+
+关于网格的几何要求，我们构造了一个函数 $\gamma(\theta) \in
+(0,0.5]$，它依赖于正则性阶数 $\theta$，并假设
+\begin{equation}
+\label{assump_polygon0}
+\rho_K \ge \gamma(\theta) h_K
+\end{equation}
+其中 $h_K$ 和 $\rho_K$ 分别是单元 $K$ 的直径和 $K$ 内切球的半径。
+这里，$\gamma(\theta)$ 具有这样的性质：%$\lim_{\theta\rightarrow 1/2}\gamma(\theta) = \mathcal{O}(1)$ 但
+$\lim_{\theta\rightarrow 1}\gamma(\theta) = 0$，
+这表明当 $\theta \rightarrow 1$ 时，$K$ 可以是任意收缩的。
+另一方面，在 \eqref{assump_polygon0} 的假设下，
+我们提出的分析方法表明，
+误差上界仅涉及常数 $(\gamma(\theta))^{\theta-1}$，
+该常数对于任何 $\theta \in (1/2,1]$ 都是有界的。
+相比之下，基于迹不等式的传统分析只能得到 
+$(\gamma(\theta))^{-1}$，当 $\gamma(\theta) \rightarrow 0$ 时，该常数会发散。
+
+基于开源 CAX 共性基础算法库 FEALPy，我们实现了所提出的算法，
+并进行了大量的数值实验，结果表明算法能够有效处理包含复杂介质界面的情况——
+具有复杂的拓扑结构、几何奇异性和薄层的界面。
+这些情况在实践中通常被认为是具有挑战性的。
+需要说明的是，
+这些算例中的网格生成算法是基于
+界面切割背景网格得到，这显著降低了网格生成的难度。
+基于此我们进一步将该方法应用于移动界面问题，
+并用于一些物理现象的数值模拟。
+
+%对于移动界面问题，一方面其界面拟合的网格生成难度再次加大，
+%每个时间步都需要重新生成网格，
+%另一方面，全离散后需要计算上个时间层的解与当前时间层空间上的函数的内积，
+%由于两个时间曾的网格不一致，需要将上一个时间层的解插值到当前时间层的空间上，
+%这一过程会引入额外的误差。
+
+
+本文后面的章节安排如下：第二章介绍了一些预备知识，给出一些符号约定；
+第三章介绍了任意维任意次的 $H^m$ 协调虚单元方法，并将其应用于带有低阶项的 
+多重调和方程求解，对提出的方法建立的稳定性，收敛性分析；第四章通过构造 $H(\diver)$
+协调宏有限元空间上的投影算子，建立了无稳定化项的 $H^1$
+协调、非协调虚单元方法，同样对提出的方法建立的稳定性，收敛性分析；
+第五章介绍了虚单元方法在时谐 Maxwell
+方程界面问题上的应用，证明了该方法在网格几何要求较低的情况下仍能保持最优的收敛性；
+第六章将虚单元方法应用于移动界面问题，并用于一些物理现象的数值模拟；
+第七章总结了全文的工作。
+
+
+
+
+
+
+
+

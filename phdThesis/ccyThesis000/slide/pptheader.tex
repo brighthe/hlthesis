@@ -1,0 +1,80 @@
+%选用主题
+\usetheme{Madrid}
+
+\usepackage[no-math, cm-default]{fontspec}
+\usepackage{xltxtra}
+\usepackage{xunicode}   
+\usepackage{xcolor}
+%\usepackage{unicode-math} % 使用 unicode-math 设置数学字体
+\usepackage{amsmath, amssymb}
+\usepackage{xeCJK}
+\usepackage{multimedia}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{color, subcaption}
+\usepackage{makecell}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+%将系统字体名映射为逻辑字体名称，主要是为了维护的方便  
+\newcommand\fnhei{Adobe 黑体 Std}  
+\newcommand\fnsong{Adobe 宋体 Std}  
+\newcommand\fnkai{Adobe 楷体 Std}  
+\newcommand\fnmono{DejaVu Sans Mono}  
+\newcommand\fnroman{Times New Roman}  
+
+% 定理类环境的定义
+\newtheorem{definition}{定义}[section]
+\newtheorem{property}{性质}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{theorem}{定理}[section]
+\newtheorem{corollary}{推论}[section]
+\newtheorem{example}{算例}
+\newtheorem{remark}{注}
+\newtheorem{assumption}{假设}
+\newtheorem{continue}{续}
+
+\newcommand{\highlightit}{\textcolor[rgb]{1.00,0.00,0.00}}
+
+
+%---SHORTCUTS--------------------------------------------------------------------------------------
+\newcommand\xor{\mathbin{\char`\^}}
+\DeclareMathOperator{\res}{Res}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\as}{as}
+\newcommand{\slant}[1]{\slshape #1\normalfont}
+\newcommand{\dd}[2]{\frac{d#1}{d#2}} 
+\newcommand{\ddx}{\frac{d}{dx}}
+\newcommand{\ddt}{\frac{d}{dt}}
+\newcommand{\dds}{\frac{d}{ds}}
+\newcommand{\pd}[1]{\ds\frac{\partial}{\partial #1 }}
+\newcommand{\pdd}[2]{\ds\frac{\partial #1}{\partial #2 }}
+\newcommand{\mdd}[3]{\ds\frac{\partial^{#3} #1}{\partial #2^{#3} }}
+\newcommand{\x}{\ _\Box}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\Bold}{\noindent \bfseries}
+\newcommand{\Norm}{\normalfont}
+\newcommand{\exl}[1]{\textcolor{NavyBlue}{\Bold Exercise #1 \Norm}}
+\newcommand{\ex}{\textcolor{NavyBlue}{\Bold Problem: \Norm}}
+\newcommand{\sol}{\textcolor{Mulberry}{\Bold Solution: \Norm}}
+\newcommand{\pf}{\textcolor{Mulberry}{\Bold Proof: \Norm}}
+\newcommand{\Title}[1]{\LARGE\Bold \textcolor{Sepia}{#1}\Norm\normalsize \vspace{10pt} \newline}
+\newcommand{\prop}{\Bold \textcolor{YellowOrange}{ Proposition:} \Norm}
+\newcommand{\propl}[1]{\Bold \textcolor{YellowOrange}{ Proposition #1:} \Norm}
+\newcommand{\rk}{\Bold \textcolor{YellowOrange}{ Remark:} \Norm}
+\newcommand{\rmk}[1]{\Bold\textcolor{YellowOrange}{#1} \Norm}
+\newcommand{\thm}[1]{\Bold \textcolor{YellowOrange}{ Theorem #1} \Norm}
+\newcommand{\ind}{\indent\indent}
+
+\newcommand{\red}{\color{red}}
+\newcommand{\blue}{\color{blue}}
+
+\newcommand{\mycomment}[1]{} % 默认不显示注释
+
+
+
+
+
+

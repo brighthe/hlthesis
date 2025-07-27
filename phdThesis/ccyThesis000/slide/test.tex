@@ -1,0 +1,42 @@
+\documentclass[notheorems,serif]{beamer}
+
+\input{pptheader.tex}
+\input{mycommand.tex}
+
+\begin{document}
+
+\title{新型虚单元方法的理论及应用研究}
+\author{陈春雨}
+\institute[XTU]{
+    \vspace{5pt}
+    cbtxs@smail.xtu.edu.cn\\
+\vspace{5pt}
+湘潭大学\\
+数学与计算科学学院\\
+
+合作者：郭汝驰，黄学海，
+{\CJKfontspec{SimSun}魏华祎}
+}
+ 
+\date
+{
+    \today
+}
+
+%\pgfdeclareimage[height=1cm]{institution-logo}{../figures/xtu.pdf}
+%\logo{\pgfuseimage{institution-logo}}
+\frame[plain]{\titlepage}
+\AtBeginSection[]{
+  \frame<beamer>{ 
+    \frametitle{Outline}   
+    \tableofcontents[currentsection] 
+  }
+}
+\section{aaa}
+\begin{frame}
+    \frametitle{Outline}
+    $A, \mathbf{A}, \boldsymbol{a}, a$  % 使用bm加粗数学符号
+\end{frame}
+
+\end{document}
+

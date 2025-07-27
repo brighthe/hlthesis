@@ -1,0 +1,89 @@
+﻿%----摘要----------------------------------------------------------------------------------------
+\begin{cnabstract}
+
+虚单元方法是一种新型的偏微分方程数值求解方法，是有限元方法
+在多边形、多面体网格上的推广，
+其对网格单元形状要求低，适用于复杂几何区域上的数值模拟，
+且虚单元方法定义方式简单，相比于有限元方法更加容易构造满足要求的离散空间。
+本文针对虚单元方法的这些特点，主要在三个方面进行了研究：
+ $H^m$ 协调虚单元构造，界面问题的虚单元方法以及无稳定化项的虚单元方法。
+此外，我们基于开源 CAX 共性基础算法
+库 FEALPy 实现了相关虚单元方法，并进行了数值算例验证。
+
+首先本文将已有二维 $H^m$ 协调虚单元推广到任意维，
+提出了任意维一般多面体上，任意 $m > 0$ 的 $H^m$ 协调虚单元，其不含有超光滑的自由度，
+对多项式次数 $k$ 的要求是 $k \geq m$，远小于 $H^m$ 协调有限元的要求 $k \geq
+2^{d}(m-1)+1$。
+%在最低次 $k = m$
+%的情况下，自由度非常简单，仅包含多面体的顶点上的函数值不超过 $m-1$ 阶的梯度值。
+借助数据空间和 Whitney Array 的概念，我们证明了自由度的唯一可解性。此外，
+在多面体 $K$ 满足星形条件且所有面直径与 $K$ 直径等价的几何假设下，
+建立了$H^m$ 协调虚单元的逆不等式与范数等价性。
+基于 FEALPy，
+我们实现了二维 $H^2$, $H^3$
+协调虚单元的程序，并将其应用于双调和方程和三调和方程的数值计算，数值结果验证了理论分析。
+
+对于虚单元方法中的稳定化项，
+%本文提出了无稳定化项的 $H^1$ 协调与非协调虚单元方法。
+%由于虚单元函数隐式定义，
+%传统的虚单元方法将函数 $H^1$ 投影到多项式空间后计算梯度，或将梯度 $L^2$
+%投影到向量多项式空间，以此来保证虚单元函数的可计算性，但这样的投影不能保证投影前后
+%虚单元函数的梯度 $L^2$ 范数等价，这是虚单元方法需要稳定化项的原因。
+我们将多面体 $K$ 剖分为一个拟一致的单纯形网格 $\mathcal{T}_K$，
+在 $\mathcal{T}_K$ 上定义宏元复形。证明了
+虚单元函数梯度到 $H(\mathrm{div})$ 协调宏元空间的 $L^2$
+投影满足两个性质：1. 可以根据虚单元空间的自由度进行计算；2. 投影具有
+$L^2$ 范数意义下的一致下界。
+基于这两个性质，我们提出了无稳定化项的 $H^1$
+协调与非协调虚单元方法，并对两种方法证明了最优误差估计，
+我们基于 FEALPy 实现了这两种方法，并通过数值算例验证了方法的有效性。
+
+虚单元方法因其对网格单元形状要求低，适用于复杂几何的数值模拟。基于这一特点，
+我们研究了非均匀介质中不定时谐 Maxwell 方程的求解问题。
+%对于此问题，
+%现有文献中的方法对网格结构、空间协调性及解的正则性高度敏感，
+%对低正则性解的最优收敛性分析几乎全部依赖于协调空间与高正则性的单纯形网格。
+%这极大的限制了这些方法的应用——尤其在非均匀介质场景下，
+此类问题中，
+电磁参数的间断性会导致介质界面附近解的正则性下降。若叠加上几何奇异性，
+该问题可能进一步恶化，在本文中，我们提出在任意多边形网格上的最低阶虚单元方法，
+该方法允许网格单元高度各向异性，我们
+建立了显式公式刻画单元形状正则性与解正则性的定量关系。
+此外，我们还从理论证明该方法对仅具 
+$\bfH^{\theta}$ 正则性（$\theta\in(1/2,1]$）的解具有鲁棒的最优收敛性。
+最后我们基于 FEALPy
+通过多组算例验证了方法的有效性，并将算法推广到移动界面问题中。
+
+\end{cnabstract}
+
+\begin{cnkeywords}
+多重调和方程；
+$H^m$ 协调虚单元；
+无稳定化项虚单元方法；
+界面问题；
+时谐 Maxwell 方程.
+\end{cnkeywords}
+%----Abstract------------------------------------------------------------------------------------
+\newpage
+\begin{enabstract}
+
+The virtual element method (VEM) is a novel numerical technique for solving partial differential equations, serving as a generalization of the finite element method (FEM) to general polygonal and polyhedral meshes. Owing to its flexibility in handling arbitrary element geometries, VEM proves particularly suitable for simulations involving complex domains. Moreover, it provides greater convenience than FEM in constructing discrete spaces with desired properties. This paper investigates three fundamental aspects of VEM: (i) the construction of \(H^m\)-conforming virtual elements, (ii) applications to interface problems, and (iii) stabilization-free formulations. All proposed methods have been implemented within the open-source FEALPy library, with numerical experiments validating their efficacy.
+
+First, we extend existing two-dimensional \(H^m\)-conforming virtual elements to
+arbitrary spatial dimensions, developing conforming virtual elements for general
+polyhedral domains in \(\mathbb{R}^d\) with \(m > 0\). These elements eliminate
+the need for super-smooth degrees of freedom and require only polynomial order
+\(k \geq m\) --- a significant improvement over conventional \(H^m\)-conforming FEM elements that demand \(k \geq 2^d(m-1)+1\). Employing the framework of data spaces and Whitney arrays, we establish the unisolvence of degrees of freedom. Under standard geometric assumptions (star-shaped domains with comparable face diameters), we derive inverse inequalities and norm equivalence results. Practical implementations of \(H^2\)- and \(H^3\)-conforming elements in 2D demonstrate excellent performance in biharmonic and triharmonic equation simulations, with numerical results corroborating theoretical predictions.
+
+Second, we introduce novel \(H^1\)-conforming and nonconforming virtual element methods that completely eliminate extrinsic stabilization terms. Traditional VEM formulations rely on polynomial projections to compute gradients, which fail to preserve \(L^2\)-norm equivalence and necessitate stabilization. Our approach decomposes each polyhedron \(K\) into a quasi-uniform simplicial subdivision \(\mathcal{T}_K\), constructing a macroelement complex that enables computable \(L^2\) projections onto \(H(\text{div})\) spaces. Crucially, these projections maintain uniform lower bounds in the \(L^2\) norm. The resulting stabilization-free schemes achieve optimal convergence rates, as confirmed by numerical tests.
+
+Finally, we develop a low-order VEM for time-harmonic Maxwell equations in inhomogeneous media, where solution regularity deteriorates near material interfaces. The proposed method delivers robust convergence rates for solutions with merely \(\mathbf{H}^\theta\) regularity (\(\theta \in (1/2,1]\)), while accommodating highly anisotropic mesh elements. We establish explicit relationships between element geometry and solution regularity, validating the approach through comprehensive numerical experiments, including moving interface problems.
+
+\end{enabstract}
+
+\begin{enkeywords}
+    Polyharmonic equations;
+    $H^m$ conforming virtual elements;
+    virtual element method without extrinsic stabilization;
+    interface problems; time-harmonic Maxwell equations. 
+\end{enkeywords} 

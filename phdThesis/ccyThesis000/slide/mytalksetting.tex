@@ -1,0 +1,72 @@
+%\usepackage[all]{xy}
+
+%% packages
+\usepackage{graphics,color,subfigure,pgf}
+\usepackage{times,amsmath,amsbsy,amssymb,amscd,mathrsfs,chemarrow}
+\usepackage{wasysym,mathtools}
+\usepackage{multimedia}
+\usepackage{hyperref}
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in 
+\usepackage{tikz,tikz-cd}
+
+%% color
+\usecolortheme{default}
+%\newcommand{\red}[1]{\textcolor{red}{#1}}
+%\newcommand{\blue}[1]{\structure{#1}}
+%\newcommand{\brown}[1]{\textcolor{brown}{#1}}
+%\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\cyan}[1]{\textcolor{cyan}{#1}}
+\newcommand{\red}[1]{\textcolor{red!75}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue!75}{#1}}
+\newcommand{\brown}[1]{\textcolor{brown}{#1}}
+\definecolor{darkgreen}{rgb}{0.1,0.65,0.1}
+\newcommand{\green}[1]{\textcolor{darkgreen}{#1}}
+\setbeamercolor{block title}{bg=black!80,fg = brown!90}
+
+%% figure
+\usepackage{tikz}
+\usetikzlibrary{snakes}
+\usetikzlibrary{arrows}
+\usetikzlibrary{shapes}
+
+%% diagram
+\usepackage{stmaryrd}
+\usepackage{chemarrow}
+\usetikzlibrary{arrows}
+\usepackage{multirow}
+
+%% math operators
+\renewcommand{\div}{\operatorname{div}}
+\DeclareMathOperator*{\curl}{curl}
+\DeclareMathOperator*{\grad}{grad}
+\DeclareMathOperator*{\rot}{rot}
+\DeclareMathOperator*{\range}{range}
+\DeclareMathOperator*{\img}{img}
+\newcommand{\tr}{\textrm{tr}}
+\DeclareMathOperator*{\var}{Var}
+
+
+%% shortcut
+\newcommand{\bs}{\boldsymbol}
+\newcommand{\mcal}{\mathcal}
+\newcommand{\dx}{\,{\rm d}x}
+\newcommand{\dd}{\,{\rm d}}
+
+
+%% theorems
+\newtheorem{remark}[theorem]{Remark}
+\setcounter{tocdepth}{1} 
+%\newtheorem{remark}{Remark}[section]
+\setbeamertemplate{theorems}[numbered]
+\setbeamertemplate{caption}[numbered]
+
+\newcommand{\step}[1]{\noindent\raisebox{1.5pt}[10pt][0pt]{\tiny\framebox{$#1$}}\xspace}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,526 @@
+%!TEX program = xelatex
+% 完整编译: xelatex -> biber/bibtex -> xelatex -> xelatex
+\documentclass[lang=cn,a4paper,newtx]{elegantpaper}
+
+\title{引力波学习笔记}
+\author{陈春雨 \\ 湘潭大学\ 数学与计算科学学院}
+
+\date{\zhdate{2024/9/18}}
+
+\begin{document}
+
+\maketitle
+
+广义相对论是天文学中的一个重要理论，它将宇宙描述为一个四维的空间时间流形，
+具有弯曲的度量，其曲率描述了引力场的本质。
+\section{宇宙的几何描述}
+宇宙是一个四维的空间时间流形 $M$，配备了一个 Lorentz 度量 $g_{ab}$，
+$$
+g_{ab} = g_{\mu\nu}(dx^{\mu})_a\otimes(dx^{\nu})_b
+$$
+其中 $g_{\mu\nu}$ 是一个对称非退化矩阵，$\{(dx^{\mu})_a\}_{\mu=0}^3$ 
+是 $M$ 上的余切向量基。最简单的 Lorentz 度量是 Minkowski 度量 $\eta_{ab}$:
+$$
+(\eta_{\mu\nu}) = \mathrm{diag}(-1, 1, 1, 1)
+$$
+对于向量 $v^a \in T_pM$, 若 
+\begin{itemize}
+    \item $g_{ab}v^av^b = 0$，则称 $v^a$ 是类光向量。
+    \item $g_{ab}v^av^b > 0$，则称 $v^a$ 是类空向量。
+    \item $g_{ab}v^av^b < 0$，则称 $v^a$ 是类时向量。
+\end{itemize}
+如果一个超曲面 $\Sigma$ 的法向量 $n^a$ 是类时向量，那么称 $\Sigma$ 是类空超曲面。
+此时度量 $g_{ab}$ 在 $\Sigma$ 上的限制是一个 Riemann 度量。
+
+\section{Einstein 方程}
+Einstein 方程是广义相对论的核心, 
+其描述了空间中质量和能量的分布如何影响时空的几何形状:
+$$
+G_{ab} = \frac{8\pi G}{c^4}T_{ab} 
+$$
+其中 $G_{ab} = R_{ab} - \frac{1}{2}g_{ab}R$ 是 Einstein 张量，
+$T_{ab}$ 是能量动量张量，$R_{ab}$ 是 Ricci 张量，$R$ 是标量曲率。
+在真空中 $T_{ab} = 0$，Einstein 方程变为:
+$$
+G_{ab} = 0
+$$
+显然 $\mathrm{tr}(G) = 0$，即 
+$g^{ab}G_{ab} = g^{ab}R_{ab} - \frac{1}{2}g^{ab}g_{ab}R = 0$，
+所以 $R = 0, R_{ab} = 0$。反过来，如果 Ricci
+张量为零，那么 Einstein 张量也为零。所以真空中的 Einstein 方程等价于:
+$$
+R_{ab} = 0
+$$
+\section{线性化 Einstein 方程}
+假设 $g_{ab}$ 是 Minkowski 度量的微小扰动:
+$$
+g_{ab} = \eta_{ab} + \epsilon h_{ab} + O(\epsilon^2)
+$$
+其中 $\eta_{ab}$ 是 Minkowski 度量，$0<\epsilon\ll 1$，未知量变成了 $h_{ab}$。
+将上面的度量代入 Einstein 方程，令 $\nabla$ 是 $\eta_{ab}$ 的联络，
+那么与 $g_{ab}$ 适配的联络与 $\nabla$ 之间的克氏符为:
+$$
+\Gamma_{abc} = \frac{1}{2}(\nabla_ag_{bc} + \nabla_bg_{ac} - \nabla_cg_{ab})
+= \epsilon\frac{1}{2}(\nabla_ah_{bc} + \nabla_bh_{ac} - \nabla_ch_{ab}) + O(\epsilon^2)
+$$
+$\Gamma_{abc} = O(\epsilon)$，所以 Riemann 张量为:
+$$
+\begin{aligned}
+R_{abcd} & = \nabla_c\Gamma_{bda} - \nabla_d\Gamma_{bca} + O(\epsilon^2)\\
+& = \frac{1}{2} \epsilon(\nabla_c\nabla_bh_{da} - \nabla_c\nabla_ah_{bd} -
+\nabla_d\nabla_bh_{ca} + \nabla_d\nabla_ah_{bc}) + O(\epsilon^2)\\
+\end{aligned}
+$$
+所以 Ricci 张量为:
+$$
+\begin{aligned}
+R_{bd} = R^{c}_{\ bcd} & = \frac{1}{2}\epsilon(\nabla_c\nabla_bh^{c}_{\ d} 
+- \nabla_c\nabla^ch_{bd} - \nabla_d\nabla_bh^{c}_{\ c} + \nabla_d\nabla^ch_{bc}) + O(\epsilon^2)\\
+& = \epsilon\nabla_c\nabla_{(b}h^{\ c}_{d)} - 
+\frac{1}{2}\epsilon(\nabla_c\nabla^ch_{bd} + \nabla_d\nabla_b h^c_{\ c}) + 
+O(\epsilon^2)
+\end{aligned}
+$$
+$$
+R = R^{a}_{\ a} = \epsilon(\nabla_c\nabla^ah^{\ c}_{a} - \nabla_c\nabla^ch^{a}_{\ a}) + O(\epsilon^2)
+$$
+$R = O(\epsilon)$ 那么 Einstein 张量为:
+$$
+\begin{aligned}
+G_{ab} & = R_{ab} - \frac{1}{2}g_{ab}R\\
+& = \epsilon\nabla_c\nabla_{(a}h^{\ c}_{b)} 
+- \frac{1}{2}\epsilon(\nabla_c\nabla^ch_{ab} 
++ \nabla_b\nabla_a h^c_{\ c}) - \frac{1}{2}\epsilon\eta_{ab}( \nabla_c\nabla^dh^{c}_{\ d} - \nabla_c\nabla^ch^{d}_{\ d})
++ O(\epsilon^2)\\ 
+\end{aligned}
+$$
+令 $h = h^a_a, \bar{h}_{ab} = h_{ab} - \eta_{ab} h/2$ 那么 $\bar{h} = -h, 
+h_{ab} = \bar{h}_{ab} + \eta_{ab}\bar{h}/2$，所以:
+$$
+\nabla_{a}\nabla_{b} h_{cd} = \nabla_{a}\nabla_{b} \bar{h}_{cd} + \frac{1}{2}\eta_{ab}\nabla_{c}\nabla_{d}\bar{h}
+$$
+所以有:
+$$
+\frac{\mathrm{d}}{\mathrm{d}\epsilon}G_{ab} = \nabla^c\nabla_{(a}\bar{h}_{b)c} - 
+\frac{1}{2}(\eta_{ab}\nabla^c\nabla^d\bar{h}_{cd} + \nabla^c\nabla_c\bar{h}_{ab})
+=: H(\bar{h}_{ab})
+$$
+显然 $H$ 是一个线性算子，所以 Einstein 方程的线性化形式为:
+$$
+H(\bar{h}_{ab}) = \frac{8\pi G}{c^4}\mathcal{T}_{ab}
+$$
+其中 $\mathcal{T}_{ab} = \frac{\mathrm{d}}{\mathrm{d}\epsilon}T_{ab}$。
+需要注意的是，上式保证了 $\nabla_a\mathcal{T}^{ab} = 0$，所以线性化的 Einstein 方程
+可以保证能量，动量，角动量守恒。
+
+\section{规范自由性}
+假设 $\phi$ 是两个微分流形 $M, N$ 之间的微分同胚，
+那么 $M$ 上的度量 $g$ 可以推前到 $N$，$(N, \phi_*g)$ 与 $(M, g)$ 
+等距同构。那么如果 $g$ 是 Einstein
+方程的解，那么由于:
+$$
+R(\phi_*g) = \phi_*R(g)
+$$
+所以 $\phi_*g$ 也是 Einstein 方程的解。也是 Einstein 方程的解，他们互相等价，称为规范相关。
+对于线性化的 Einstein 方程，任取向量场 $v^a$，定义 $h'_{ab} = \mathcal{L}_v\beta_{ab} = \nabla_{(a}v_{b)}$，
+那么有:
+$$
+H(h'_{ab}) = 0 
+$$
+即 $h'_{ab}\in \ker(H)$，所以 Einstein 方程的解不是唯一的，
+这个问题不能由边界条件来解决。我们可以施加一个规范条件，在等价的解中选择一个。
+类似的情况在电磁学中也有，当我们求解磁矢势 $A$ 时：
+$$
+\boldsymbol{B} = \nabla \times \boldsymbol{A}
+$$
+这个方程的解不是唯一的，当 $\boldsymbol{A}'\in\ker(\nabla\times)$, 
+$\boldsymbol{A+A}'$ 也是方程的解。
+这时可以加上一个条件：
+$$
+\nabla\cdot\boldsymbol{A} = 0
+$$
+这个条件就是规范条件。在线性 Einstein 方程中，常用的规范条件是：
+$$
+\nabla^b\bar{h}_{ab} = 0
+$$
+在这个规范条件下，线性化的 Einstein 方程的形式更加简单:
+$$
+H(\bar{h}_{ab}) = \square\bar{h}_{ab} = \frac{8\pi G}{c^4}\mathcal{T}_{ab} 
+$$
+其中 $\square = \nabla^a\nabla_a$ 是 d'Alembert 算子。
+\begin{note}
+对于任意 $h_{ab}$，选择 $v^a$ 满足 $\nabla^b\nabla_b v^a = -\nabla^b h_{ab}$，
+令 $h'_{ab} = h_{ab}+\nabla_{(a}v_{b)}$ 那么有:
+$$
+\begin{aligned}
+\bar{h'}_{ab} 
+& = h'_{ab} - \frac{1}{2}\eta_{ab}h'\\
+& = h_{ab} + \nabla_{(a}v_{b)} - \frac{1}{2}\eta_{ab}(h_{c}^{\ c} + 
+\eta^{cd}\nabla_{c}v_{d})\\
+& = \bar{h}_{ab} + \nabla_{(a}v_{b)} - \frac{1}{2}\eta_{ab}\nabla^{c}v_{c}\\
+\end{aligned}
+$$
+所以:
+$$
+\begin{aligned}
+\nabla^b \bar{h'}_{ab} & = \nabla^b\bar{h}_{ab} + \nabla^b\nabla_{(a}v_{b)} - \frac{1}{2}\nabla_a\nabla^bv_b\\
+& = \nabla^b\bar{h}_{ab} + \frac{1}{2}\nabla_b\nabla^bv_a\\
+& = 0
+\end{aligned}
+$$
+所以，对于任意 $h_{ab}$，总可以找到一个等价的 $h'_{ab}$ 满足规范条件。
+\end{note}
+
+\begin{note}
+关于规范相关有一个等价的解释：选择一个合适的坐标系，
+ Einstein 方程可以写成分量形式:
+$$
+R_{\mu\nu}(x) - \frac{1}{2}g_{\mu\nu}(x)R(x) = \frac{8\pi G}{c^4}T_{\mu\nu}(x)
+$$
+其中每个分量都是 $x$ 的函数。这个方程的未知量是 $g_{\mu\nu}(x)$，因为 $g$ 对称,
+所以有 $10$ 个未知量。选择适当的边界条件，上式同时也是 10 个偏微分方程，
+原本非常合理，10 个方程求解 10 个未知量，但是因为有 Bianchi 恒等式:
+$$
+\nabla_{[a}R_{bc]d}^{\quad\ e} = 0
+$$
+这可以推出 $\nabla_aG^{ab} = 0$, 其分量形式是四个方程:
+$$
+\nabla_{\mu}G^{\mu\nu} = 0
+$$
+这表明 10 个方程中只有 6 个是独立的，所以实际上只有 6 个方程求解 10 个未知量。
+实际上，如果 $g_{\mu\nu}(x)$ 是 Einstein 方程的解，那么 $g_{\mu\nu}(x)$ 的任意坐标变换
+$g'_{\mu\nu}(x)$ 也是 Einstein 方程的解，那么 $g_{\mu\nu}(x)$ 和 $g'_{\mu\nu}(x)$ 是
+规范相关。
+最后添加的规范条件就是为了消除这种规范相关性，使得解是唯一的。规范条件的分量形式是:
+$$
+\nabla^{\mu}\bar{h}_{\mu\nu} = 0
+$$
+这是四个方程，所以加上规范条件后，10 个方程求解 10 个未知量。
+\end{note}
+加上 Lorenz 规范条件后，方程的解仍然不是唯一的, 令 $h'_{ab} = \partial_a v_b +
+\partial_b v_a$，
+其中 $v_a$ 满足 $\partial^b\partial_bv^a = 0$，那么 
+$$
+\bar{h'}_{ab} = \partial_a v_b + \partial_b v_a - \eta_{ab}\partial^c v_c
+$$
+那么：
+$$
+\partial^b\bar{h'}_{ab} = \partial^b\partial_a v_b + \partial^b\partial_b v_a - \partial_a\partial^b v_b
+= 0
+$$
+且:
+$$
+H(\bar{h'}_{ab}) = \partial^c\partial_{c}\bar{h'}_{ab} = 
+\partial^c\partial_{c}\partial_a v_b + \partial^c\partial_{c}\partial_b v_a -
+\partial^c\partial_{c}\eta_{ab}\partial^d v_d = 0 
+$$
+所以要给 $\bar{h}_{ab}$ 再加一些条件使得满足这些条件的 $h_{ab}' = \partial_a v_b
++ \partial_b v_a$ 当 $\partial^b\partial_b v^a = 0$ 时要能推出 $v^a = 0$。
+其实就是边界条件:
+$$
+h = 0, \quad h_{0i} = 0
+$$
+
+\section{线性 Einstein 方程的平面波解}
+现在考虑一个平面波解，
+令 $k^a$ 是一个类光矢量，即 $k^ak_a = 0$，$A_{ab}$ 是一个对称张量，满足：
+\begin{align}
+\label{proposition1}
+\nabla_cA_{ab} = 0, \quad A_{ab}k^b = 0
+\end{align}
+对于任意的 $C^2$ 函数 $f(x)$，定义:
+$$
+\bar{h}_{ab} = A_{ab}f(k_cx^c)
+$$
+那么:
+$$
+\square \bar{h}_{ab} = A_{ab}\square f(k_cx^c) = A_{ab}k^ck_c f''(k_cx^c) = 0
+$$
+而且：
+$$
+\nabla^b\bar{h}_{ab} = A_{ab}\nabla^bf(k_cx^c) = A_{ab}k^bf'(k_cx^c) = 0
+$$
+所以 $\bar{h}_{ab}$ 是线性化 Einstein 方程的解。这种解称为平面波解。
+在平面波解中，我们可以转化原始的规范条件为：
+\begin{itemize}
+    \item[1.] $A^a_{\ a} = 0$
+    \item[2.] 对于某个类时矢量 $u^b$, $A_{ab}u^b = 0$.
+\end{itemize}
+这个条件被称为 TT 规范条件。
+现在选择 $u^b = (1, 0, 0, 0)$，$k^a = k(1, 0, 0, 1)$，那么 
+可以根据 TT 规范条件以及前述的 $A_{ab}$ 的性质，得到：
+$$
+A_{ii} = 0, A_{0i} = 0, A_{i0} = 0, A_{3i} = 0, A_{i3} = 0
+$$
+所以 $A_{ij}$ 如下:
+$$
+\begin{pmatrix}
+0 & 0 & 0 & 0\\
+0 & A^{+} & A^{\times} & 0\\
+0 & A^{\times} & -A^{+} & 0\\
+0 & 0 & 0 & 0
+\end{pmatrix}
+$$
+
+\begin{proposition}
+    若有一个平面波解 $\bar{h}_{ab} = A_{ab}f(k_cx^c)$，其中 $k^a = k(1, 0, 0,
+    1)$, $A_{ab}$ 满足条件
+    \eqref{proposition1} ，那么存在 $\bar{h'}_{ab} = A'_{ab}f(k_cx^c)$ 满足 TT
+    规范条件, 且 $\bar{h}_{ab}$ 和 $\bar{h'}_{ab}$ 是规范相关的。
+\end{proposition}
+
+\section{Wely 张量和 Bel 分解}
+黎曼张量 $R_{abcd}$ 可以做一个分解:
+$$
+R_{abcd} = M_{abcd} + W_{abcd}
+$$
+其中:
+$$
+M_{abcd} = \frac{2}{n-2}(g_{a[c}R_{b]d} - g_{b[c}R_{d]a} -
+\frac{R}{n-1}g_{a[c}R_{d]b})
+$$
+分解的两部分都满足与 $R_{abcd}$ 相同的对称性，特别的满足如下反对称性:
+\begin{align}
+\label{asymmetry}
+M_{abcd} = -M_{abdc}, \quad W_{abcd} = -W_{abdc}
+\end{align}
+和如下对称性:
+\begin{align}
+\label{symmetry}
+M_{abcd} = M_{cdab}, \quad W_{abcd} = W_{cdab}
+\end{align}
+$M_{abcd}$ 与 Ricci 张量有关，
+$W_{abcd}$ 称为 Wely 张量，是完全无迹的 : $W^a_{\ bac} = 0$，且满足 Bianchi 恒等式:
+$$
+\nabla_{[a}W_{bc]de} = 0
+$$
+在真空中，$R_{ab} = 0$，那么 $M_{abcd} = 0$，所以 $R_{abcd} = W_{abcd}$。
+现在我们仅考虑 Wely 张量，在 4 维时空中，Wely 张量有 10 个独立分量。
+
+由于 $W_{abcd}$ 满足 \eqref{asymmetry} 和 \eqref{symmetry}，那么固定 $a, b$，那么 $W_{abcd}$ 是一个
+2阶反对称张量，固定 $c, d$，那么 $W_{abcd}$ 是一个 2 阶对称张量，
+因为 2 阶反对称张量等价于一个 2 形式，加之 $W_{abcd}$ 的对称性，
+所以存在两个 2 形式 $\Lambda^1, \Lambda_0$ 使得:
+$$
+W_{abcd} = \Lambda^0_{ab}\otimes\Lambda^1_{cd} +
+\Lambda^1_{ab}\otimes\Lambda^0_{cd}
+$$
+那么可以定义两个 $W_{abcd}$ 的对偶(分别是 Hodge star 算子作用在不同的部分)：
+$$
+\begin{aligned}
+    W_{abcd}^* & := (1\otimes\star)W_{abcd} 
+    = \frac{1}{2}W_{abef}\epsilon^{ef}_{\ \ \ cd}\\
+    ^*W_{abcd} & := (\star\otimes 1)W_{abcd}
+    = \frac{1}{2}\epsilon^{\ \ \ ef}_{ab}W_{efcd}
+\end{aligned}
+$$
+其中 $\epsilon_{abcd}$ 是空间的体元。两个对偶满足:
+$$
+W_{abcd}^{**} = -W_{abcd}, \quad W_{abcd}^* = ^*W_{cdab}
+$$
+根据 Wely 张量定义如下电张量和磁张量:
+$$
+\begin{aligned}
+    \bar{E}_{ab} & = n^an^bW_{acbd}\\
+    \bar{B}_{ab} & = n^an^bW_{abcd}^*
+\end{aligned}
+$$
+根据 $W_{abcd}$ 的对称性，这两个张量是对称迹零的，且根据 Wely 张量的反对称性，
+这两个张量是类空的，即:
+$$
+\bar{E}_{ab} n^b = 0, \quad \bar{B}_{ab}n^b = 0
+$$
+反过来，Wely
+张量可以由电磁张量重构:
+$$
+W_{abcd} = 2(l_{a[c}\bar{E}_{d]b} - l_{b[c}\bar{E}_{d]a} - 
+n_{[c}\bar{B}_{d]e}\epsilon^{e}_{\ \ \ abf}n^f - 
+n_{[a}\bar{B}_{b]e}\epsilon^{e}_{\ \ \ cdf}n^f)
+$$
+其中 $l_{ab}$ 是 $g_{ab}$ 在类空超曲面上的诱导度量:
+$$
+l_{ab} = g_{ab} + 2n_an_b
+$$
+所以 $W_{abcd}$ 可以由 $\bar{E}_{ab}$ 和 $\bar{B}_{ab}$ 决定，这个过程称为 Bel
+分解。
+
+\section{线性化的 Bel 分解}
+在上述带有微小扰动的度量 $g_{ab}$ 的情况下，令 $C_{cbcd}$ 是 Wely 张量的微分:
+$$
+W_{abcd} = C_{abcd}^0 + \epsilon C_{cbcd} + O(\epsilon^2)
+$$
+在真空情况下: $C_{abcd}^0 = 0$，分别定义电磁张量的微分:
+$$
+\begin{aligned}
+    \bar{E}_{ab} & = E_{ab}^0 + \epsilon E_{ab} + O(\epsilon^2)\\
+    \bar{B}_{ab} & = B_{ab}^0 + \epsilon B_{ab} + O(\epsilon^2)
+\end{aligned}
+$$
+那么有:
+$$
+\begin{aligned}
+    E_{ab} & = n^an^bC_{acbd}^0 = C_{0a0b}\\
+    B_{ab} & = n^an^b(C_{abcd}^0)^* = (C_{0a0b})^* =
+    C_{0aef}\epsilon^{ef}_{\ \ \ 0b}
+\end{aligned}
+$$
+类似于 Maxwell 方程，可以定义磁场 $H_{ab}$ 和电场 $D_{ab}$:
+$$
+\begin{aligned}
+    H_{ab} & = *C_{0a0b} = \frac{1}{2}\epsilon_{0a}^{\ \ \
+    ef}C_{ef0b}\\
+    D_{ab} & = *C_{0aef}^* = \frac{1}{2}\epsilon_{0a}^{\ \ \
+    ef}C_{ef0b}^*
+\end{aligned}
+$$
+根据上节的讨论，$C_{abcd}$ 具有和 $W_{abcd}$ 相同的对称性与反对称性，所以
+$C_{abcd}$ 也可以看做是两个 2 形式的张量积，在 Minkowski 空间中，2 形式的基为:
+\begin{align}
+\label{2formbasis}
+\boldsymbol{t}\wedge\boldsymbol{x},\  \boldsymbol{t}\wedge\boldsymbol{y},\ 
+\boldsymbol{t}\wedge\boldsymbol{z},\  \boldsymbol{y}\wedge\boldsymbol{z},\ 
+\boldsymbol{z}\wedge\boldsymbol{x},\  \boldsymbol{x}\wedge\boldsymbol{y}
+\end{align}
+那么双 2 形式的基就是上面的基的张量积，在这组基下，$C_{abcd}$ 可以写成矩阵形式:
+$$
+\begin{pmatrix}
+    \boldsymbol{E} & \boldsymbol{B}\\
+    \boldsymbol{H} & \boldsymbol{D}
+\end{pmatrix}
+$$
+其中 $\boldsymbol{E}$ 是 $E_{ab}$ 的矩阵形式，
+由于 
+$$
+*(\boldsymbol{t}\wedge\boldsymbol{x}) = \boldsymbol{y}\wedge\boldsymbol{z},
+\quad 
+*(\boldsymbol{t}\wedge\boldsymbol{y}) = \boldsymbol{z}\wedge\boldsymbol{x},
+\quad 
+*(\boldsymbol{t}\wedge\boldsymbol{z}) = \boldsymbol{x}\wedge\boldsymbol{y},
+$$
+$$
+*(\boldsymbol{y}\wedge\boldsymbol{z}) = -\boldsymbol{t}\wedge\boldsymbol{x},
+\quad 
+*(\boldsymbol{z}\wedge\boldsymbol{x}) = -\boldsymbol{t}\wedge\boldsymbol{y},
+\quad 
+*(\boldsymbol{x}\wedge\boldsymbol{y}) = -\boldsymbol{t}\wedge\boldsymbol{z}
+$$
+所以 $C^*_{abcd}$ 的矩阵形式为:
+$$
+\begin{pmatrix}
+    \boldsymbol{B} & -\boldsymbol{E}\\
+    \boldsymbol{D} & -\boldsymbol{H}
+\end{pmatrix}
+$$
+$^*C_{abcd}$ 的矩阵形式为:
+$$
+\begin{pmatrix}
+    \boldsymbol{H} & \boldsymbol{D}\\
+    -\boldsymbol{E} & -\boldsymbol{B}
+\end{pmatrix}
+$$
+$^*C_{abcd}^*$ 的矩阵形式为:
+$$
+\begin{pmatrix}
+    \boldsymbol{D} & -\boldsymbol{H}\\
+    -\boldsymbol{B} & \boldsymbol{E}
+\end{pmatrix}
+$$
+根据 $C_{abcd}$ 的对称性，反对称性，迹零性质可以有一下结论：
+\begin{itemize}
+    \item $\boldsymbol{E}, \boldsymbol{D}$ 是对称的，$\boldsymbol{H} =
+        \boldsymbol{B}^T$. (由于 $C_{abcd}$ 的对称性)
+    \item $\mathrm{tr}(\boldsymbol{E}) + \mathrm{tr}(\boldsymbol{H}) = 0$.
+    \item $\boldsymbol{E}$ 是迹零的，$\boldsymbol{H}, \boldsymbol{D}$ 是对称的。
+        $\boldsymbol{D} = -\boldsymbol{E}^T$.
+\end{itemize}
+所以 $C_{abcd}$ 的矩阵形式可以简化为:
+$$
+\begin{pmatrix}
+    \boldsymbol{E} & \boldsymbol{B}\\
+    \boldsymbol{B} & -\boldsymbol{E}
+\end{pmatrix}
+$$
+其中 $\boldsymbol{E}$ 和 $\boldsymbol{B}$ 是对称且迹零的。
+
+\section{线性 Bel 分解}
+在真空中 $R_{ab} = 0$，$R_{abcd} = W_{abcd}$，而 $C_{abcd}$ 是 Wely 张量的微分，
+$R_{abcd}$ 满足 Bianchi 恒等式， $C_{abcd}$ 也满足 Bianchi 恒等式:
+$$
+\nabla_{[a}C_{bc]de} = 0
+$$
+根据前面的讨论，$C_{abcd}$ 可以写成矩阵形式:
+$$
+\begin{pmatrix}
+    \boldsymbol{E} & \boldsymbol{B}\\
+    \boldsymbol{B} & -\boldsymbol{E}
+\end{pmatrix}
+$$
+那么在矩阵形式下，Bianchi 恒等式可以写成:
+\begin{align}
+    \boldsymbol{\dot{E}} + \mathrm{curl}\boldsymbol{B} = 0\\
+    \boldsymbol{\dot{B}} - \mathrm{curl}\boldsymbol{E} = 0
+\end{align}
+满足:
+$$
+\mathrm{div}\boldsymbol{E} = 0, \quad \mathrm{div}\boldsymbol{B} = 0
+$$
+上述方程称为线性 Einstein-Bianchi 方程。
+称对称，迹零且散度为零的张量为 TSD 张量。
+显然上述方程的解 $\boldsymbol{E}, \boldsymbol{B}$ 是 TSD 张量且属于 $H(curl,
+\mathbb{M})$，其中 $\mathbb{M}$ 是 $3\times 3$ 实矩阵空间。
+对于 $\boldsymbol{A} \in H(curl, \mathbb{M})$，
+\begin{itemize}
+    \item $\mathrm{curl}\boldsymbol{A}$ 散度为 0。
+    \item $\boldsymbol{A}$ 对称那么 $\mathrm{curl}\boldsymbol{A}$ 迹为 0。
+    \item $\boldsymbol{A}$ 是 TSD 张量，那么 $\mathrm{curl}\boldsymbol{A}$ 也是
+        TSD 张量。
+\end{itemize}
+
+\section{平面引力波与线性 Einstein-Bianchi 方程} 
+在前述的平面波情况下，度量的微小扰动 $h_{ab}$ 可以写为:
+$$
+h_{ab} = A_{ab}f(k_cx^c)
+$$
+其分量形式为:
+$$
+h_{\mu\nu} = 
+\begin{pmatrix}
+  0 & 0 & 0 & 0\\
+  0 & A^{+} & A^{\times} & 0\\
+  0 & A^{\times} & -A^{+} & 0\\
+  0 & 0 & 0 & 0
+\end{pmatrix}
+f(\boldsymbol{k}\cdot\boldsymbol{x})
+$$
+其中 $\boldsymbol{k} = (k, 0, 0, k)$，$\boldsymbol{x} = (t, x, y, z)$。
+那么 $C_{abcd}$ 的分量可以如下计算:
+$$
+\begin{aligned}
+C_{\alpha1\beta1}=-\frac12\partial_{\alpha}\partial_{\beta}h_{11}=-\frac12k_{\alpha}k_{\beta}A^{+}f^{\prime\prime}(k_{c}x^{c}),\\C_{\alpha2\beta2}=-\frac12\partial_{\alpha}\partial_{\beta}h_{22}=\frac12k_{\alpha}k_{\beta}A^{+}f^{\prime\prime}(k_{c}x^{c}),\\C_{\alpha1\beta2}=-\frac12\partial_{\alpha}\partial_{\beta}h_{12}=-\frac12k_{\alpha}k_{\beta}A^{\times}f^{\prime\prime}(k_{c}x^{c})
+\end{aligned}
+$$
+其中 $\alpha, \beta = 0, 3$, 其余分量为零。
+对应的 $\boldsymbol{E}, \boldsymbol{B}$ 为:
+$$
+E_{\mu\nu} = C_{0\mu0\nu} = 
+\begin{pmatrix}
+    -A^{+} & -A^{\times} & 0\\
+    -A^{\times} & A^{+} & 0\\
+    0 & 0 & 0
+\end{pmatrix}
+\frac{k^2}{2}f^{\prime\prime}(\boldsymbol{k}\cdot\boldsymbol{x})
+$$
+$$
+B_{\mu\nu} = C_{0\mu0\nu}^* =
+\begin{pmatrix}
+    -A^{\times} & A^{+} & 0\\
+    A^{+} & A^{\times} & 0\\
+    0 & 0 & 0
+\end{pmatrix}
+\frac{k^2}{2}f^{\prime\prime}(\boldsymbol{k}\cdot\boldsymbol{x})
+$$
+显然这样定义的 $\boldsymbol{E}, \boldsymbol{B}$ 是 TSD 张量，且满足线性
+Einstein-Bianchi 方程。
+
+
+\end{document}

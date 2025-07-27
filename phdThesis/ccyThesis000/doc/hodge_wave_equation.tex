@@ -1,0 +1,1126 @@
+
+%!TEX program = xelatex
+% 完整编译: xelatex -> biber/bibtex -> xelatex -> xelatex
+\documentclass[lang=cn,a4paper,newtx]{elegantpaper}
+\usepackage{tikz-cd}
+
+\title{有限元外微分学习笔记}
+\author{陈春雨 \\ 湘潭大学\ 数学与计算科学学院}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{无界算子}
+
+\subsection{对偶算子}
+考虑 Hilbert 空间 $U, V$ 之间的算子 $T$，其定义域为 $D(T) \subseteq U$。对于任意的
+$v \in V$，可以定义一个 $U$ 上的线性泛函:
+\begin{align}
+\label{linearfunction0}
+u \to \langle v, Tu \rangle_V
+\end{align}
+当这个泛函有界，根据 Riesz 表示定理，存在唯一的 $v^* \in V^*$ 使得
+$$
+\langle v, Tu \rangle_V = \langle v^*, u \rangle_U
+$$
+定义 $v$ 到 $v^*$ 的映射为 $T^*$，即
+$$
+\langle v, Tu \rangle_V = \langle T^* v, u \rangle_U
+$$
+那么 $T^*$ 的定义域 $D(T^*)$ 为所有令 \eqref{linearfunction0} 有界的 $v$.
+
+\subsection{闭算子}
+考虑 Hilbert 空间 $U, V$ 之间的算子 $T$，可以定义 $T$ 的图为: $G(T) = \{(u, Tu) \in U \times V\} \subseteq U \times V$.
+\begin{definition}
+    若 $G(T)$ 是 $U \times V$ 的闭子集，则称 $T$ 是闭算子.
+\qed
+\end{definition}
+在 $D(T)$ 上可以定义一个范数:
+$$
+\|u\|_{G(T)} = \|Tu\|_V + \|u\|_U
+$$
+称为图范数. 那么有以下定理:
+\begin{theorem}
+    $T$ 是闭算子当且仅当 $D(T)$ 配备图范数 $\|\cdot\|_{G(T)}$ 是 Banach 空间. 
+\end{theorem}
+
+根据定义 $G(T^*)$ 属于 $V\times U$，可以定义图 $G(T)$ 的一个旋转:
+$$
+\tilde{G}(T) := \{(-y, x) \mid (x, y) \in G(T)\} 
+$$
+那么 $\tilde{G}(T)$ 也是 $V \times U$ 的子集。有以下性质:
+\begin{property}
+    当 $D(T)$ 在 $U$ 上稠密时，
+    $$
+    \tilde{G}(T^*) = G(T)^{\perp}
+    $$
+\end{property}
+
+根据这个性质可知：当 $T$ 稠密定义时，$T^*$ 是闭算子。更进一步的，有以下性质:
+\begin{property}
+    若 $T$ 是稠密闭算子的，那么 $T^*$ 也是稠密闭算子。
+\end{property}
+\begin{proof}
+    $D(T^*)$ 稠密的充要条件是 $D(T^*)^{\perp} = \{0\}$.
+    现在任取 $v \perp D(T^*)$，那么 $(0, v) \perp \tilde{G}(T^*)$, 所以
+    $(0, v) \in G(T)$，所以 $v = T0 = 0$.
+    所以 $D(T^*)^{\perp} = \{0\}$.
+\end{proof}
+为了研究 $T$ 的性质，我们需要研究 $T^{**}$：
+\begin{property}
+    若 $T$ 是稠密闭算子，那么 $T^{**} = T$.
+\end{property}
+\begin{proof}
+    因为 $T$ 是闭算子，所以 $G(T) = \tilde{G}(T^*)^{\perp}$. $T^*$ 也是闭算子，
+    所以 $G(T^*) = \tilde{G}(T^{**})^{\perp}$. $T^{**}$ 也是闭算子，所以
+    $G(T^{**}) = \tilde{G}(T^{*})^{\perp} = G(T)$. 因为 $T$ 的图和 $T^{**}$ 的图相同，
+    所以 $T = T^{**}$.
+\end{proof}
+所以 $T$ 是稠密闭算子等价于 $T^*$ 是稠密闭算子。
+
+算子的像空间 $R(T)$ 的闭性与算子方程 $Tu = v$ 的适定性密切相关，一个算子的核空间 
+一定是闭的。我们有以下定理:
+\begin{theorem}
+    \label{theorem:range_perp}
+    若 $T$ 是稠密闭算子，那么:
+    $$
+    R(T)^{\perp} = N(T^*)
+    $$
+\end{theorem}
+关于 $T$ 像空间闭性，有如下的验证方式:
+\begin{theorem}
+    若 $T$ 是稠密闭算子，且 $T$ 有下界:
+    $$
+    \inf_{u \in D(T)} \frac{\|Tu\|_V}{\|u\|_U} = \alpha > 0 
+    $$
+    那么 $R(T)$ 是闭的。
+\end{theorem}
+\begin{theorem}
+    稠密闭算子的像如果是闭的，那么其对偶算子的像也是闭的。
+\end{theorem}
+
+\begin{theorem}
+    \label{theorem:finite_dimensional_quotient_space}
+    若 $T$ 是闭算子，商空间 $V/R(T)$ 有限维，那么 $R(T)$ 是闭的。
+\end{theorem}
+
+\begin{theorem}
+    \label{theorem:compact_embedding}
+    若 $T$ 是闭算子，其定义域 $D(T)$ 配备图范数后紧嵌入到 $U$ 中，那么 $R(T)$ 是闭的。
+\end{theorem}
+
+\section{Hilbert 复形}
+
+考虑如下复形:
+$$
+W_0 \xrightarrow{d_0} W_1 \xrightarrow{d_1} W_2 \xrightarrow{d_2} \cdots
+\xrightarrow{d_{n-1}} W_n
+$$
+其中 $W_i$ 是 Hilbert 空间，$d_i$ 是 $W_i$ 到 $W_{i+1}$
+的\textbf{稠密闭线性算子}，
+lbert满足 $d_{i+1} \circ d_i = 0$. 上述复形称为 Hilbert 复形。
+$d_i$ 的定义域 $D(d_i) := V_i$ 是 $W_i$ 的子空间, 定义 $d_i$ 的对偶算子
+$d_{i+1}^* : W_{i+1} \to W_i$，定义域为 $D(d_i^*) = V_i^*$，对应的对偶复形为:
+$$
+W_0 \xleftarrow{d_1^*} W_1 \xleftarrow{d_2^*} W_2 \xleftarrow{d_3^*} \cdots
+\xleftarrow{d_{n}^*} W_n
+$$
+\begin{note}
+    $d_i$ 的对偶算子是 $d_{i+1}^*$, 不是 $d_i^*$.
+\qed
+\end{note}
+因为 $d_i$ 是闭算子，所以可以定义如下定义域复形:
+$$
+\begin{aligned}
+V_0 \xrightarrow{d_0} V_1 \xrightarrow{d_1} V_2 \xrightarrow{d_2} \cdots
+\xrightarrow{d_{n-1}} V_n\\
+V_0^* \xleftarrow{d_1^*} V_1^* \xleftarrow{d_2^*} V_2^* \xleftarrow{d_3^*} \cdots 
+\xleftarrow{d_{n}^*} V_n^*
+\end{aligned}
+$$
+其中 $V_i, V_i^*$ 配备图内积，
+$$
+\|v\|_{V_i} = \|d_i v\|_{V_{i+1}} + \|v\|_{W_i}, \quad
+\|v^*\|_{V_i^*} = \|d_i^* v^*\|_{V_{i-1}^*} + \|v^*\|_{W_i}
+$$
+\begin{note}
+    在定义域复形中，$d_i$ 和 $d_i^*$ 是有界算子。
+\qed
+\end{note}
+定义 $\mathfrak{B}_k$ 为 $d_{k-1}$ 的像空间，$\mathfrak{Z}_k$ 为 $d_{k}^*$ 的核空间，
+根据 $d_{k+1} \circ d_k = 0$，有 $\mathfrak{B}_k \subseteq \mathfrak{Z}_{k}$.
+定义
+$\mathcal{H}_k = \mathfrak{Z}_k/\mathfrak{B}_{k}$ 为复形的 $k$-次调和空间。
+若 $\mathfrak{B}_k$ 是闭的，那么称这个 Hilbert 复形是\textbf{闭的}。
+若 $\mathcal{H}_k$ 是有限维的，那么称这个 Hilbert 复形是 \textbf{Fredholm} 的。
+根据定理 \ref{theorem:finite_dimensional_quotient_space} 可知 \textbf{Fredholm
+复形是闭的。}
+
+对于 Hilbert 复形的对偶复形，同样可以定义 
+$\mathfrak{B}_k^* = N(d_{k+1}^*)$, 
+$\mathfrak{Z}_k^* = R(d_k)$, 
+根据定理 \ref{theorem:range_perp} 可知:
+\begin{theorem}
+对于一个 Hilbert 复形，有
+$$
+\mathfrak{B}_k^{\perp} = \mathfrak{Z}_{k}^*, \quad \mathfrak{Z}_k^{\perp} =
+\mathfrak{\bar B}_{k}^*,\quad 
+\mathfrak{B}_k^{*\perp} = \mathfrak{Z}_{k}, \quad \mathfrak{Z}_k^{*\perp} =
+\mathfrak{\bar B}_{k}
+$$
+\end{theorem}
+\subsection{调和形式}
+定义 $k$-次调和形式为 $\mathfrak{H}_k = \mathfrak{Z}_k \cap \mathfrak{Z}_k^*$.
+根据
+$$
+\mathfrak{H}_k = \mathfrak{Z}_k \cap \mathfrak{B}_{k}^{\perp}
+$$
+当 Hilbert 复形是闭的时，$\mathfrak{H}_k$ 其实与 $\mathcal{H}_k$ 同构。
+
+定义空间 $V_k \cap V_k^*$ 的范数为:
+$$
+\|v\|_{V_k\cap V_k^*} = \|d_k v\|_{W_{k+1}} + 2\|v\|_{W_k} + \|d_k^* v\|_{W_{k-1}}
+$$
+
+\begin{definition}
+    若 $V_k\cap V_k^*$ 紧嵌入于 $W_k$ 中，那么称 Hilbert 复形是\textbf{紧的}。
+\end{definition}
+
+\begin{theorem}
+    若 Hilbert 复形是紧的，那么 $\mathfrak{H}_k$ 是有限维的，即 Hilbert 复形是 Fredholm 的。
+\end{theorem}
+\begin{proof}
+    定义算子 $T_k$ 为 $d_k$ 的限制在 $D(T_k) = V_k\cap \mathfrak{Z}_k^\perp$
+    上的算子。因为 $\mathfrak{Z}_k^{\perp} = \mathfrak{B}_k^{*} \subseteq 
+    \mathfrak{Z}_k^{*} \subseteq V_k^*$，所以 $D(T_k) \subseteq V_k \cap V_k^*$.
+    在 $D(T_k)$ 上图范数与 $V_k\cap V_k^*$ 上的范数等价，所以根据定理
+    \ref{theorem:compact_embedding} 可知 $R(T_k) = \mathfrak{B}_{k+1}$ 是闭的。
+
+    所以 $\mathcal{H}_k$ 与 $\mathfrak{H}_k$ 同构，在 $\mathfrak{H}_k$ 上
+    $V_k\cap V_k^*$ 范数和 $W_k$ 上的范数相等，所以 $\mathfrak{H}_k$ 上的单位球
+    $B$ 在 $W_k$ 上是闭的，由于 $V_k\cap V_k^*$ 紧嵌入于 $W_k$ 中，所以
+    $B$ 在 $W_k$ 上是相对紧的，所以 $B$ 是紧的，所以 $\mathfrak{H}_k$ 是有限维的。
+\end{proof}
+
+\subsection{Hodge 分解与 Poincar\'e 不等式}
+Hodge 分解是复形的一个重要性质，在 Hilbert 复形中，
+$$
+\mathfrak{Z}_k = \mathfrak{\bar B}_{k} \oplus \mathfrak{H}_k, \quad
+W_k = \mathfrak{Z}_k \oplus \mathfrak{Z}_k^{\perp}
+$$
+所以有:
+\begin{theorem}
+$$
+\begin{aligned}
+W_k & = \mathfrak{\bar B}_{k} \oplus
+\mathfrak{H}_k \oplus \mathfrak{\bar B}_{k}^{*}\\
+V_k & = \mathfrak{\bar B}_{k} \oplus \mathfrak{H}_k 
+\oplus \mathfrak{Z}_{k}^{\perp_{V_k}}
+\end{aligned}
+$$
+\end{theorem}
+当 $\mathfrak{B}_k$ 是闭的，可以得到 Poincar\'e 不等式:
+\begin{theorem}
+    若 Hilbert 是闭的，那么对于任意的 $v \in \mathfrak{Z}_k^{\perp_{V_k}}$，有
+    $$
+    \|v\|_{W_k} \leq C\|d_k v\|_{W_{k+1}}
+    $$
+\end{theorem}
+\begin{proof}
+  $d_k$ 可以认为是 $\mathfrak{Z}_k^{\perp_{V_k}}$ 到 $\mathfrak{B}_{k+1}$
+  的线性有界双射算子，因为 $\mathfrak{B}_{k+1}$ 是闭的，
+  根据 Banach 定理，$d_k$ 存在有界逆算子，结果成立。
+\end{proof}
+
+\subsection{$\mathbb{R}^3$ 空间中的 $L^2$ 复形}
+考虑 $\mathbb{R}^3$ 空间中的 $L^2$ 复形:
+$$
+0 \to L^2(\Omega) \xrightarrow{d_0} L^2(\Omega; \mathbb{R}^3) \xrightarrow{d_1} 
+L^2(\Omega; \mathbb{R}^3) \xrightarrow{d_2} L^2(\Omega) \to 0
+$$
+其中 $d_0 = \mathrm{grad}$, $d_1 = \mathrm{curl}$, $d_2 = \mathrm{div}$.
+$d_0$ 的定义域为 $H^1(\Omega)$，$d_1$ 的定义域为 $H(\mathrm{curl}; \Omega)$,
+$d_2$ 的定义域为 $H(\mathrm{div}; \Omega)$. 
+$d_i$ 都是稠密闭算子，所以可以得到定义域复形:
+$$
+\mathbb{R} \to H^1(\Omega) \xrightarrow{d_0} H(\mathrm{curl}; \Omega) 
+\xrightarrow{d_1} H(\mathrm{div}; \Omega) \xrightarrow{d_2} L^2(\Omega) \to 0
+$$
+对应的对偶复形为:
+$$
+0 \leftarrow L^2(\Omega)/\mathbb{R} \xleftarrow{-\mathrm{div}} 
+H_0(\mathrm{div}; \Omega) \xleftarrow{\mathrm{curl}}
+H_0(\mathrm{curl}; \Omega) \xleftarrow{-\mathrm{grad}} H^1(\Omega)_0 \leftarrow 0
+$$
+
+可以证明 $H^1(\Omega) \cap L^2(\Omega)/\mathbb{R}$ 紧嵌入于 $L^2(\Omega)$ 中，
+$H(\mathrm{curl}; \Omega) \cap H_0(\mathrm{div}; \Omega)$ 和 
+$H(\mathrm{div}; \Omega) \cap H_0(\mathrm{curl}; \Omega)$ 
+紧嵌入于 $L^2(\Omega; \mathbb{R}^3)$ 中，
+所以该复形是紧的，也是 Fredholm 的。
+因此可以对 $L^2$ 空间进行 Hodge 分解:
+$$
+L^2(\Omega; \mathbb{R}^3) = \mathrm{grad} H^1(\Omega) \oplus \mathrm{curl}
+H_0(\mathrm{curl}; \Omega) \oplus \mathfrak{H}^1
+$$
+$$
+L^2(\Omega; \mathbb{R}^3) = \mathrm{grad} H^1_0(\Omega)\oplus \mathrm{curl}
+H(\mathrm{curl}; \Omega) \oplus \mathfrak{H}^2
+$$
+
+\section{Hodge-Laplace 方程}
+令 $(W, d)$ 为一个 Hilbert 复形，定义算子 
+$L_k = d_{k-1} d_{k}^* + d_{k+1}^* d_{k}$, $L$ 是一个 $W_k$ 到 $W_k$
+的算子，称为 Hodge-Laplacian 算子。其定义域为 
+$$
+D(L_k) = \{u\in V_k\cap V_k^* \mid d_{k} u \in V_{k+1}^* \cap V_{k+1}
+, d_{k}^* u \in V_{k-1}\cap V_{k-1}^*\} 
+$$
+
+考虑 Hodge-Laplace 方程 $L_k u = f$，其中 $f \in W_k$，$u \in D(L_k)$.
+显然 $L_k$ 的核空间是 $\mathfrak{H}^k$，所以
+方程解的唯一性与调和空间 $\mathfrak{H}^k$ 是否为 0 有关。
+另一方面，根据 $L_k$ 的定义，
+$$
+\langle L_k u,  v\rangle = \langle d_{k}^* u, d_{k}^* v\rangle + \langle
+d_{k} u, d_k v\rangle \quad \forall v \in V_k\cap V_k^*
+$$
+若取 $v \in \mathfrak{H}^k$，则有
+$$
+\langle L_k u, v\rangle = 0
+$$
+所以 $L_k$ 的像空间与 $\mathfrak{H}_k$ 正交，所以 $f$ 与 $\mathfrak{H}_k$ 
+问题才会有解。
+
+\subsection{Hodge-Laplace 方程的三种形式}
+Hodge-Laplace 方程有以下三种形式：
+
+\textbf{强形式}：给定 $f \in W_k$, 找到 $u \in D(L_k)\cap \mathfrak{H}_k^{\perp}$ 
+满足:
+$$
+L_k u = f-P_{\mathfrak{H}_k} f
+$$
+
+\textbf{Primal 弱形式}：给定 $f \in W_k$, 找到 $u \in V_k\cap V_k^*\cap \mathfrak{H}_k$ 满足:
+\begin{align}
+\langle du,  dv\rangle + \langle d^* u, d^* v\rangle = \langle
+f-P_{\mathfrak{H}_k} f, v\rangle \quad
+\forall v \in V_k\cap V_k^*
+\end{align}
+
+\textbf{Dual 弱形式}：给定 $f \in W_k$, 找到 $\sigma \in V_{k-1}, u \in V_k, p
+\in \mathfrak{H}_k$ 满足:
+\begin{align}
+    \langle \sigma,  \tau\rangle - \langle u, d \tau\rangle & = 0, \quad \forall \tau \in V_{k-1}\\
+    \langle d\sigma,  v\rangle + \langle du,  dv\rangle + \langle p,  v\rangle &
+    = \langle f, v\rangle, \quad \forall v \in V_k\\
+    \langle u,  p\rangle = 0, \quad q \in \mathfrak{H}_k.
+\end{align}
+
+这里简单讨论一下 $L_k$ 的性质。首先考察 $L_k$ 的像空间: $R(L_k)$，显然 $R(L_k) \perp
+\mathfrak{H}_k$:
+$$
+(\dd_{k-1} \dd_{k}^*u + \dd_{k+1}^* \dd_{k} u, h) = 
+(\dd_{k}^*u, \dd_{k}^* h) + (\dd_{k} u, \dd_{k} h) = 0 \quad \forall h \in \mathfrak{H}_k
+$$
+反之对于任意 $v \in W_k$ 做 Hodge 分解:
+$$
+v = \dd_{k-1} v_0 + \dd_{k+1}^* v_1 + h_0
+$$
+其中 $h_0 \in \mathfrak{H}_k$，再对 $v_0, v_1$ 做 Hodge 分解:
+$$
+v_0 = \dd_{k-2} v_{00} + \dd_{k}^* v_{01} + h_1, \quad 
+v_1 = \dd_{k} v_{10} + \dd_{k+2}^* v_{11} + h_2
+$$
+其中 $h_1 \in \mathfrak{H}_{k-1}$, $h_2 \in \mathfrak{H}_{k+1}$.
+所以 $v$ 可以写成:
+$$
+v = \dd_{k-1} \dd_{k}^* v_{01} + 
+\dd_{k+1}^* \dd_{k} v_{10} + h_0
+$$
+当 $v \in \mathfrak{H}_k^{\perp}$ 时，$h_0 = 0$，所以 $v \in R(L_k)$.
+所以 $R(L_k) = \mathfrak{H}_k^{\perp}$.
+
+现在考察 $L_k$ 的核空间: $N(L_k)$，显然 $\mathfrak{H}_k \subseteq N(L_k)$，
+反之对于任意 $u \in N(L_k)$，因为 $\mathfrak{B}^*_k \cap \mathfrak{B}_k =
+\{0\}$，所以 $\dd^* \dd u = 0, \dd \dd^* u = 0$，所以 $\dd u \in
+\mathfrak{Z}_{k}^*\cap \mathfrak{B}_k = \{0\}$，$\dd^* u \in \mathfrak{Z}_{k}
+\cap\mathfrak{B}_k^* = \{0\}$，所以 $\dd u = 0, \dd^* u = 0$，所以 $u \in 
+\mathfrak{H}_k$，所以 $N(L_k) = \mathfrak{H}_k$.
+
+所以 $L_k$ 是 $\mathfrak{H}_k^{\perp}$ 到 $\mathfrak{H}_k^{\perp}$ 的双射算子，
+所以强形式的解是存在唯一的，当且仅当右端与 $\mathfrak{H}_k$ 正交，解也与 $\mathfrak{H}_k$
+正交。
+
+关于这三种形式的关系，有以下定理:
+\begin{theorem}
+令 $f \in W_k$，$u \in W_k$ 是强形式的解当且仅当 $u$ 是 Primal 弱形式的解，此时
+令 $\sigma = d^* u, p = P_{\mathfrak{H}} f$，则 $(\sigma, u, p)$ 是 Dual 弱形式的解。
+反过来，若 $(\sigma, u, p)$ 是 Dual 弱形式的解，那么 $u$ 是 Primal
+弱形式的解，而且 $\sigma = d^* u, p = P_{\mathfrak{H}} f$.
+\end{theorem}
+
+方程是适定的：
+\begin{theorem}
+    若 $f \in W_k$，那么 Hodge-Laplace 方程存在唯一的 $u \in D(L_k)\cap
+    \mathfrak{H}_k^{\perp}$ 满足强形式。且有
+    $$
+    \|u\| + \|du\| + \|d^* u\| + \|d^* du\| + \|d d^* u\| + \| p\| \leq C\|f\|
+    $$
+    其中 $C$ 仅与 Poincar\'e 不等式中的常数有关。
+\end{theorem}
+\begin{proof}
+  $f = d^* du + d d^* u + p$，三项正交，所以只需证明：
+  $$
+  \|u\| + \|du\| + \|d^* u\|\leq C\|f\|
+  $$
+  定义乘积空间 $X = V_{k-1} \times V_{k} \times \mathfrak{H}_k$，定义 
+  $X$ 上的双线性型 $B$:
+  $$
+  B((\sigma, u, p), (\tau, v, q)) = \langle \sigma, \tau\rangle - 
+  \langle u, d\tau\rangle - \langle d\sigma, v\rangle - \langle du, dv\rangle
+  -\langle p, v\rangle - \langle u, q \rangle
+  $$
+  同样定义一个 $X$ 上的线性泛函 $F$:
+  $$
+  F((\tau, v, q)) = \langle f, v\rangle
+  $$
+  那么 dual 弱形式可以写成找到 $(\sigma, u, p) \in X$ 满足 
+  $$
+  B((\sigma, u, p), (\tau, v, q)) = F((\tau, v, q))\quad \forall (\tau, v, q) \in X
+  $$
+  根据 Lax-Milgram 定理，问题的适定性等价于如下 Inf-sup 条件:
+  $$
+  \inf_{(\sigma, u, p)\in X} \sup_{(\tau, v, q)\in X} \frac{B((\sigma, u, p),
+  (\tau, v, q))}{\|(\tau, v, q)\|_X\|(\sigma, u, p)\|_X} = \alpha > 0
+  $$
+  换成另一中语言为: 对于任意的 $(\sigma, u, p) \in X$，存在 $(\tau, v, q) \in X$，
+  使得：
+  $$
+  B((\sigma, u, p), (\tau, v, q)) \geq \alpha\|(\tau, v, q)\|_X\|(\sigma, u, p)\|_X
+  $$
+  为了找到这样的 $(\tau, v, q)$，现将 $u$ 分解为 $u = u_{\mathfrak{B}} +
+  u_{\mathfrak{H}} + u_{\mathfrak{B}^*}$，这三项分别是 $u$ 到对应空间的正交投影。
+  因为 $\mathfrak{B}^k$ 是 $d$ 的像空间，所以存在 
+  $\rho \in \mathfrak{Z}_{k-1}^{\perp}$，使得 $d\rho = u_{\mathfrak{B}}$.
+  根据 Poincar\'e 不等式，有
+  $$
+  \|\rho\|_V \leq c_p\|u_{\mathfrak{B}}\|
+  $$
+  令 
+  $$
+  \tau = \sigma - \frac{1}{c_p^2} \rho, \quad v = -u - d \sigma - p, \quad q = -p +
+  u_{\mathfrak{H}}.
+  $$
+  根据正交性，
+  $$
+  \|\tau\|_V + \|v\|_V + \|q\| \leq C(\|\sigma\|_V + \|u\|_V + \|p\|)
+  $$
+  带入到 $B$ 中，有
+  \begin{align}
+  \label{eq:binequality1}
+  B((\sigma, u, p), (\tau, v, q)) = \|\sigma\|^2 + 
+  \|d\sigma\|^2 + \|du\|^2 + \|p\|^2 + \|p\|^2 + \|u_{\mathfrak{H}}\|^2
+  + \frac{1}{c_p^2}\|u_{\mathfrak{B}}\|^2 - \frac{1}{c_p^2} \langle \sigma, \rho
+  \rangle
+  \end{align}
+  因为 $d u_{\mathfrak{B}^*} = du$ 根据 Poincar\'e 不等式，有
+  $$
+  \|u_{\mathfrak{B}^*}\| \leq c_p\|du\|
+  $$
+  根据 Cauchy-Schwarz 不等式，有
+  $$
+  \langle \sigma,  \rho\rangle \leq \|\sigma\|\|\rho\| \leq
+  \frac{c_p}{2}\|\sigma\|^2 + \frac{1}{2c_p^2}\|\rho\|^2 \leq
+  \frac{c_p}{2}\|\sigma\|^2 + \frac{1}{2}\|u_{\mathfrak{B}}\|^2
+  $$
+  将上面两个不等式带入 \eqref{eq:binequality1} 中，有
+  $$
+  \begin{aligned}
+    B((\sigma, u, p), (\tau, v, q)) & 
+    \geq \frac{1}{2}\|\sigma\|^2 + \|d\sigma\|^2 + \frac{1}{2} 
+    \|du\|^2 + \|p\|^2 + \|p\|^2
+    + \|u_{\mathfrak{H}}\|^2 + \frac{1}{2c_p^2}\|u_{\mathfrak{B}}\|^2\\
+    & \geq C (\|\sigma\|^2 + \|d\sigma\|^2 + \|du\|^2 + \|p\|^2 +
+    \|u_{\mathfrak{H}}\|^2 + \|u_{\mathfrak{B}}\|^2 +
+    \|u_{\mathfrak{B}^*}\|^2)\\
+    & = C(\|\sigma\|_V^2 + \|u\|_V^2 + \|p\|^2)\\
+    & \geq C'(\|\tau\|_V + \|v\|_V + \|q\|)(\|\sigma\|_V + \|u\|_V + \|p\|)
+  \end{aligned}
+  $$
+  定理得证。
+\end{proof}
+
+对于 $f \in W_k$ 定义 $Kf \in D(L)$ 满足:
+$$
+LKf = f - P_{\mathfrak{H}_k} f, Kf \perp \mathfrak{H}_k
+$$
+根据上面的定理，可知 $K$ 是 well-defined 而且是一个有界算子。令
+$\sigma = d^* Kf, p = P_{\mathfrak{H}_k} f, u = Kf$。 Hodge 投影
+$P_{\mathfrak{B}} = dd^*K, P_{\mathfrak{B}^*} = d^*dK$, $f$ 的分解为
+$$
+f = dd^*Kf + d^*dKf + P_{\mathfrak{H}_k} f
+$$
+
+\subsection{$\mathfrak{B}$ 问题与 $\mathfrak{B}^*$ 问题}
+现在假设 $f \in \mathfrak{B}_k$，那么存在 $g \in V_{k-1}$, $f = d_{k-1} g$，
+那么 Hodge-Laplace 方程:
+$$
+L_k u = f = \dd_{k-1} g = \dd_{k+1}^* \dd_{k} u + \dd_{k-1} \dd_{k}^* u
+$$
+那么可知 $\dd_{k+1}^* \dd_{k} u \in \mathfrak{B}_{k} \cap \mathfrak{B}_k^* =
+\{0\}$, 所以 $\dd_k u \in \mathfrak{Z}_{k+1}^* \cap \mathfrak{B}_{k+1} = \{0\}$. 
+所以 $\dd_k u = 0$，所以当 $f \in \mathfrak{B}_k$ 时，Hodge-Laplace 问题变为:
+找到 $u \in \mathfrak{H}_k^{\perp}\cap \mathfrak{Z}_k = \mathfrak{B}_k$ 满足:
+$$
+\dd_{k-1} \dd_{k}^* u = f - P_{\mathfrak{H}_k} f
+$$
+类似的也有 $\mathfrak{B}^*$ 问题: 当 $f \in \mathfrak{B}_k^*$ 时，Hodge-Laplace 问题变为:
+找到 $u \in \mathfrak{H}_k^{\perp}\cap \mathfrak{Z}_k^* = \mathfrak{B}_k^*$ 满足:
+$$
+\dd_{k+1}^* \dd_{k} u = f - P_{\mathfrak{H}_k} f
+$$
+
+
+
+\section{Hilbert 复形的有限维逼近}
+现在只考虑 Hilbert 复形 $(W, d)$ 的定义域复形 $(V, d)$ 中 $k-1$ 到 $k+1$
+三个空间:
+\begin{align}
+\label{threedomaincomplex}
+V_{k-1} \xrightarrow{d_{k-1}} V_k \xrightarrow{d_k} V_{k+1}
+\end{align}
+关于 primal 弱形式，其离散是有问题的，我们要求解在 $V_k\cap V_k^*\cap
+\mathfrak{H}_k^{\perp}$ 中，即找到有限维子空间 $V_k^h \subseteq V_k \cap V_k^* \cap
+\mathfrak{H}_k^{\perp}$，这会带来两个问题：
+一是 $\mathfrak{H}_k$ 是未知的，这样构造 $V_h\perp \mathfrak{H}_k$ 是困难的。
+另一方面，即使 $\mathfrak{H}_k = \{0\}$ 也会有问题，因为 $V_k\cap V_k^*$
+不是标准的 Sobolev 空间。如考虑二维 de Rham 复形:
+$$
+\mathbb{R} \to H^1(\Omega) \xrightarrow{\grad} H(\mathrm{curl}; \Omega)
+\xrightarrow{\curl} L^2(\Omega) \to 0
+$$
+其对偶复形为:
+$$
+0 \leftarrow L^2_0(\Omega) \xleftarrow{-\mathrm{div}} H_0(\mathrm{div}; \Omega)
+\xleftarrow{\mathrm{grad}} H_0^1(\Omega) \leftarrow 0
+$$
+考虑凹角区域上，$k=1$ 的 Hodge-Laplace 问题的 primal 弱形式：找到 
+$u \in H(\mathrm{curl}; \Omega)\cap H_0(\diver, \Omega): Y$ 满足:
+$$
+(\curl u, \curl v) + (\diver u, \diver v) = (f, v) \quad \forall v \in Y
+$$
+为了离散 $Y$，我们需要找到 $V_h \subseteq H(\mathrm{curl}) \cap H_0(\diver)$，
+$H(\mathrm{curl})$ 和 $H_0(\diver)$ 分别要求函数切向连续和法向连续，这样 $V_h$
+必须同时满足这两个条件，也就是说要求完全连续，所以 $V_h \in H^1(\Omega) \cap
+H_0(\diver): X$，显然 $X \subseteq Y$，且对于 $v \in X$，有
+$$
+\|v\|_X  = \|v\| + \|\grad v\| = \|v\| + \|\curl v\| + \|\diver v\| = \|v\|_Y
+$$
+所以 $X$ 是 $Y$ 的闭子空间。对于 $v \in X^{\perp} \cap Y$，$v \perp V_h$,
+所以 $V_h$ 无法逼近 $v$。
+
+\subsection{Dual 混合格式的离散}
+考虑 \eqref{threedomaincomplex} 的离散：
+$$
+V^{k-1}_h \xrightarrow{\dd_{k-1}} V^k_h \xrightarrow{\dd_k} V^{k+1}_h
+$$
+其中 $V_h^j$ 是 $V^j$ 的有限维子空间，
+类似于连续情况，我们可以定义像空间 $\mathfrak{B}^k_h = R(\dd^{k-1}_h)$，
+核空间 $\mathfrak{Z}^k_h = N(\dd^k_h)$，调和空间 $\mathfrak{H}^k_h =
+\mathfrak{Z}^k_h\cap \mathfrak{B}_h^{k, \perp}$, 
+那么有：$\mathfrak{B}^k_h \subseteq \mathfrak{B}^k$, 
+$\mathfrak{Z}^k_h \subseteq \mathfrak{Z}^k$，\textbf{但是一般来说
+$\mathfrak{H}^k_h$ 不是 $\mathfrak{H}_k$ 的子空间!} 因为 $\mathfrak{H}_k$
+要求与 $\mathfrak{B}^k$ 正交，而 $\mathfrak{H}^k_h$ 仅与 $\mathfrak{B}^k_h$
+正交。
+
+这样可以定义离散的 Hodge-Laplace 问题：找到 $\sigma_h \in V^{k-1}_h, u_h \in
+V^k_h, p_h \in \mathfrak{H}^k_h$ 满足:
+\begin{align}
+\label{dualdiscrete0}
+\langle \sigma_h, \tau_h\rangle - \langle u_h, \dd \tau_h\rangle & = 0, \quad \forall \tau_h \in V^{k-1}_h\\
+\label{dualdiscrete1}
+\langle \dd \sigma_h, v_h\rangle + \langle \dd u_h, \dd v_h\rangle + \langle p_h, v_h\rangle & = \langle f, v_h\rangle, \quad \forall v_h \in V^k_h\\
+\label{dualdiscrete2}
+\langle u_h, q_h\rangle & = 0, \quad \forall q_h \in \mathfrak{H}^k_h
+\end{align}
+在 primal 形式中，离散空间的定义必须正交与 $\mathfrak{H}_k$，而
+$\mathfrak{H}^k$ 是未知的，但是在 dual 形式中，我们只要求正交于
+$\mathfrak{H}_h^k$，$\mathfrak{H}^k_h$ 是已知的。
+
+由于 $\mathfrak{H}^k_h$ 不是 $\mathfrak{H}_k$ 的子空间，所以 dual
+混合格式并不是一个协调方法，需要对 $\mathfrak{H}^k_h$
+的非协调性进行额外处理。不过常见情况下 $\mathfrak{H}^k_h = \mathfrak{H}_k = 0$，
+这时 dual 混合格式是一个协调方法。\eqref{dualdiscrete} 的解是唯一的，若
+$(\sigma_h^0, u_h^0, p_h^0)$ 是 $f = 0$ 时 \eqref{dualdiscrete0}-\eqref{dualdiscrete2}
+的解，首先根据 \eqref{dualdiscrete2} 可知 $u_h^0 \in \mathfrak{H}_h^{k, \perp}$，
+然后令 $v_h = u_h^0, \tau_h = \sigma_h^0$，有
+$$
+\langle \sigma_h^0, \sigma_h^0\rangle - \langle \dd \sigma_h^0, u_h^0\rangle = 0
+\quad 
+\langle \dd \sigma_h^0, u_h^0\rangle + \langle \dd u_h^0, \dd u_h^0\rangle = 0
+$$
+所以 $\sigma_h^0 = 0, u_h^0 = 0$，所以 $(\sigma_h^0, u_h^0, p_h^0) = (0, 0, 0)$，
+所以解是唯一的。
+
+\subsection{离散复形的要求}
+对于离散复形 $(V_h, d_h)$，我们要求其满足三个条件：
+一是具有逼近性，二是原复形的子复形，三要和原复形之间有一个有界上链算子。
+
+\subsubsection{逼近性}
+$V_h^j$ 是一个关于 $h$ 的序列，为了 $\sigma, u$ 有一个逼近性，我们要求 $V_h^j, j
+\in \{k-1, k\}$ 满足:
+$$
+\lim_{h\to 0} \inf_{v_h\in V_h^j} \|v - v_h\| = 0 \quad \forall v \in V^j
+$$
+
+\subsubsection{子复形}
+$(V_h, d_h)$ 要求是 $(V, d)$ 的子复形:
+$$
+V_h^{k-1} \xrightarrow{d_{k-1}} V_h^k \xrightarrow{d_{k}} V_h^{k+1}   
+$$
+其中 $V_h^j$ 也是 Hilbert 空间，配备 $V^j$ 的范数，定义背景空间 $W_h^j = V_h^j$
+配备 $W^j$ 的范数，因为 $V_h^j$ 都是有限维的，所以 $(V_h, d_h)$ 是闭的。
+作为一个复形，$\mathfrak{B}_h^k \subseteq \mathfrak{Z}^k_h$，$\mathfrak{H}_h^k$
+
+定义 $\dd^{k}_h$ 为 $\dd^k$ 在 $V_h^k$ 上的限制，定义 $\dd^k_h$ 的对偶算子为
+$\dd^{k*}_h$，因为 $\dd^k_h$ 是有界的，所以 $V_k^{k*} = W_h^k = V_h^k$，
+注意: \textbf{$\dd_h^{k*}$ 不是 $\dd^{k*}$ 的限制，这导致 $V_h^{k*} \neq
+V_k^{k*}$，$\mathfrak{B}_h^{k*} \neq \mathfrak{B}^{k*}$，$\mathfrak{Z}_h^{k*}
+\neq \mathfrak{Z}^{k*}$}。
+
+与连续情况类似，离散复形也有 Hodge 分解：
+$$
+V_h^k = \mathfrak{B}_h^k \oplus \mathfrak{H}_h^k \oplus \mathfrak{B}_h^{k*}
+$$
+
+\subsubsection{有界上链算子}
+有界上链算子是有限元外微分的一种重要假设，它将离散复形和连续复形联系起来，
+可以根据连续复形的性质推导离散复形的性质。
+
+要求存在一个上链算子 $\pi_h^j: V^j \to V_h^j$，满足: $\pi_h^{j+1}\dd^j =
+\dd_h^j\pi_h^{j}$，且 $\pi_h^j$ 限制在 $V_h^j$ 上恒同算子。
+$$
+\begin{array}{c}
+\xymatrix{
+  V^{k-1} \ar[r]^-{\dd^{k-1}} \ar[d]^{\pi_h^{k-1}} & V^k \ar[r]^-{\dd^k}
+  \ar[d]^{\pi_h^k} & V^{k+1} \ar[d]^{\pi_h^{k+1}}   \\
+  V_h^{k-1} \ar[r]^-{\dd^{k-1}} & V_h^k \ar[r]^-{\dd^k} & V_h^{k+1}   }
+\end{array}
+$$
+算子要求在 $V^j$ 的范数下有界，即存在常数 $C$ 使得:
+$$
+\|\pi_h^j v\|_{V^j} \leq C\|v\|_{V^j} \quad \forall v \in V^j
+$$
+也可以要求在 $W^j$ 的范数下有界，即存在常数 $C$ 使得:
+$$
+\|\pi_h^j v\|_{W^j} \leq C\|v\|_{W^j} \quad \forall v \in V^j
+$$
+因为 $\pi_h$ 是上链算子，所以 $W$ 有界可以推出 $V$ 有界:
+$$
+\|\pi_h^j v\|_{V^j} = \|\pi_h^j v\|_{W^j} + \|d\pi_h^j v\|_{W^{j+1}} = 
+\|\pi_h^j v\|_{W^j} + \|\pi_h^j dv\|_{W^{j+1}} \leq C\|v\|_{W^j} + 
+C\|dv\|_{W^{j+1}} \leq C'\|v\|_{V^j}
+$$
+所以 $V$ 有界是比 $W$ 有界更弱的条件。注意上面出现的 $C$ 要求与 $h$ 无关。
+
+有界投影的存在可以得到一个拟最优逼近性，即对于任意 $v \in V^j$，有:
+$$
+\|v - \pi_h v\|_V = \|v - v_h + v_h - \pi_h v\|_V = \|v - v_h + \pi_h(v - v_h)\|_V
+= \|(I-\pi_h)(v - v_h)\|_V \leq C\|v - v_h\|_V
+$$
+其中 $C = \|I - \pi_h\| = \|pi_h\|$，上式对任意的 $v_h \in V_h^j$ 都成立，所以:
+$$
+\|v - \pi_h v\| \leq C\inf_{v_h\in V_h^j} \|v - v_h\|
+$$
+
+\subsubsection{离散 Poincar\'e 不等式}
+Poincar\'e 不等式是证明问题适定性的一个重要工具，对于离散复形，我们也能得到
+离散 Poincar\'e 不等式。
+\begin{theorem}
+对于 $v_h \in V_h^j\cap \mathfrak{Z}_h^{j\perp}$，有:
+$$
+\|v_h\|_V \leq C\|\pi_h^j\|\|dv_h\|_V
+$$
+\end{theorem}
+\begin{proof}
+    由于 $dv_h \in \mathfrak{B}_h^{j+1}\subseteq \mathfrak{B}^{j+1}$，所以存在
+    $v \in V^j\cap \mathfrak{Z}^{j\perp}$，使得 $dv_h = dv$，所以
+    $\dd v_h - \dd \pi_h v = \dd v_h - \pi_h \dd v = \dd v_h - \pi_h \dd v_h =
+    0$，所以 $v_h - \pi_h v \in \mathfrak{Z}_h^j$，所以 $v_h - \pi_h v$ 与 $v$
+    正交。
+    $$
+    \|v_h\|_V^2 = \langle v_h, v_h - \pi_h v\rangle_V + \langle v_h, \pi_h
+    v\rangle_V = \langle v_h, \pi_h v \rangle_V \leq \|\pi_h v\|_V\|v_h\|_V \leq
+    \|\pi_h\| \|v\| \|v_h\|_V \leq C\|\pi_h\| \|dv_h\|_V\| v_h\|_V
+    $$
+    定理得证。
+\end{proof}
+
+重申一下双线性型 $B$ 的定义:
+$$
+B((\sigma, u, p), (\tau, v, q)) = \langle \sigma, \tau\rangle - 
+\langle u, d\tau\rangle - \langle d\sigma, v\rangle - \langle du, dv\rangle
+-\langle p, v\rangle - \langle u, q \rangle
+$$
+所以：
+$$
+B((\sigma_h, u_h, p_h), (\tau_h, v_h, q_h)) = \langle \sigma_h, \tau_h\rangle -
+\langle u_h, \dd \tau_h\rangle - \langle \dd \sigma_h, v_h\rangle - \langle \dd
+u_h,
+\dd v_h\rangle - \langle p_h, v_h\rangle - \langle u_h, q_h \rangle
+$$
+
+根据 Poincar \'e 不等式，我们可以得到离散的 Hodge-Laplace 问题的适定性。
+\begin{theorem}
+    对于 $f_h \in V_h^k$，Hodge-Laplace 问题存在唯一解 $(\sigma_h, u_h, p_h) \in
+    V_h^{k-1}\times V_h^k \times \mathfrak{H}_h^k$，满足:
+    \begin{align}
+    \label{discrete0}
+    \langle \sigma_h, \tau_h\rangle - \langle u_h, \dd \tau_h\rangle & = 0, \quad \forall \tau_h \in V_h^{k-1}\\
+    \label{discrete1}
+    \langle \dd \sigma_h, v_h\rangle + \langle \dd u_h, \dd v_h\rangle + \langle p_h, v_h\rangle & = \langle f_h, v_h\rangle, \quad \forall v_h \in V_h^k\\
+    \label{discrete2}
+    \langle u_h, q_h\rangle & = 0, \quad \forall q_h \in \mathfrak{H}_h^k
+     \end{align}
+    且有
+    $$
+    \|\sigma_h\| + \|u_h\| + \|p_h\| \leq C\|f_h\|
+    $$
+    此外，$B$ 满足 Inf-sup 条件:
+    $$
+    \inf_{(\sigma_h, u_h, p_h)\in V_h^{k-1}\times V_h^k \times \mathfrak{H}_h^k}
+    \sup_{(\tau_h, v_h, q_h)\in V_h^{k-1}\times V_h^k \times \mathfrak{H}_h^k}
+    \frac{B((\sigma_h, u_h, p_h), (\tau_h, v_h, q_h))}{\|(\tau_h, v_h,
+    q_h)\|_V\|(\sigma_h, u_h, p_h)\|_V} = \alpha > 0
+    $$
+\end{theorem}
+ 
+\subsection{离散 Hodge-Laplace 问题的收敛性}
+对于协调算法，稳定性可以得到收敛性结果。但是当 $\mathfrak{H} \not=0$ 
+时，离散 Hodge-Laplace
+问题不是一个协调算法，要得到收敛性结果需要对非协调部分进行控制。
+非协调性的来源是 $\mathfrak{H}^k_h \not\subseteq \mathfrak{H}_k$，
+下面的定理给出了他们之间的关系。
+\begin{theorem}
+    假设有限元复形满足三个条件：逼近性，子复形，有界上链算子。那么有:
+    $$
+    \|q - P_{\mathfrak{H}_h^k} q\| \leq C\|q - \pi_h^k q\| \quad \forall q \in
+    \mathfrak{H}^k
+    $$
+    $$
+    \|q - P_{\mathfrak{H}^k} q\| \leq C\|q - \pi_h^k 
+    P_{\mathfrak{H}}q\| \quad \forall q \in \mathfrak{H}_h^k
+    $$
+\end{theorem}
+
+$$
+\|\sigma - \sigma_h\| + \|u - u_h\| + \|p - p_h\| 
+\leq \|\sigma - Q_{h}\sigma\| + \|u - Q_{h}u\| + \|p - Q_{h}p\| +  
+\|Q_h\sigma - \sigma_h\| + \|Q_h u - u_h\| + \|Q_h p - p_h\|
+$$
+其中 $Q_h$ 是 $V^k$ 到 $V_h^k$ 的 $V$ 内积正交投影算子。
+前三项的估计可以根据正交投影的稳定性得到，根据 $B$ 的 infsup 条件，
+后三项会被 $B$ 控制：
+$$
+\|Q_h\sigma - \sigma_h\| + \|Q_h u - u_h\| + \|Q_h p - p_h\|
+\leq \sup_{(\tau_h, v_h, q_h)\in V_h^{k-1}\times V_h^k \times \mathfrak{H}_h^k}
+\frac{B((\sigma_h - Q_h\sigma, u_h - Q_h u, p_h - Q_h p), (\tau_h, v_h, q_h))}
+{\|(\tau_h, v_h, q_h)\|_V}
+$$
+重申一下，$\sigma_h, u_h, p_h$ 是离散 Hodge-Laplace 问题的解：
+$$
+\begin{aligned}
+    \langle \sigma_h, \tau_h\rangle - \langle u_h, \dd \tau_h\rangle & = 0,
+    \quad \forall \tau_h \in V_h^{k-1}\\
+    \langle \dd \sigma_h, v_h\rangle + \langle \dd u_h, \dd v_h\rangle + \langle
+    p_h, v_h\rangle & = \langle f, v_h\rangle, \quad \forall v_h \in V_h^k\\
+    \langle u_h, q_h\rangle & = 0, \quad \forall q_h \in \mathfrak{H}_h^k
+\end{aligned}
+$$
+$\sigma, u, p$ 是 Hodge-Laplace 问题的解：
+$$
+\begin{aligned}
+    \langle \sigma, \tau\rangle - \langle u, \dd \tau\rangle & = 0,
+    \quad \forall \tau \in V^{k-1}\\
+    \langle \dd \sigma, v\rangle + \langle \dd u, \dd v\rangle + \langle
+    p, v\rangle & = \langle f, v\rangle, \quad \forall v \in V^k\\
+    \langle u, q\rangle & = 0, \quad \forall q \in \mathfrak{H}^k
+\end{aligned}
+$$
+所以我们有:
+$$
+\begin{aligned}
+B((& \sigma_h - Q_h\sigma, u_h - Q_h u, p_h - Q_h p), (\tau_h, v_h, q_h))\\
+& = B((\sigma - Q_h\sigma, u - Q_h u, p - Q_h p), (\tau_h, v_h, q_h)) + 
+\langle u,  q_h\rangle\\
+& \leq C(\|\sigma - Q_h\sigma\| + \|u - Q_h u\| + \|p - Q_h p\|
++\|P_{\mathfrak{H}_h^k} u\|)(\|\tau_h\|_V + \|v_h\|_V + \|q_h\|_V)\\
+\end{aligned}
+$$
+所以有:
+$$
+\|\sigma - \sigma_h\|_V + \|u - u_h\|_V + \|p - p_h\|_V
+\leq C(\|\sigma - Q_h\sigma\|_V + \|u - Q_h u\|_V + \|p - Q_h p\|_V+
+\|P_{\mathfrak{H}_h^k} u\|_V)
+$$
+前两项的估计可以根据正交投影的稳定性得到，第三项：
+$$
+\|p - Q_h p\|_V \leq \|p - \pi_h p\|_V \leq C\inf_{q_h \in V_h^k} \|p -
+q_h\|_V
+$$
+其中第一个不等式是两个调和空间之间的关系。现在估计 $\|P_{\mathfrak{H}_h^k}
+u\|_V$，因为 $u \in \mathfrak{H}^k$，所以 $u = u_{\mathfrak{B}} + u_{\perp}$，
+其中 $u_{\perp}\perp \mathfrak{Z}^k$，所以 $u_{\perp} \perp \mathfrak{Z}_h^k$，
+所以 $P_{\mathfrak{H}_h^k} u_{\perp} = 0$。所以:
+$$
+\begin{aligned}
+\|P_{\mathfrak{H}_h^k} u\|_V^2 & = \langle P_{\mathfrak{H}_h^k} u_{\mathfrak{B}}, 
+P_{\mathfrak{H}_h^k} u\rangle_V\\ 
+& = \langle u_{\mathfrak{B}}, P_{\mathfrak{H}_h^k} u\rangle_V\\
+& = \langle u_{\mathfrak{B}} - \pi_h u_{\mathfrak{B}}, P_{\mathfrak{H}_h^k}
+u\rangle_V\\
+&\leq C\inf_{v_h \in V_h^k} \|u_{\mathfrak{B}} - v_h\|_V\|P_{\mathfrak{H}_h^k}
+u\|_V\\
+\end{aligned}
+$$
+所以有：
+\begin{align}
+    \label{discreteconvergence}  
+    &\|\sigma - \sigma_h\|_V + \|u - u_h\|_V + \|p - p_h\|_V\\
+    &\leq C(\inf_{\tau_h \in V_h^{k-1}} \|\sigma - \tau_h\|_V + 
+        \inf_{v_h \in V_h^k} \|u - v_h\|_V + \inf_{q_h \in V_h^k} \|p
+        - q_h\|_V
+    + \inf_{v_h \in V_h^k} \|u_{\mathfrak{B}} - v_h\|_V)\nonumber
+\end{align}
+\section{Hodge-Wave 方程}
+在这一节中，我们考虑 Hodge-Wave 方程的离散问题，Hodge-Wave 方程与 Hodge-Laplace
+方程类似，如下：
+\begin{equation}
+\label{hodgewave}
+\begin{aligned}
+    u_{tt} - (\dd \delta + \delta \dd) u & = f
+\end{aligned}
+\end{equation}
+其中 $\delta = \dd^*$. 为了讨论其适定性，我们先给出 Hille-Yosida
+定理的一个推论：
+\begin{theorem}
+    令 $\mathcal{L}$ 是 Hilbert 空间 $X$ 上的一个自反算子，其定义域
+    $D(\mathcal{L})$ 是 $X$ 的稠密子空间，$F$ 属于 $C([0, T], X)$，且 $F$ 属于
+    $L^1((0, T); D(\mathcal{L}))$ 和 $W^{1,1}([0, T]; X)$ 之一，
+    $U_0 \in D(\mathcal{L})$，那么方程：
+    $$
+    \begin{aligned}
+        u'(t) + \mathcal{L}u(t) & = F(t)\\
+        u(0) & = u_0
+    \end{aligned}
+    $$
+    有唯一解 $u \in C^0([0, T], D(\mathcal{L}))\cap C^1([0, T], X)$。
+\end{theorem}
+根据这个定理，我们只需要研究算子 $\mathcal{L} = \dd \delta + \delta \dd$
+的反对称性。
+
+\subsection{抽象的Hodge-Wave 方程}
+令 $\sigma = \delta u, v = u_t, \beta = \dd u$，那么 Hodge-Wave
+方程变成如下形式：
+\begin{equation}
+    \label{abstracthodgewave}
+    \begin{aligned}
+        \sigma_t = \delta v\\
+        v_t = -\delta \beta - \dd \sigma + f\\
+        \beta_t = \dd v
+    \end{aligned}
+\end{equation}
+其中 $(\sigma, v, \beta) \in W^0\times W^1\times W^2 =: \boldsymbol{W}$，
+令 $\xi = (\sigma, v, \beta)$，那么 \eqref{abstracthodgewave} 可以写成
+\begin{equation}
+\label{abstracthodgewave1}
+\xi_t + \mathcal{L}\xi = F
+\end{equation}
+如果 $\xi \in C^0([0, T], D(\mathcal{L}))\cap C^1([0, T], \boldsymbol{W})$ 满足 
+\eqref{abstracthodgewave1}，那么称 $\xi$ 是 \eqref{abstracthodgewave} 的强解。
+关于强解的存在性，我们有如下定理：
+\begin{theorem}
+\label{abstracthodgewavetheorem}
+    令 $(W, d)$ 是一个 Hilbert 复形，定义域复形为 $(V, d)$ 是一个闭 Hilbert
+    复形。$\mathcal{L}$ 定义如 \eqref{abstracthodgewave1}，初值 $\xi_0 \in
+    D(\mathcal{L})$，那么存在唯一的 $\xi \in C^0([0, T], D(\mathcal{L}))\cap
+    C^1([0, T], \boldsymbol{W})$ 是 \eqref{abstracthodgewave1} 的强解。
+\end{theorem}
+\begin{proof}
+    关键是证明 $\mathcal{L}$ 是一个自反算子，即 $\mathcal{L}^* = -\mathcal{L}$。
+\end{proof}
+
+\subsection{混合 Hodge-Wave 方程}
+令 $\boldsymbol{V} : = V^0\times V^1\times W^2$，找到 
+$\xi \in C^0([0, T], \boldsymbol{V})\cap C^1([0, T], \boldsymbol{W})$ 满足:
+\begin{equation}
+    \label{mixedhodgewave}
+    \begin{aligned}
+        \langle \sigma_t, \tau\rangle &= \langle v, d\tau\rangle, \quad \forall \tau \in V^0\\
+        \langle v_t, \nu\rangle & = -\langle \beta \dd \nu \rangle  - \langle
+        \dd \sigma + f, \nu\rangle  \quad \forall \nu \in V^1\\
+        \langle \beta_t, \mu\rangle &= \langle \dd v, \mu\rangle  \quad \forall \mu \in W^2
+    \end{aligned}
+\end{equation}
+定义双线性型 $a$:
+$$
+a((\sigma, v, \beta), (\tau, \nu, \mu)) = -\langle v, d\tau\rangle + \langle
+\beta, \dd \nu\rangle + \langle \dd \sigma, \nu\rangle - \langle \dd v,
+\mu\rangle 
+$$
+那么弱混合形式的 Hodge-Wave 方程为: 找到 $\xi \in C^0([0, T],
+\boldsymbol{V})\cap C^1([0, T], \boldsymbol{W})$ 满足:
+\begin{equation}
+\label{mixedhodgewave1}
+(\xi_t, \tau) + a(\xi, \tau) = 0 \quad \forall \tau \in \boldsymbol{V}
+\end{equation}
+
+强解和弱解在定理 \ref{abstracthodgewavetheorem} 的假设下是等价的。
+
+\section{Hodge-Wave 方程的离散}
+现在考虑离散 Hodge-Wave 方程，我们需要定义离散复形 $\bV_h = V_h^0\times
+V_h^1\times V_h^2$ 是 $\bV$ 的有限维子空间，假设这三个空间的复形满足逼近性，
+子复形和存在有界上链算子。
+$$
+\begin{array}{c}
+\xymatrix{
+  V^{0} \ar[r]^-{d_{0}} \ar[d]^{\pi_h^{0}} & V^1 \ar[r]^-{d_1}
+  \ar[d]^{\pi_h^1} & W^{2} \ar[d]^{\pi_h^{2}}   \\
+  V_h^{0} \ar[r]^-{d_{0}} & V_h^1 \ar[r]^-{d_1} & V_h^{2}   }
+\end{array}
+$$
+
+\begin{lemma}
+    对于一个非负函数 $F \in C^0([0, T]), Q\in C^1([0, T])$，若有：
+    $$
+    \frac{\mathrm{d}}{dt}Q^2(t) \leq  F(t)Q(t)
+    $$
+    那么有：
+    $$
+    Q(t) \leq Q(0) + \frac{1}{2}\int_0^t  F(s) \dd s  \quad \forall t \in [0, T]
+    $$
+\end{lemma}
+离散的 Hodge-Wave 方程为：找到 $\xi_h := (\sigma_h, u_h, \rho_h) \in C^0([0, T],
+\bV_h)$ 满足：
+\begin{equation}
+\label{discretehodgewave}
+\begin{aligned}
+    \langle \sigma_{h, t}, \tau_h\rangle &= \langle u_h, d\tau_h\rangle, \quad \forall \tau_h \in V_h^0\\
+    \langle u_{h, t}, \nu_h\rangle & = -\langle \rho_h, \dd \nu_h \rangle  - \langle
+    \dd \sigma_h, \nu_h\rangle  \quad \forall \nu_h \in V_h^1\\
+    \langle \rho_{h, t}, \mu_h\rangle &= \langle \dd u_h, \mu_h\rangle  \quad \forall \mu_h \in V_h^2
+\end{aligned}
+\end{equation}
+且满足初始条件 $\xi_h(0) = \xi_{h, 0}$。重申双线性型 $a: \bV \times \bV \to
+\mathbb{R}$:
+$$
+a((\sigma, u, \rho), (\tau, v, \beta)) = -\langle u, d\tau\rangle + \langle
+\rho, \dd v\rangle + \langle \dd \sigma, v\rangle - \langle \dd u,
+\beta\rangle
+$$
+问题可以简单的写为：
+$$
+(\xi_{h, t}, \tau_h) + a(\xi_h, \tau_h) = 0 \quad \forall \tau_h \in \bV_h
+$$
+假设 $\xi$ 是 Hodge-Wave 方程的弱解，定义椭圆投影算子 $\Pi_h$:
+$$
+(\Pi_h \xi, \psi_h) + a(\Pi_h \xi, \psi_h) = (\xi, \psi_h) + a(\xi, \psi_h)
+\quad \forall \psi_h \in \bV_h
+$$
+现在考察 $\Pi_h$ 的收敛性，定义双线线性 $A: \bV_h \times \bV_h \to \mathbb{R}$:
+$$
+A((\sigma, u, \rho), (\tau, v, \beta)) = (\sigma, \tau) + (u, v) + (\rho, \beta)
++ a((\sigma, u, \rho), (\tau, v, \beta))
+$$
+显然 $A$ 是一致有界的，关于 $A$ 稳定性有以下结果：
+\begin{property}
+    假设 $\bV_h$ 满足子复形性质，那么 $A$ 满足 Inf-sup 条件，且下界为
+    $1/\sqrt{12}$。
+\end{property}I
+\begin{proof}
+$A$ 是对称的，所以我们只需要证明一个 Inf-sup 条件。对于任意的 $(\sigma_h, u_h,
+\rho_h) \in \bV_h$，定义 $(\tau_h, v_h, \beta_h) = (\sigma_h, u_h + d\sigma_h,
+\rho_h - \dd u_h)$，那么有:
+$$
+\begin{aligned}
+A((\sigma_h, u_h, \rho_h), (\tau_h, v_h, \beta_h)) & =
+A((\sigma_h, u_h, \rho_h), (\sigma_h, u_h, \rho_h)) + 
+A((\sigma_h, u_h, \rho_h), (0, d\sigma_h, -\dd u_h))\\
+& = \|\sigma_h\|^2 + \|u_h\|^2 + \|\rho_h\|^2 + (u, d\sigma_h) - (\rho_h, \dd
+u_h) + \|d\sigma_h\|^2 + \|\dd u_h\|^2\\
+&\geq \|\sigma_h\|^2 + \|u_h\|^2 + \|\rho_h\|^2 - \frac{1}{2}(\|d\sigma_h\|^2 +
+\|\dd u_h\|^2) + \frac{1}{2}(\|d\sigma_h\|^2 + \|\dd u_h\|^2) \\
+&\geq
+\frac{1}{2}(\|\sigma_h\|^2_V + \|u_h\|^2_V + \|\rho_h\|^2_W) = \frac{1}{2}\|(\sigma_h,
+u_h, \rho_h)\|_{\bV}
+\end{aligned}
+$$
+因为 $\|(\tau_h, v_h, \beta_h)\|_{\bV} \leq \sqrt{3}\|(\sigma_h, u_h,
+\rho_h)\|_{\bV}$，所以 Inf-sup 条件成立:
+$$
+A((\sigma_h, u_h, \rho_h), (\tau_h, v_h, \beta_h)) \geq
+\frac{1}{\sqrt{12}}\|(\sigma_h, u_h, \rho_h)\|_{\bV}\|(\tau_h, v_h,
+\beta_h)\|_{\bV}
+$$
+\end{proof}
+根据 Inf-sup 条件，我们可以得到 $\Pi_h$ 的拟最优收敛性：
+$$
+\|u-\Pi_h u\|_{\bV} \leq C \inf_{u \in \bV_h} \|u - u_h\|_{\bV}
+$$
+最后我们可以得到离散 Hodge-Wave 方程的收敛性：
+\begin{theorem}
+假设 $\bV_h$ 满足逼近性，子复形和有界上链算子，那么离散 Hodge-Wave
+方程的解 $\xi_h$ 满足：
+$$
+\|\xi - \xi_h\|_{L^{\infty}(\bV)} \leq \|\Pi_h \xi(0) - \xi_h(0)\| + 
+\|\Pi_h \xi - \xi_h\|_{L^{\infty}(\bV)} + (1+T)(\|\Pi_h\xi - \xi(0)\|_{\bV}
++ \|\Pi_h\xi_{,t} - \xi_{, t}\|_{L^1(\bV)})
+$$
+\end{theorem}
+\begin{proof}
+对于任意的 $\psi \in V_h$ 有：
+$$
+(\xi_{,t}, \psi) + a(\xi, \psi) =  (\xi_{h, t}, \psi) + a(\xi_h, \psi)
+$$
+所以有：
+$$
+(\xi - \Pi_h \xi, \psi) + a(\xi - \Pi_h \xi, \psi) = (\xi - \xi_h, \psi) + a(\xi
+- \xi_h, \psi)
+$$
+定义 $\epsilon_h = \Pi_h \xi - \xi_h$，那么有：
+$$
+(\epsilon_{h, t}, \psi) + a(\epsilon_h, \psi) = (\xi - \xi_h, \psi) + a(\xi -
+\xi_h, \psi)
+= (\Pi_h \xi_{,t} - \xi_{,t}, \psi) - (\Pi_h \xi - \xi, \psi)
+$$
+因为 $a(\epsilon_h, \psi) = 0 \forall \psi \in \bV_h$，所以有：
+$$
+\frac{1}{2} \frac{\mathrm{d}}{\mathrm{d}t}\|\epsilon_h\|^2_{\bV} =
+(\Pi_h \xi_{, t} - \xi_{, t}, \epsilon_h) - (\Pi_h \xi - \xi, \epsilon_h) \leq
+(\|\Pi_h \xi_{, t} - \xi_{, t}\| + \|\Pi_h \xi - \xi\|)\|\epsilon_h\|
+$$
+根据引理，我们有：
+$$
+\begin{aligned}
+\|\epsilon_h\|_{\bV} & \leq \|\epsilon_h(0)\|_{\bV} + \int_0^t
+(\|\Pi_h \xi_{, t} - \xi_{, t}\| + \|\Pi_h \xi - \xi\|) \mathrm{d}s \\
+& \leq \|\epsilon_h(0)\|_{\bV} + (1+T)(\|\Pi_h \xi_{,t} - \xi_{, t}\|_{L^1(\bV)}
++ \|\Pi_h \xi - \xi\|_{L^1(\bV)})
+\end{aligned}
+$$
+因为 $|f(t)| \leq |f(0)| + |\int_0^t f'(s) \mathrm{d}s|$，所以有：
+$$
+\|\epsilon_h\|_{\bV} \leq \|\epsilon_h(0)\|_{\bV} + (1+T)(\|\Pi_h \xi_{,
+t}(0) - \xi_{, t}(0)\|_{\bV} + \|\Pi_h \xi_{,t} - \xi_{,t}\|_{L^1(\bV)})
+$$
+取上式的上界，我们得到了定理的结论。
+\end{proof}
+
+\section{Linearized EB 方程}
+重申一下 Linearized EB 方程：
+\begin{equation}
+\label{lineareb}
+\begin{aligned}
+\dot{\bE} + \curl \bB & = \boldsymbol{0}\\
+\dot{\bB} - \curl \bE & = \boldsymbol{0}
+\end{aligned}
+\end{equation}
+满足如下限制条件：
+\begin{equation}
+\label{linearebconstraint}
+\diver \bE = 0, \quad \diver \bB = 0
+\end{equation}
+
+对 \eqref{lineareb} 添加一个变量 : $\sigma = -\int_{0}^t \diver \bE$，
+对于真解这一部分等于0。那么我们可以得到如下的方程：
+\begin{equation}
+    \label{lineareb1}
+    \begin{aligned}
+        \dot{\sigma} & = - \diver \bE\\
+        \dot{\bE} &= - \grad{\sigma} - \curl \bB\\
+        \dot{\bB} & = \curl \bE
+    \end{aligned}
+\end{equation}
+考虑三维可缩区域 $\Omega$，有以下复形：
+\begin{equation}
+\label{derhamotimer3complex}
+\begin{aligned}
+\mathring{H}^1(\mathbb{R}^3) \xrightarrow{\grad} 
+\mathring{H}(\curl, \mathbb{M}) \xrightarrow{\curl}
+L^2(\mathbb{M})
+\end{aligned}
+\end{equation}
+其中 $\mathbb{M} = \mathbb{R}^{3\times 3}$，
+现在在 $H^1(\mathbb{R}^3) \times H(\curl, \mathbb{M}) \times L^2(\mathbb{M})$
+上寻找 \eqref{lineareb1} 的解: $(\sigma, \bE, \bB)$。
+
+实际上 \eqref{derhamotimer3complex} 是如下复形与
+$\mathbb{R}^3$ 做张量积得到的：
+\begin{equation}
+\label{derhamcomplexonR3}
+\begin{aligned}
+\mathring{H}^1(\Omega) \xrightarrow{\grad}
+\mathring{H}(\curl, \Omega) \xrightarrow{\curl}
+L^2(\Omega)
+\end{aligned}
+\end{equation}
+\eqref{derhamcomplexonR3} 的离散是常见的 Lagrange-Nedelec-Raviart
+有限元复形：
+\begin{equation}
+\label{derhamcomplexonR3discrete}
+\begin{aligned}
+    \mathbb{P}_{k}\Lambda^0(\Omega) \xrightarrow{\grad}
+    \mathbb{P}_{k-1}\Lambda^1(\Omega) \xrightarrow{\curl}
+    \mathbb{P}_{k-2}\Lambda^2(\Omega)
+\end{aligned}
+\end{equation}
+
+另一种方法是引入变量 $\sigma = \int_{0}^t \diver \diver \bE$
+，那么我们可以得到如下的方程：
+\begin{equation}
+    \label{lineareb2}
+    \begin{aligned}
+        \dot{\sigma} & = \diver \diver \bE\\
+        \dot{\bE} &= - \grad\grad{\sigma} - \sym\curl \bB\\
+        \dot{\bB} & = \curl \bE
+    \end{aligned}
+\end{equation}
+这个方程有两种离散方式，一种是 Primal 混合元，令 
+$\sigma \in C^0([0, T], H^2(\Omega)), 
+\bB \in C^1([0, T], L^2(\Omega, \mathbb{S})), \bE \in H(\curl,
+\Omega, \mathbb{S})$，相关的复形为如下的 GradGrad 复形：
+\begin{equation}
+\label{gradgradcomplex}
+\begin{aligned}
+P_1(\Omega)\overset{\subset}{\operatorname*{\longrightarrow}}H^2(\Omega)\overset{\grad\grad}{\operatorname*{\longrightarrow}}H(\mathrm{curl},\Omega;\mathbb{S})\overset{\mathrm{curl}}{\operatorname*{\longrightarrow}}H(\mathrm{div},\Omega;\mathbb{T})\overset{\mathrm{div}}{\operatorname*{\longrightarrow}}L^2(\Omega;\mathbb{R}^3)\to0,
+\end{aligned}
+\end{equation}
+另一种是 Dual 混合元，令 $\sigma \in C^1([0, T], L^2(\Omega)), \bB \in 
+C^0([0, T], H(\sym\curl, \Omega, \mathbb{S})), \bE \in C^0([0, T],
+H(\diver\diver, \Omega, \mathbb{S}))$，相关的复形为如下的 divdiv 复形：
+\begin{equation}
+    \label{divdivcomplex}
+\begin{aligned}
+    RT\overset{\subset}{\operatorname*{\longrightarrow}}H^1(\Omega;\mathbb{R}^3)\overset{\mathrm{dev}\nabla}{\operatorname*{\longrightarrow}}H(\mathrm{sym}\operatorname{curl},\Omega;\mathbb{T})\overset{\mathrm{sym}\operatorname{curl}}{\operatorname*{\longrightarrow}}H(\mathrm{div}\operatorname{div},\Omega;\mathbb{S})\overset{\mathrm{div}\operatorname{div}}{\operatorname*{\longrightarrow}}L^2(\Omega)\to0.
+\end{aligned}
+\end{equation}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}

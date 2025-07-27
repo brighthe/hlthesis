@@ -1,0 +1,73 @@
+
+\section{stabfree}
+在虚单元方法（VEMs）中通常需要额外的稳定化项来确保离散双线性形式的强制性~\cite{BeiraoBrezziCangianiManziniEtAl2013,BeiraoBrezziMariniRusso2014}。局部稳定化项$S_K(\cdot, \cdot)$必须满足
+$$
+c_{*} |v|_{1,K}^2\leq S_K(v,v)\leq c^{*} |v|_{1,K}^2
+$$
+对于$v$属于虚单元空间的非多项式子空间，这影响了刚度矩阵的条件数，并引入了误差估计中的污染因子$\frac{\max\{1, c^*\}}{\min\{1, c_*\}}$ \cite{DassiMascotto2018,BeiraodaVeigaDassiRusso2017,Mascotto2018}。对于边界误差估计中的后验误差分析，稳定化项出现在边界误差估计器将误差边界化为残差误差估计器时的两侧 \cite{CangianiGeorgoulisPryerSutton2017}。
+
+在\cite{AntoniettiBerroneBorioDAuriaEtAl2022}中对各向异性多边形网格的后验误差分析中，稳定化项主导了误差估计器，使得各向异性后验误差估计器次优。稳定化项显著影响了VEM在Poisson特征值问题中的性能 \cite{BoffiGardiniGastaldi2020}，不恰当的稳定化项选择将产生无用的结果。针对非线性弹塑性变形问题 \cite{HudobivnikAldakheelWriggers2019} 和三维电磁界面问题 \cite{CaoChenGuo2023}，设计了特殊的稳定化项，但这些项不容易推广到其他问题。简而言之，不同偏微分方程需要精心选择稳定化项，以使VEM发挥良好作用，这是一项艰巨的任务，可能会降低其实用性。
+
+在文献\cite{BerroneBorioMarcon2021}中，基于虚单元函数梯度的高阶多项式投影，提出了一种不需要外部稳定化的线性虚单元方法（VEM）用于二维泊松方程。在这种方法中，投影中使用的多项式阶数取决于多边形的顶点数量和通常的几何形状。文献\cite{BerroneBorioMarcon2022}中的数值例子表明，在一般凸多边形网格上，\cite{BerroneBorioMarcon2021}中的VEM比\cite{BeiraodaVeigaBrezziMariniRusso2016}中的标准方法性能更好，特别是在各向异性椭圆问题上。
+
+然而，\cite{BerroneBorioMarcon2021}中的方法在高维度中构建不需要外部稳定化的VEM是困难的，并且其分析相对较为复杂。这促使我们以统一的方式构建任意维度和任意多项式阶数的不需要外部稳定化的VEM。
+
+为了实现这一目标，我们需要找到针对每个多面体$K$的有限维空间$\mathbb{V}(K)$和一个投影器$Q_K$，使得
+\begin{enumerate}[(C1)]
+    \item 在虚单元的形状函数空间$V_k(K)$中，存在范数等价关系
+    \begin{equation}\label{intro:gradVknormequiv}
+    \|Q_{K}\nabla v\|_{0,K}\eqsim \|\nabla v\|_{0,K} \quad \forall~v\in V_k(K)
+    \end{equation}
+    \item 对于$V_k(K)$中的$v$，投影$Q_{K}\nabla v$可以通过虚单元的自由度（DoFs）计算得到。
+\end{enumerate}
+在\eqref{intro:gradVknormequiv}中的隐藏常数与$K$的大小无关，但依赖于多项式的阶数、多面体的不规则性参数和几何维度；详情请参考第\ref{sec:meshcondition}节。
+
+我们可以选择$Q_{K}$为关于内积$(\cdot, \cdot)_K$的$L^2$正交投影器。范数等价关系\eqref{intro:gradVknormequiv}意味着空间$\mathbb{V}(K)$应该相对于虚单元空间$V_k(K)$足够大。在标准虚单元方法中，使用了$Q_{k-1}^{K}\nabla v$ \cite{BeiraodaVeigaBrezziMariniRusso2016}或$\nabla\Pi_k^{K}v$ \cite{BeiraoBrezziCangianiManziniEtAl2013,BeiraoBrezziMariniRusso2014,AhmadAlsaediBrezziMariniEtAl2013,AyusodeDiosLipnikovManzini2016}，其中$Q_{k-1}^{K}$是$L^2$正交投影器，投影到$(k-1)$阶多项式空间$\mathbb P_{k-1}(K; \mathbb{R}^d)$，$\Pi_k^{K}$是$H^1$投影算子，投影到$k$阶多项式空间$\mathbb P_{k}(K)$。然而，只有
+\[
+\|Q_{k-1}^{K}\nabla v\|_{0,K}\lesssim \|\nabla v\|_{0,K}, \quad \|\nabla\Pi_k^{K}v\|_{0,K}\lesssim \|\nabla v\|_{0,K}
+\]
+成立，而不是范数等价关系\eqref{intro:gradVknormequiv}，因此通常需要额外的稳定化项来确保离散双线性形式的强制性。
+
+为了消除额外的稳定化项，在对多面体$K$进行正则的单纯形剖分的基础上，我们在本文中使用$k$阶或$(k-1)$阶$H(\mathrm{div})$协调的宏有限元作为$\mathbb{V}(K)$，并将虚单元空间$V_k(K)$保持为常规的空间。
+
+我们首先在任意维度中，基于多面体$K$的单纯形剖分$\mathcal T_K$，构建了$H(\mathrm{div})$协调的宏有限元。形状函数空间$\mathbb{V}_{k}^{\rm div}(K)$是$k\geq1$时单纯形剖分$\mathcal T_K$上$k$阶Brezzi-Douglas-Marini（BDM）元素空间的子空间，并且对于$k=0$，是最低阶Raviart-Thomas（RT）元素空间，但有一些约束条件。为了确保对于虚单元函数$v\in V_k(K)$，$L^2$投影$Q_{K,k}^{\mathrm{div}}\nabla v$到空间$\mathbb{V}_{k}^{\rm div}(K)$是可计算的，我们要求$\mathrm{div}\boldsymbol{\phi}\in\mathbb P_{\max\{k-1,0\}}(K)$，并且对于$K$的每个$(d-1)$维面，$\boldsymbol{\phi}\cdot\boldsymbol{n}$是多项式，其中$\boldsymbol{\phi}\in\mathbb{V}_{k}^{\rm div}(K)$。基于这些考虑以及与$\mathbb{V}_{k}^{\rm div}(K)$相关的$H(\mathrm{div})$协调的宏有限元空间的直接分解，我们提出了$\mathbb{V}_{k}^{\rm div}(K)$的唯一解自由度，并建立了$L^2$范数等价关系。顺便提一下，我们使用了矩阵-向量语言来回顾文献\cite{ArnoldFalkWinther2006,Arnold2018}中的一个关于$(d-2)$-形式的协调有限元。
+
+在$Q_{K,k}^{\mathrm{div}}$的帮助下，我们在任意维度中推进了一个不需要外部稳定化的非协调VEM和一个协调VEM，用于解决二阶椭圆问题。事实上，这些VEM可以等价地重新构造为原始混合VEM。我们证明了范数等价关系\eqref{intro:gradVknormequiv}和不需要外部稳定化的VEM的良定义性，并得出了最优的误差估计。
+
+我们提供了数值实验来测试不需要外部稳定化的VEM的收敛速度、局部刚度矩阵的可逆性、组装时间以及刚度矩阵的条件数，这些VEM在与其他现有VEM相比具有竞争力。
+
+本文构建不需要外部稳定化的VEM的思路简单，并且可以扩展到更多的VEM和更多的偏微分方程。由于没有额外的稳定化项，这些VEM可能对工程界具有吸引力。不需要外部稳定化的VEM的更多优势将在未来的研究中探讨。另外，我们参考文献\cite{XuZhang2023}中关于三角形网格的不需要外部稳定化的VEM，\cite{CicuttinErnLemaire2019}中关于混合高阶方法的研究，以及
+\cite{YeZhang2020,AlTaweelWang2020,AlTaweelWang2020a,YeZhang2021,YeZhang2021a,AlTaweelWangYeZhang2021}
+中关于不需要外部稳定化的弱Galerkin有限元方法。
+
+
+
+\subsection{预备知识}
+\subsection{符号}
+设$\Omega\subset
+\mathbb{R}^d$为有界多面体。给定有界域$K\subset\mathbb{R}^{d}$和非负整数$m$，$H^m(K)$是定义在$K$上的常规Sobolev空间。相应的范数和半范数分别表示为$\Vert\cdot\Vert_{m,K}$和$|\cdot|_{m,K}$。按照惯例，令$L^2(K)=H^0(K)$。$(\cdot,
+\cdot)_K$表示$L^2(K)$上的标准内积。如果$K$为$\Omega$，我们将$\Vert\cdot\Vert_{m,K}$，$|\cdot|_{m,K}$和$(\cdot,
+\cdot)_K$简记为$\Vert\cdot\Vert_{m}$，$|\cdot|_{m}$和$(\cdot,
+\cdot)$。$H_0^m(K)$表示相对于范数$\Vert\cdot\Vert_{m,K}$的$\mathcal
+C_{0}^{\infty}(K)$的闭包，$L_0^2(K)$包含$L^2(K)$中所有均值为零的函数。对于整数$k\geq0$，符号$\mathbb
+P_k(K)$表示$K$上总次数不超过$k$的所有多项式的集合。令$\mathbb
+P_{-1}(K)=\{0\}$。对于Banach空间$B(K)$，记$B(K;
+\mathbb{X}):=B(K)\otimes\mathbb{X}$，其中$\mathbb{X}=\mathbb{R}^d$且$\mathbb{K}$为反对称矩阵的集合。记$Q_k^{K}$为$L^2$-正交投影到$\mathbb
+P_k(K)$或$\mathbb P_{k}(K;
+\mathbb{X})$上。记$\mathrm{skw}\boldsymbol{\tau}:=(\boldsymbol{\tau}-\boldsymbol{\tau}^{\intercal})/2$为张量$\boldsymbol{\tau}$的反对称部分。记$\#S$为有限集合$S$中的元素数量。
+
+给定$d$维多面体$K$，记$\Delta_j(K)$为$K$的所有$j$维面的集合，其中$j=0,1,\ldots,
+d-1$。令$\mathcal{F}(K):=\Delta_{d-1}(K)$和$\mathcal{E}(K):=\Delta_{d-2}(K)$。对于$\mathcal{F}(K)$中的$F$，记$\boldsymbol{n}_{K,F}$为指向$\partial
+K$的外法向量，若不引起混淆则简记为$\boldsymbol{n}_F$或$\boldsymbol{n}$。
+
+给定一个 $d$ 维的单纯形 $T$，
+令 $F_i\in\mathcal F(T)$ 表示与顶点 $\texttt{v}_i$ 对立的 $(d-1)$ 维面，$\boldsymbol n_i$ 表示面 $F_i$ 的单位外法向量，$\lambda_i$ 表示与顶点 $\texttt{v}_i$ 对应的点 $\boldsymbol x$ 的重心坐标，其中 $i=0, 1, \cdots, d$。
+显然 $\{ \boldsymbol n_1, \boldsymbol n_2, \cdots, \boldsymbol n_d \}$ 构成 $\mathbb R^d$ 的基，$\{\mathrm{skw}({\boldsymbol n_i\boldsymbol n_j^{\intercal}})\}_{1\leq i<j\leq d}$ 构成反对称空间 $\mathbb K$ 的基。
+对于 $F\in\mathcal F(T)$，令 $\mathcal{E}(F):=\{e\in\mathcal{E}(T): e\subset\partial F\}$。
+对于 $\mathcal E(F)$ 中的 $e$，记 $\boldsymbol{n}_{F,e}$ 为指向 $\partial F$ 的单位外法向量，但与 $F$ 平行。
+
+
+令 $\mathcal{F}(\mathcal T_K)$ 和 $\mathcal{E}(\mathcal T_K)$ 分别表示单纯形分割 $\mathcal T_K$ 的所有 $(d-1)$ 维面和 $(d-2)$ 维面的集合。定义
+\[
+\mathcal{F}^{\partial}(\mathcal T_K):=\{F\in\mathcal{F}(\mathcal T_K): F\subset\partial K\},\quad \mathcal{E}^{\partial}(\mathcal T_K):=\{e\in\mathcal{E}(\mathcal T_K): e\subset\partial K\}.
+\]

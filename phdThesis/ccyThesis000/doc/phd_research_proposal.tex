@@ -1,0 +1,449 @@
+%!TEX program = xelatex
+% 完整编译: xelatex -> biber/bibtex -> xelatex -> xelatex
+\documentclass[lang=cn,a4paper,newtx]{elegantpaper}
+
+\title{张量有限元研究计划书}
+\author{陈春雨 \\ 湘潭大学\ 数学与计算科学学院}
+
+\date{\zhdate{2024/9/18}}
+
+% 本文档命令
+\usepackage{array}
+\usepackage{fontspec}
+\newcommand{\ccr}[1]{\makecell{{\color{#1}\rule{1cm}{1cm}}}}
+
+\begin{document}
+
+\maketitle
+
+\section{研究背景}
+
+有限元方法\cite{brenner2008mathematical}是一种求解偏微分方程的数值方法，
+于20世纪50年代由Courant等人提出，
+我国的冯康院士独立于国外给出了有限元的严格数学理论基础。
+有限元方法的基本思想是将复杂求解区域分解为简单几何单元
+（如三角形、四边形、四面体、六面体等）组成的网格，在网格上建立具备合适连续性的
+分片多项式函数组成的有限元空间， 然后基于 Galerkin
+方法，将偏微分方程离散为代数方程组，通过求解代数方程组得到数值解。
+在应用方面因为有限元方法可以在复杂的物理区域上建立数值模型，适用于各种复杂的边界条件，
+所以在结构力学、传热学、流体力学、电磁场计算等领域都有广泛应用。
+
+有限元方法因为其完备且优雅的数学基础，在理论方面也得到广泛研究，特别是最近关于
+有限元外微分\cite{arnold2006finite, arnold2018finite}的研究，通过 Hilbert
+复形将一类的问题联系起来，使用上同调，Hodge 分解等代数拓扑中的工具研究 Hilbert 
+复形，给出一类问题的高效数值方法。
+有限元外微分的主要思想是构造与 Hilbert 复形对应的有限元复形,
+根据它们之间的有界上链投影算子，
+建立离散有限元复形的稳定性，收敛性理论\cite{arnold2010finite}，
+且有限元外微分技术易于推广到高次元情况，为构造稳定且精确的有限元方法提供了理论框架。
+基于这样的框架，很多悬而未决的问题被解决，如 divergence free 的 Stokes 元
+\cite{neilan2015discrete}，弹性复形中稳定的 $H(\mathbf{div}, \mathbb{S})$ 
+协调对称张量有限元\cite{hu2015finite, hu2015family}，可用于离散线性 
+Einstein-Bianchi 方程的 divdiv 有限元复形和 Hessian 有限元复形
+\cite{huliangma2022conforming, chen2024new, huliang2021conforming} 等。
+最近 Arnold, Kaibo Hu \cite{arnold2021complexes} 使用 
+Bernstein-Galfeld-Galfeld 序列
+给出了一种基于已有的有界 Hilbert 复形，重新构造新复形的方法，
+极大的扩展了有限元外微分的应用范围。
+
+%\subsection{$L^2$ Hilbert 复形}
+%Hessian 复形
+%$$
+%H^{q}\otimes \mathbb{R} \xrightarrow{\mathrm{hess}} H^{q-2}\otimes \mathbb{S}
+%\xrightarrow{\mathrm{curl}} H^{q-3}\otimes \mathbb{T} \xrightarrow{\mathrm{div}}
+%H^{q-4}\otimes \mathbb{R}^3 \rightarrow 0
+%$$
+%
+%$$
+%L^2\otimes \mathbb{R} \xrightarrow{\mathrm{hess}} L^2 \otimes \mathbb{S}
+%\xrightarrow{\mathrm{curl}} L^2 \otimes \mathbb{T} \xrightarrow{\mathrm{div}}
+%L^2 \otimes \mathbb{R}^3 \rightarrow 0
+%$$
+%
+%
+%
+%Hilbert 复形形式如下: 
+%$$
+%\cdots\to H^{q}\otimes\mathbb{W}^k\xrightarrow{D^k}H^{q}\otimes\mathbb{W}^{k+1}\to\cdots,
+%$$
+%其中 $\mathbb{W}^k$ 是一个有限维的内积空间，$H^{q}$ 是一个通常的 Sobolev 空间。
+%定义 domain 空间:
+%$$
+%H^{q}\mathbb{W}^k=\{u\in H^{q}\otimes\mathbb{W}^k, D^k u \in H^{q}\otimes\mathbb{W}^{k+1}\},
+%$$
+%那么可以得到一个以上 Hilbert 复形的 domain 复形：
+%$$
+%\cdots\to H^{q}\mathbb{W}^k\xrightarrow{D^k}H^{q}\mathbb{W}^{k+1}\to\cdots,
+%$$
+%$q = 0$ 时对应的是 $L^2$ Hilbert 复形，这是研究最广泛的 Hilbert 复形。
+
+有限元外微分中主要研究的是有界 Hilbert 复形，以 3 维 $L^2$ de Rham 复形为例:
+$$
+\mathbb{R} \xrightarrow{\subset} H^1(\Omega) \xrightarrow{\mathrm{grad}} H(\text{curl}, \Omega)
+\xrightarrow{\mathbf{curl}} H(\text{div}, \Omega) \xrightarrow{\mathbf{div}}
+L^2(\Omega) \rightarrow 0 
+$$ 
+其中 $\Omega$ 是 $\mathbb{R}^3$ 中的多面体区域. 将 $\Omega$ 剖分为单纯形网格
+$\mathcal{T}$，构造 $\mathcal{T}$ 上的
+有限元复形的关键之一是构造具有对应协调性的有限元，根据如下格林公式， 
+$$
+\begin{aligned}
+    (\mathrm{grad} u, \boldsymbol{v}) & = - (u, \mathbf{div} \boldsymbol{v}) +
+    (u\boldsymbol{v}\cdot \boldsymbol{n})_{\partial \Omega}\\
+    (\mathbf{curl} \boldsymbol{u}, \boldsymbol{v}) & = 
+    (\boldsymbol{u}, \mathbf{curl} \boldsymbol{v}) +
+    (\boldsymbol{n}\times \boldsymbol{u}, \boldsymbol{v})_{\partial \Omega}\\
+    (\mathbf{div} \boldsymbol{u}, v) & = - (\boldsymbol{u}, \mathrm{grad} v) +
+    (\boldsymbol{u}\cdot \boldsymbol{n}, v)_{\partial \Omega}
+\end{aligned}
+$$
+可知对于分片多项式函数 $u$ (向量函数 $\boldsymbol{u}$)， $H^1$
+协调性要求函数在整个网格上连续, $H(\text{curl})$ 协调性要求函数
+在两个相邻单元的面上切向分量连续, $H(\text{div})$
+协调性要求函数在两个相邻单元的面上法向分量连续。 常用的 $H^1$
+协调的有限元有 Lagrange 有限元、Hermite 有限元等， $H(\text{curl})$
+协调的有限元有第一类 Nedelec 有限元、第二类 Nedelec 有限元，
+$H(\text{div})$ 协调的有限元有 RT 有限元、BDM 有限元。
+
+从实现的角度来看，标量的 Lagrange 有限元基函数简单容易构造，
+而 $H(\text{curl})$ 和 $H(\text{div})$ 协调的有限元属于向量型有限元，
+其自由度相比于标量的 Lagrange 有限元复杂，基函数的构造也相对困难。
+传统的向量型有限元的基函数构造方式是在参考单元上构造基函数，然后 对于
+$H(\text{curl})$ 协调有限元使用协变 Piola 变换， 对于
+$H(\text{div})$ 协调有限元使用逆变 Piola 变换，
+将参考单元上的基函数映射到实际单元上，从而得到实际单元上的基函数。
+在 \cite{Chen2024GeometricDA} 中本人及合作者基于对 $k$
+次多项式空间的几何分解，给出了一种不需要映射的基函数构造方法，使用
+Lagrange 有限元基函数乘以不同的向量，对函数施加不同的连续性，可以得到 BDM
+元和第二类 Nedelec 元的基函数，与\cite{christiansen2018nodal}
+中 Hu-Zhang 元基函数构造方法类似。
+
+Stokes 复形是一个和 $L^2$ de Rham 复形类似的复形，三维的 Stokes 元复形如下:
+$$
+\mathbb{P}_1(\Omega) \xrightarrow{\subset} H^2(\Omega) \xrightarrow{\mathrm{grad}} 
+H^1(\text{curl}, \Omega)
+\xrightarrow{\mathbf{curl}} H^1(\Omega, \mathbb{R}^3) \xrightarrow{\mathbf{div}}
+L^2(\Omega) \rightarrow 0
+$$
+其中涉及的微分算子与 de Rham 复形一致，不同点在于 Stokes
+复形的空间正则性更高。对于不可压流体的数值求解 Stokes 复形有重要应用，
+其关键在于构造 Stokes 复形中的后两个空间对应的有限元，由于三维 $H^2$ 
+协调的有限元在顶点上要求 4 阶连续，所以对应的 $H^1$ 协调向量元要在顶点上 2 阶连续，
+$L^2$ 协调有限元在顶点上 1 阶连续。Neilan 在 \cite{neilan2015discrete} 
+中给出了对应的构造。最近 Hu, Lin, Wu 等人在\cite{hu2023construction} 
+构造了具有 $C^m$ 光滑性的有限元，
+为其他类型具有更高光滑性的有限元构造提供了理论基础。
+基于这样的光滑元，Chen, Huang\cite{chenhuangstokes2024} 构造了具有不同光滑性的 
+de Rham 有限元复形。需要说明的是，由于多项式的光滑性，
+更高光滑性的有限元需要把自由度更多的集中到顶点上，这导致了有限元的的次数升高，
+例如三维 $H^2$ 协调的有限元需要至少 9 次多项式，$H^3$ 协调的有限元需要至少 17 
+次多项式，这对显式基函数构造来说是一个挑战，本人在博士期间对此进行了研究，
+给出了一种\cite{hu2023construction}
+中光滑有限元基函数的构造方法，构造过程仅需要求解一个下三角矩阵的逆，
+这样的基函数结合\cite{Chen2024GeometricDA} 中构造 BDM 元，第二类 Nedelec 
+元基函数的方法，将光滑元基函数乘上不同的向量，
+对函数在网格单元的边界上施加不同的连续性，可以得到具有不同光滑性的 de Rham 
+有限元复形的基函数。
+
+%\subsection{弹性复形}
+除了 de Rham 复形外，三维空间中有三种基本的复形：弹性复形，Hessian 复形，divdiv
+复形。
+三维空间的弹性复形： 
+$$
+RM \xrightarrow{\subset} H^1(\Omega, \mathbb{R}^3) 
+\xrightarrow{\mathrm{def}} H(\mathbf{inc}, \Omega, \mathbb{S})
+\xrightarrow{\mathbf{inc}} H(\mathbf{div}, \Omega, \mathbb{S})
+\xrightarrow{\mathbf{div}} L^2(\Omega, \mathbb{R}^3) \rightarrow 0
+$$ 
+弹性复形在固体力学的数值模拟中有重要应用，
+在固体力学问题的数值求解中，常用方式是位移方法，以位移为未知量，
+通过位移的梯度计算应力与应变，但是对于粘弹性问题，塑性问题，位移法会出现一些问题，
+将应力和位移一起作为未知量的混合方法是一种合适的选择，其中位移属于 $L^2$ 空间，
+应力属于 $H(\text{div}, \mathbb{S})$ 空间，
+在1970年就提出了混合方法\cite{fraeijs1965displacement}，但是其对应的稳定的有限元方法一直没有解决，
+直至\cite{arnold2002mixed}中，Arnold 等人根据有限元外微分技术给出了一种稳定的有限元离散方法。
+根据格林公式，
+$$
+\begin{aligned}
+  (\mathbf{div} \boldsymbol{\sigma}, v) & = -(\boldsymbol{\sigma}, \mathrm{grad} v) +
+  (\boldsymbol{\sigma}\cdot \boldsymbol{n}, v)_{\partial \Omega}\\
+\end{aligned}
+$$ $H(\mathbf{div}, \mathbb{S})$ 协调的有限元要求
+$\boldsymbol{\sigma}$ 在两个相邻单元的边上法向分量连续，在\cite{hu2015family,
+hu2015finite}
+中 Hu, Zhang 提出了以 $\mathbb{P}_k(\mathbb{S})$ 为形函数空间的
+$H(\mathbf{div}, \mathbb{S})$ 协调的有限元: Hu-Zhang 元，其中由于
+$P_k(\mathbb{S})$
+的光滑性与对称性，使得有限元函数必须在顶点和边上施加额外的连续性。
+在\cite{chenhuang2022finitemc}中，Chen, Huang
+提出了一种 $H(\mathbf{inc}, \mathbb{S})$ 协调的有限元，与 Hu-Zhang
+元，$H^1$ 协调的 Neilan 元，一起组成第一个完整的三维弹性复形。
+
+%\subsection{{$\mathrm{div}\mathbf{div}$ 复形}}
+对于 Hessian 复形其最初在\cite{pauly2020divdiv}中被提出用于推导 
+$\mathbb{R}^3$ 中双调和问题的 Helmholtz 分解，Hessian 复形如下:
+$$
+\mathbb{P}_1(\Omega)\stackrel{\subset}{\longrightarrow}
+H^2(\Omega;\mathbb{R})\stackrel{\mathrm{hess}}{\longrightarrow}H(\mathrm{curl},\Omega;\mathbb{S})\stackrel{\mathrm{curl}}{\longrightarrow}H(\mathrm{div},\Omega;\mathbb{T})\stackrel{\mathrm{div}}{\longrightarrow}L^2(\Omega;\mathbb{R}^3)\longrightarrow0,
+$$
+Hu, Liang \cite{huliang2021conforming}
+提出了对应的 Hessian 有限元复形，与 Stokes 复形类似，
+$H^2$ 协调的有限元在顶点上 4 阶连续，在边上 2
+阶连续，因此后续的有限元需要有不同程度的更高连续性要求。
+
+$\mathrm{div}\mathbf{div}$ 复形是最近的研究热点，
+其可以用于双调和方程的混合元求解， 线性 Einstein-Bianchi 方程的求解。
+$\mathrm{div}\mathbf{div}$ 复形如下: 
+$$
+RT \xrightarrow{\subset} H^1(\Omega, \mathbb{R}^3) 
+\xrightarrow{\mathrm{dev}\ \mathrm{grad}} 
+H(\text{sym curl}, \Omega, \mathbb{T}) \xrightarrow{\mathrm{sym\ curl}} 
+H(\mathrm{div}\mathbf{div}, \Omega, \mathbb{S}) \xrightarrow{\mathrm{div}\mathbf{div}} L^2(\Omega) \rightarrow 0
+$$ 
+在双调和方程混合元方法中 未知量的 Hessian 值也被当做未知量，属于
+$H(\mathrm{div}\mathbf{div}, \mathbb{S})$ 空间，根据格林公式， 
+$$
+\begin{aligned}
+(\mathrm{div}\mathrm{div}\boldsymbol{\tau},v)_{K} & =
+(\boldsymbol{\tau},\nabla^{2}v)_{K} - 
+\sum_{F\in \partial K}\sum_{e\in \partial F}
+(\boldsymbol{n}_{F,e}^{\intercal}\boldsymbol{\tau}\boldsymbol{n},v)_{e}\\
+& - \sum_{F\in \partial K}
+[(\boldsymbol{n}^{\intercal}\boldsymbol{\tau}\boldsymbol{n},\partial_{n}v)_{F} 
+- (\boldsymbol{n}^{\intercal}\mathrm{div}\boldsymbol{\tau}+\mathrm{div}_{F}
+(\boldsymbol{\tau}\boldsymbol{n}),v)_{F}]
+\end{aligned}
+$$ 
+Chen, Huang
+\cite{Chenhuangdivdiv2020, chen2022finite} 
+提出了 $\boldsymbol{\sigma}$ 在面，边的法平面上连续，
+$\mathbf{div}_F(\boldsymbol{\sigma n})+\boldsymbol{n}^T 
+\mathbf{div}\boldsymbol{\sigma}$ 在面上连续的 $H(\mathrm{div}\mathbf{div},
+\mathbb{S})$ 协调的有限元，并在 \cite{chenhuangsiam2022finite}
+中推广到了任意维。需要说明的是，这个有限元在低维的单形上要求了函数值连续性，
+基于这个有限元，Hu, Liang, Ma \cite{huliangma2022conforming} 定义了对应的 $H^1$ 
+协调的有限元，$H(\text{sym curl}, \mathbb{T})$ 协调的有限元，
+共同组成了第一个完整的 $\mathrm{div}\mathbf{div}$ 有限元复形, 并将其应用于线性
+Einstein-Bianchi 方程，给出了线性 Einstein-Bianchi
+方程对偶公式的有限元离散格式。
+根据如下格林公式：
+$$
+(\mathrm{div}\mathbf{div}\boldsymbol{\sigma}, v) = 
+-(\boldsymbol{\sigma}, \mathrm{hess} v) +
+(\boldsymbol{\sigma}\cdot \boldsymbol{n}, \mathrm{grad} v)_{\partial \Omega}
++ (\mathrm{div}\boldsymbol{\sigma}\cdot \boldsymbol{n}, v)_{\partial \Omega}
+$$ 
+Hu, Ma, Zhang \cite{hu2021family}
+提出了一种 $H(\mathrm{div}\mathbf{div}, \mathbb{S})$ 协调且 
+$H(\mathbf{div}, \mathbb{S})$ 协调的有限元，满足
+$\boldsymbol{\sigma}\cdot \boldsymbol{n}$ 以及
+$\mathrm{div}\boldsymbol{\sigma}\cdot \boldsymbol{n}$
+在两个相邻单元的面上连续。这样的连续性更强，
+所以其也包含在顶点上的超光滑自由度。针对超光滑性的问题，最近在
+\cite{chen2024new} 中，
+作者通过重新分配自由度，将顶点上的自由度分配到边和面上，
+从而消去了顶点上的超光滑自由度，构造的 $H(\mathrm{div}\mathbf{div}, \mathbb{S})$
+协调有限元可以使用杂交化技术，作者将其应用于了双调和方程的混合元求解，此外，
+基于这个有限元，作者还给出了两个新的 divdiv 复形，
+其中的 $H^1(\Omega, \mathbb{R}^3)$ 协调的有限元分别是 Lagrange 元和 Hermite 元。
+
+这三个复形中涉及的 $H(\mathbf{inc}, \mathbb{S})$、$H(\mathbf{div}, \mathbb{S})$、
+$H(\mathrm{sym\ curl}, \mathbb{T})$、$H(\mathrm{div}\mathbf{div}, \mathbb{S})$
+协调有限元都是张量型有限元，自由度相比于向量型的有限元还要更加复杂，
+其基函数的构造也更加困难。对于向量型的有限元，尚且可以通过协变或逆变
+Piola 变换，
+将参考单元上的基函数映射到实际单元上，但是对于张量型的有限元，
+由于其复杂的连续性要求，类似的保持连续性的映射构造起来非常困难。 对于 Hu-Zhang 元,
+在\cite{christiansen2018nodal}，使用了 Lagrange
+基函数乘以不同的对称向量的方式，构造了其显式基函数，
+而且形式非常简单，实现起来也相对容易，在 \cite{hu2021family} 中作者对于
+$H(\mathrm{div}\mathbf{div}, \mathbb{S})\cap H(\mathbf{div}, \mathbb{S})$
+协调的有限元， 给出了二维的构造方法。
+但是其他的张量型有限元目前还没有显式的基函数构造，这对将这些新型张量有限元
+和基于它们设计出来的数值离散格式应用到实际问题中是一个障碍。
+从\cite{christiansen2018nodal, Chen2024GeometricDA}中的方法出发，
+以\cite{Chenhuangdivdiv2020, chen2022finite}中的 
+$H(\mathrm{div}\mathbf{div}, \mathbb{S})$ 协调的有限元为例，
+假设 $\boldsymbol{\sigma} = \sigma \boldsymbol{M} \in
+\mathbb{P}_k(\mathbb{S})$，其中 $\boldsymbol{M}$ 是一个对称矩阵，那么
+$$
+\mathrm{div}_F(\boldsymbol{\sigma n}) + \boldsymbol{n}^T 
+\mathrm{div}\boldsymbol{\sigma} = 2\sum_{i=0}^{n-2}
+\boldsymbol{n}^T \boldsymbol{M} \boldsymbol{t}_{F, i} \frac{\partial
+\sigma}{\partial \boldsymbol{t}_{F, i}} + \boldsymbol{n}^T \boldsymbol{M}
+\boldsymbol{n} \frac{\partial \sigma}{\partial \boldsymbol{n}}
+$$
+所以对于
+$\mathrm{div}_F(\boldsymbol{\sigma n}) + \boldsymbol{n}^T 
+\mathrm{div}\boldsymbol{\sigma}$ 的连续性就可以转化为 $\sigma$
+的函数值和法向导数的连续性，因此使用具有特殊连续性的函数，
+乘上合适的对称矩阵来构造 $H(\mathrm{div}\mathbf{div}, \mathbb{S})$ 
+协调的有限元的基函数是可行的。
+这种方法可以推广到其他的张量有限元的基函数构造。
+
+另一方面，根据前面的介绍，由于协调性的要求，张量有限元经常会需要额外的连续性，如
+Hu-Zhang 元要求在顶点上连续，$H(\mathrm{div}\mathbf{div}, \mathbb{S})$
+协调的有限元要求在顶点和边的法平面上连续，
+而且以此构造的有限元复形会有更多的连续性要求，
+如 \cite{chenhuang2022finitemc} 中的弹性有限元复形中，
+$H(\mathbf{inc}, \mathbb{S})$ 协调的有限元在顶点上 1
+阶连续, $H^1$ 协调的有限元在顶点上 2 阶连续。类似的，
+\cite{huliangma2022conforming} 中的 $\mathrm{div}\mathbf{div}$
+有限元复形中，$H(\mathrm{sym\ curl}, \mathbb{T})$ 协调的有限元在顶点上
+1 阶连续，$H^1$ 协调的有限元在顶点上 2 阶连续。
+这些额外的连续性对有限元的设计来说是一个挑战，对算法实现来说也是一个挑战，
+在最近研究中，基于分布 Hilbert
+复形构造分布有限元，可以降低连续性要求，
+如对于弹性复形，\cite{christiansen2011linearization}
+中作者将 Regge calculus 解释为一种有限元称为 Regge 
+有限元，其中微分几何中的度量在 Regge
+弹性复形中是一个在边上切向切向连续的分片对称常值矩阵。
+Regee 有限元在 \cite{li2018regge} 中被推广到了高次情况，并将其应用于 Einstein 场方程的保结构离散。
+对于弹性问题的求解 \cite{pechstein2011tangential, pechstein2018analysis}中 TDNNS
+方法使用法向法向连续的对称张量离散应力，切向连续的函数离散位移，
+得到了稳定的弹性方程的混合元离散格式。
+在\cite{chen2024new}中，提出了一个分布 divdiv 有限元复形，构造了从 0
+次到任意次的有限元复形。最近在 \cite{hu2023distributional} 中作者将 Regge
+有限元的构造方式推广到了 Hessian 复形和 divdiv 复形，不过仅包含最低次的情况。
+在 \cite{chenhuang2023distributional} 中作者研究了 $\mathrm{curl div}$ 复形的分布有限元。
+这些分布有限元的构造方式可以降低连续性的要求，构造起来简单，方便应用于实际问题，
+具有重要的研究价值。
+
+这些新提出的有限元方法，尤其是张量有限元方法，很多都仅停留在理论研究方面，
+除 Hu-Zhang 元外，其他方法在实际问题中应用很少，甚至数值算例都很少见。
+当前我们国家大力推进工业软件，科学计算软件等方面的发展，
+有限元方法在工程领域有着广泛的应用，
+现在又有这些可以用于解决实际问题的新有限元方法，
+因此开发一套简单、易用且高效的开源张量有限元模块，
+将这些新提出的有限元方法高效的实现，并应用于实际问题中具有重要的意义。
+本人在博士期间深度参与了湘潭大学魏华
+{\CJKfontspec{SimSun} 祎}
+教授主导的开源软件 FEALPy 
+的研发，加之现如今各种开源高性能科学计算库的发展，
+如 Numpy，Pytorch，Jax 等，其提供了高效的张量计算功能，
+且 FEALPy 包含丰富的网格模块，有限元计算模块，
+因此基于 FEALPy 开发这样的模块是可行的。
+
+\section{研究目标}
+基于上述背景，本研究将围绕分布型的张量有限元理论，
+现有的张量型有限元显式基函数的构造，及相关算法的开源程序模块开发及应用展开研究。
+具体为以下几个方面：
+\begin{enumerate}
+    \item[(1)]
+        \textbf{分布型张量有限元方法的理论研究}。研究\cite{hu2023distributional} 
+        中提出的 Hessian ，divdiv 分布有限元复形，将这些复形推广到任意次，
+        构造更简单的有限元算法用于求解线性
+        Einstein-Bianchi 方程和双调和方程; 对提出的有限元方法的稳定性，
+        收敛性给出理论分析。
+    \item[(2)] \textbf{张量有限元显式基函数的构造}。
+        以 Bernstein 多项式为基础，研究 \cite{hu2023construction}
+        中提出的光滑元的基函数构造方法，并将其应用于
+        \cite{chenhuangstokes2024} 中提出的光滑 de Rham 有限元复形，
+        \cite{chenhuang2022finitemc, huliangma2022conforming} 中的
+        弹性有限元复形，$\mathrm{div}\mathbf{div}$
+        复形中的涉及的有限元的显式基函数构造；研究基函数构造的一般原理，
+        给出一种一般的有限元基函数构造方法。
+    \item[(3)] \textbf{线性 Einstein-Bianchi 方程和双调和方程的数值求解}。
+        将提出的有限元方法应用于线性 Einstein-Bianchi
+        方程和双调和方程的数值求解，使用典型例子设计数值实验
+        来验证算法的有效性，收敛性情况。
+    \item[(4)] \textbf{高性能张量有限元软件模块研制}。基于 Numpy，Pytorch 
+        Jax 等张量计算库以及开源软件 FEALPy 
+        研究如何使用数组化和面向对象的方式实现以上张量有限元方法，
+        进而设计高效易用的张量有限元模块，
+        充分发挥硬件性能的同时又易于算法工程师修改底层算法。
+        最后使用典型的双调和方程验证算法模块的有效性。
+\end{enumerate}
+
+\section{时间安排}
+\textbf{2025-2026年：} 针对 $H(\mathrm{div}\mathbf{div}, \mathbb{S}), H(\mathrm{sym\ curl},
+\mathbb{T})$
+协调有限元以及不同光滑性的 de Rham 有限元设计其显式基函数，
+给出基函数构造的基本原理，对一般的张量有限元基函数构造方式进行分析。
+设计完善张量有限元算法的程序模块，
+实现已经提出显式基函数的张量有限元，并使用 Stokes 问题，
+双调和方程中的典型问题进行验证。
+
+\textbf{2026-2027年：} 研究\cite{hu2023distributional} 
+中提出的 Hessian ，divdiv 分布有限元复形，将这些复形推广到任意次。
+设计可以用于求解线性 Einstein-Bianchi 方程的分布有限元方法; 
+对提出的有限元方法的稳定性，收敛性给出理论分析。
+
+
+\section{本人博士期间的研究情况}
+
+本人在博士期间主要的研究内容是虚单元方法和有限元方法。
+虚单元方法可以看做是有限元方法的扩展，可以定义在任意多边形，多面体区域上，
+但是由于其基函数是某个方程的解，没有显示表达式，因此其计算必须投影到多项式空间，
+这样就需要引入稳定化项。
+
+在虚单元方面，本人主要在提高虚单元光滑性，去除虚单元方法中的稳定化项，
+以及低正则性解的虚单元方法等方面进行了研究。
+本人及合作者给出了任意维任意次任意 $m\in \mathbb{N}$ 的 $H^m$
+协调虚单元\cite{chen2022conforming}， 其不含有超光滑的自由度，
+且对多项式次数 $k$ 的要求是
+$k\geq m$，小于 $H^m$ 协调有限元的要求
+$k\geq (m-1)2^d+1$。在\cite{chen2024virtual}中，本人及合作者基于有限元外微分，
+构造了多边形多面体上的宏元复形,
+将虚单元函数的梯度投影到宏元空间，可以去掉虚单元方法中的稳定化项。
+在\cite{chen2023anisotropic}中，最低次的 $H(\mathrm{curl})$
+协调虚单元与多边形剖分成的三角网格上最低次棱元同构，
+基于这个事实，本人及合作者分析了对于低正则性解，虚单元方法的最优收敛性。
+此外，根据虚单元方法对网格单元的要求较低的特点，本人及合作者提出了一种移动界面问题的
+虚单元方法，其优点是网格生成简单，且无需对上一个时间层的解在当前时间层的网格上
+进行插值。
+
+在有限元方法方面，本人主要对构造有限元基函数进行了研究。对于向量型有限元，
+基于对 $(\mathbb{P}_k)^d$ 的几何分解， 本人及合作者使用 Lagrange
+有限元基函数乘以不同的向量，对函数施加不同的连续性，
+提出了一种不需要映射的 BDM 元和第二类 Nedelec 元基函数的构造方法。
+此外，对于最近胡俊教授等人提出的任意维任意次光滑元构造\cite{hu2023construction}，
+本人及合作者基于\cite{chen2021geometric}中对光滑元的几何分解，
+给出了一种任意维任意次任意
+$r\in \mathbb{N}$ 的 $C^r$ 光滑有限元基函数的构造方法，
+其构造过程仅需要求解一个下三角矩阵的逆，且自由度形式与 Lagrange 元统一，
+易于实现。
+
+根据以上情况，本人基本具备了研究张量有限元的基本知识和技能，有能力完成本研究的目标，
+并且本人对有限元方法的研究有浓厚的兴趣，希望能够在这个领域做出一些有意义的工作。
+
+%\section{看的论文}
+%
+%\begin{enumerate}
+%\item
+%  有限元外微分
+%\item
+%  complex from complex
+%\end{enumerate}
+%
+%\section{问题}
+%
+%\begin{enumerate}
+%\item
+%  有限元外微分为什么能够提供稳定的有限元方法？其和 InfSup
+%  条件有什么关系？
+%\item
+%  为什么 divdiv 复形有这个版本： $$
+%   RT \xrightarrow{\subset} H^1(\Omega, \mathbb{R}^3) \xrightarrow{\mathrm{dev}\mathrm{grad}} 
+%   H(\text{sym curl}, \Omega, \mathbb{T}) \xrightarrow{\mathrm{sym\ curl}} 
+%   H(\mathrm{div}\mathbf{div}, \Omega, \mathbb{S}) \xrightarrow{\mathrm{div}\mathbf{div}} L^2(\Omega) \rightarrow 0
+%   $$ 还有这个版本： distributional divdiv complex $$
+%   RT \xrightarrow{\subset} H^1(\Omega, \mathbb{R}^3) \xrightarrow{\mathrm{dev}\mathrm{grad}} 
+%   H(\text{sym curl}, \Omega, \mathbb{T}) \xrightarrow{\mathrm{sym\ curl}} 
+%   L^2(\Omega, \mathbb{S}) \xrightarrow{\mathrm{div}\mathbf{div}} H^{-2}(\Omega) \rightarrow 0
+%   $$ 似乎还有这个版本： $$
+%   RT \xrightarrow{\subset} H^1(\Omega, \mathbb{R}^3) \xrightarrow{\mathrm{dev}\mathrm{grad}} 
+%   H(\text{sym curl}, \Omega, \mathbb{T}) \xrightarrow{\mathrm{sym\ curl}} 
+%   H(\mathrm{div}\mathbf{div}^{-1}, \Omega, \mathbb{S}) 
+%   \xrightarrow{\mathrm{div}\mathbf{div}} H^{-1}(\Omega) \rightarrow 0
+%   $$ 他们有什么关系？
+%\item
+%  构造 Hilbert
+%  复形对应的有限元复形的时候，要求他们之间要有一个上链投影算子，
+%  但是看很多文章都没有提到这个上链投影算子，这个是有什么理论保证其存在性么？
+%\end{enumerate}
+
+\bibliographystyle{unsrt}
+\bibliography{./ref}
+
+\end{document}
