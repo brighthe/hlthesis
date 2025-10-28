@@ -56,3 +56,6 @@ _minted*/
 
 # Build directories
 build/
+
+# Windows WSL Zone Identifier files
+*:Zone.Identifier
