@@ -1,0 +1,134 @@
+# LaTeX 编译生成的临时文件
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+# LaTeX 索引和术语表
+*.idx
+*.ilg
+*.ind
+
+# LaTeX 参考文献
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# LaTeX 其他辅助文件
+*.dvi
+*.ps
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+
+# LaTeX Beamer
+*.nav
+*.snm
+*.vrb
+
+# LaTeX 其他
+*.thm
+*.spl
+*.soc
+*.xdv
+*.fdb_latexmk
+*.synctex(busy)
+
+# 字体缺失日志
+missfont.log
+
+# 备份文件
+*~
+*.bak
+*.swp
+*.swo
+*~
+*.backup
+*.tmp
+
+# macOS 系统文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows 系统文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux 系统文件
+*~
+.directory
+
+# 编辑器临时文件
+# VSCode
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# TeXstudio
+*.txss
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# 压缩文件
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# 其他临时文件
+*.tid
+*.tms
+*.vrb
+*.xcp
+*.lol
+*.upa
+*.upb
+
+# latexmk
+*.fdb_latexmk
+
+# 目录特定的辅助文件
+body/*.aux
+preface/*.aux
+reference/*.aux
+figures/*.aux
+
+# 编译输出目录（如果使用）
+out/
+build/
+dist/

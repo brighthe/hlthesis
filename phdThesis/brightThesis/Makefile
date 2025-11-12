@@ -3,6 +3,7 @@
 ##########        Start Date: April.20 2019                 ##########
 ##########        Author: Wei Si                            ##########
 ##########        Email: siwei@smail.xtu.edu.cn      		##########
+##########        Modified for brightPhD                    ##########
 ##########                                                  ##########
 ######################################################################
 
@@ -14,7 +15,7 @@
 
 #### If you use this Makefile, please replace 'file' by your file name;
 
-file = LFHPhD
+file = brightPhD
 
 
 .PHONY: all
@@ -23,7 +24,7 @@ ifeq ($(file).tex, $(wildcard $(file).tex))
 	@-xelatex $(file).tex
 	@-bibtex $(file).aux
 	@-xelatex $(file).tex
-	@-evince $(file).pdf &
+	@-xelatex $(file).tex
 	clear
 else
 	clear
@@ -56,11 +57,19 @@ endif
 .PHONY: clean
 clean:
 	clear
-	@-rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *~ *.tid *.tms *.bak *.blg *.bbl *.nav *.snm *.vrb *.thm *.spl *.soc *.bcf *.xml *.synctex.gz
+	@-rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *~ *.tid *.tms *.bak *.blg *.bbl *.nav *.snm *.vrb *.thm *.spl *.soc *.bcf *.xml *.synctex.gz *.fdb_latexmk *.fls *.xdv *.gz
 	@-rm -f body/*.aux
 	@-rm -f reference/*.aux
 	@-rm -f preface/*.aux
+	@-rm -f figures/*.aux
+	@-rm -f missfont.log
 	@echo "Hint: Clean Out"
+
+
+.PHONY: cleanall
+cleanall: clean
+	@-rm -f $(file).pdf
+	@echo "Hint: Clean All (including PDF)"
 
 
 .PHONY: help
@@ -68,12 +77,12 @@ help:
 	clear
 	@echo "==================== A Common Makefile for Latex ===================="
 	@echo " Copyright (Latex)	2019	Wei Si"
+	@echo " Modified for brightPhD project"
 	@echo " The following targets are support"
 	@echo
-	@echo " all				- (== make) compile"
+	@echo " all				- (== make) compile the document"
 	@echo " vim				- edit the main file"
 	@echo " view				- view the pdf file"
-	@echo " clean			- clean all files from compiling"
-	@echo "========================== Version 1.0 =========================="
-
-
+	@echo " clean			- clean temporary files from compiling"
+	@echo " cleanall			- clean all files including PDF"
+	@echo "========================== Version 1.1 =========================="
