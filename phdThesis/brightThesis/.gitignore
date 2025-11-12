@@ -124,6 +124,8 @@ tramp
 
 # 目录特定的辅助文件
 body/*.aux
+body/*/*.aux
+body/*/*/*.aux
 preface/*.aux
 reference/*.aux
 figures/*.aux
