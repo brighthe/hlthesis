@@ -1,15 +1,146 @@
 % !TeX root = ../../brightPhD.tex
-\chapter{任意次与多单元族的拉格朗日有限元拓扑优化比较研究}
+\chapter{任意次多单元族拉格朗日有限元拓扑优化比较研究}
 \label{chap:lagrange_comparison}
 
 \section{引言}
 \label{sec:ch3_intro}
 
-本章研究任意次拉格朗日有限元在拓扑优化中的应用...
+拓扑优化是一类用于在给定设计域内优化材料分布的计算设计方法，旨在满足既定物理与几何约束的同时优化目标函数。其基本流程为 “分析—优化” 闭环：求解相应边值问题获得状态场，并据此更新设计变量以迭代逼近最优。在变密度法框架下，设计域由有限元方法离散，并将每个几何实体（如单元或节点）关联到一个设计变量（密度）$\rho\in[0,1]$。理想的二元拓扑设计满足 $\rho\in\{0,1\}$（$\rho=1$ 为实体相，$\rho=0$ 为空洞相），数值实现中则通过惩罚化材料插值、最小特征尺度控制与适当的优化策略，将连续松弛变量逐步逼近上述 0–1 结构（为数值稳定常取 $\rho\in[\rho_{\min},1]$，$\rho_{\min}>0$ 很小）。
+
+
+在传统拓扑优化中，常以低阶四边形或三角形单元离散设计域，虽实现简便、代价较低，但优化过程中易出现棋盘格与网格依赖性等数值病态，且边界呈现明显锯齿化特征，通常需配合过滤与投影以控制最小特征尺度并获得网格无关解。相较之下，高阶拉格朗日单元在可比自由度规模下具有更高的分析精度与更强的边界刻画能力，有望改善目标函数收敛与几何质量。鉴于此，本章在统一物理长度尺度的设定下（过滤半径 $⁡r_{\min}$ 在物理坐标系中统一设定），系统比较任意阶次 $k$ 与多单元族在拓扑优化中的表现。
+
+
+就设计变量布置而言，本文对比两类常用方案：其一，单元密度（每个单元一个密度变量，密度场间断），实现简单、装配直接，但更易诱发上述病态且分辨率受平均网格尺寸所限；其二，节点密度（每个节点一个密度变量，密度场连续），该做法在粗网格下可能出现 “岛化” 现象，但当位移分析采用高阶有限元（$k\geq2$）时，由于对层状材料分布的刚度评估更为准确，此类不利效应可显著缓解。尽管围绕上述两类表征已有大量工作，在统一最小特征尺度、求解与约束参数的前提下，针对不同网格类型与质量、不同单元族与任意阶 $k$ 的系统比较仍相对不足，且覆盖二维/三维同时并列评估单元密度与节点密度两类表征的综合性研究仍显缺失。本章即在这一统一框架下开展全面对比与量化评估。
 
 
 \section{线弹性问题的连续模型与变分形式}
-\label{sec:continuous_model}
 
-\subsection{基本假设}
-\label{subsec:assumptions}
+\subsection{线弹性理论的基本假设}
+
+结构拓扑优化中的状态方程通常采用经典小变形线弹性理论，其为柔顺度最小化等优化问题提供了明确的物理基础与数学结构。本节简要回顾该理论所依赖的标准假设\cite{bendsoeTopologyOptimization2004}
+\begin{enumerate}
+	\item 连续介质假设：将由离散原子、分子构成的真实材料在宏观尺度上理想化为连续、致密且可无限分割的介质。
+	
+	\item 小变形假设：假设结构在载荷作用下产生的位移和转动均是微小的，即位移梯度张量 $\nabla\boldsymbol{u}$ 的范数远小于 1，该假设带来两个关键简化：
+	\begin{enumerate}
+		\item 几何线性化：应变与位移的关系可由线性的几何方程描述。应变张量 $\boldsymbol{\varepsilon}$ 被定义为位移向量 $\boldsymbol{u}$ 的对称梯度：
+		\[
+		\boldsymbol{\varepsilon} = \frac{1}{2}(\nabla\boldsymbol{u} + (\nabla\boldsymbol{u})^T).
+		\]
+		\item 平衡方程简化：可忽略变形前后物体几何构型的差异，直接在未变形的初始构型上建立静力平衡方程。
+	\end{enumerate}
+	
+	\item 线性本构假设：假设材料的力学响应是线性的，即应力张量 $\boldsymbol{\sigma}$ 与应变张量 $\boldsymbol{\varepsilon}$ 之间服从广义胡克定律：
+	\[
+	\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon},
+	\]
+	其中 $\mathbb{C}$ 为四阶弹性刚度张量，包含了描述材料弹性特性的所有信息，且在该假设下被视为不依赖于应变的常数张量。
+	
+	\item 各向同性假设：假设材料的力学性质在所有方向上都是相同的。在此假设下，$\mathbb{C}$ 仅由两个独立的材料常数来完全决定，以拉梅常数 $\lambda$ 和 $\mu$ 表示：
+	\[
+	\boldsymbol{\sigma} = 2\mu\boldsymbol{\varepsilon} + \lambda\operatorname{tr}(\boldsymbol{\varepsilon})\boldsymbol{I},
+	\]
+	其中 $\operatorname{tr}(\boldsymbol{\varepsilon})$ 表示应变张量的迹，$\boldsymbol{I}$ 为二阶单位张量。
+\end{enumerate}
+
+工程实践中常用的材料参数体系包括：
+\begin{itemize}
+	\item 杨氏模量 $E$：描述材料在单轴拉伸或压缩时的刚度。
+	\item 泊松比 $\nu$：描述材料在单轴加载时横向应变与纵向应变的比值。
+	\item 拉梅第一常数 $\lambda$：主要出现在应力-应变关系的数学表述中，无直接的物理解释。
+	\item 剪切模量 $\mu$：描述材料抵抗剪切变形的能力，亦称拉梅第二常数。
+	\item 体积模量 $K$：描述材料在各向同性压力下的体积变化特性。
+\end{itemize}
+
+在经典三维各向同性线弹性理论中，上述材料参数之间存在如下转换关系：
+\[
+\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)},\quad \mu = \frac{E}{2(1+\nu)},\quad K = \frac{E}{3(1-2\nu)},
+\]
+反过来有
+\[
+E = \frac{\mu(3\lambda + 2\mu)}{\lambda + \mu},\quad \nu = \frac{\lambda}{2(\lambda + \mu)}.
+\]
+
+\subsection{线弹性问题的强形式}
+
+在不考虑时间效应的静态情况下，求解域 $\Omega$ 内的任意一点满足本构三类控制方程：
+
+\begin{enumerate}
+	\item 静力平衡方程：描述物体内任意点的内力平衡关系
+	\[
+	\operatorname{div}\boldsymbol{\sigma} + \boldsymbol{b} = \boldsymbol{0}
+	\quad\text{in }\Omega,
+	\]
+	其中 $\boldsymbol{b}$ 为体力密度向量。
+	
+	\item 几何方程：描述应变场与位移场之间的运动学关系
+	\[
+	\boldsymbol{\varepsilon}(\boldsymbol{u}) = 
+	\frac{1}{2}\bigl(\nabla\boldsymbol{u} + (\nabla\boldsymbol{u})^{\!\top}\bigr)
+	\quad\text{in }\Omega.
+	\]
+	
+	\item 本构方程：描述各向同性线弹性材料的应力–应变关系
+	\[
+	\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}
+	\quad\text{in }\Omega.
+	\]
+\end{enumerate}
+
+设 $\partial\Omega=\Gamma_D\cup\Gamma_N$ 且 $\Gamma_D\cap\Gamma_N=\emptyset$，给定边界数据 $\boldsymbol{u}_D$ 与 $\boldsymbol{g}$，求 $\boldsymbol{u}:\Omega\to\mathbb{R}^d$，使得
+\begin{equation}
+	\begin{cases}
+		-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}) = \boldsymbol{b}      &\text{in}\ \Omega,   \\[1pt]
+		\boldsymbol{u} = \boldsymbol{u}_D                                            &\text{on}\ \Gamma_D, \\[1pt]
+		\boldsymbol{\sigma}\boldsymbol{n} = \boldsymbol{g}                           &\text{on}\ \Gamma_N
+	\end{cases}
+	\label{eq:strong_form}
+\end{equation}
+其中 $\boldsymbol{n}$ 为外法向量。
+
+\subsection{线弹性问题的弱形式与变分原理}
+
+为便于建立能量型表述，以下在合适的 Sobolev 空间内给出弱形式，记
+\[
+\boldsymbol{V} := H^1(\Omega;\mathbb{R}^d),\quad\boldsymbol{V}_0 := \{\boldsymbol{v}\in\boldsymbol{V}:\boldsymbol{v} = \boldsymbol{0}~\text{on}~{\Gamma_D}\}
+\]
+在上述设置下，取任意 $\boldsymbol{v}\in\boldsymbol{V}_0$ 与强形式 $-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}) = \boldsymbol{b}$ 作内积：
+\[
+(-\operatorname{div}\boldsymbol{\sigma},\boldsymbol{v}) = (\boldsymbol{b},\boldsymbol{v}),
+\]
+应用 Green 公式得：
+\[
+(-\operatorname{div}\boldsymbol{\sigma},\boldsymbol{v}) = -\langle\boldsymbol{\sigma}\boldsymbol{n},\boldsymbol{v}\rangle_{\partial\Omega} + (\boldsymbol{\sigma},\nabla\boldsymbol{v}),
+\]
+由于测试函数 $\boldsymbol{v}$ 在 $\Gamma_D$ 上为零，且 $\boldsymbol{\sigma}\boldsymbol{n} = \boldsymbol{g}$ 在 $\Gamma_N$ 上成立，于是：
+\[
+(\boldsymbol{\sigma},\nabla\boldsymbol{v}) = (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},
+\]
+利用应力张量 $\boldsymbol{\sigma}$ 的对称性，梯度项化为对称梯度项：
+\[
+(\boldsymbol{\sigma},\boldsymbol{\varepsilon}(\boldsymbol{v})) = (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},\quad\forall\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+据此定义双线性型与线性泛函
+\[
+a(\boldsymbol{u},\boldsymbol{v}) := (\boldsymbol{\sigma},\boldsymbol{\varepsilon}(\boldsymbol{v})),\quad\ell(\boldsymbol{v}) := (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},
+\]
+得到位移法的弱形式：求 $\boldsymbol{u}\in\boldsymbol{V}$，使得
+\begin{equation}
+	a(\boldsymbol{u},\boldsymbol{v}) = \ell(\boldsymbol{v}),\quad\forall\boldsymbol{v}\in\boldsymbol{V}_0
+\end{equation}
+
+在线性各向同性情形，可得两种常用且等价的表达:
+\begin{enumerate}
+	\item 应变型：
+	\[
+	a(\boldsymbol{u},\boldsymbol{v}) := 2\mu(\boldsymbol{\varepsilon}(\boldsymbol{u}),\boldsymbol{\varepsilon}(\boldsymbol{v})) + \lambda(\operatorname{div}\boldsymbol{u},\operatorname{div}\boldsymbol{v})
+	\]
+	
+	\item 梯度型：
+	\[
+	a(\boldsymbol{u},\boldsymbol{v}) := \mu(\nabla\boldsymbol{u},\nabla\boldsymbol{v}) + (\lambda+\mu)(\operatorname{div}\boldsymbol{u},\operatorname{div}\boldsymbol{v})
+	\]
+\end{enumerate}
+
+由 Korn 与 Poincaré 不等式可知 $a(\cdot,\cdot)$ 在 $\boldsymbol{V}_0$ 上连续且强椭圆，$\ell(\cdot)$ 连续，故由 Lax–Milgram 定理，弱问题存在唯一解\cite{ciarletFiniteElementMethod2002a}。此外，弱形式 $a(\boldsymbol{u},\boldsymbol{v}) = \ell(\boldsymbol{v})$ 正是最小势能原理的欧拉–拉格朗日方程：线弹性体系的总势能由应变能与外力势能构成，求解弱式等价于寻求使总势能极小的稳定平衡态\cite{zienkiewiczFiniteElementMethod2005}。
