@@ -1,0 +1,317 @@
+<mxfile host="app.diagrams.net" agent="Claude" version="22.1.0">
+  <diagram name="上半对称部分" id="half-symmetric">
+    <mxGraphModel dx="984" dy="525" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- 上半部分灰色矩形（高度减半为120） -->
+        <mxCell id="rect-half" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillStyle=auto;fillColor=#808080;" value="" vertex="1">
+          <mxGeometry height="120" width="240" x="80" y="160" as="geometry" />
+        </mxCell>
+        
+        <!-- 对称轴（底部虚线） -->
+        <mxCell id="sym-axis" edge="1" parent="1" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;dashed=1;dashPattern=8 8;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="30" y="280" as="sourcePoint" />
+            <mxPoint x="400" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 左上角固定墙壁阴影线组 -->
+        <mxCell id="hatch-lt-group" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="31" width="20" x="60" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="hatch-lt-1" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="12" y="31" as="sourcePoint" />
+            <mxPoint x="1" y="26" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-2" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="15" as="sourcePoint" />
+            <mxPoint y="5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-3" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="20" as="sourcePoint" />
+            <mxPoint y="10" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-4" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="10" as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-5" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="5" as="sourcePoint" />
+            <mxPoint x="9" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-6" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="31" as="sourcePoint" />
+            <mxPoint x="20" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-7" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="25" as="sourcePoint" />
+            <mxPoint y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lt-8" edge="1" parent="hatch-lt-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="30" as="sourcePoint" />
+            <mxPoint y="20" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 左侧中间固定墙壁阴影线组（在对称轴处） -->
+        <mxCell id="hatch-lm-group" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="31" width="20" x="10" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="hatch-lm-1" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="12" y="31" as="sourcePoint" />
+            <mxPoint x="1" y="26" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-2" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="15" as="sourcePoint" />
+            <mxPoint y="5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-3" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="20" as="sourcePoint" />
+            <mxPoint y="10" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-4" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="10" as="sourcePoint" />
+            <mxPoint as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-5" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="5" as="sourcePoint" />
+            <mxPoint x="9" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-6" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="31" as="sourcePoint" />
+            <mxPoint x="20" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-7" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="25" as="sourcePoint" />
+            <mxPoint y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-lm-8" edge="1" parent="hatch-lm-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="20" y="30" as="sourcePoint" />
+            <mxPoint y="20" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 右侧固定墙壁阴影线组（旋转180度） -->
+        <mxCell id="hatch-r-group" connectable="0" parent="1" style="group;rotation=-180;" value="" vertex="1">
+          <mxGeometry height="31" width="20" x="373" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="hatch-r-1" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="8" as="sourcePoint" />
+            <mxPoint x="19" y="5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-2" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="16" as="sourcePoint" />
+            <mxPoint x="20" y="26" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-3" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="11" as="sourcePoint" />
+            <mxPoint x="20" y="21" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-4" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="21" as="sourcePoint" />
+            <mxPoint x="20" y="31" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-5" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;startSize=6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="26" as="sourcePoint" />
+            <mxPoint x="11" y="31" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-6" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint as="sourcePoint" />
+            <mxPoint y="31" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-7" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="6" as="sourcePoint" />
+            <mxPoint x="20" y="16" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hatch-r-8" edge="1" parent="hatch-r-group" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint y="1" as="sourcePoint" />
+            <mxPoint x="20" y="11" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 左侧弹簧组（带箭头 f_in） -->
+        <mxCell id="spring-l-group" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="30" width="80" x="30" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="spring-l-arrow" edge="1" parent="spring-l-group" style="endArrow=classicThin;html=1;strokeWidth=1;strokeColor=#000000;fillColor=#000000;endFill=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="44" y="15" as="sourcePoint" />
+            <mxPoint x="74" y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-1" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="15" as="sourcePoint" />
+            <mxPoint x="10" y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-2" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="10" y="15" as="sourcePoint" />
+            <mxPoint x="14" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-3" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="14" as="sourcePoint" />
+            <mxPoint x="20" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-4" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" y="30" as="sourcePoint" />
+            <mxPoint x="25" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-5" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="25" as="sourcePoint" />
+            <mxPoint x="30" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-6" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="30" y="30" as="sourcePoint" />
+            <mxPoint x="35" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-7" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="35" as="sourcePoint" />
+            <mxPoint x="40" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-l-8" edge="1" parent="spring-l-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="30" as="sourcePoint" />
+            <mxPoint x="44" y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-fin" parent="spring-l-group" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="&lt;i&gt;f&lt;/i&gt;&lt;sub&gt;in&lt;/sub&gt;" vertex="1">
+          <mxGeometry height="30" width="40" x="54" y="-11" as="geometry" />
+        </mxCell>
+        
+        <!-- 右侧弹簧组（带箭头 u_out，旋转180度） -->
+        <mxCell id="spring-r-group" connectable="0" parent="1" style="group;rotation=-180;" value="" vertex="1">
+          <mxGeometry height="30" width="74" x="299" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="spring-r-arrow" edge="1" parent="spring-r-group" style="endArrow=classicThin;html=1;strokeWidth=1;strokeColor=#000000;fillColor=#000000;endFill=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="30" y="15" as="sourcePoint" />
+            <mxPoint y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-1" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="74" y="15" as="sourcePoint" />
+            <mxPoint x="64" y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-2" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="64" y="15" as="sourcePoint" />
+            <mxPoint x="60" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-3" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="30" as="sourcePoint" />
+            <mxPoint x="54" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-4" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="54" as="sourcePoint" />
+            <mxPoint x="49" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-5" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="49" y="30" as="sourcePoint" />
+            <mxPoint x="44" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-6" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="44" as="sourcePoint" />
+            <mxPoint x="39" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-7" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="39" y="30" as="sourcePoint" />
+            <mxPoint x="34" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="spring-r-8" edge="1" parent="spring-r-group" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="34" as="sourcePoint" />
+            <mxPoint x="30" y="15" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-uout" parent="spring-r-group" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="&lt;i&gt;u&lt;/i&gt;&lt;sub&gt;out&lt;/sub&gt;" vertex="1">
+          <mxGeometry height="30" width="50" x="-25" y="-13" as="geometry" />
+        </mxCell>
+        
+        <!-- k_out 标签 -->
+        <mxCell id="label-kout" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="&lt;i&gt;k&lt;/i&gt;&lt;sub&gt;out&lt;/sub&gt;" vertex="1">
+          <mxGeometry height="30" width="50" x="340" y="289" as="geometry" />
+        </mxCell>
+        
+        <!-- k_in 标签 -->
+        <mxCell id="label-kin" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="&lt;i&gt;k&lt;/i&gt;&lt;sub&gt;in&lt;/sub&gt;" vertex="1">
+          <mxGeometry height="30" width="40" x="20" y="289" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
