@@ -849,3 +849,462 @@ H_{ik} = \max\{0, r_{\min} - \operatorname{dist}(i,k)\},
 \frac{\partial f}{\partial \rho_k} = \sum_{j=1}^{N_n} \frac{\partial{f}}{\partial \tilde{\rho}_j} \frac{\partial \tilde{\rho}_j}{\partial \rho_k} = v_k \sum_{j=1}^{N_n} H_{jk} \left( \frac{1}{\sum_{l=1}^{N_n} H_{jl} v_l} \frac{\partial f}{\partial \tilde{\rho}_j} \right),
 \]
 值得注意的是，求和项 $\sum_{j=1}^{N_n}$ 表示节点 $k$ 的设计变量变化通过卷积关系影响其邻域内所有节点 $j$ 的物理密度，进而对全局目标函数产生贡献。
+
+\section{数值算例}
+\label{sec:ch3_numerical_examples}
+
+\subsection{算例设置与统一框架}
+\label{subsec:ch3_case_framework}
+
+为确保本章所有比较研究均在统一且公平的基准下进行，除特别说明外，全部数值算例均采用如下统一设置：
+\begin{itemize}
+	\item 物理与本构：材料为均匀、各向同性的线弹性体，平面应力假设。
+
+	\item 采用修正的 SIMP 模型，以避免低密度区域的刚度矩阵奇异性。杨氏模量 $E$ 被定义为关于空间位置 $\boldsymbol{x}$ 处相对密度场 $\rho(\boldsymbol{x})$ 的函数：
+	\[
+	E(\rho(\boldsymbol{x})) = E_{\min} + (\rho(\boldsymbol{x}))^p (E_0 - E_{\min}),
+	\]
+	其中，$E_0=1$ 为实体材料的杨氏模量，$E_{\min}=10^{-9}$ 为孔洞区域设定的极小非零刚度下限，惩罚因子固定为 $p=3$。
+	
+	\item 优化问题：主要优化问题为最小化柔顺度，并施加体积分数约束。
+	
+	\item 最小尺度控制：为获得网格无关且无病态的解，统一采用固定的最小特征尺度控制。具体地，过滤算子采用基于单元邻域的加权平均形式，其过滤半径 $r_{\min}$ 以物理长度为单位度量，除特别说明外统一取 $r_{\min} = 2.4$。该设置确保在不同网格密度下，过滤邻域覆盖的物理范围保持一致，从而实现真正的网格无关性。
+	
+	\item 优化算法：设计变量更新采用优化准则法，统一设置
+	\begin{itemize}
+		\item 正向移动限制 $m=0.2$；
+		\item 数值阻尼系数 $\eta=0.5$；
+		\item 拉格朗日乘子采用二分法搜索，给定上界 $l_{\max}=10^9$ 与容差 $\epsilon_{\text{bisect}}=10^{-3}$；
+		\item 设计变量下界 $\rho_{\min}=10^{-9}$。
+	\end{itemize}
+		
+	\item 收敛准则： 当连续两次迭代中设计变量 $\boldsymbol{\rho}$ 的变化量满足 
+	\[
+	\Vert\boldsymbol{\rho}^{(n+1)} - \boldsymbol{\rho}^{(n)}\Vert_{\infty,\Omega} < 10^{-2},
+	\]
+	此外，设置最大迭代步数 $n_{\max} = 500$ 作为安全上限。当迭代达到 $n_{\max}$ 而上述条件仍未满足时，算法亦终止。若此时柔顺度与体积分数已在较长迭代区间内保持基本稳定，则本文将该情形记为 “准收敛”。
+	
+	\item 单位体系：本章所有算例统一采用 $\mathrm{mm}/\mathrm{N}/\mathrm{MPa}$（长度单位 $\mathrm{mm}$，力单位 $\mathrm{N}$，杨氏模量单位 $\mathrm{MPa}$）。
+
+\end{itemize}
+
+值得注意的是，在有限元分析中，刚度矩阵的数值积分精度直接影响优化结果的可靠性。对于单元密度表征，由于设计变量在单元内为常数，刚度阵被积函数的多项式阶次相对较低，采用适当的阶数的标准高斯积分即可满足精度要求。而在节点密度表征下，密度场随空间变化，并通过 SIMP 插值进入材料刚度，刚度矩阵与灵敏度的被积函数中包含高次非线性项，需要提高数值积分精度以避免显著的积分误差。
+
+本章统一采用如下积分设置，对于张量积单元（如二维四边形、三维六面体）上的拉格朗日元，单元密度表征采用 $q=k+1$ 阶高斯积分公式，节点密度表征采用 $q=k+2$ 阶；对于单纯形单元（如二维三角形、三维四面体）上的拉格朗日元，则不再用积分点数表示，而是按代数精度选择积分公式，单元密度表征选用代数精度不低于 $2k$ 阶的高斯积分公式，节点密度表征选用不低于 $2k+2$ 阶的积分公式。
+
+\subsection{基准比较：数值病态与最小尺度控制}
+\label{subsec:benchmark_pathology_min_lengthscale}
+%算例 3.1：二维 MBB 梁
+\noindent{\heiti\zihao{-4} 算例 3.1：二维 MBB 梁}\par\vspace{0.3\baselineskip}
+
+本节首先采用二维 MBB（Messerschmitt-Bolkow-Blohm）梁作为基准算例，以对比有无最小尺度控制下的优化结果，并为后续研究建立参照。
+
+MBB 梁是拓扑优化的经典基准算例 \cite{olhoff1991cad}，其完整设计域如图 \ref{fig:mbb_domain_full} 所示，尺寸为 $120~\mathrm{mm}\times20~\mathrm{mm}$。鉴于结构与载荷关于竖向中线对称，为提高计算效率，采用右半域作为计算域，如图 \ref{fig:mbb_domain_half} 所示，半域尺寸为 $60~\mathrm{mm}\times20\mathrm~\mathrm{mm}$，左侧边施加对称约束（$u_x = 0$），右下角节点施加滑移支座（$u_y = 0$），左上角节点处施加竖直向下的集中载荷 $P = 1~\mathrm{N}$，其余边施加自由边界（即齐次诺伊曼）条件。
+
+材料的杨氏模量 $E=1~\mathrm{MPa}$，泊松比 $\nu=0.3$，优化问题定义为：在满足体积分数约束 $V_f = 0.5$ 的条件下，寻找材料的最优分布以最小化结构柔顺度（即最大化刚度）。
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+
+	\subfigure[全设计域]{
+		\label{fig:mbb_domain_full}
+		\includegraphics[width=0.47\textwidth]{fig3-2a.pdf}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[右半设计域]{
+		\label{fig:mbb_domain_half}
+		\includegraphics[width=0.47\textwidth]{fig3-2b.pdf} 
+	}
+	\caption{二维 MBB 梁设计域。}
+	\label{fig:mbb_domain}
+\end{figure}
+
+
+为突出数值病态与最小特征尺度控制的影响，本节基准比较统一采用单分辨率的位移型有限元离散，分析单元取 $k=1$ 阶四边形单元，采用 $q=2$ 阶高斯积分公式，设计变量取每个单元上的常值密度 $\rho_e$。在此基础上，考虑三种过滤策略：不施加最小特征尺度控制（无过滤）、灵敏度过滤与密度过滤。为保证物理尺度的一致性，灵敏度过滤与密度过滤的过滤半径均取 $r_{\min}=2.4$，并在三种不同网格剖分下进行对比，三组网格剖分分别为 $60\times20$、$90\times30$ 与 $150\times50$，对应位移自由度数 $u_{\mathrm{dof}}=\{2562,\,5642,\,15402\}$，设计变量自由度数 $\rho_{\mathrm{dof}}=\{1200,\,2700,\,7500\}$。上述对比结果汇总于表 \ref{tab:mbb_mesh_filter_results}。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与过滤策略下的优化结果}
+	\label{tab:mbb_mesh_filter_results}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				% 垂直居中
+				>{\centering\arraybackslash}m{0.15\textwidth} 
+				>{\centering\arraybackslash}m{0.28\textwidth}
+				>{\centering\arraybackslash}m{0.28\textwidth}
+				>{\centering\arraybackslash}m{0.28\textwidth}
+			}
+			\toprule
+			网格剖分 & 无最小特征尺度 & 灵敏度过滤 & 密度过滤 \\
+			\midrule
+			
+			\makecell{$60\times20$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_nolc.pdf}\\[-0.5mm]\footnotesize $n=53$, $c=203.0660$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_sens.pdf}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_dens.pdf}\\[-0.5mm]\footnotesize $n=144$, $c=233.7146$}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_90_30_nolc.pdf}\\[-0.5mm]\footnotesize $n=34$, $c=201.0279$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_90_30_sens.pdf}\\[-0.5mm]\footnotesize $n=95$, $c=217.9426$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_90_30_dens.pdf}\\[-0.5mm]\footnotesize $n=265$, $c=234.4671$}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_150_50_nolc.pdf}\\[-0.5mm]\footnotesize $n=48$, $c=202.8103$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_150_50_sens.pdf}\\[-0.5mm]\footnotesize $n=95$, $c=219.7274$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_150_50_dens.pdf}\\[-0.5mm]\footnotesize $n=362$, $c=235.7332$}
+			\\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表 \ref{tab:mbb_mesh_filter_results} 第 2 列给出了在未施加最小特征尺度控制时，不同网格剖分下的优化结果。以粗网格 $60\times20$ 为例，位移自由度 $u_{\mathrm{dof}}=2562$，设计变量自由度 $\rho_{\mathrm{dof}}=1200$，优化在 $53$ 步即可收敛，柔顺度值约为 $c\approx203$。然而，结构内部尤其在荷载作用区域与右端支承附近出现了大面积规则的棋盘格图案，相邻单元的密度在接近 $0$ 与接近 $1$ 之间交替振荡，整体拓扑呈现出明显的网格振荡，主承载路径难以辨认，属于典型的棋盘格型数值病态。随着网格细化到 $90\times30$  乃至 $150\times50$，位移和设计变量自由度显著增加，但迭代步数和柔顺度值大致保持在同一量级，并未出现性能明显改善的趋势。与此同时，病态特征不仅没有消失，反而在细网格下演化为大量一至两单元宽度的细薄杆件与分枝结构，局部拓扑极其细碎和复杂，不同网格分辨率下腹板走向和承载路径差异显著，粗网格得到的拓扑在细网格上常演化为截然不同的布局，表现出强烈的网格依赖性。
+
+相比之下，施加最小特征尺度控制后的结果（表 \ref{tab:mbb_mesh_filter_results} 第 3、4 列）在几何特征和网格依赖性方面均有显著改善。对三个网格层次，无论采用灵敏度过滤还是密度过滤，优化得到的拓扑结构均基本消除了棋盘格和局部高频振荡，粗、中、细网格之间的主承载路径保持较好的一致性，各主要构件的宽度稳定在由过滤半径 $r_{\min}$ 决定的尺度附近，灰度区主要局限于构件边缘的狭窄过渡带。与未过滤情形相比，过滤操作引入了额外的平滑约束，柔顺度值整体略有上升，迭代步数普遍增加，但换来了物理上更可行、几何上更规整的无病态设计。
+
+需要指出的是，在相同过滤半径下，密度过滤（表 \ref{tab:mbb_mesh_filter_results} 第 4 列）对密度场本身进行平滑，所得结构相对更为保守，边界略显模糊；灵敏度过滤则形成更为清晰的 0–1 型拓扑。在二维 MBB 梁算例所采用的参数配置下，灵敏度过滤在几何清晰度与数值稳定性之间取得了较为满意的折中。基于此，为简化后续比较，本章后续算例如无特别说明均采用灵敏度过滤作为统一的最小特征尺度控制手段，而将密度过滤结果仅作为对照与补充。
+
+
+\subsection{核心对比：表征方法与单元阶次}
+\label{subsec:core_compare_rep_order}
+
+第 \ref{subsec:benchmark_pathology_min_lengthscale} 节通过二维 MBB 梁基准算例说明了在单元密度表征下，若缺乏显式的最小特征尺度控制，则容易产生棋盘格与网格依赖等数值病态；而在施加统一过滤半径的灵敏度过滤与密度过滤后，上述病态现象可以得到显著缓解，并可获得几何清晰、对网格划分不敏感的拓扑结构。基于这一认识，本节在前述 MBB 梁算例的基础上，系统比较不同设计变量表征方式与不同单元阶次对优化结果的影响，物理与优化参数均沿用前文的统一设置。
+
+为突出设计变量表征方式本身的作用，表 \ref{tab:mbb_elem_vs_node_density_unfiltered} 给出了在未施加最小特征尺度控制时，采用四边形单元进行位移分析下，不同网格剖分对应的单元密度与节点密度两种表征方式的优化结果。积分规则按照第 \ref{subsec:ch3_case_framework} 节中的统一设置选取，单元密度表征采用 $q=k+1$ 阶高斯积分公式，而节点密度表征采用 $q=k+2$ 高斯积分公式。在 $60\times20$、$90\times30$ 与 $150\times50$ 三组网格下，单元密度表征的设计变量自由度数分别为 $\rho_{\mathrm{dof}}^{\mathrm{elem}}=\{1200,\,2700,\,7500\}$，而节点密度表征下设计变量自由度数分别为 $\rho_{\mathrm{dof}}^{\mathrm{node}}=\{1281,\,2821,\,7701\}$。
+
+
+
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与密度表征下的优化结果（未过滤）}
+	\label{tab:mbb_elem_vs_node_density_unfiltered}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				% 垂直居中
+				>{\centering\arraybackslash}m{0.17\textwidth}
+				>{\centering\arraybackslash}m{0.415\textwidth}
+				>{\centering\arraybackslash}m{0.415\textwidth}
+			}
+			\toprule
+			网格剖分 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$60\times20$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-1_60_20_nolc.pdf}\\[-0.5mm]
+				\footnotesize $n=53$, $c=203.0660$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-2_60_20_node.pdf}\\[-0.5mm]
+				\footnotesize $n=302$, $c=204.0256$
+			}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-1_90_30_nolc.pdf}\\[-0.5mm]
+				\footnotesize $n=34$, $c=201.0279$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-2_90_30_node.pdf}\\[-0.5mm]
+				\footnotesize $n=216$, $c=197.3244$
+			}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-1_150_50_nolc.pdf}\\[-0.5mm]
+				\footnotesize $n=48$, $c=202.8103$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{tab3-2_150_50_node.pdf}\\[-0.5mm]
+				\footnotesize $n=369$, $c=192.3462$
+			}
+			\\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+与作为基准的单元密度方案（表 \ref{tab:mbb_elem_vs_node_density_unfiltered} 左列）相比，未过滤的节点密度方案（表 \ref{tab:mbb_elem_vs_node_density_unfiltered} 右列）表现出显著差异。得益于四节点双线性形函数的插值特性，节点密度场天然具备 $C^0$ 连续性，这使得优化结果基本消除了棋盘格等高频振荡病态。沿主承载路径的密度分布呈连续条带状，灰度主要集中在构件边缘的过渡带，视觉上更为平滑清晰，验证了节点表征的 “天然平滑” 机制对数值不稳定性的抑制作用。
+
+然而，节点密度方案并未完全消除网格依赖性：在不同网格分辨率下，腹板数量、走向以及局部细杆件的形态仍存在可见差异，细网格下依然会出现一到两单元宽度的细薄构件与分枝结构。从数值角度看，三组网格中两种表征所得的柔顺度水平大致相当，节点密度并未表现出稳定而显著的目标值优势，但迭代代价却明显增加：单元密度方案通常在约 $30\sim50$ 步内即可满足收敛判据，而节点密度方案则往往需要约 $200\sim400$ 步，其迭代次数约为前者的 $6\sim8$ 倍。这反映了节点设计变量通过形函数在网格上的强耦合，以及连续性约束对快速形成陡峭 0–1 阶跃的阻碍。综合来看，仅将设计变量由单元转移至节点、依赖节点密度的 $C^0$ 连续性，虽然可以在一定程度上抑制棋盘格并改善拓扑，但既不能根除网格依赖，也会显著提高达到给定收敛精度所需的计算成本。
+
+鉴于未过滤情形下两种密度表征方式均存在不同程度的网格依赖性，为在统一且物理可制造的框架下进行公平对比，本节进一步考察施加灵敏度过滤后的优化表现。表 \ref{tab:mbb_elem_vs_node_density_sens} 给出了在统一过滤半径 $r_{\min} = 2.4$ 下，不同网格剖分对应的单元密度与节点密度两种表征方式的优化结果。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_elem_vs_node_density_sens}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.15\textwidth}
+				>{\centering\arraybackslash}m{0.425\textwidth}
+				>{\centering\arraybackslash}m{0.425\textwidth}
+			}
+			\toprule
+			网格剖分 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$60\times20$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_sens}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-3_60_20_node}\\[-0.5mm]\footnotesize $n=140$, $c=225.3707$}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_90_30_sens.pdf}\\[-0.5mm]\footnotesize $n=95$, $c=217.9426$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-3_90_30_node.pdf}\\[-0.5mm]\footnotesize $n=108$, $c=221.4765$}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_150_50_sens.pdf}\\[-0.5mm]\footnotesize $n=95$, $c=219.7274$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-3_150_50_node.pdf}\\[-0.5mm]\footnotesize $n=112$, $c=220.8803$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+与作为基准的单元密度方案（表 \ref{tab:mbb_elem_vs_node_density_sens} 左列）相比，施加同样过滤条件的节点密度方案（表 \ref{tab:mbb_elem_vs_node_density_sens} 右列）在最终拓扑形态上仅表现出细微差异。三种网格分辨率下，引入统一半径的灵敏度过滤同样有效地消除了节点密度表征下的棋盘格与网格依赖性。结合第 \ref{subsec:benchmark_pathology_min_lengthscale} 节中对单元密度方案的观察可以看出，一旦采用统一物理尺度的灵敏度过滤，显式的最小特征尺度控制在消除数值病态和缓解网格依赖方面起到了主导作用，而设计变量取单元密度还是节点密度对最终拓扑的影响已经相对次要。从迭代行为的角度看，这一点同样得到了印证。在未施加过滤时，单元密度方案相较于节点密度方案，迭代次数相差接近一个数量级；施加灵敏度过滤后，两种密度表征在三个网格上的迭代次数均集中在约一百步左右，差异已经不再显著。这一前后对比说明：在本算例下，迭代效率和数值稳定性的主导因素并非设计变量取单元还是节点，而是是否施加了统一的最小特征尺度控制。
+
+综上，从网格加密的角度看，本节的结果表明：在缺乏显式最小特征尺度控制时，单元密度方案在各个网格上均出现严重的棋盘格和显著的网格依赖；节点密度表征虽然凭借 $C^0$ 连续性在一定程度上抑制了棋盘格，但仍无法消除内部主承载路径对离散尺度的敏感性，并且迭代代价明显增大。引入统一物理半径的灵敏度过滤后，两种密度表征在不同网格上的拓扑形态、柔顺度水平和收敛步数均趋于一致，数值病态得到根本缓解，说明显式长度尺度正则化在获得网格无关、几何清晰的拓扑结构方面起到了决定性作用，而设计变量取单元密度还是节点密度已退居次要地位。
+
+在前文比较了不同网格剖分下的表现之后，本小节将网格统一固定为 $60\times20$ 的粗网格，首先在不施加过滤的条件下，仅改变单元阶次 $k$，考察单元密度与节点密度两种表征在不同单元阶次下的差异，在保持设计自由度不变的前提下（单元密度方案中 $\rho_{\text{dof}}=1200$，节点密度方案中 $\rho_{\text{dof}}=1281$），随着 $k $ 的提高，位移自由度从 $u_{\text{dof}}=2562$ 增加到 $u_{\text{dof}}=9922$ 以及 $u_{\text{dof}}=39042$，如表 \ref{tab:mbb_order_elem_vs_node_unfiltered} 所示。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同四边形单元阶次与密度表征下的优化结果（无过滤）}
+	\label{tab:mbb_order_elem_vs_node_unfiltered}
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.16\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+			}
+			\toprule
+			单元阶次
+			&
+			单元密度
+			&
+			节点密度
+			\\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_nolc}\\[-0.5mm]\footnotesize $n=53$, $c=203.0660$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-2_60_20_node}\\[-0.5mm]\footnotesize $n=302$, $c=204.0256$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-4_k2_elem.pdf}\\[-0.5mm]\footnotesize $n=36$, $c=213.1796$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-4_k2_node.pdf}\\[-0.5mm]\footnotesize $n=500^{+}$, $c=212.1727$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-4_k4_elem.pdf}\\[-0.5mm]\footnotesize $n=41$, $c=218.6621$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-4_k4_node.pdf}\\[-0.5mm]\footnotesize $n=500^{+}$, $c=216.0374$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表 \ref{tab:mbb_order_elem_vs_node_unfiltered} 的第一行（$k=1$）对应前述基准算例在未过滤条件下的结果，此处作为参照用以刻画单元阶次提高时的变化趋势。由表可见，提高单元阶次在两种密度表征下都呈现出相似的数值趋势：柔顺度随 $k$ 的增加而单调升高，单元密度方案中由 $c\approx203$ 增加到 $c\approx213$ 和 $c\approx219$，节点密度方案中由 $c\approx204$ 增加到 $c\approx212$ 和 $c\approx216$。这种 “柔顺度变大” 的现象并不意味着结构性能恶化，而是高阶有限元在一定程度上抑制了由离散误差、棋盘格及细微结构引起的 “虚假刚度”，使计算结果更接近物理合理的柔顺度水平，这是两种密度表征在提高阶次时的共性。
+
+在此基础上，两种表征在拓扑形态上的表现有所不同。对单元密度表征而言，$k=1$ 时棋盘格最为显著，大量一单元尺度的细碎条块沿结构内部分布，提高至 $k=2$ 后，棋盘格明显减弱，密度沿构件方向被拉伸成较为连续的条带，局部结构明显平滑，继续提升到 $k=4$ 时，所得拓扑与 $k=2$ 已非常接近，局部振荡难以进一步显著减少，说明在缺乏显式最小特征尺度控制的前提下，高阶形函数对抑制棋盘格的作用在 $k\approx2$ 左右基本趋于饱和。
+
+对节点密度表征而言：由于密度在节点上通过四节点双线性形函数进行 $C^0$ 连续插值，在 $k=1$ 时棋盘格现象已基本消失，三种单元阶次下得到的宏观拓扑框架几乎完全一致，高阶单元仅在主承载杆件和边界附近带来轻微的平滑或细化。此时，提高阶次的主要作用同样是削弱虚假刚度，而非改变拓扑结构。但在迭代行为上，节点密度方案表现出明显的不利影响：迭代步数由 $k=1$ 的 $302$ 步显著增加，到 $k=2$ 与 $k=4$ 均达到最大迭代步数 $n_{\max}=500$ 仍未满足收敛判据。图 3.2 给出了 $k=4$ 情形下两种密度表征的迭代历程对比：单元密度方案（图 \ref{fig:ch3_k4_conv_elem}）在约 30 步左右即可使柔顺度和体积分数稳定，并很快满足设计变量变化量的收敛阈值，而节点密度方案（图 \ref{fig:ch3_k4_conv_node}）在前若干步内同样迅速降低柔顺度，之后长达数百步仅在极窄区间内小幅震荡，体积分数始终维持在目标值附近，但由于 0–1 过渡带内存在局部微调，设计变量的最大变化量始终略高于阈值，最终在迭代步数达到 $n_{\max}=500$ 时由安全上限触发终止，表现出典型的 “准收敛” 特征。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[单元密度]{
+		\label{fig:ch3_k4_conv_elem}
+		\includegraphics[width=0.47\textwidth]{fig3-3a.pdf}
+	}
+	\hfill
+	\subfigure[节点密度]{
+		\label{fig:ch3_k4_conv_node}
+		\includegraphics[width=0.47\textwidth]{fig3-3b.pdf}
+	}
+	
+	\caption{$k=4$ 下两种密度表征的迭代历程对比}
+	\label{fig:ch3_k4_conv_compare}
+\end{figure}
+
+上述无过滤算例表明，仅通过提高单元阶次并不能从根本上消除数值病态，在节点密度表征下还会诱发明显的 “准收敛” 行为。为进一步考察在最小特征尺度统一控制时单元阶次的作用，本节在表 \ref{tab:mbb_order_elem_vs_node_unfiltered} 的基础上，引入过滤半径为 $r_{\min}=2.4$ 的灵敏度过滤，给出不同单元阶次下单元密度与节点密度两种表征的优化结果，如表 \ref{tab:mbb_order_elem_vs_node_sens} 所示。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同四边形单元阶次与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_order_elem_vs_node_sens}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.16\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-1_60_20_sens}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-3_60_20_node}\\[-0.5mm]\footnotesize $n=140$, $c=225.3707$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-5_k2_elem}\\[-0.5mm]\footnotesize $n=115$, $c=226.2545$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-5_k2_node}\\[-0.5mm]\footnotesize $n=144$, $c=229.6092$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-5_k4_elem}\\[-0.5mm]\footnotesize $n=113$, $c=230.8768$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-5_k4_node}\\[-0.5mm]\footnotesize $n=144$, $c=233.5225$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表 \ref{tab:mbb_order_elem_vs_node_sens} 的第一行（$k=1$）对应前述基准算例在灵敏度过滤条件下的结果，此处作为参照用以刻画单元阶次提高时的变化趋势。由表可见，在引入统一半径的灵敏度过滤后，不同单元阶次与两种密度表征下的优化拓扑在形态上已高度一致。无论取单元密度还是节点密度，$k=1,2,4$ 情形均收敛到光滑、无棋盘格的结构框架，主承载路径基本重合，两者主要差异仅在于节点密度方案的边界轮廓和杆端过渡略为平滑一些，而整体构型基本一致，而整体构型几乎相同，说明此时由过滤半径 $r_{\min}$ 决定的最小特征尺度已在很大程度上主导了最终拓扑。
+
+在性能与迭代行为上，随着 $k$ 从 $1$ 提高到 $2$、$4$，两种密度表征下的柔顺度仅出现幅度较小的变化，迭代步数也稳定在约一百步左右，高阶节点密度方案在无过滤时出现的 $500^+$ 步 “准收敛” 现象消失。就本算例和当前参数设置而言，这表明：在设计自由度和过滤半径固定的前提下，提高四边形单元阶次并未带来显著的拓扑改进或目标值收益，高阶形函数的精度优势难以得到充分发挥，单元阶次和密度表征对整体优化效果已退居次要地位。
+
+为检验上述结论在其他单元族上的适用性，进一步考虑等面积剖分的三角形网格，除网格类型与积分阶次外，其余物理参数、优化设置以及灵敏度过滤半径均与前文保持一致。积分规则按照第 \ref{subsec:ch3_case_framework} 节中的统一设置选取：在单元密度表征下，统一采用代数精度不低于 $2k$ 阶的高斯积分公式，在节点密度表征下，不低于 $2k+2$ 阶。表 \ref{tab:mbb_tri_order_elem_vs_node_sens} 给出了在施加灵敏度过滤时，不同单元阶次下单元密度与节点密度两种表征的优化结果。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同三角形单元阶次与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_tri_order_elem_vs_node_sens}
+	
+	\setlength{\tabcolsep}{6pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.12\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k1_elem}\\[-0.5mm]\footnotesize $n=101$, $c=212.2910$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k1_node}\\[-0.5mm]\footnotesize $n=112$, $c=221.7030$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k2_elem}\\[-0.5mm]\footnotesize $n=98$, $c=224.2097$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k2_node}\\[-0.5mm]\footnotesize $n=109$, $c=228.9346$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k4_elem}\\[-0.5mm]\footnotesize $n=99$, $c=228.8028$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k4_node}\\[-0.5mm]\footnotesize $n=105$, $c=233.1645$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+从表 \ref{tab:mbb_tri_order_elem_vs_node_sens} 可以看到，在三角形单元上，单元密度与节点密度在统一施加灵敏度过滤后，同样收敛到无棋盘格、拓扑结构高度一致的解，不同单元阶次 $k$ 之间的拓扑差异很小，主要表现为杆件略有加粗或局部边界略为平滑，主承载路径和整体构型基本保持不变。相应的迭代步数也都集中在约百步量级，未再无过滤情形下的 “准收敛” 等异常行为。这与前文四边形单元上的观察结论一致，表明在统一的最小特征尺度控制下，“表征方法与单元阶次”的主要规律对不同单元族均具有良好的鲁棒性。
+
+需要注意的是，在节点密度表征下，左侧固定边界附近形成了一条饱和的高密度带，视觉上呈现为一条 “黑色边界”。这可以理解为节点密度离散与体积分数度量方式共同作用的自然结果：边界节点仅被较少单元共享，在体积分数约束中的有效权重较小，在相同体积分数限制下将其取为 $1$ 所 “消耗” 的体积分数更低，因此优化过程倾向于优先填满这些边界节点，再叠加灵敏度过滤的平滑效应，高密度沿边界连续传播，最终形成稳定的边界高密度带。若在实际应用中希望进一步消除这种边界偏好，可通过重新设计体积分数的离散形式来统一各设计变量的体积权重（例如对节点密度采用归一化权重），这类修正可以减弱边界高密度带，但不会改变本节关于拓扑形态与收敛特性的整体结论，本文不再展开。
+
+\subsection{算例推广：不同边界载荷}
+\label{subsec:case_boundary_loads}
+
+\subsection{算例推广：三维问题}
+\label{subsec:case_3d}
+
+\subsection{算例推广：柔顺机构设计}
+\label{subsec:case_compliant_mechanism}
