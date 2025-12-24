@@ -1,3 +1,247 @@
 % !TeX root = ../../brightPhD.tex
 \chapter{拓扑优化模型与数值基础}
 \label{chap:top_models_numerics}
+
+\section{主要符号表与基本函数空间}
+\label{sec:notation_spaces}
+
+\subsection{主要符号表}
+\label{subsec:notation_table}
+
+\subsection{函数空间}
+\label{subsec:function_spaces}
+
+\section{变密度拓扑优化的连续数学模型}
+\label{sec:cont_models}
+
+连续体拓扑优化的原始形式是寻找最优材料分布的整数规划问题，即确定设计域上的离散示性函数 $\chi(\boldsymbol{x}) \in \{0, 1\}$，以最小化目标泛函 \cite{bendsoeTopologyOptimization2004} 。然而，该问题在数学上通常具有柯西不适定性，直接求解易导致网格依赖与棋盘格等数值不稳定现象 \cite{kohnOptimalDesignRelaxation1986}。
+
+为克服这一困难并利用基于梯度的优化算法，变密度法采用了松弛策略，引入连续密度变量 $\rho(\boldsymbol{x}) \in [0, 1]$ 替代离散变量，将组合优化转化为连续型的分布参数优化问题。本节将详细阐述基于该策略的连续数学模型，包括材料属性插值方案、状态方程的变分形式以及一般形式的优化列式。
+
+
+\subsection{材料密度与材料属性插值}
+\label{subsec:material_interpolation}
+在变密度拓扑优化中，材料密度与材料物理属性之间的插值模型是连接数学优化算法与物理力学分析的桥梁。我们需要建立一个从无量纲的密度场到具有物理量纲的材料张量场的映射关系。
+
+设设计域为一个有界开集 $\Omega\subseteq\mathbb{R}^d$。引入一个材料密度函数
+\[
+\rho:\Omega\to[0,1],\quad\rho\in{L}^\infty(\Omega),\quad0\leq\rho(\boldsymbol{x})\leq1~\text{a.e.}~\text{in}~\Omega
+\]
+其中 $\rho(\boldsymbol{x})=1$ 表示该点为实体材料，$\rho(\boldsymbol{x})=0$ 表示空洞，$0<\rho(\boldsymbol{x})<1$ 表示中间密度的材料。这种允许密度值在 $[0,1]$ 区间连续变化的参数化方法，使得结构的拓扑和形状在优化过程中平滑地演变。
+
+为了建立宏观结构性能与微观材料密度之间的联系，需要定义材料的本构属性及其对密度函数 $\rho(\boldsymbol{x})$ 的依赖关系。在线弹性小变形理论框架下（见第 \ref{subsec:elastic_assumption} 节），材料的应力–应变关系可由四阶弹性刚度张量 $\mathbb{C}$ 所表征：
+\[
+\boldsymbol{\sigma} = \mathbb{C}(\rho)\boldsymbol{\varepsilon}(\boldsymbol{u}),
+\]
+材料插值模型的核心目标在于构造从标量密度场 $\rho(\boldsymbol{x})$ 到张量场 $\mathbb{C}(\rho(\boldsymbol{x}))$ 的映射
+\[
+\rho(\boldsymbol{x})\mapsto \mathbb{C}(\rho(\boldsymbol{x})),
+\]
+并要求插值得到的刚度张量保持线弹性问题适定性所需的基本性质（对称性与强椭圆性）。
+
+对于各向同性材料，根据第 \ref{subsec:elastic_assumption} 节的各向同性假设，弹性刚度张量 $\mathbb{C}$ 可由杨氏模量 $E$ 和泊松比 $\nu$ 这两个标量参数完全描述。本文中，通常假设泊松比 $\nu$ 在优化过程中为常数 $\nu_0$，而将杨氏模量 $E$ 视为密度 $\rho$ 的函数：
+\[
+E=E(\rho),\quad\nu = \nu_0,
+\]
+在此设定下，弹性刚度张量 $\mathbb{C}$ 可写作
+\[
+\mathbb{C}(\rho) = \mathbb{C}(E(\rho),\nu_0),
+\]
+从而材料插值问题可等价地理解为构造标量函数 $E(\rho)$ 的问题。基于线弹性刚度张量的性质，可形式化地认为
+\[
+E(\rho)\in{L}^\infty(\Omega),\quad\mathbb{C}(\rho)\in{L}^\infty(\Omega,\mathbb{S}).
+\]
+
+在众多材料插值方案中，SIMP 模型是应用最为广泛的一类幂律插值 \cite{bendsoeOptimalShapeDesign1989a}。其基本思想是将杨氏模量 $E(\boldsymbol{x})$ 表示为相对于实体材料杨氏模量 $E_0$ 的幂函数：
+\[
+E(\rho(\boldsymbol{x})) = \rho(\boldsymbol{x})^pE_0,\quad\rho(\boldsymbol{x})\in[0,1],
+\]
+其中 $p>1$ 为惩罚因子，惩罚因子的引入旨在显著削弱中间密度单元的刚度贡献，使得在优化过程中中间密度配置在能量上处于劣势，从而驱动最优密度场向接近 0–1 的分布收敛，以获得拓扑清晰的结构。
+
+然而，标准 SIMP 模型在 $\rho(\boldsymbol{x})\to0$ 时给出 $E(\rho(\boldsymbol{x}))\to0$。在有限元离散中，若简单采用 $E=0$ 对应空洞区域，则局部刚度矩阵可能退化为奇异矩阵，导致整体刚度矩阵病态甚至不可逆，进而引发数值不稳定。为避免该问题，并在物理上为 “空洞” 区域保留极小但非零的刚度，以维持数值稳定性，工程上通常采用修正的 SIMP 模型 \cite{zhouCOCAlgorithmPart1991}，对杨氏模量设置一个正的下限 $E_{\min}>0$。修正 SIMP 插值可写为
+\[
+E(\rho(\boldsymbol{x})) = E_{\min} + \rho(\boldsymbol{x})^p(E_0-E_{\min}),
+\]
+其中 $E_{\min}\ll{E}_0$ 为非常小的正数。这样，即使在 $\rho(\boldsymbol{x})=0$ 的区域，材料也保有微小的刚度 $E_{\min}$，从而保证整体刚度矩阵在数值上保持良好的条件数。
+
+除 SIMP 外，文献中还提出了多种替代性材料插值模型。例如，RAMP 模型 \cite{stolpeAlternativeInterpolationScheme2001a} 采用有理函数形式：
+\[
+E(\rho(\boldsymbol{x})) = E_{\min} + \frac{\rho(\boldsymbol{x})(E_0-E_{\min})}{1+q(1-\rho(\boldsymbol{x}))},
+\]
+其中 $q>0$ 为控制参数。与 SIMP 相比，RAMP 在惩罚行为、插值函数的凸性/凹性以及对中间密度的敏感性等方面呈现不同特征，在某些情形下有利于改善优化问题的数值性质和收敛特性。
+
+需要指出的是，尽管采用了惩罚型材料插值，在实际优化迭代过程中（尤其是中间阶段以及收敛解附近）通常仍会出现一定比例的中间密度区域，即所谓 “灰度区域”。这些灰度区域在物理解释上对应 “局部材料尺度未明确” 的状态，可能造成：
+\begin{itemize}
+	\item 制造层面的问题，如加工难度增大、制造成本上升或成形不确定性提高；
+	\item 数值层面的典型不稳定现象，如棋盘格、网格依赖性和局部极值等。
+\end{itemize}
+因此，如何在保持结构性能的同时抑制过度的灰度区域、提高拓扑的清晰性与可制造性，并兼顾数值稳定性，是变密度方法理论研究和工程应用中必须审慎处理的重要问题。
+
+\subsection{变密度拓扑优化的一般形式}
+\label{subsec:general_formulation}
+
+设设计域为有界开集 $\Omega\subset\mathbb{R}^d$，边界 $\partial\Omega$ 根据具体物理边界可分解为狄利克雷边界 $\Gamma_D$ 与诺伊曼边界 $\Gamma_N$，记状态变量为位移场
+\[
+\boldsymbol{u}:\Omega\to\mathbb{R}^d,\quad\boldsymbol{u}\in\mathcal{V},
+\]
+其中 $\mathcal{V}$ 为适当的向量值函数空间，$\mathcal{V}_0\subset\mathcal{V}$ 表示满足齐次位移边界条件的测试函数空间。设计变量为标量密度场
+\[
+\rho:\Omega\to[0,1],\quad\rho\in\mathcal{X}\subset{L}^{\infty}(\Omega),
+\]
+其中可行设计集合 $\mathcal{X}$ 的典型形式为
+\[
+\mathcal{X} = \{\rho(\boldsymbol{x})\in{L}^\infty(\Omega):0\leq\rho(\boldsymbol{x})\le1~\text{a.e.}~\text{in}\,\Omega\}.
+\]
+
+在变密度方法框架下，结构优化可以抽象为以下偏微分方程（PDE）约束优化问题：
+\[
+\begin{aligned}
+	\min_{\rho,\boldsymbol{u}}\quad&\mathcal{J}(\boldsymbol{u}, \rho)\\
+	\text{subject~to}\quad&
+	a_\rho(\boldsymbol{u},\boldsymbol{v}) = \ell(\boldsymbol{v}),\quad\forall\boldsymbol{v}\in\mathcal{V}_0,\\
+	&\mathcal{G}_i(\rho,\boldsymbol{u})\leq0,\quad{i}=1,\cdots,m,\\
+	&\rho\in\mathcal{X}.
+\end{aligned}
+\]
+其中各项含义说明如下：
+\begin{itemize}
+	\item 目标泛函 $\mathcal{J}(\boldsymbol{u}, \rho)$：用于衡量结构性能的泛函
+	\[
+	\mathcal{J}:\mathcal{V}\times\mathcal{X}\to\mathbb{R}
+	\]
+	其具体形式随所考虑的优化问题而定。本文主要讨论柔顺度最小化与柔顺机构设计等典型目标。
+	\item 状态方程 $a_\rho(\boldsymbol{u},\boldsymbol{v}) = \ell(\boldsymbol{v})$：由密度场 $\rho$ 决定的物理场平衡方程的弱形式。双线性型 $a_\rho(\cdot,\cdot)$ 通过材料刚度张量 $\mathbb{C}(\rho)$ 依赖于材料密度函数 $\rho(\boldsymbol{x})$，线性泛函 $\ell(\cdot)$ 则对应外载荷与边界条件的作用。 
+	\item 约束条件 $\mathcal{G}_i(\rho,\boldsymbol{u})\leq0$：用于刻画体积、质量、位移、应力等工程与物理要求。本文中主要考虑体积分数约束与应力约束等典型不等式约束。
+	\item 设计变量可行集合 $\mathcal{X}$：限制密度函数 $\rho(\boldsymbol{x})$ 的取值范围与基本正则性，确保优化问题在数学上具备合理性。
+\end{itemize}
+
+\section{变密度拓扑优化的典型问题}
+\label{sec:typical_problems}
+
+前一节建立了变密度拓扑优化的通用数学模型。然而，针对不同的工程需求，目标泛函 $\mathcal{J}(\boldsymbol{u}, \rho)$ 和约束条件 $\mathcal{G}_i(\boldsymbol{u}, \rho)$ 的具体形式各不相同。不同的物理目标不仅决定了结构的最终拓扑构型，也对数值优化算法的稳定性与收敛速度提出了不同的挑战。
+
+本节将详细阐述三类最具代表性的拓扑优化问题：最小柔顺度问题（追求结构刚度最大化）、柔顺机构设计问题（追求特定输出位移最大化）以及应力约束问题（追求结构强度满足要求）。这三类问题涵盖了从单目标凸规划到多目标非线性规划的典型特征，也是检验高效数值算法性能的标准基准问题。
+
+
+\subsection{体积分数约束下的柔顺度最小化问题}
+\label{subsec:min_compliance}
+
+柔顺度度量了外载荷对结构所作的功，因此可以视作 “柔软程度” 的量化指标。对于给定的 $(\rho,\boldsymbol{u})$，其连续形式可定义为
+\[
+c(\boldsymbol{u},\rho) := \ell(\boldsymbol{u}) = \int_{\Omega}\boldsymbol{b}\cdot\boldsymbol{u}~\mathrm{d}\boldsymbol{x} + \int_{\Gamma_N}\boldsymbol{g}\cdot\boldsymbol{u}~\mathrm{d}\boldsymbol{s},
+\]
+对于线弹性结构，在平衡状态下，外力所做的功等于两倍的结构应变能，因此柔顺度也可以写成应变能的形式：
+\[
+c(\boldsymbol{u},\rho) = 2\left(\frac{1}{2}\int_{\Omega}(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})):\boldsymbol{\varepsilon}(\boldsymbol{u})~\mathrm{d}\boldsymbol{x}\right) = \int_{\Omega}(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})):\boldsymbol{\varepsilon}(\boldsymbol{u})~\mathrm{d}\boldsymbol{x}.
+\]
+
+设设计域体积为
+\[
+|\Omega| = \int_{\Omega}1~\mathrm{d}\boldsymbol{x},
+\]
+给定体积分数上限 $V_f\in(0,1]$，密度场 $\rho$ 的体积分数定义为
+\[
+V(\rho) = \frac{1}{|\Omega|}\int_{\Omega}\rho(\boldsymbol{x})~\mathrm{d}\boldsymbol{x},
+\]
+体积分数约束要求材料平均用量不超过给定体积分数，即
+\[
+V(\rho) \leq V_f,
+\]
+等价地，可以写成不等式约束
+\[
+g_V(\rho) := V(\rho) - V_f \leq 0.
+\]
+
+将状态方程视作一种从设计变量到位移解的映射，即对每个给定的 $\rho\in\mathcal{X}$，存在唯一的位移解 $\boldsymbol{u}_\rho\in\boldsymbol{V}$ 满足线弹性变分问题
+\[
+a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) = \ell(\boldsymbol{v}) \quad\forall\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+其中 $\boldsymbol{V}$ 为试探函数框架，$\boldsymbol{V}_0$ 为满足齐次位移边界条件的测试函数空间，其具体定义见第 \ref{subsec:elastic_weak} 节。由此，体积分数约束下的柔顺度最小化问题可以表述为
+\[
+\begin{aligned}
+	\min_{\rho}\quad&c(\rho) = \int_{\Omega}(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)~\mathrm{d}\boldsymbol{x}\\
+	\text{subject~to}\quad&a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) = \ell(\boldsymbol{v}),\quad\forall\boldsymbol{v}\in\boldsymbol{V}_0,\\
+	&g_V(\rho) \leq0,\\
+	&\rho\in\mathcal{X}.
+\end{aligned}
+\]
+在材料插值采用 SIMP 等惩罚型模型的设定下，双线性型 $a_\rho(\cdot,\cdot)$ 对位移变量 $\boldsymbol{u}$ 是连续且一致强椭圆的，从而对固定的 $\rho$ 线弹性边值问题在位移空间上是良定的；但由于刚度张量 $\mathbb{C}(\rho)$ 非线性依赖于密度场 $\rho$，整体优化问题在设计变量空间上通常是高度非凸的，这也是拓扑优化中局部极值、网格依赖性等数值现象的重要来源。
+
+\subsection{柔顺机构设计问题}
+\label{subsec:compliant_mechanisms}
+
+在变密度拓扑优化框架下，柔顺机构设计的目标不再是提高结构整体刚度，而是通过合理分配材料，使在给定输入激励作用下，输出端在指定方向上的位移响应尽可能大，同时保持结构的完整性与一定的刚度水平。为了与第 \ref{subsec:min_compliance} 节中的柔顺度最小化问题保持一致，并出于模型与推导上的简洁性考虑，本文中柔顺机构设计一律基于小变形线弹性假设，忽略几何与材料非线性效应。
+
+设设计域为有界开集 $\Omega\subset\mathbb{R}^d$，其边界 $\partial\Omega$ 分解为互不交叠的三部分
+\[
+\partial\Omega = \Gamma_D \cup \Gamma_{\mathrm{in}} \cup \Gamma_{\mathrm{out}},
+\]
+其中 $\Gamma_{\mathrm{in}}$ 与 $\Gamma_{\mathrm{out}}$ 分别表示机构的输入和输出端口所在的边界子集。为刻画线弹性响应，仍定义与密度场 $\rho$ 相关的双线性型
+\[
+a_\rho(\boldsymbol{u},\boldsymbol{v}) := \int_{\Omega}\big(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})\big):\boldsymbol{\varepsilon}(\boldsymbol{v})~\mathrm{d}\boldsymbol{x},
+\]
+同时为了避免出现 “机制” 解，即在输入端施加载荷后结构整体刚度趋于零而产生不受控的大位移，并在连续模型中显式体现输入致动器和输出工件的刚度特性，柔顺机构设计中通常在输入端和输出端引入弹簧（或等效刚度元件）进行正则化。记输入端与输出端的特征方向向量分别为 $\boldsymbol{d}_{\mathrm{in}}$ 与 $\boldsymbol{d}_{\mathrm{out}}$，并给定输入/输出弹簧刚度 $k_{\mathrm{in}}$ 和 $k_{\mathrm{out}}$，其中 $\boldsymbol{d}_{\mathrm{in}},\boldsymbol{d}_{\mathrm{out}}\in\mathbb{R}^d$  为给定单位向量，用于提取输入/输出沿指定方向的位移分量，$k_{\mathrm{in}},k_{\mathrm{out}}$ 分别等效描述应变基致动器与外部工件的线性刚度 \cite{bendsoeTopologyOptimization2004}。可在弱形式中定义附加双线性型
+\[
+s(\boldsymbol{u},\boldsymbol{v}) := k_{\mathrm{in}}\int_{\Gamma_{\mathrm{in}}}(\boldsymbol{u}\cdot\boldsymbol{d}_{\mathrm{in}})(\boldsymbol{v}\cdot\boldsymbol{d}_{\mathrm{in}})\,\mathrm{d}\boldsymbol{s} + k_{\mathrm{out}}\int_{\Gamma_{\mathrm{out}}}(\boldsymbol{u}\cdot\boldsymbol{d}_{\mathrm{out}})(\boldsymbol{v}\cdot\boldsymbol{d}_{\mathrm{out}})\,\mathrm{d}\boldsymbol{s},
+\]
+给定输入端的等效体力 $\boldsymbol{b}$ 和边界载荷密度 $\boldsymbol{g}_{\mathrm{in}}$，可定义输入载荷对应的线性泛函
+\[
+\ell_{\mathrm{in}}:\boldsymbol{V}\to\mathbb{R},\qquad\ell_{\mathrm{in}}(\boldsymbol{v})  := \int_{\Omega}\boldsymbol{b}\cdot\boldsymbol{v}~\mathrm{d}\boldsymbol{x} + \int_{\Gamma_{\mathrm{in}}}\boldsymbol{g}_{\mathrm{in}}\cdot\boldsymbol{v}\,\mathrm{d}\boldsymbol{s},
+\]
+其中 $\ell_{\mathrm{in}}$ 描述了输入致动器对任意位移 $\boldsymbol{v}$ 所作的外功。于是，对每个给定的密度场 $\rho\in\mathcal{X}$，柔顺机构的位移场 $\boldsymbol{u}_\rho\in\boldsymbol{V}$ 由下述变分问题唯一确定：
+\[
+\begin{aligned}
+	a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) + s(\boldsymbol{u}_\rho,\boldsymbol{v}) = \ell_{\mathrm{in}}(\boldsymbol{v}),\quad \forall \boldsymbol{v}\in\boldsymbol{V}_0, 
+\end{aligned}
+\]
+在材料插值 $\mathbb{C}(\rho)$ 满足一致强椭圆性、且 $k_{\mathrm{in}},k_{\mathrm{out}}>0$ 的条件下，上述双线性型对位移变量是连续且强椭圆的，从而该状态方程对每个固定 $\rho$ 是良定的。
+
+柔顺机构设计的核心指标是输出端在指定方向上的位移。为此，引入输出位移泛函
+\[
+\ell_{\mathrm{out}}:\boldsymbol{V}\to\mathbb{R},\qquad \ell_{\mathrm{out}}(\boldsymbol{u}) := \int_{\Gamma_{\mathrm{out}}}\boldsymbol{d}_{\mathrm{out}}\cdot\boldsymbol{u}\,\mathrm{d}s,
+\]
+其中 $\ell_{\mathrm{out}}$ 用于测量输出端沿方向 $\boldsymbol{d}_{\mathrm{out}}$ 的位移响应，并将输出位移定义为
+\[
+u_{\mathrm{out}}(\rho) := \ell_{\mathrm{out}}(\boldsymbol{u}_\rho),
+\]
+则 $u_{\mathrm{out}}(\rho)$ 为给定密度场下输出弹簧的标量位移。引入与第 \ref{subsec:min_compliance} 节相同的体积分数约束函数 $g_V(\rho)\leq0$，于是体积分数约束下柔顺机构设计问题的连续优化模型可表述为
+\[
+\begin{aligned} \max_{\rho}\quad & u_{\mathrm{out}}(\rho) = \ell_{\mathrm{out}}(\boldsymbol{u}_\rho)\\[0.3em] \text{subject to}\quad & a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) + s(\boldsymbol{u}_\rho,\boldsymbol{v}) = \ell_{\mathrm{in}}(\boldsymbol{v}),\quad \forall \boldsymbol{v}\in\boldsymbol{V}_0,\\[0.2em] & g_V(\rho)\le 0,\\[0.2em] & \rho\in\mathcal{X}. 
+\end{aligned}
+\]
+
+\subsection{应力约束下的拓扑优化问题}
+\label{subsec:stress_constrained}
+
+\section{灵敏度分析理论与方法}
+\label{sec:sensitivity_analysis}
+
+\subsection{灵敏度分析一般框架}
+\label{subsec:sensitivity_framework}
+
+\subsection{典型拓扑优化问题的灵敏度推导}
+\label{subsec:sensitivity_derivation}
+
+\section{拓扑优化中的数值优化算法}
+\label{sec:num_algorithms}
+
+\subsection{优化准则法}
+\label{subsec:alg_oc}
+
+\subsection{移动渐近线方法}
+\label{subsec:alg_mma}
+
+\section{正则化与长度尺度控制：过滤与投影}
+\label{sec:regularization}
+
+\subsection{灵敏度过滤方法}
+\label{subsec:filter_sensitivity}
+
+\subsection{密度过滤方法}
+\label{subsec:filter_density}
+
+\subsection{投影方法}
+\label{subsec:projection_methods}
+
+\section{拓扑优化的基本流程}
+\label{sec:basic_workflow}
