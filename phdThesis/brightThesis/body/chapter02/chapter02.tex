@@ -134,6 +134,7 @@ c(\boldsymbol{u},\rho) := \ell(\boldsymbol{u}) = \int_{\Omega}\boldsymbol{b}\cdo
 \[
 c(\boldsymbol{u},\rho) = 2\left(\frac{1}{2}\int_{\Omega}(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})):\boldsymbol{\varepsilon}(\boldsymbol{u})~\mathrm{d}\boldsymbol{x}\right) = \int_{\Omega}(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})):\boldsymbol{\varepsilon}(\boldsymbol{u})~\mathrm{d}\boldsymbol{x}.
 \]
+其中 $C(\rho)$ 表示由第 \ref{subsec:material_interpolation} 节材料插值模型确定的密度相关弹性刚度张量。
 
 设设计域体积为
 \[
@@ -216,32 +217,505 @@ u_{\mathrm{out}}(\rho) := \ell_{\mathrm{out}}(\boldsymbol{u}_\rho),
 \section{灵敏度分析理论与方法}
 \label{sec:sensitivity_analysis}
 
+在拓扑优化的数值求解过程中，灵敏度分析作为连接优化模型与迭代算法的关键环节，直接影响算法的收敛速度和计算效率。前文已讨论了典型拓扑优化问题的数学建模，本节将首先阐述灵敏度分析的一般框架，然后推导典型拓扑优化问题中的灵敏度计算，以为后续高效数值算法的实现提供理论支撑。
+
 \subsection{灵敏度分析一般框架}
 \label{subsec:sensitivity_framework}
+
+在使用基于梯度的优化算法求解变密度拓扑优化问题时，核心步骤是计算目标泛函和约束泛函对设计变量的灵敏度。灵敏度刻画了当设计变量发生微小改变时，目标或约束的变化率，从而为寻找最优设计提供方向。本节阐述一种计算灵敏度的通用高效方法，即伴随方法。为表述清晰，首先以单个目标泛函为例展开推导，其结论可直接推广至各类约束泛函。
+
+根据第 \ref{subsec:general_formulation} 节的描述，对每个给定的 $\rho$，令 $\boldsymbol{u}_\rho$ 为相应状态方程的解，则目标泛函可以写为 $\mathcal{J}(\boldsymbol{u}_\rho, \rho)$。若直接根据链式法则计算 $\mathcal{J}(\boldsymbol{u}_\rho, \rho)$ 关于 $\rho$ 的导数，将不可避免地涉及状态解 $\boldsymbol{u}_\rho$ 对设计变量的导数 $\partial\boldsymbol{u}_\rho/\partial\rho$。在有限元离散后，这对应于一个维度极高的稠密矩阵，显式构造和存储的计算代价非常昂贵。伴随方法的核心思想，是通过构造适当的拉格朗日泛函 $\mathcal{L}$ 并引入伴随变量 $\boldsymbol{\lambda}$，消除对 $\partial\boldsymbol{u}_\rho/\partial\rho$ 的显式依赖，从而以与设计变量维数基本无关的代价获得完整的梯度信息。
+
+基于泛函分析中的拉格朗日乘子理论 \cite{luenbergerOptimizationVectorSpace1969}，引入增广拉格朗日泛函：
+\[
+\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda}) := \mathcal{J}(\boldsymbol{u}, \rho) + \mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol\lambda),
+\]
+其中残差算子定义为
+\[
+\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{v}) := a_\rho(\boldsymbol{u},\boldsymbol{v}) - \ell(\boldsymbol{v}),\quad\forall\boldsymbol{v}\in\boldsymbol{V}_0,
+\]
+当 $\boldsymbol{u}=\boldsymbol{u}_\rho$ 满足状态方程时，有
+\[
+\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{v}) = 0,\quad\forall\boldsymbol{v}\in\boldsymbol{V}_0,
+\]
+从而对任意伴随变量 $\boldsymbol{\lambda}\in\boldsymbol{V}_0$ 都有 $\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda}) = 0$。因此，$\mathcal{J}(\boldsymbol{u}_\rho, \rho)$ 在方向 $\delta\rho$ 上的一阶变分 $\delta\mathcal{J}(\boldsymbol{u}_\rho, \rho)$，等于 $\mathcal{L}$ 在点 $(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})$ 的一阶变分 $\delta\mathcal{L}$，即
+\[
+\delta\mathcal{J}(\boldsymbol{u}_\rho, \rho) = \delta\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda}),
+\]
+该一阶变分即为目标泛函对设计变量 $\rho$ 的 Fréchet 导数。
+
+对 $\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})$ 作一阶变分，可写为
+\[
+\delta\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda}) = \frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] + \frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] + \frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\boldsymbol\lambda}[\delta\boldsymbol\lambda],
+\]
+其中各项为 $\mathcal{L}$ 对相应变量的 Gâteaux 导数 \cite{luenbergerOptimizationVectorSpace1969}。结合 $\mathcal{L}$ 与 $\mathcal{R}$ 的定义，可分别写为
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial\mathcal{J}( \boldsymbol{u},\rho)}{\partial\rho}[\delta\rho] + \frac{\partial\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol\lambda)}{\partial\rho}[\delta\rho],
+\]
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] = \frac{\partial\mathcal{J}( \boldsymbol{u},\rho)}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] + \frac{\partial\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol\lambda)}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}],
+\]
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda})}{\partial\boldsymbol\lambda}[\delta\boldsymbol\lambda] = \mathcal{R}(\rho,\boldsymbol{u}_\rho)(\delta\boldsymbol{\lambda}) = a_\rho(\boldsymbol{u},\delta\boldsymbol\lambda) - \ell(\delta\boldsymbol\lambda),
+\]
+特别地，当 $\boldsymbol{u}=\boldsymbol{u}_\rho$ 满足状态方程时，有 $\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\delta\boldsymbol{\lambda})=0$，从而 $\frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\boldsymbol\lambda}[\delta\boldsymbol\lambda] = 0$。
+
+为了消除未知状态扰动 $\delta\boldsymbol{u}$ 的依赖，引入伴随变量 $\boldsymbol{\lambda}\in\boldsymbol{V}_0$，并要求其满足
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] = 0, \quad \forall\,\delta\boldsymbol{u}\in\boldsymbol{V}_0,
+\]
+由拉格朗日泛函的定义可得
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] = \frac{\partial\mathcal{J}( \boldsymbol{u}_\rho,\rho)}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] + \frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol\lambda)}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}],
+\]
+在变密度线弹性问题中，$\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{v}) := a_\rho(\boldsymbol{u},\boldsymbol{v}) - \ell(\boldsymbol{v})$，从而
+\[
+\frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol\lambda)}{\partial\boldsymbol{u}}[\delta\boldsymbol{u}] = a_\rho(\delta\boldsymbol{u},\boldsymbol{\lambda}),
+\]
+因此，伴随变量 $\boldsymbol{\lambda}$ 应满足如下伴随方程：求 $\boldsymbol{\lambda}\in\boldsymbol{V}_0$，使得
+\[
+a_\rho(\boldsymbol{v},\boldsymbol{\lambda}) = -\frac{\partial\mathcal{J}( \boldsymbol{u}_\rho,\rho)}{\partial\boldsymbol{u}}[\boldsymbol{v}],\quad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+一旦对给定的设计变量 $\rho$ 求解状态方程得到 $\boldsymbol{u}_\rho$​，再求解上述伴随方程得到对应的伴随解 $\boldsymbol{\lambda}$，则目标泛函 $\mathcal{J}(\boldsymbol{u}_\rho, \rho)$ 在方向 $\delta\rho$ 上的一阶变分可以写为
+\[
+\delta\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda}) = \frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial\mathcal{J}( \boldsymbol{u}_\rho,\rho)}{\partial\rho}[\delta\rho] + \frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol\lambda)}{\partial\rho}[\delta\rho],
+\]
+该表达式即为 $\mathcal{J}(\boldsymbol{u}_\rho, \rho)$ 关于设计变量 $\rho$ 在方向 $\delta\rho$ 上的 Gâteaux 导数，它已经不再包含对未知状态扰动 $\delta\boldsymbol{u}$ 的依赖，只涉及给定的状态解 $\boldsymbol{u}_\rho$、伴随解 $\boldsymbol{\lambda}$ 以及状态算子对 $\rho$ 的显式依赖结构。
+
+在变密度拓扑优化中，可以将上述线性泛函理解为在设计域上对某个局部函数的积分，该局部函数刻画了每一点密度微小变化对全局目标的影响，通常称为灵敏度密度函数。伴随方法的核心优势在于其计算效率：无论设计变量 $\rho$ 的离散维度多高（例如有限元离散后，每个单元或每个节点都对应一个设计变量），计算整个灵敏度场的主成本仅在于求解一次原问题的状态方程和一次伴随方程，而与设计变量的个数基本无关。这一性质使伴随方法成为大规模变密度拓扑优化中进行灵敏度分析的标准工具与首选方法。
 
 \subsection{典型拓扑优化问题的灵敏度推导}
 \label{subsec:sensitivity_derivation}
 
+\noindent \textbf{柔顺度目标函数的灵敏度}
+\vspace{0.5em}
+
+考虑体积分数约束下的柔顺度最小化问题，记对给定的密度场 $\rho\in\mathcal{X}$，$\boldsymbol{u}_\rho\in\boldsymbol{V}$ 为线弹性问题变分形式的解，即满足
+\[
+a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) = \ell(\boldsymbol{v}),\quad \forall \boldsymbol{v}\in\boldsymbol{V}_0
+\]
+在平衡状态下，柔顺度 $c(\rho)$ 可以写作外载功
+\[
+c(\rho) = \mathcal{J}(\boldsymbol{u}_\rho,\rho) := \ell(\boldsymbol{u}_\rho),
+\]
+于是目标泛函 $\mathcal{J}(\boldsymbol{u}_\rho,\rho)$ 对位移 $\boldsymbol{u}$ 的导数为
+\[
+\frac{\partial\mathcal{J}(\boldsymbol{u}_\rho,\rho)}{\partial\boldsymbol{u}}[\boldsymbol{v}] = \ell(\boldsymbol{v}),\quad \forall \boldsymbol{v}\in\boldsymbol{V}_0
+\]
+且对密度 $\rho$ 没有显式依赖，即
+\[
+\frac{\partial\mathcal{J}(\boldsymbol{u}_\rho,\rho)}{\partial\rho}[\delta\rho] = 0
+\]
+根据第 \ref{subsec:sensitivity_framework} 节给出的伴随方法一般框架，对应的伴随方程为
+\[
+a_\rho(\boldsymbol{v},\boldsymbol{\lambda}) = -\frac{\partial\mathcal{J}( \boldsymbol{u}_\rho,\rho)}{\partial\boldsymbol{u}}[\boldsymbol{v}],\quad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+代入上式可得
+\[
+a_\rho(\boldsymbol{v},\boldsymbol{\lambda}) = -\ell(\boldsymbol{v}) = -a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}), \quad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+利用双线性型 $a_\rho(\cdot,\cdot)$ 的对称性与强椭圆性，得到伴随解的唯一性，并可判断
+\[
+\boldsymbol{\lambda} = -\boldsymbol{u}_\rho
+\]
+这表明，对于柔顺度最小化问题，伴随场与位移场仅相差一个负号，无需额外求解新的边值问题，从而进一步降低了灵敏度分析的代价。这种伴随解与状态解的强关联性，正是柔顺度最小问题自伴随性质的体现 \cite{bendsoeTopologyOptimization2004}。
+
+下面利用一般形式的灵敏度表达式计算柔顺度目标的密度导数。由残差算子
+\[
+\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{v}) := a_\rho(\boldsymbol{u},\boldsymbol{v}) - \ell(\boldsymbol{v}),
+\]
+可知其对 $\rho$ 的 Gâteaux 导数为
+\[
+\frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial a_\rho(\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \int_{\Omega}\big(\mathbb{C}'(\rho)[\delta\rho]: \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\big):\boldsymbol{\varepsilon}(\boldsymbol{\lambda})\,\mathrm{d}\boldsymbol{x},
+\]
+其中 $\mathbb{C}'(\rho)[\delta\rho]$ 表示刚度张量对密度的方向导数。注意到在每一点 $\boldsymbol{x}\in\Omega$ 上，$\mathbb{C}'(\rho)[\delta\rho](\boldsymbol{x})$ 关于 $\delta\rho(\boldsymbol{x})$ 是线性的，可写为
+\[
+\mathbb{C}'(\rho)[\delta\rho](\boldsymbol{x}) = \mathbb{C}'(\rho(\boldsymbol{x}))\,\delta\rho(\boldsymbol{x}),
+\]
+代入并利用伴随解 $\boldsymbol{\lambda} = -\boldsymbol{u}_\rho$，得到
+\[
+\frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = -\int_{\Omega}\big(\mathbb{C}'(\rho): \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\big):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\,\delta\rho\,\mathrm{d}\boldsymbol{x}.
+\]
+另一方面，柔顺度目标对 $\rho$ 无显式依赖，即 $\partial\mathcal{J}(\boldsymbol{u}_\rho,\rho)/\partial\rho[\delta\rho]=0$。由 2.4.1 节的结论，得到柔顺度目标在方向 $\delta\rho$ 上的一阶变分：
+\[
+\delta c(\rho) = \delta\mathcal{J}(\boldsymbol{u}_\rho,\rho) = \frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = -\int_{\Omega}\big(\mathbb{C}'(\rho): \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\big):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\,\delta\rho\,\mathrm{d}\boldsymbol{x},
+\]
+并与一般形式
+\[
+\delta c(\rho) = \int_{\Omega}\frac{\delta c}{\delta\rho}(\boldsymbol{x})\,\delta\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x},
+\]
+对比，即可写出柔顺度关于密度场的灵敏度密度函数为
+\[
+\frac{\delta c}{\delta\rho}(\boldsymbol{x}) = -\big(\mathbb{C}'(\rho(\boldsymbol{x})): \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x}))\big): \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x})),
+\]
+
+采用 SIMP 插值杨氏模量
+\[
+\mathbb{C}(\rho(\boldsymbol{x})) = E(\rho(\boldsymbol{x}))\,\mathbb{C}_0,
+\]
+其中 $\mathbb{C}_0$ 为实体材料的刚度张量，$E(\rho)$ 为等效杨氏模量，则
+\[
+\mathbb{C}'(\rho(\boldsymbol{x})) = E'(\rho(\boldsymbol{x}))\,\mathbb{C}_0,
+\]
+从而灵敏度密度可具体写为
+\[
+\frac{\delta c}{\delta\rho}(\boldsymbol{x}) = -E'(\rho(\boldsymbol{x}))\, \big(\mathbb{C}_0:\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x}))\big): \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x})).
+\]
+
+\noindent \textbf{体积分数约束函数的灵敏度}
+\vspace{0.5em}
+
+由第 \ref{subsec:min_compliance} 节可知，体积分数约束采用归一化体积函数
+\[
+V(\rho) = \frac{1}{|\Omega|}\int_{\Omega}\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x}, \qquad |\Omega| = \int_{\Omega}1\,\mathrm{d}\boldsymbol{x},
+\]
+并记约束函数
+\[
+g_V(\rho) := V(\rho) - V_f \le 0,
+\]
+由于 $g_V(\rho)$ 仅通过线性泛函依赖于密度场 $\rho$，且与位移场 $\boldsymbol{u}_\rho$ 无关，其灵敏度可以直接由 Gâteaux 导数给出，而不需要引入伴随场。
+
+对任意方向扰动 $\delta\rho\in\mathcal{X}$，体积分数约束在方向 $\delta\rho$ 上的一阶变分为
+\[
+\delta g_V(\rho) = \frac{\partial g_V(\rho)}{\partial\rho}[\delta\rho] = \frac{1}{|\Omega|}\int_{\Omega}\delta\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x},
+\]
+等价地，也可以写成
+\[
+\delta g_V(\rho) = \int_{\Omega}\frac{\delta g_V}{\delta\rho}(\boldsymbol{x})\,\delta\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x},
+\]
+对比可得体积分数约束关于密度场的灵敏度密度函数为常数：
+\[
+\frac{\delta g_V}{\delta\rho}(\boldsymbol{x}) = \frac{1}{|\Omega|}, \qquad \forall\,\boldsymbol{x}\in\Omega.
+\]
+
+\noindent \textbf{柔顺机构输出位移目标的灵敏度}
+\vspace{0.5em}
+
+考虑第 \ref{subsec:compliant_mechanisms} 节中的柔顺机构设计问题。对给定的密度场 $\rho\in\mathcal{X}$，位移场 $\boldsymbol{u}_\rho\in\boldsymbol{V}$ 由下述变分问题唯一确定：
+\[
+a_\rho(\boldsymbol{u}_\rho,\boldsymbol{v}) + s(\boldsymbol{u}_\rho,\boldsymbol{v})  = \ell_{\mathrm{in}}(\boldsymbol{v}),\quad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0,
+\]
+柔顺机构的性能指标取为输出端沿指定方向的位移
+\[
+u_{\mathrm{out}}(\rho) := \ell_{\mathrm{out}}(\boldsymbol{u}_\rho), \qquad \ell_{\mathrm{out}}(\boldsymbol{u})  := \int_{\Gamma_{\mathrm{out}}}\boldsymbol{d}_{\mathrm{out}}\cdot\boldsymbol{u}\,\mathrm{d}s,
+\]
+即目标泛函记为
+\[
+\mathcal{J}(\boldsymbol{u}_\rho,\rho) := u_{\mathrm{out}}(\rho) = \ell_{\mathrm{out}}(\boldsymbol{u}_\rho),
+\]
+在连续模型中 $\mathcal{J}$ 对密度场 $\rho$ 没有显式依赖，仅通过位移场 $\boldsymbol{u}_\rho$ 间接依赖于 $\rho$，因此
+\[
+\frac{\partial\mathcal{J}(\boldsymbol{u}_\rho,\rho)}{\partial\rho}[\delta\rho] = 0,\quad\frac{\partial\mathcal{J}(\boldsymbol{u}_\rho,\rho)}{\partial\boldsymbol{u}}[\boldsymbol{v}] = \ell_{\mathrm{out}}(\boldsymbol{v}), \qquad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+
+按照一般伴随框架，将柔顺机构的状态方程写成残差算子
+\[
+\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{v}) := a_\rho(\boldsymbol{u},\boldsymbol{v}) + s(\boldsymbol{u},\boldsymbol{v}) - \ell_{\mathrm{in}}(\boldsymbol{v}), \qquad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+并构造拉格朗日泛函
+\[
+\mathcal{L}(\rho,\boldsymbol{u},\boldsymbol{\lambda}) := \mathcal{J}(\boldsymbol{u},\rho)  + \mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{\lambda}),\qquad\boldsymbol{\lambda}\in\boldsymbol{V}_0
+\]
+引入伴随变量 $\boldsymbol{\lambda}$ 并令
+\[
+\frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})} {\partial\boldsymbol{u}}[\delta\boldsymbol{u}] = 0, \qquad \forall\,\delta\boldsymbol{u}\in\boldsymbol{V}_0
+\]
+可得伴随问题：求 $\boldsymbol{\lambda}\in\boldsymbol{V}_0$，使
+\[
+a_\rho(\boldsymbol{v},\boldsymbol{\lambda}) + s(\boldsymbol{v},\boldsymbol{\lambda}) = -\,\ell_{\mathrm{out}}(\boldsymbol{v}), \qquad \forall\,\boldsymbol{v}\in\boldsymbol{V}_0
+\]
+可见，伴随方程与原状态方程在算子形式上相同，只是右端载荷由输入载荷 $\ell_{\mathrm{in}}$ 换成了与输出端位移相关的 “虚拟载荷” $-\ell_{\mathrm{out}}$。与柔顺度最小化问题不同，此时一般不再满足 $\boldsymbol{\lambda} = \pm\boldsymbol{u}_\rho$​，因此柔顺机构设计问题不具自伴随性，需要额外求解一次伴随方程。
+
+接下来计算目标泛函对密度场的导数。由
+\[
+\mathcal{R}(\rho,\boldsymbol{u})(\boldsymbol{\lambda}) = a_\rho(\boldsymbol{u},\boldsymbol{\lambda}) + s(\boldsymbol{u},\boldsymbol{\lambda}) - \ell_{\mathrm{in}}(\boldsymbol{\lambda})
+\]
+可得其对 $\rho$ 的 Gâteaux 导数为
+\[
+\frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial a_\rho(\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] + \frac{\partial s(\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] - \frac{\partial\ell_{\mathrm{in}}(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho],
+\]
+在假设弹簧刚度 $k_{\mathrm{in}},k_{\mathrm{out}}$、特征方向 $\boldsymbol{d}_{\mathrm{in}},\boldsymbol{d}_{\mathrm{out}}$ 以及边界子集 $\Gamma_{\mathrm{in}},\Gamma_{\mathrm{out}}$ 与设计变量无关的情况下，有
+\[
+\frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial a_\rho(\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho]
+\],
+根据
+\[
+a_\rho(\boldsymbol{u},\boldsymbol{v}) = \int_{\Omega}\big(\mathbb{C}(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u})\big) :\boldsymbol{\varepsilon}(\boldsymbol{v})\,\mathrm{d}\boldsymbol{x},
+\]
+其对 $\rho$ 的 Gâteaux 导数形式与柔顺度目标的推导完全类似，利用
+\[
+\mathbb{C}'(\rho)[\delta\rho](\boldsymbol{x})  = \mathbb{C}'\big(\rho(\boldsymbol{x})\big)\,\delta\rho(\boldsymbol{x}),
+\]
+可得
+\[
+\begin{aligned} 
+	\frac{\partial a_\rho(\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] &= \int_{\Omega} \big(\mathbb{C}'(\rho)[\delta\rho]:\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\big) :\boldsymbol{\varepsilon}(\boldsymbol{\lambda})\,\mathrm{d}\boldsymbol{x}\\ &= \int_{\Omega} \big(\mathbb{C}'(\rho(\boldsymbol{x})):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x}))\big) : \boldsymbol{\varepsilon}(\boldsymbol{\lambda}(\boldsymbol{x}))\, \delta\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x}, 
+\end{aligned}
+\]
+当伴随方程满足时有
+\[
+\delta u_{\mathrm{out}}(\rho) = \delta\mathcal{J}(\boldsymbol{u}_\rho,\rho) = \frac{\partial\mathcal{L}(\rho,\boldsymbol{u}_\rho,\boldsymbol{\lambda})}{\partial\rho}[\delta\rho] = \frac{\partial\mathcal{R}(\rho,\boldsymbol{u}_\rho)(\boldsymbol{\lambda})}{\partial\rho}[\delta\rho],
+\]
+从而得到
+\[
+\delta u_{\mathrm{out}}(\rho) = \int_{\Omega} \big(\mathbb{C}'(\rho):\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho)\big) :\boldsymbol{\varepsilon}(\boldsymbol{\lambda})\, \delta\rho\,\mathrm{d}\boldsymbol{x},
+\]
+与一般形式
+\[
+\delta u_{\mathrm{out}}(\rho) = \int_{\Omega}\frac{\delta u_{\mathrm{out}}}{\delta\rho}(\boldsymbol{x})\, \delta\rho(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x},
+\]
+对比，可得到柔顺机构输出位移关于密度场的灵敏度密度函数为
+\[
+\frac{\delta u_{\mathrm{out}}}{\delta\rho}(\boldsymbol{x}) = \big(\mathbb{C}'(\rho(\boldsymbol{x})) : \boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x}))\big) : \boldsymbol{\varepsilon}(\boldsymbol{\lambda}(\boldsymbol{x})),
+\]
+采用 SIMP 材料插值时，灵敏度密度可具体写为
+\[
+\frac{\delta u_{\mathrm{out}}}{\delta\rho}(\boldsymbol{x}) = E'(\rho(\boldsymbol{x}))\, \big(\mathbb{C}_0:\boldsymbol{\varepsilon}(\boldsymbol{u}_\rho(\boldsymbol{x}))\big) : \boldsymbol{\varepsilon}(\boldsymbol{\lambda}(\boldsymbol{x})).
+\]
+
 \section{拓扑优化中的数值优化算法}
 \label{sec:num_algorithms}
+
+拓扑优化问题的求解算法主要有优化准则法（Optimality Criteria, OC）和数学规划法（Mathematical Programming, MP）\cite{ChengGengDong.GongChengJieGouYouHuaSheJiJiChuChengGengDongBianZhu2012}。依据优化迭代过程中对灵敏度信息的依赖程度，数学规划法通常被划分为无梯度算法与基于梯度的算法两大类。无梯度算法（如单纯形法、Powell 法及各类直接搜索法）\cite{ChengGengDong.GongChengJieGouYouHuaSheJiJiChuChengGengDongBianZhu2012} 虽然规避了复杂的灵敏度求解过程，但在面对拓扑优化通常涉及的数以万计甚至百万级设计变量时，其搜索效率显著下降，难以满足大规模问题的计算需求。相反，基于梯度的优化算法通过利用目标函数与约束函数的导数信息来构造搜索方向或近似子问题，具有极高的收敛效率，因此成为连续体拓扑优化领域的主流选择。该类方法的典型代表包括序列线性规划（Sequential Linear Programming, SLP）、序列二次规划（Sequential Quadratic Programming, SQP）、序列凸规划（Sequential Convex Programming, SCP）以及专门针对结构优化特点发展的移动渐近线法（Method of Moving Asymptotes，MMA）等 \cite{qianApproachStructuralOptimization1984, svanbergMethodMovingAsymptotes1987, boggsSequentialQuadraticProgramming1995}。
 
 \subsection{优化准则法}
 \label{subsec:alg_oc}
 
+优化准则法是一类基于极值条件显式更新设计变量的迭代算法 \cite{saveStructuralOptimizationVolume1986}。其基本思想是：针对给定的目标函数与约束条件，根据最优解应满足的 Karush–Kuhn–Tucker（KKT）条件，推导出设计变量的 “最优性准则”，并据此构造启发式的迭代更新格式。对于约束数目较少、结构较规整的拓扑优化问题（如单一体积分数约束下的柔顺度最小化），优化准则法具有物理概念直观、收敛速度快、计算代价低等优点，加之其易于程序实现，已被广泛应用于大规模拓扑优化问题中。
+
+以单一体积分数约束下的拓扑优化问题为例，记设计变量为 $\boldsymbol{\rho} = (\rho_1,\dots,\rho_{N_d})^\top$，其中 $N_d$ 是设计变量个数。目标函数为 $c(\boldsymbol{\rho})$，约束函数为 $g_V(\boldsymbol{\rho})$，定义拉格朗日函数为
+\[
+\mathcal{L}(\boldsymbol{\rho},\lambda) = c(\boldsymbol{\rho}) + \lambda{g}_V(\boldsymbol{\rho}),
+\]
+其中 $\lambda$ 为与体积约束相关的拉格朗日乘子。由 KKT 条件中的驻点条件 $\partial\mathcal{L}/\partial\rho_i= 0$ 可推导出每个设计变量对应的 “更新系数”：
+\[
+B_i = -\frac{\partial{c}(\boldsymbol{\rho})}{\partial\rho_i}\left(\lambda\frac{\partial{g}_V(\boldsymbol{\rho})}{\partial\rho_i}\right)^{-1},
+\]
+其中 $B_i$ 反映了在当前迭代状态下，第 $i$ 个设计变量对目标函数灵敏度与约束灵敏度的比值关系。
+
+在此基础上，Bendsøe \cite{bendsoeOptimizationStructuralTopology1995a} 提出了经典的启发式更新方案，通过 $B_i$ 来调整材料密度 $\rho_i$，典型的更新公式可写为
+\[
+\rho_i^{\mathrm{new}}=
+\begin{cases}
+	\max(0,\rho_i-m)\quad&\text{如果}\quad \rho_iB_i^\eta\leq\max(0,\rho_i-m),\\
+	\min(1,\rho_i+m)\quad&\text{如果}\quad\rho_iB_i^\eta \geq \min(1,\rho_i+m),\\
+	\rho_iB_i^\eta\quad&\text{如果}\quad\text{其它情况},\\
+\end{cases}
+\]
+其中，$\rho_i$ 是第 $i$个设计变量；$m$ 是移动限制，用于限制单步迭代中设计变量的更新幅度以保证数值稳定性；$\eta$ 是阻尼系数，用于平滑收敛过程并抑制数值振荡。上述更新式在保证 $\rho_i\in[0,1]$ 的同时，通过 $B_i^\eta$ 的放大或缩小，实现材料在高效区域的集中与低效区域的剔除。实际实现中，常在 OC 更新中引入最小密度 $\rho_{\min}>0$，将区间 $[0,1]$ 替换为 $[\rho_{\min},1]$，以避免设计变量退化到完全空洞并提高数值稳定性。
+
+基于上述更新公式，算法 \ref{alg:oc} 给出了优化准则法求解单一约束的拓扑优化问题的伪代码描述。该伪代码体现了迭代过程的核心步骤，包括灵敏度计算、密度更新和收敛判断。
+%\begin{breakablealgorithm}
+\begin{algorithm}
+	\caption{优化准则法求解单一约束的拓扑优化问题}
+	\label{alg:oc}
+	\begin{spacing}{1.2}  % 调整行间距为 1.2 倍
+		\begin{algorithmic}
+			\Require 初始设计变量 $\boldsymbol{\rho}^{(0)}$ （满足 $\rho_{\min} \leq \rho_i^{(0)} \leq 1$），移动限制 $m$，阻尼系数 $\eta$，收敛容差 $\epsilon$，最大迭代次数 MaxIter
+			\Ensure 优化后的设计变量 $\rho$
+			\State 初始化：令迭代计数器 $k \gets 0$
+			\While{未达到收敛准则}
+			\State 根据当前设计变量 $\boldsymbol{\rho}^{(k)}$，组装刚度矩阵并求解平衡方程，得到位移场 $\boldsymbol{U}^{(k)}$
+			\State 计算目标函数 $c(\boldsymbol{\rho}^{(k)})$ 和约束函数 $g_V(\boldsymbol{\rho}^{(k)})$
+			\State 计算目标函数的灵敏度 $\nabla{c}(\boldsymbol{\rho}^{(k)})$ 和约束函数的灵敏度 $\nabla{g}_V(\boldsymbol{\rho}^{(k)})$
+			\State （可选）对灵敏度进行过滤或校正
+			\State 采用二分法确保拉格朗日乘子 $\lambda$，使得根据 OC 公式更新的 $\boldsymbol{\rho}^{\text{new}}$ 满足体积约束
+			\State （可选）对 $\boldsymbol{\rho}^{\text{new}}$ 进行过滤或校正
+			\State 令 $\boldsymbol{\rho}^{(k+1)} \gets \boldsymbol{\rho}^{\text{new}}$，更新设计计数器 $k \gets k + 1$
+			\EndWhile
+		\end{algorithmic}
+	\end{spacing}
+\end{algorithm}
+%\end{breakablealgorithm}
+
+然而，优化准则法的主要局限性在于难以处理多约束问题。对于多约束情况，确定多个拉格朗日乘子需要求解复杂的非线性方程组，效率较低。另一方面，在非凸的拓扑优化问题中，KKT 条件通常仅是局部最优解的必要条件，并不能保证获得全局最优解，这也使得其适用范围受到一定限制。因此，在处理更复杂的拓扑优化模型（如多物理场耦合、多约束问题）时，研究者往往采用 MMA 等数学规划算法。
+
 \subsection{移动渐近线方法}
 \label{subsec:alg_mma}
+
+MMA 算法由 Svanberg 提出 \cite{svanbergMethodMovingAsymptotes1987}，属于 SCP 方法。该方法已成为求解数学规划类问题的主流算法，尤其在多约束和复杂目标函数的结构拓扑优化问题中，表现出极佳的适用性。 MMA 的基本思想是：在每个迭代步，通过引入一组随迭代更新的 “移动渐近线” 参数，在当前设计点附近构造目标函数和约束函数的一族分离凸近似，将原始的非线性优化问题转化为一系列显式、具有严格凸性的优化子问题。每步迭代中构造的凸子问题可以在原变量空间中直接求解，也可以通过其对偶问题高效求解，从而得到新的设计变量。随着迭代的进行，这些人工构造的优化子问题在一定意义下逐渐逼近原问题，在满足相应收敛判据时，即可得到原问题的近似最优解。
+
+一般形式的优化问题的数学模型可表示为：
+\[
+\begin{aligned}
+	\min_{\boldsymbol{\rho}}\quad&f_0(\boldsymbol{\rho})\\
+	\mathrm{subject~to}\quad&f_i(\boldsymbol{\rho}) \leq 0,\quad&{i}=1,\cdots,N_g\\
+	\quad&\rho_j^{\min}\leq{\rho}_j\leq{\rho}_j^{\max},\quad&{j}=1,\cdots,N_d
+\end{aligned}
+\]
+其中，$\boldsymbol{\rho}$ 是设计变量向量，$f_0(\boldsymbol{\rho})$ 表示目标函数，$f_i(\boldsymbol{\rho}) \leq 0$ 为约束函数，$\rho_j^{\min}$ 和 $\rho_j^{\max}$ 分别为第 $j$ 个设计变量的下限和上限，$N_g$ 是约束函数个数。
+
+在第 $k$ 次迭代中，MMA 基于当前设计点 $\boldsymbol{\rho}^{(k)}$ 处的函数值 $f_0$ 和一阶梯度 $f_i$，引入一组渐近线参数 $L_j^{(k)}$ 和 $U_j^{(k)}$，构造如下严格凸的近似子问题 \cite{svanbergMethodMovingAsymptotes1987}：
+\[
+\begin{aligned}
+	\min_{\boldsymbol{\rho}}\quad&\tilde{f}_0^{(k)}(\boldsymbol{\rho}) + a_0z + \sum_{i=1}^{N_g}(c_iy_i+\frac{1}{2}d_iy_i^2)\\
+	\mathrm{subject~to}\quad&\tilde{f}_i^{(k)}(\boldsymbol{\rho}) - a_iz - y_i \leq 0,\quad&{i}=1,\cdots,N_g\\
+	\quad&\alpha_j^{(k)}\leq\rho_j\leq\beta_j^{(k)},\quad&{j}=1,\cdots,N_d\\
+	\quad&{y}_i\geq0,\,z\geq0,\\
+\end{aligned}
+\]
+其中，$\boldsymbol{y}=(y_1,\dots,y_{N_g})^\top$ 和 $z$ 为非负辅助变量，用于保证对原约束的凸近似及其可行性；$a_0,a_i,c_i,d_i$ 为给定的非负参数；$\alpha_j^{(k)},\beta_j^{(k)}$ 为第 $j$ 个设计变量在第 $k$ 次迭代中的局部移动界限，由原始界限 $⁡\rho_j^{\min},\rho_j^{\max}$ 与移动渐近线 $L_j^{(k)},U_j^{(k)}$ 综合确定。
+
+在上述子问题中，为了统一描述，记 $f_0(\boldsymbol{\rho})$ 为目标函数，$f_1(\boldsymbol{\rho}), \dots, f_{N_g}(\boldsymbol{\rho})$ 为约束函数。对所有 $i = 0, 1, \dots, N_g$，其近似函数 $\tilde{f}_i^{(k)}(\boldsymbol{\rho})$ 的形式统一写为：
+\[
+\tilde{f}_i^{(k)}(\boldsymbol{\rho}) = \sum_{j=1}^{N_d}\left(\frac{p_{ij}^{(k)}}{U_{j}^{(k)}-\rho_j} + \frac{q_{ij}^{(k)}}{\rho_{j}-L_j^{(k)}}\right) + r_i^{(k)},
+\]
+其中，$L_j^{(k)}$$ 和 $$U_j^{(k)}$ 分别为第 $j$ 个设计变量在第 $k$ 次迭代中的移动渐近线下界和上界；系数 $p_{ij}^{(k)}, q_{ij}^{(k)}, r_i^{(k)}$ 由原函数 $f_i$ 在当前设计点 $\boldsymbol{\rho}^{(k)}$ 处的函数值和梯度确定，旨在使得 $\tilde{f}_i^{(k)}$ 在当前点附近对 $f_i$ 给出一阶精度的凸近似。
+
+近似函数的凸性与求解稳定性很大程度上取决于移动渐近线 $L_j^{(k)}$ 和 $U_j^{(k)}$ 的位置。对于不同的迭代步 $k$，其更新规则如下：
+\begin{itemize}
+	\item 当 $k=0$ 和 $k=1$ 时，由于缺乏足够的迭代历史信息，采用对称初始化策略：
+	\[
+	\begin{aligned} 
+		L_j^{(k)} &= \rho_j^{(k)} - 0.5(\rho_j^{\max}-\rho_j^{\min}) \\ U_j^{(k)} &= \rho_j^{(k)} + 0.5(\rho_j^{\max}-\rho_j^{\min}) 
+	\end{aligned}
+	\]
+	\item 当 $k \geq 2$ 时，利用前两步的迭代信息，根据设计变量的震荡或单调特性自适应调整渐近线位置：
+	\[
+	\begin{aligned} 
+		L_j^{(k)} &= \rho_j^{(k)} - \gamma_j^{(k)}(\rho_j^{(k-1)}-L_j^{(k-1)}) \\ U_j^{(k)} &= \rho_j^{(k)} + \gamma_j^{(k)}(U_j^{(k-1)}-\rho_j^{(k-1)}) 
+	\end{aligned}
+	\]
+	其中，参数 $\gamma_j^{(k)}$ 控制渐近线的缩放。
+\end{itemize}
+若设计变量出现震荡（即 $(\rho_j^{(k)}-\rho_j^{(k-1)})(\rho_j^{(k-1)}-\rho_j^{(k-2)}) < 0$），取 $\gamma_j^{(k)} = 0.7$ 使渐近线收缩，增加近似函数的曲率以稳定收敛；反之若变化趋势单调，取 $\gamma_j^{(k)} = 1.2$ 使渐近线扩张以加速收敛；否则取 $\gamma_j^{(k)} = 1.0$。此外，为避免数值不稳定，还需对计算出的 $L_j^{(k)}$ 和 $U_j^{(k)}$ 进行上下界截断处理，确保其处于合理范围内。
+
+为了避免子问题求解过程中设计变量过于接近渐近线而导致数值奇异（即分母趋近于零），同时限制单步更新幅度以保证近似的有效性（类似信赖域策略），MMA 显式定义了第 $k$ 次迭代的局部移动界限 $\alpha_j^{(k)}$ 和 $\beta_j^{(k)}$。其选取规则如下：
+\[
+\begin{aligned} 
+	\alpha_j^{(k)} &= \max\left\{ \rho_j^{\min},\; L_j^{(k)} + 0.1(\rho_j^{(k)} - L_j^{(k)}),\; \rho_j^{(k)} - 0.5(\rho_j^{\max} - \rho_j^{\min}) \right\} \\ \beta_j^{(k)} &= \min\left\{ \rho_j^{\max},\; U_j^{(k)} - 0.1(U_j^{(k)} - \rho_j^{(k)}),\; \rho_j^{(k)} + 0.5(\rho_j^{\max} - \rho_j^{\min}) \right\} 
+\end{aligned}
+\]
+上述界限实际上隐含了三重约束：首先，设计变量必须位于原始物理界限 $[\rho_j^{\min}, \rho_j^{\max}]$ 内；其次，单步更新幅度不能超过总设计域的 $50\%$；最后，更新后的变量与渐近线之间必须保留至少 $10\%$ 的相对距离，即满足：
+\[
+-0.9(\rho_j^{(k)} - L_j^{(k)}) \leq \rho_j - \rho_j^{(k)} \leq 0.9(U_j^{(k)} - \rho_j^{(k)})
+\]
+这一机制有效地保证了凸近似子问题在数值求解时的非奇异性和稳定性。
+
+MMA 通过计算系数 $p_{ij}^{(k)}$ 和 $q_{ij}^{(k)}$ 来拟合原函数的梯度信息。为保证近似函数 $\tilde{f}_i^{(k)}$ 在当前设计点 $\boldsymbol{\rho}^{(k)}$ 处与原函数 $f_i$ 具有一阶一致性（即函数值相等、梯度相等），并保证严格凸性，需对梯度的正负部分进行分离。记当前设计点处偏导数的正部与负部为：
+\[
+\left(\frac{\partial f_i}{\partial \rho_j}\right)^{+} = \max\left(\frac{\partial f_i}{\partial \rho_j}, 0\right), \quad  \left(\frac{\partial f_i}{\partial \rho_j}\right)^{-} = \max\left(-\frac{\partial f_i}{\partial \rho_j}, 0\right)
+\]
+则系数 $p_{ij}^{(k)}$ 和 $q_{ij}^{(k)}$ 计算如下：
+\[
+\begin{aligned} 
+	p_{ij}^{(k)} &= (U_j^{(k)}-\rho_j^{(k)})^2 \left[ 1.001\left(\frac{\partial f_i}{\partial \rho_j}\right)^{+} + 0.001\left(\frac{\partial f_i}{\partial \rho_j}\right)^{-} + \frac{10^{-5}}{\rho_j^{\max}-\rho_j^{\min}} \right] \\ q_{ij}^{(k)} &= (\rho_j^{(k)}-L_j^{(k)})^2 \left[ 0.001\left(\frac{\partial f_i}{\partial \rho_j}\right)^{+} + 1.001\left(\frac{\partial f_i}{\partial \rho_j}\right)^{-} + \frac{10^{-5}}{\rho_j^{\max}-\rho_j^{\min}} \right] 
+\end{aligned}
+\]
+上述构造中引入的小量保证了即使某分量梯度为零，系数 $p_{ij}^{(k)}$ 与 $q_{ij}^{(k)}$ 仍严格为正，从而确保了子问题的严格凸性。最后，常数项 $r_i^{(k)}$ 由条件 $\tilde{f}_i^{(k)}(\boldsymbol{\rho}^{(k)}) = f_i(\boldsymbol{\rho}^{(k)})$ 唯一确定。
+
+\begin{algorithm}[h]  % 指定[h]避免隔页
+	\caption{MMA 求解带约束的拓扑优化问题}
+	\label{alg:mma}
+	\begin{spacing}{1.2}  % 调整行间距为 1.2 倍
+		\begin{algorithmic}
+			\Require 初始设计变量 \(\boldsymbol{\rho}^{(0)}\) （满足 \(\rho_j^{\min} \leq \rho_j^{(0)} \leq \rho_j^{\max}\)），目标函数 \(f_0(\boldsymbol{\rho})\) 与约束函数 \(f_i(\boldsymbol{\rho}) \leq 0\)，设计变量上下界 \(\rho_j^{\min}, \rho_j^{\max}\)，MMA 参数（如 \(a_0, a_i, c_i, d_i\) 及初始渐近线设置等），收敛容差 \(\epsilon\)，最大迭代次数 MaxIter
+			\Ensure 优化后的设计变量 \(\boldsymbol{\rho}\)
+			\State 初始化：令迭代计数器 \(k \gets 0\)，给定初始移动渐近线 \(L_j^{(0)}, U_j^{(0)}\)
+			\While{未达到收敛准则}
+			\State 在当前设计变量 \(\boldsymbol{\rho}^{(k)}\) 下求解状态方程，得到物理场（如位移场）
+			\State 计算目标函数 \(f_0(\boldsymbol{\rho}^{(k)})\) 与约束函数 \(f_i(\boldsymbol{\rho}^{(k)})\)
+			\State 计算目标函数的灵敏度 \(\nabla f_0(\boldsymbol{\rho}^{(k)})\) 与约束函数的灵敏度 \(\nabla f_i(\boldsymbol{\rho}^{(k)})\)
+			\State （可选）对灵敏度进行过滤或投影
+			\State 根据 \(\boldsymbol{\rho}^{(k)}\) 及其若干步的迭代信息，更新第 \(k\) 步的移动渐近线 \(L_j^{(k)}, U_j^{(k)}\)
+			\State 由原始界限 \(\rho_j^{\min}, \rho_j^{\max}\) 与 \(L_j^{(k)}, U_j^{(k)}\) 构造局部设计变量界限 \(\alpha_j^{(k)}, \beta_j^{(k)}\)
+			\State 利用当前点的函数值、梯度以及渐近线信息，计算系数 \(p_{ij}^{(k)}, q_{ij}^{(k)}, r_i^{(k)}\)，得到分离的凸近似函数
+			\[
+			 \tilde{f}_i^{(k)}(\boldsymbol{\rho}), \quad i=0,1,\dots,N_g
+			\]
+			\State 在 \(\alpha_j^{(k)} \leq \rho_j \leq \beta_j^{(k)}\) 内，以 \(\tilde{f}_i^{(k)}\) 为目标与约束构造 MMA 子问题，采用合适的数值方法（如原始–对偶牛顿算法）求解该凸子问题，得到新的最优设计变量 \(\boldsymbol{\rho}^{\mathrm{new}}\)
+			\State （可选）对 \(\boldsymbol{\rho}^{\mathrm{new}}\) 进行过滤或投影
+			\State 令 \(\boldsymbol{\rho}^{(k+1)} \gets \boldsymbol{\rho}^{\mathrm{new}}\)，更新迭代计数器 \(k \gets k + 1\)
+			\EndWhile
+		\end{algorithmic}
+	\end{spacing}
+\end{algorithm}
 
 \section{正则化与长度尺度控制：过滤与投影}
 \label{sec:regularization}
 
+连续体拓扑优化问题旨在无限维函数空间中寻找最优材料分布 $\rho(\boldsymbol{x})$。然而，原问题通常缺乏松弛条件，导致在数学上是不适定的。这在数值求解中表现为网格依赖性，即随着网格细化，解会出现无限精细的微结构，且目标函数无法收敛为了获得网格无关的可制造设计，必须引入正则化手段来控制结构中的最小长度尺度。目前，基于卷积算子的过滤技术是最主流的方法 \cite{sigmundMorphologybasedBlackWhite2007b}。
+
 \subsection{灵敏度过滤方法}
 \label{subsec:filter_sensitivity}
+
+灵敏度过滤由 Sigmund \cite{sigmundDesignCompliantMechanisms1997a} 提出。虽然它本质上是一种启发式方法，缺乏严格的数学变分基础，但其物理直观清晰，能够有效消除棋盘格现象。在连续域 $\Omega$ 上，该方法通过对目标泛函的梯度场进行卷积平滑来修正搜索方向。
+
+定义修正后的灵敏度场 $\widetilde{\frac{\partial\mathcal{J}}{\partial\rho}}$ 为原始灵敏度场 $\frac{\partial\mathcal{J}}{\partial\rho}$ 的加权平均：
+\[
+\widetilde{\frac{\partial\mathcal{J}}{\partial\rho}} = \frac{1}{\max\{\gamma, \rho(\boldsymbol{x})\}\psi(\boldsymbol{x})}\int_{\Omega}w(\|\boldsymbol{y} - \boldsymbol{x}\|) \rho(\boldsymbol{y}) \frac{\partial\mathcal{J}}{\partial\rho} \, \mathrm{d}\boldsymbol{y},
+\]
+式中，$\boldsymbol{x}, \boldsymbol{y} \in \Omega$ 为空间坐标向量；$\gamma$ 为防止奇异的小正数；$\psi(\boldsymbol{x})$ 为归一化因子，定义为卷积核在设计域内的积分：
+\[
+\psi(\boldsymbol{x}) = \int_{\Omega}w(\Vert\boldsymbol{y}-\boldsymbol{x}\Vert)~\mathrm{d}\boldsymbol{y},
+\]
+其中 $w(r)$ 为具有紧支集的卷积核函数，通常采用线性衰减的锥形函数 \cite{brunsTopologyOptimizationNonlinear2001, bourdinFiltersTopologyOptimization2001}：
+\[
+w(r) = \max\{0, r_{\min} - r\},
+\]
+其中 $r = \|\boldsymbol{y} - \boldsymbol{x}\|$ 表示两点间的欧几里得距离，$r_{\min}$ 为预设的过滤半径。该积分形式表明，某点处的修正灵敏度不仅取决于该点，还受到其邻域内所有点灵敏度的加权影响，从而平滑了高频振荡。
 
 \subsection{密度过滤方法}
 \label{subsec:filter_density}
 
+灵敏度过滤虽然在工程上有效，但其本质是对梯度场的后处理，并未改变设计变量本身的空间分布，因此在数学上缺乏对解空间的严格约束。相比之下，Bruns 和 Tortorelli \cite{brunsTopologyOptimizationNonlinear2001} 提出的密度过滤直接作用于设计变量场，是一种更为严谨的正则化手段。Bourdin \cite{bourdinFiltersTopologyOptimization2001} 进一步在数学上证明了该方法能确保拓扑优化问题解的存在性。
+
+密度过滤的核心思想在于解耦了 “数学设计空间” 与 “物理材料空间”。在该框架下，原始设计变量场 $\rho(\boldsymbol{x})$ 不再直接决定材料的物理属性，而是作为一组纯粹的数学优化参数。真正决定结构物理响应（如刚度、质量、热传导率等）的是经过平滑映射后的物理密度场 $\tilde{\rho}(\boldsymbol{x})$。因此，所有的状态方程求解及性能泛函计算均必须基于 $\tilde{\rho}$ 进行，且最终的设计结果亦应以 $\tilde{\rho}$ 为准。
+
+在连续域 $\Omega$ 上，密度过滤定义了一个从原始设计变量空间 $L^\infty(\Omega)$ 到物理密度空间的平滑映射算子。物理密度场 $\tilde{\rho}(\boldsymbol{x})$ 定义为原始设计场的卷积：
+\[
+\tilde{\rho}(\boldsymbol{x}) = \frac{1}{\psi(\boldsymbol{x})}\int_{\Omega} w(\|\boldsymbol{y} - \boldsymbol{x}\|) \rho(\boldsymbol{y}) \, \mathrm{d}\boldsymbol{y},
+\]
+在此框架下，结构的目标泛函及约束泛函 $\mathcal{F}$ 均直接依赖于物理密度场 $\tilde{\rho}$，根据链式法则
+\[
+\frac{\partial\mathcal{F}}{\partial\rho(\boldsymbol{x})} = \int_{\Omega}\frac{\partial\mathcal{F}}{\partial\tilde{\rho}(\boldsymbol{y})}\frac{\partial\tilde{\rho}(\boldsymbol{y})}{\partial\rho(\boldsymbol{x})}~\mathrm{d}\boldsymbol{y} = \int_{\Omega} w(\|\boldsymbol{y} - \boldsymbol{x}\|) \frac{1}{\psi(\boldsymbol{y})}\frac{\partial\mathcal{F}}{\partial\tilde{\rho}(\boldsymbol{y})}\, \mathrm{d}\boldsymbol{y}.
+\]
+
 \subsection{投影方法}
 \label{subsec:projection_methods}
+
+虽然密度过滤方法在数学上提供了良好的适定性证明，并有效控制了最小长度尺度，但其低通滤波特性不可避免地在结构边界处引入了较宽的中间密度过渡区域（即灰度带）。这导致最终优化结果存在大量非 0 非 1 的材料分布，不仅难以制造，且在有限元分析中可能导致物理属性（如刚度）被低估或高估。为了获得边界清晰、黑白分明的拓扑结构，Guest 等 \cite{guestAchievingMinimumLength2004b} 及 Sigmund \cite{sigmundMorphologybasedBlackWhite2007b} 提出在密度过滤之后引入基于 Heaviside 函数的非线性投影技术。
+
+投影方法的核心思想是构建一个从过滤后密度空间到物理密度空间的非线性映射。在该框架下，原始设计变量 $\rho(\boldsymbol{x})$ 首先经过密度过滤得到平滑的中间密度场 $\tilde{\rho}(\boldsymbol{x})$，随后通过投影算子 $\mathcal{P}$ 映射为物理密度场 $\bar{\rho}(\boldsymbol{x})$。此时，全场变量的映射关系扩展为三层体系：
+\[
+\rho(\boldsymbol{x}) \xrightarrow{\text{过滤}} \tilde{\rho}(\boldsymbol{x}) \xrightarrow{\text{投影}} \bar{\rho}(\boldsymbol{x})
+\]
+所有的物理场分析与性能计算均基于最终的物理密度 $\bar{\rho}(\boldsymbol{x})$ 进行。
+
+理想的投影算子为 Heaviside 阶跃函数，即当 $\tilde{\rho} > \eta$ 时 $\bar{\rho}=1$，否则 $\bar{\rho}=0$，其中 $\eta$ 为投影阈值。然而，阶跃函数在阈值处不可微，无法直接应用于基于梯度的优化算法。因此，在实际应用中通常采用光滑的连续函数来逼近阶跃特征。目前应用最为广泛的两种光滑投影函数分别为指数型投影与双曲正切型投影。
+\begin{itemize}
+	\item 指数型投影：由 Guest 等 \cite{guestAchievingMinimumLength2004b} 提出，其形式为：
+	\[
+	\bar{\rho}(\boldsymbol{x}) = 1 - e^{-\beta \tilde{\rho}(\boldsymbol{x})} + \tilde{\rho}(\boldsymbol{x}) e^{-\beta},
+	\]
+	其中 $\beta > 0$ 为控制投影陡峭程度的正则化参数。当 $\beta \to 0$ 时，该映射退化为近似线性关系；当 $\beta \to \infty$ 时，该映射收敛于 Heaviside 阶跃函数。常用于特定的微结构设计或材料插值方案中。
+	\item 双曲正切型投影：由 Wang 等 \cite{wangProjectionMethodsConvergence2011a} 推广，该函数通过双曲正切函数构造，具有形式简单、阈值可控的优点：
+	\[
+	\bar{\rho}(\boldsymbol{x}) = \frac{\tanh(\beta \eta) + \tanh(\beta (\tilde{\rho}(\boldsymbol{x}) - \eta))}{\tanh(\beta \eta) + \tanh(\beta (1 - \eta))},
+	\]
+	式中，$\eta \in [0,1]$ 为投影阈值，决定了灰度转变的分界点（通常取 $\eta=0.5$ 以保持过滤前后的体积近似守恒）。该投影同样通过 $\beta$ 控制逼近程度。
+\end{itemize}
+
+投影参数 $\beta$ 的选取对优化收敛性至关重要。若直接采用较大的 $\beta$ 值，目标泛函会表现出极强的非凸性，导致优化算法过早陷入局部极小值；若 $\beta$ 值过小，则无法有效消除灰度。为此，通常采用延拓策略进行求解：在优化初期设定较小的 $\beta$ 值（如 $\beta=1$），此时优化问题近似凸性较好，利于寻找全局轮廓；随着迭代步数的增加，逐步增大 $\beta$ 值，从而逐渐锐化结构边界，直至获得清晰的黑白设计。
+
+引入投影算子后，目标泛函 $\mathcal{F}$ 对原始设计变量 $\rho(\boldsymbol{x})$ 的灵敏度计算需根据链式法则进一步扩展。基于连续域的变分推导，其导数关系为：
+\[
+\frac{\partial \mathcal{F}}{\partial \rho(\boldsymbol{x})} = \int_{\Omega} \frac{\delta \mathcal{F}}{\delta \bar{\rho}(\boldsymbol{y})} \frac{\partial \bar{\rho}(\boldsymbol{y})}{\partial \tilde{\rho}(\boldsymbol{y})} \frac{\partial \tilde{\rho}(\boldsymbol{y})}{\partial \rho(\boldsymbol{x})} \, \mathrm{d}\boldsymbol{y},
+\]
+考虑到投影是点对点的局部映射，即 $\bar{\rho}(\boldsymbol{y})$ 仅取决于该点的 $\tilde{\rho}(\boldsymbol{y})$，而密度过滤是全域积分映射，结合第 \ref{subsec:filter_density} 节的过滤伴随算子，最终灵敏度表达式为：
+\[
+\frac{\partial \mathcal{F}}{\partial \rho(\boldsymbol{x})} = \int_{\Omega} w(\|\boldsymbol{y} - \boldsymbol{x}\|) \frac{1}{\psi(\boldsymbol{y})} \left( \frac{\partial \mathcal{F}}{\partial \bar{\rho}(\boldsymbol{y})} \cdot \frac{\partial \bar{\rho}}{\partial \tilde{\rho}}\bigg|_{\boldsymbol{y}} \right) \, \mathrm{d}\boldsymbol{y},
+\]
+其中，$\frac{\partial \bar{\rho}}{\partial \tilde{\rho}}$ 为投影函数的导数。对于指数型投影，其导数为
+\[
+\frac{\partial\bar\rho}{\partial\tilde\rho} = \beta{e}^{-\beta\tilde\rho} + e^{-\beta},
+\]
+而对于双曲正切型投影，其导数为
+\[
+\frac{\partial \bar{\rho}}{\partial \tilde{\rho}} = \beta \frac{1 - \tanh^2(\beta (\tilde{\rho} - \eta))}{\tanh(\beta \eta) + \tanh(\beta (1 - \eta))},
+\]
+该式表明，引入投影后，物理场灵敏度在反向传播时，首先被投影导数 “缩放”（在灰度过渡区放大，在黑白区抑制），然后再经过卷积核 “平滑”，最终作用于设计变量。这一机制确保了优化驱动力集中于结构边界的演化，从而实现高精度的形状描述。
+
 
 \section{拓扑优化的基本流程}
 \label{sec:basic_workflow}

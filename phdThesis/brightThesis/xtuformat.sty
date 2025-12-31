@@ -39,6 +39,11 @@
 \RequirePackage{lipsum}
 \RequirePackage[bottom]{footmisc}                                                              % 脚注居底不与正文相连
 
+\makeatletter
+\@addtoreset{algorithm}{chapter}  % 重置algorithm计数器，随chapter变化
+\renewcommand{\thealgorithm}{\thechapter.\@arabic\c@algorithm}  % 编号格式为“章节号.算法号”
+\makeatother
+
 %\RequirePackage{natbib}%[sort&compress,longnamesfirst]
 %%\bibpunct[, ]{(}{)}{;}{a}{}{,}
 %\addtolength{\bibsep}{-0.5 em} % 缩小参考文献间的垂直间距
@@ -372,8 +377,6 @@ subsubsection = {
     beforeskip={12pt},afterskip={6pt},
 }
 }
-
-
 
 \newlength\oneimage
 \setlength\oneimage{0.8\textwidth}
