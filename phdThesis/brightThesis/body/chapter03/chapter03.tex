@@ -804,17 +804,21 @@ u_{\text{out}} = \boldsymbol{L}^{\top}\boldsymbol{U},
 \[
 H_{es} = \max\{0,r_{\min} - \text{dist}(e,s)\},
 \]
-式中，$r_{\min}$ 为预设的过滤半径，$\text{dist}(e,s)$ 为单元 $e$ 和 $s$ 的中心距离。$H_{es}$ 本质上是 2.7 节中连续卷积核函数 $w(r)$ 在离散网格上的数值实现。具体而言，$H_{es}$ 等价于核函数在单元 $e$ 和 $s$ 几何中心处的取值，即
+式中，$r_{\min}$ 为预设的过滤半径，$\text{dist}(e,s)$ 为单元 $e$ 和 $s$ 的中心距离。$H_{es}$ 本质上是第 \ref{subsec:filter_sensitivity} 节中连续卷积核函数 $w(r)$ 在离散网格上的数值实现。具体而言，当选取
+\[
+w(r) = \max\{0, r_{\min} - r\},
+\]
+并在单元几何中心处取样时，有
 \[
 H_{es} \equiv w(\|\boldsymbol{x}_e - \boldsymbol{x}_s\|),
 \]
-该表达式通过取最大值自动将过滤邻域外的单元权重置零，确保了权重的非负性，是该算法在数值中的标准实现方式。
+其中 $\boldsymbol{x}_e$ 与 $\boldsymbol{x}_s$ 分别表示单元 $e$ 与单元 $s$ 的几何中心坐标。由 $\max\{\cdot\}$ 的截断形式可知，过滤邻域外（$⁡\mathrm{dist}(e,s)\ge r_{\min}$）的单元权重自动为零，从而保证权重非负并使得过滤仅在局部邻域内生效，这是该方法在数值实现中的标准做法。
 
 灵敏度过滤：该方法主要修正目标函数的灵敏度场，而不直接改变设计变量本身。其修正公式为：
 \[
-\widetilde{\frac{\partial{c}}{\partial\rho_e}} = \frac{v_e}{\max\{\gamma,\rho_e\}\sum_{s=1}^{N_c}H_{es}v_s}\sum_{s=1}^{N_c}H_{es}\rho_s\frac{1}{v_s}\frac{\partial{c}}{\partial\rho_s},
+\widetilde{\frac{\partial c}{\partial \rho_e}} = \frac{1}{\max\{\gamma,\rho_e\}}\; \frac{\sum\limits_{s=1}^{N_c}H_{es}\,v_s\,\rho_s\, \frac{\partial c}{\partial \rho_s}} {\sum\limits_{s=1}^{N_c}H_{es}\,v_s},
 \]
-其中，$v_e$ 和 $v_s$ 分别为单元 $e$ 和 $s$ 的体积，$\gamma$ 为防止奇异的小正数。
+其中，$v_s$ 分别为单元 $s$ 的体积，$\gamma$ 为防止奇异的小正数。
 
 密度过滤：通过引入物理密度场 $\tilde{\boldsymbol{\rho}}$ 与设计变量场 $\boldsymbol{\rho}$ 之间的平滑映射来控制最小特征尺寸。物理密度 $\tilde{\rho}_e$ 定义为邻域内设计变量的体积加权平均：
 \[

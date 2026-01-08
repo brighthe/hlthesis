@@ -80,25 +80,417 @@
 \section{多分辨率拓扑优化计算框架}
 \label{sec:mtop_framework}
 
-为了在数学上实现设计与分析的解耦，并确保在粗网格高阶分析下的数值计算准确性，本章建立由位移有限元网格、设计变量网格与密度积分网格构成的三层离散系统，并在此基础上构建优化数学模型。
+为实现拓扑优化中“设计分辨率—分析分辨率”的解耦，并在粗网格高阶分析下保持数值精度，本章采用多分辨率离散范式：引入位移有限元网格、设计变量网格与密度积分网格三套相互独立但逻辑耦合的离散层级，以在不加密位移网格的前提下获得更高分辨率的材料分布表征。该三层离散思想与 MTOP 框架一致 \cite{nguyenComputationalParadigmMultiresolution2010a}，而在高阶有限元分析中，传统“单元常密度=设计变量”的做法难以随阶次提升而同步提高结构描述分辨率，因此更需要采用设计变量与有限元分析网格分离的多分辨率策略 \cite{nguyenTopologyOptimizationUsing2017a}。
 
 \subsection{多分辨率空间离散策略}
 \label{subsec:multires_spatial_discretization}
 
-为了打破传统方法中几何分辨率受限于分析单元尺寸的桎梏，本章引入了三套相互独立但逻辑关联的离散网格系统。首先是位移有限元网格（$\mathcal{T}_h$），作为求解线弹性平衡方程 $\boldsymbol{K}\boldsymbol{U}=\boldsymbol{F}$ 的分析模型。在本章研究中，该网格由较粗的高阶拉格朗日单元（阶次 $k \ge 1$）构成，旨在利用高阶形函数优异的逼近能力消除剪切闭锁现象，并在控制整体自由度规模的前提下显著提高位移场与应变能的计算精度。
+为了打破传统方法中几何分辨率受限于分析单元尺寸的桎梏，本章引入了三套相互独立但逻辑关联的离散网格系统，以在数学上实现设计与分析的解耦，并为粗网格高阶分析下的准确数值计算提供支撑 \cite{nguyenComputationalParadigmMultiresolution2010a}。首先是位移有限元网格 $\mathcal{T}_h$，作为求解线弹性平衡方程
+\[
+\boldsymbol{K}\boldsymbol{U}=\boldsymbol{F}
+\]
+的分析模型。在本章研究中，$\mathcal{T}_h$ 由较粗的拉格朗日单元（阶次 $k \ge 1$）构成，旨在在自由度规模可控的前提下，提高位移场、应变能及其相关响应量的近似精度，从而降低由粗网格离散带来的分析误差。
 
-与分析模型相对应的是用于优化迭代的设计变量网格（$\mathcal{T}_d$）。该网格由高密度的节点或中心点组成，每个节点关联一个设计变量 $d_i \in [0, 1]$。设计变量网格的分辨率显著高于位移网格，且二者在空间上相互独立；这种离散策略允许优化器在粗糙的分析网格背景下，探索超越分析单元尺度的精细拓扑结构，从而实现设计空间对分析空间的解耦。
+与分析模型相对应的是用于优化迭代的设计变量网格 $\mathcal{T}_d$。该网格由高密度的节点或中心点组成，每个节点关联一个设计变量 $d_i \in [0, 1]$。$\mathcal{T}_d$ 的分辨率显著高于 $\mathcal{T}_h$，且二者在空间上相互独立；这种离散策略允许优化器在相对粗糙的分析网格背景下，探索超越分析单元尺度的精细拓扑结构，从而实现设计空间对分析空间的解耦，并提升结构几何表达能力。
 
-然而，粗位移单元内部由精细设计变量定义的材料分布往往不再均匀，导致传统的全量高斯积分失效。为此，本章进一步引入密度积分网格（$\mathcal{T}_\rho$） 作为连接高分辨率设计与低分辨率分析的数值桥梁。具体而言，为了精确捕捉粗位移单元 $\Omega_e$ 内部的非均匀材料分布，每个位移单元被进一步细分为 $N_i$ 个微小的密度子单元。刚度矩阵的数值积分将在这些子单元上进行，以确保在非均匀材料场下刚度评估的准确性。
+然而，当粗位移单元内部的材料分布由高分辨率设计变量控制时，材料场往往呈现明显的空间非均匀性。若仍沿用“单元内密度常值”的刚度评估方式，将难以准确反映位移单元内部材料分布对刚度的局部贡献，从而引入欠解析并影响优化迭代的稳定性。为此，本章进一步引入密度积分网格 $\mathcal{T}_\rho$ 作为连接高分辨率设计与低分辨率分析的数值桥梁：对每个位移单元 $\Omega_e$，将其进一步细分为 $N_i$ 个密度子单元，并在子单元层面对刚度贡献进行数值积分与累加，以确保在非均匀密度场下刚度评估具有足够的准确性与一致性。
 
+值得注意的是，通常取设计变量网格 $\mathcal{T}_d$ 与密度积分网格 $\mathcal{T}_\rho$ 的空间分辨率显著高于位移有限元网格 $\mathcal{T}_h$，从而在 “高分辨率设计—粗网格高阶分析” 的框架下实现几何表达能力与数值求解精度的兼顾，并为后续多分辨率拓扑优化问题的统一列式与实现奠定基础。为直观说明三网格体系的分工与分辨率差异，图 \ref{fig:ch4_three_meshes} 给出了示意图。图 4.3(a) 表示位移网格 $\mathcal{T}_h$ 上的一个双二次四边形位移单元 $Q_2$；图 4.3(b) 表示位移单元内部引入的密度积分网格 $\mathcal{T}_\rho$​，即将单元细分为若干密度子单元以进行刚度的数值积分；图 4.3(c) 表示设计变量网格 $\mathcal{T}_d$，在更高分辨率上对设计变量 $\boldsymbol{d}$ 进行参数化。设计变量通过映射关系 $\rho=f(\boldsymbol{d})$ 赋值到 $\mathcal{T}_\rho$ 上的子单元物理密度，随后由 $\mathcal{T}_\rho$ 上的积分结果组装得到位移网格 $\mathcal{T}_h$ 上的刚度矩阵 $K(\rho)$，用于后续平衡方程的求解。为便于示意，图中取 $\mathcal{T}_d$ 与 $\mathcal{T}_\rho$ 在单元内具有相同的细分密度；一般情形下二者可独立选取。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.98\textwidth]{fig4-3}
+	\caption{多分辨率三网格体系示意：位移网格、密度积分网格与设计变量网格。}
+	\label{fig:ch4_three_meshes}
+\end{figure}
 
 \subsection{多分辨率框架下的优化问题列式}
 \label{subsec:multires_optimization_formulation}
 
+在上述三层网格体系下，拓扑优化问题的数学列式需进行重构。设 $\boldsymbol{d}$ 为定义在设计变量网格上的设计变量向量，$\boldsymbol{U}$ 为定义在位移有限元网格上的全局位移向量。以第 \ref{subsec:min_compliance} 节体积分数约束的柔顺度最小化问题为例，基于 SIMP 插值模型的多分辨率拓扑优化问题描述如下：
+\[
+\begin{aligned} 
+	\min_{\boldsymbol{d}} \quad & c(\boldsymbol{d}) = \boldsymbol{F}^T \boldsymbol{U}(\boldsymbol{d}) \\ \text{subject to} \quad & \boldsymbol{K}(\boldsymbol{\rho}(\boldsymbol{d})) \boldsymbol{U}(\boldsymbol{d}) = \boldsymbol{F} \\ 
+	&g_V(\boldsymbol{d}) = V(\boldsymbol{\rho}(\boldsymbol{d})) - V_f \leq 0 \\ 
+	&d_i \in [0, 1], \quad i = 1, \dots, N_d 
+\end{aligned}
+\]
+其中 $c(\boldsymbol{d})$ 为目标函数；$\boldsymbol{K}(\boldsymbol{\rho}(\boldsymbol{d}))$ 为全局刚度矩阵，其构造依赖于由设计变量 $\boldsymbol{d}$ 映射得到的物理密度场 $\boldsymbol{\rho}(\boldsymbol{d})$；$\boldsymbol{F}$ 为外载荷向量；$V(\boldsymbol{\rho}(\boldsymbol{d}))$ 为结构体积分数，$V_f$ 为给定的体积分数上限。需要强调的是，在多分辨率框架下，$\rho(\boldsymbol d)$ 表示在密度积分网格 $\mathcal{T}_\rho$ 上取值的离散物理密度（或子单元密度向量），其将直接参与刚度矩阵的数值积分与组装。为避免刚度矩阵奇异，通常在由 $\boldsymbol d$ 映射得到物理密度时引入下界 $\rho_{\min}>0$，以保证结构处处具有非零刚度。
+
+与传统单分辨率方法（第 \ref{chap:lagrange_comparison} 章）的主要区别在于：物理密度场 $\boldsymbol{\rho}$ 不再直接等同于优化变量，而是通过映射关系
+\[
+\boldsymbol{\rho}=f(\boldsymbol{d})
+\]
+与设计变量建立关联。该映射用于描述“设计自由度 $\boldsymbol d$ 生成用于组装的物理密度 $\rho$”这一密度生成链条：它既可以包含设计自由度向密度积分网格取值的插值/子单元赋值关系，也可以进一步统一涵盖密度过滤与 Heaviside 投影等密度正则化操作，从而使设计变量与物理密度在空间分辨率上相互独立。需要指出的是，若采用灵敏度过滤，其本质是对灵敏度/梯度信息的正则化处理，而不改变进入刚度组装的物理密度场；因此在“物理密度生成”意义下可将其视为恒等映射情形，即仍取 $\rho=f(\boldsymbol d)=\boldsymbol d$，相应的过滤作用将在灵敏度传递与更新步骤中体现。在最简单的恒等映射情形下，可理解为在设计自由度处直接取 $\rho_j=d_j$；当进一步取 $\mathcal{T}_d\equiv \mathcal{T}_{\rho}$ 并采用子单元常值设计时，上述关系可具体写为 $\rho_{e,i}=d_{e,i}$。
+
 \subsection{基于子单元的刚度矩阵数值积分}
 \label{subsec:subcell_stiffness_integration}
+
+在 MTOP 框架下，物理密度场 $\rho(\boldsymbol{x})$ 在单个位移单元 $\Omega_e$ 内通常为非均匀分布，因此位移单元刚度矩阵写为
+\[
+\boldsymbol{K}_e=\int_{\Omega_e}\boldsymbol{B}^{\top}(\boldsymbol{x})\,\boldsymbol{D}(\rho(\boldsymbol{x}))\,\boldsymbol{B}(\boldsymbol{x})\,\mathrm d\boldsymbol{x},
+\]
+其中 $\boldsymbol{B}$ 为应变–位移矩阵，$\boldsymbol{D}(\rho)$ 为由 SIMP 插值确定的本构矩阵。
+
+由于 $\rho(\boldsymbol{x})$ 在单元内的空间变化一般难以用固定阶次多项式精确刻画，直接选取“精确求积”所需的高斯阶次并不方便。参考 Nguyen 等在 p-version 多分辨率框架下的处理方式 \cite{nguyenTopologyOptimizationUsing2017a}，将位移单元 $\Omega_e$ 划分为 $N_e$ 个密度子单元 $\{\Omega_{e,i}\}_{i=1}^{N_e}$ ，并在每个子单元内将密度近似为常值 $\rho_{e,i}$（从而 $\boldsymbol{D}(\rho)$ 在该子单元内为常矩阵），则刚度积分可分段表示为
+\[
+\boldsymbol{K}_e =\sum_{i=1}^{N_e}\int_{\Omega_{e,i}}\boldsymbol{B}^{\top}(\boldsymbol{x})\,\boldsymbol{D}(\rho_{e,i})\,\boldsymbol{B}(\boldsymbol{x})\,\mathrm d\boldsymbol{x}.
+\]
+
+为便于数值实现，将积分通过等参映射转移至位移单元参考域 $\hat{\Omega}_e$。记等参映射为 $\boldsymbol{x}=\boldsymbol{x}_e(\boldsymbol\xi)$（$\boldsymbol\xi\in\hat{\Omega}_e$），其雅可比矩阵定义为
+\[
+\boldsymbol{J}_e(\boldsymbol\xi)=\frac{\partial\boldsymbol{x}_e(\boldsymbol\xi)}{\partial\boldsymbol\xi}, \qquad \big|\det(\boldsymbol{J}_e(\boldsymbol\xi))\big|
+\]
+（对仿射单元该行列式为常数；一般等参单元在积分点处取值）。同时，将参考域 $\hat{\Omega}_e$ 规则划分为 $N_e$ 个参考密度子单元 $\{\hat{\Omega}_{e,i}\}_{i=1}^{N_e}$，并以
+\[
+J_i:=\big|\det(\boldsymbol{J}_{\text{sub},i})\big|
+\]
+表示从参考位移单元到第 $i$ 个参考密度子单元的几何缩放因子（规则等分时为常数）。对每个参考密度子单元采用 $N_g$ 点高斯积分，设第 $i$ 个子单元内第 $g$ 个高斯点与权重分别为 $\boldsymbol\xi_{i,g}$ 与 $w_g$，则有离散近似
+\[
+ \boldsymbol{K}_e \approx \sum_{i=1}^{N_e}\sum_{g=1}^{N_g} \Big(\boldsymbol{B}^{\mathsf T}\boldsymbol{D}(\rho_{e,i})\boldsymbol{B}\Big)\big(\boldsymbol{x}_e(\boldsymbol\xi_{i,g})\big)\; \big|\det(\boldsymbol{J}_e(\boldsymbol\xi_{i,g}))\big|\; J_i\; w_g.
+\]
+
+上述“子单元分段积分”的关键在于：通过密度子单元的细化来补偿密度非均匀性带来的积分复杂度，从而可在每个子单元上采用相对低阶的高斯公式，而无需在整个高阶位移单元上使用高阶求积。密度子单元网格仅用于密度场表示与刚度积分，不参与位移插值，因此其细化与调整实现简单；同时子单元积分天然可并行，适合高效实现。
 
 \subsection{灵敏度分析}
 \label{subsec:sensitivity_analysis}
 
+本节在第 \ref{subsec:multires_optimization_formulation} 节给出的 MTOP 列式及映射关系 $\boldsymbol\rho=f(\boldsymbol{d})$ 的基础上，推导柔顺度目标关于设计变量的灵敏度表达式。记 $\rho_{e,i}$ 为位移单元 $e$ 内第 $i$ 个密度子单元的物理密度，$\boldsymbol U_e$ 为全局位移向量 $\boldsymbol U$ 在单元自由度上的提取向量。为突出多分辨率框架的统一性，以下先给出柔顺度对 $\rho_{e,i}$ 的“原始灵敏度”，再通过映射 $\rho=f(d)$ 将其转换为对设计网格 $\mathcal{T}_d$ 上设计变量 $d_{s,j}$ 的梯度。
 
+
+对位移单元 $e$ 内第 $i$ 个密度子单元的物理密度 $\rho_{e,i}$，柔顺度灵敏度由伴随法给出
+\[
+\frac{\partial c}{\partial \rho_{e,i}} = -\,\boldsymbol U_e^{\mathsf T}\,\frac{\partial \boldsymbol K_e}{\partial \rho_{e,i}}\,\boldsymbol U_e,
+\]
+由于 $\rho_{e,i}$ 仅影响单元刚度中对应子单元的贡献项，结合第 \ref{subsec:subcell_stiffness_integration} 节的子单元求积形式，可将 $\partial\boldsymbol{K}_e/\partial\rho_{e,i}$ 表示为对子单元 $i$ 内高斯点的累加：
+\[
+ \frac{\partial \boldsymbol{K}_e}{\partial \rho_{e,i}} \approx \sum_{g=1}^{N_g} \Big(\boldsymbol{B}^{\mathsf T}\,\frac{\partial \boldsymbol{D}}{\partial \rho}(\rho_{e,i})\,\boldsymbol{B}\Big)\big(\boldsymbol{x}_e(\boldsymbol\xi_{i,g})\big)\; \big|\det(\boldsymbol{J}_e(\boldsymbol\xi_{i,g}))\big|\; J_i\; w_g,
+\]
+若采用 SIMP 插值 $\boldsymbol{D}(\rho)=E(\rho)\boldsymbol{D}_0$，且 $E(\rho) = \rho^pE_0$，则
+\[
+\frac{\partial \boldsymbol{D}}{\partial \rho}(\rho_{e,i}) = \frac{\mathrm{d}E}{\mathrm{d}\rho}(\rho_{e,i})\,\boldsymbol{D}_0 = p\rho_{e,i}^{p-1}\boldsymbol{D}_0,
+\]
+从而 $\partial \boldsymbol{K}_e/\partial \rho_{e,i}$ 可直接由上式数值积分得到。
+
+进一步，由于物理密度由映射 $\rho=f(\boldsymbol{d})$ 给出，目标函数关于设计变量的梯度可由链式法则统一写为
+\[
+\frac{\partial c}{\partial d_{s,j}} = \sum_{e}\sum_{i} \frac{\partial c}{\partial \rho_{e,i}}\, \frac{\partial \rho_{e,i}}{\partial d_{s,j}}
+\]
+为强调映射的“局部影响范围”，也可引入影响集合
+\[
+\mathcal{S}_{s,j} := \left\{(e,i):\frac{\partial \rho_{e,i}}{\partial d_{s,j}}\neq 0\right\},
+\]
+则上式等价为
+\[
+\frac{\partial c}{\partial d_{s,j}} = \sum_{(e,i)\in \mathcal{S}_{s,j}} \frac{\partial c}{\partial \rho_{e,i}}\, \frac{\partial \rho_{e,i}}{\partial d_{s,j}}
+\]
+当不引入过滤/投影且设计变量与密度子单元一一对应时，常有 $\rho_{e,i}=d_{e,i}$，此时 $\partial \rho_{e,i}/\partial d_{s,j}$ 退化为 Kronecker $\delta$，从而 $\partial c/\partial d_{s,j}$ 直接等于对应密度子单元的灵敏度；而当引入密度过滤或 Heaviside 投影等正则化后，单个 $d_{s,j}$ 往往会影响邻域内多个 $\rho_{e,i}$，此时需按上述集合求和累加其贡献。
+%由于物理密度由映射 $\rho=f(d)$ 给出，目标函数关于设计变量的梯度由链式法则得到
+%\[
+%\frac{\partial c}{\partial d_k} = \sum_{e\in \mathcal{E}_k}\; \sum_{i\in \mathcal{I}(e,k)} \frac{\partial c}{\partial \rho_{e,i}}\, \frac{\partial \rho_{e,i}}{\partial d_k},
+%\]
+%其中 $\mathcal{E}_k$ 表示受设计变量 $d_k$ 影响的位移单元索引集合，$\mathcal{I}(e,k)$ 表示位移单元 $e$ 内受 $d_k$ 影响的密度子单元索引集合。无过滤/无投影且一一对应时，通常 $|\mathcal{E}_k|=1$ 且 $|\mathcal{I}(e,k)|=1$；当引入密度过滤或 Heaviside 投影等正则化后，$d_k$ 往往会影响多个单元及其内部多个子单元的密度分布，因此需要采用上述双重求和形式累加其贡献。
+%
+%为便于后续统一表述，也可将双重求和合并为对索引对 $(e,i)$ 的集合求和：令
+%\[
+%\mathcal{S}_k := \{(e,i)\,:\, e\in\mathcal{E}_k,\; i\in\mathcal{I}(e,k)\},
+%\]
+%则有等价表达
+%\[
+%\frac{\partial c}{\partial d_k} = \sum_{(e,i)\in \mathcal{S}_k} \frac{\partial c}{\partial \rho_{e,i}}\, \frac{\partial \rho_{e,i}}{\partial d_k},
+%\]
+%映射 $f(\cdot)$ 的具体形式（插值、过滤与投影等）决定了 $\partial \rho_{e,i}/\partial d_k$ 的显式表达。
+
+\section{设计变量到物理密度的映射机制}
+\label{sec:mapping}
+
+在第 4.3 节建立的三层离散体系中，设计变量 $\boldsymbol{d}$ 定义在设计变量网格 $\mathcal{T}_d$ 上，而刚度矩阵的组装与体积分数计算依赖密度积分网格 $\mathcal{T}_\rho$ 上的物理密度场 $\boldsymbol{\rho}$。因此，灵敏度过滤、密度过滤与 Heaviside 投影等正则化策略可以统一表述为设计变量到物理密度的映射关系
+\[
+\boldsymbol{\rho} = f(\boldsymbol{d}),
+\]
+根据映射关系的数学性质，可将其分为两类：一类为恒等映射，对应灵敏度过滤等梯度正则化方法，即 $\boldsymbol{\rho} = \boldsymbol{d}$，正则化仅作用于梯度场；另一类为密度映射，对应密度过滤与 Heaviside 投影等方法，即通过线性或非线性算子对密度场进行重构，使得一个设计变量可影响邻域内多个子单元的物理密度。
+
+
+\subsection{基于灵敏度过滤的恒等映射}
+\label{subsec:mapping-sens-identity}
+
+当采用灵敏度过滤策略时，正则化操作仅作用于目标函数的梯度场，而不直接改变用于刚度矩阵组装与体积分数计算的物理密度场。因此，在设计变量与密度积分自由度一一对应（例如子密度单元常值表征，且 $\mathcal{T}_d=\mathcal{T}_\rho$）的情形下，设计变量到物理密度可视为恒等映射
+\[
+\rho_{e,i} = d_{e,i},\quad(e,i)\in\mathcal{T}_\rho,
+\]
+其分量导数为
+\[
+\frac{\partial \rho_{e,i}}{\partial d_{s,j}} = \delta_{es}\delta_{ij}
+\]
+其中 $\delta_{es}$ 与 $\delta_{ij}$ 为 Kronecker delta 符号。由链式法则可得，目标函数关于任一设计变量 $d_{s,j}$ 的梯度可写为
+\[
+\frac{\partial c}{\partial d_{s,j}} =\sum_{e}\sum_{i}\frac{\partial c}{\partial \rho_{e,i}} \frac{\partial \rho_{e,i}}{\partial d_{s,j}} =\frac{\partial c}{\partial \rho_{s,j}}
+\]
+这表明在恒等映射下，第 4.3 节基于子单元刚度积分得到的 $\partial c/\partial \rho_{e,i}$ 可直接作为设计变量的基础梯度。随后仅需对该梯度场施加过滤，即可抑制棋盘格等数值不稳定性，并向优化器提供平滑后的梯度信息。
+
+参照第 3.5.1 节的离散卷积思想，在密度积分网格 $\mathcal{T}_\rho$ 上定义子密度单元 $(e,i)$ 与 $(s,j)$ 之间的权重
+\[
+H_{(e,i)(s,j)}=\max\Bigl\{0,\; r_{\min}-\mathrm{dist}\bigl((e,i),(s,j)\bigr)\Bigr\}
+\]
+其中 $\mathrm{dist}((e,i),(s,j))=\|\boldsymbol{x}_{e,i}-\boldsymbol{x}_{s,j}\|$  为对应位置向量的欧氏距离，$\boldsymbol{x}_{e,i}$ 表示子密度单元 $(e,i)$ 的几何中心坐标。进一步定义与 $(e,i)$ 相互作用的邻域索引集合
+\[
+\mathcal{N}_{e,i}=\{(s,j)\mid H_{(e,i)(s,j)}>0\}
+\]
+则灵敏度过滤可写为
+\[
+\widetilde{\left(\frac{\partial c}{\partial \rho_{e,i}}\right)} = \frac{1}{\max\{\gamma,\rho_{e,i}\}}\; \frac{\sum\limits_{(s,j)\in\mathcal{N}_{e,i}} H_{(e,i)(s,j)}\, v_{s,j}\,\rho_{s,j}\, \left(\frac{\partial c}{\partial \rho_{s,j}}\right)} {\sum\limits_{(s,j)\in\mathcal{N}_{e,i}} H_{(e,i)(s,j)}\, v_{s,j}}
+\]
+其中 $v_{s,j}$ 为子密度单元 $(s,j)$ 的体积，$\gamma>0$ 为防止除零导致数值奇异的微小正数。由于恒等映射下 $\rho_{e,i}=d_{e,i}$，过滤后的 $\widetilde{\partial c/\partial \rho_{e,i}}$ 可直接作为优化更新所需的设计变量梯度使用。该策略实现简单、计算开销低，且无需引入额外的密度映射变量，但由于正则化仅作用于灵敏度而不显式平滑物理密度场，最终结构边界的几何分辨率主要由子密度单元尺度所决定，最小特征尺度与平滑强度则由过滤半径 $r_{\min}$ 控制。
+
+\subsection{基于密度过滤的线性映射}
+\label{subsec:mapping-density-linear}
+
+与灵敏度过滤不同，密度过滤直接对密度场进行正则化，其核心是通过一个线性空间算子将设计变量 $\boldsymbol{d}$ 平滑为用于组装刚度矩阵与体积约束计算的物理密度 $\boldsymbol{\rho}$。在 MTOP 框架下，设计变量 $d_{s,j}$ 定义在设计网格 $\mathcal{T}_d$ 上，而物理密度 $\rho_{e,i}$ 定义在密度积分网格 $\mathcal{T}_\rho$​（子密度单元）上，因此密度过滤自然对应一类从 $\mathcal{T}_d$ 到 $\mathcal{T}_\rho$ 的显式映射，则密度过滤给出的线性映射可写为
+\[
+\rho_{e,i} =\frac{\sum\limits_{(s,j)\in\mathcal{N}_{e,i}}H_{(e,i)(s,j)}\,v_{s,j}\,d_{s,j}} {\sum\limits_{(s,j)\in\mathcal{N}_{e,i}}H_{(e,i)(s,j)}\,v_{s,j}},
+\]
+由此可见，密度过滤本质上将每个 $\rho_{e,i}$ 表示为邻域内设计变量的加权平均，因此映射 $f(\cdot)$ 为线性算子。
+由于 $\rho_{e,i}$ 由多个 $d_{s,j}$ 共同决定，映射导数为
+\[
+\frac{\partial \rho_{e,i}}{\partial d_{s,j}} = 
+\begin{cases} 
+	\dfrac{H_{(e,i)(s,j)}\,v_{s,j}} {\sum\limits_{(t,\ell)\in\mathcal{N}_{e,i}}H_{(e,i)(t,\ell)}\,v_{t,\ell}}, & (s,j)\in\mathcal{N}_{e,i},\\[1.0em] 0, & (s,j)\notin\mathcal{N}_{e,i}. 
+\end{cases}
+\]
+因此，目标函数 $c$ 对设计变量的灵敏度为
+\[
+\frac{\partial c}{\partial d_{s,j}} =\sum_{e}\sum_{i}\frac{\partial c}{\partial \rho_{e,i}} \frac{\partial \rho_{e,i}}{\partial d_{s,j}},
+\]
+体积分数等约束对设计变量的梯度亦可按同样形式计算。
+
+与灵敏度过滤对应的恒等映射相比，密度过滤通过显式平滑密度场本身，使得刚度评估与体积计算在 $\mathcal{T}_\rho$ 上具有一致的最小尺度控制效果，但同时也会引入一定的中间密度。
+
+\subsection{基于 Heaviside 投影的非线性映射}
+\label{subsec:mapping-heaviside-nonlinear}
+
+如第 2.6.3 节所述，虽然密度过滤策略能够有效控制结构的最小特征尺寸并解决棋盘格问题，但其本质上的线性加权平均操作不可避免地会在结构边界处引入较宽的过渡区域（灰度带）。在 MTOP 中，为了充分利用高密度积分网格 $\mathcal{T}_{\rho}$ 来清晰地表达结构边界，本节在密度过滤的基础上进一步引入 Heaviside 投影，建立从“设计变量 $\to$ 中间密度 $\to$ 物理密度” 的非线性映射机制。
+
+引入投影算子后，设计变量到物理密度的映射过程被扩展为两阶段过程。首先，利用第 4.4.2 节所述的线性密度过滤，将定义在设计网格 $\mathcal{T}_d$ 上的设计变量 $d_{s,j}$ 映射为定义在密度积分网格 $\mathcal{T}_{\rho}$（即子单元）上的中间密度 $\tilde{\rho}_{e,i}$。随后，应用第 2.6.3 节定义的投影算子 $\mathcal{P}_\beta$，将中间密度非线性映射为近似 0 - 1 分布的物理密度 $\rho_{e,i}$：
+\[
+\rho_{e,i} = \mathcal{P}_\beta(\tilde{\rho}_{e,i}),
+\]
+其中 $\beta$ 为控制投影陡峭程度的正则化参数。具体的数值实现中，为了保证优化过程的稳健性，需要采用延拓策略，即在迭代过程中逐步增大 $\beta$ 值以逼近清晰边界。
+
+指数型投影的离散形式为：
+\[
+\rho_{e,i} = 1 - e^{-\beta\tilde{\rho}_{e,i}} + \tilde{\rho}_{e,i}e^{-\beta},
+\]
+双曲正切型投影的离散形式为：
+\[
+\rho_{e,i} = \frac{\tanh(\beta\eta) + \tanh(\beta(\tilde{\rho}_{e,i} - \eta))}{\tanh(\beta\eta) + \tanh(\beta(1 - \eta))},
+\]
+通常取 $\eta=0.5$ 以保持投影前后体积近似守恒。值得注意的是，在 MTOP 框架下，投影操作是在子单元层级上逐点进行的。这意味着，即使基础的设计变量分布相对稀疏，通过在极细密的积分网格上进行锐利的非线性截断，依然可以 “切割” 出极其光滑且清晰的几何边界。
+
+引入投影后，目标函数 $c$ 关于设计变量 $d_{s,j}$ 的灵敏度计算需应用链式法则。结合第 4.4.2 节中过滤灵敏度的推导，总灵敏度公式修正为：
+\[
+\frac{\partial c}{\partial d_{s,j}} = \sum_{e} \sum_{i} \frac{\partial c}{\partial \rho_{e,i}} \frac{\partial \rho_{e,i}}{\partial \tilde{\rho}_{e,i}} \frac{\partial \tilde{\rho}_{e,i}}{\partial d_{s,j}},
+\]
+其中 $\frac{\partial c}{\partial \rho_{e,i}}$ 为目标函数对子单元物理密度的偏导数；$\frac{\partial \tilde{\rho}_{e,i}}{\partial d_{s,j}}$ 为线性密度过滤的权重项；$\frac{\partial \rho_{e,i}}{\partial \tilde{\rho}_{e,i}}$ 为投影函数的导数项。
+对于双曲正切型投影，其导数为：
+\[
+\frac{\partial \rho_{e,i}}{\partial \tilde{\rho}_{e,i}} = \beta \frac{1 - \tanh^2(\beta(\tilde{\rho}_{e,i} - \eta))}{\tanh(\beta\eta) + \tanh(\beta(1 - \eta))},
+\]
+对于指数型投影，其导数为：
+\[
+\frac{\partial \rho_{e,i}}{\partial \tilde{\rho}_{e,i}} = \beta e^{-\beta\tilde{\rho}_{e,i}} + e^{-\beta},
+\]
+通过上述链式法则，优化驱动力能够准确地穿过非线性投影层和线性过滤层，传递回设计变量网格，从而驱动拓扑构型的演化。
+
+\section{应力约束拓扑优化问题}
+\label{key}
+
+\section{数值算例}
+\label{key}
+
+\subsection{算例设置与统一框架}
+\label{subsec:ch4_setup_framework}
+
+为保证本章数值算例在统一且可复现的基准下进行，除特别说明外，均沿用第 \ref{subsec:ch3_case_framework} 节中关于小变形线弹性假设、各向同性材料、SIMP 材料插值、单位体系等通用设定。本章在此基础上主要补充如下统一约定。
+
+\begin{itemize}
+	\item 材料插值与惩罚延续：基础材料模型沿用第 \ref{subsec:ch3_case_framework} 节中定义的修正 SIMP 插值公式，且杨氏模量参数保持 $E_0=1$ 与 $E_{\min}=10^{-9}$ 不变。与前文固定惩罚因子（$p=3$）不同，本章为增强多分辨率框架下优化过程的鲁棒性并避免局部极值，对惩罚指数 $p$ 施加如下延续策略
+	\[
+	p^{(n)}=\min\Bigl(3,\; 1+0.5\,\bigl\lfloor n/30 \bigr\rfloor \Bigr)
+	\]
+	即初始 $p=1$，每迭代 $30$ 次增加 $0.5$，直至达到上限 $p=3$ 后保持不变。
+	
+	\item 映射机制：采用密度过滤对应的线性映射 $\boldsymbol{\rho}=f(\boldsymbol{d})$ 对设计变量进行正则化处理。
+	
+	\item 最小尺度控制与过滤半径：统一采用过滤算子实现最小特征尺度控制，过滤半径 $r_{\min}$  以设计域的物理长度度量（与第 3.6.1 节一致），离散实现时，过滤邻域由设计网格尺寸 $h_\rho$ 确定，也就是
+	\[
+	N_x=\left\lceil \frac{r_{\min}}{h_{\rho,x}} \right\rceil,\qquad  N_y=\left\lceil \frac{r_{\min}}{h_{\rho,y}} \right\rceil
+	\]
+	例如，在 MTOP 采用 $4\times4$ 子密度单元划分时，设计网格步长精细化为 $h_\rho\approx h/4$，此时，为维持  $⁡r_{\min}$ 的物理覆盖范围不变，其对应的离散单元层数将自动调整为 STOP 框架下的约 4 倍，即 $N_x,N_y$ 相应放大约 $4$ 倍，在二维情形下，邻域内参与平均的子密度单元总数因此增加约 $16$ 倍。该机制保证了物理最小特征尺度的一致性，同时允许在更细的设计网格上进行稳定更新。
+	
+	\item 优化算法：采用 MMA 更新设计变量。算法参数采用 Svanberg 推荐的标准设置 \cite{svanbergMmaGcmmaVersions2007a}：渐近线移动的收缩因子与扩张因子分别取 $0.7$ 与 $1.2$，初始渐近线参数取 $0.5$，设计变量的移动限制设为 $0.2$。 
+	
+	\item 收敛准则：当连续两次迭代中设计变量的最大变化量满足
+	\[
+	\Vert\boldsymbol{\rho}^{(n+1)} - \boldsymbol{\rho}^{(n)}\Vert_{\infty,\Omega} < 10^{-3}
+	\]
+	则判定收敛并终止迭代；同时设置最大迭代步数 $n_{\max}=500$ 作为安全上限。
+	
+	\item 积分设置：为充分利用 MTOP 框架的子单元策略，与第 \ref{subsec:ch3_case_framework} 节不同的是，本章统一采用低阶高斯积分公式。低阶高斯积分的选取与密度子单元数 $N_i$ 密切相关，子单元数越多，整体采样点密度越高，每个子单元内的积分点数 $N_g$ 即可相应减少。在实践实现中，对于 $N_i\geq16$（如二维情形下 $4\times4$ 划分），可采用 $q=1$ 阶高斯积分公式，对于 $N_i=4\sim9$（如二维情形下 $2\times2\sim3\times3$ 划分），可采用 $q=2$ 阶积分公式以平衡精度和开销。
+\end{itemize}
+
+
+\subsection{多分辨率数值验证：构型一致性与收敛行为}
+\label{subsec:mtop_verification}
+
+\noindent{\heiti\zihao{-4} 算例 4.1：二维 MBB 梁}\par\vspace{0.3\baselineskip}
+本节选取经典的二维 MBB 梁作为基准算例 \cite{olhoffCADintegratedStructuralTopology1991a}，设计域与边界载荷关于竖向中心轴对称，几何尺寸为 $60~\mathrm{mm}\times10~\mathrm{mm}$（见图 \ref{fig:ch4_mtop_ex41_mbb_setup}）。左下角设置铰支座约束（$u_x=u_y=0$），右下角设置滑移支座约束（$u_y=0$），并在上边界中点施加竖直向下的集中载荷 $P = 2~\mathrm{N}$，其余边界为零牵引边界条件。材料属性设定为杨氏模量 $E=1~\mathrm{MPa}$，泊松比 $\nu=0.3$，优化目标是在满足体积分数约束 $V_f = 0.6$ 的条件下最小化结构柔顺度。理论上，其最优构型在桁架极限意义下呈现 Michell 型扇形桁架特征 \cite{rozvanyShortcomingsMichellsTruss1996, rozvanyExactAnalyticalSolutions1998}，图 \ref{fig:ch4_mtop_ex41_mbb_michell} 给出相应参考构型。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[设计域、边界条件与载荷]{
+		\label{fig:ch4_mtop_ex41_mbb_setup}
+		\includegraphics[width=0.47\textwidth]{fig4-4a}
+	}
+	\hfill
+	\subfigure[Michell 型扇形桁架参考构型]{
+		\label{fig:ch4_mtop_ex41_mbb_michell}
+		\includegraphics[width=0.47\textwidth]{fig4-4b}
+	}
+	
+	\caption{二维 MBB 梁算例：模型设置与 Michell 型扇形桁架参考构型。}
+	\label{fig:ch4_mtop_ex41_mbb}
+\end{figure}
+
+为系统评估多分辨率策略在分析规模、设计分辨率与结构性能三个维度上的表现，图 \ref{fig:ch4_fig4-5_stop_k1} 汇总展示了不同分析阶次 $k$ 与最小尺度过滤半径 $r_{\min}$ 下的优化拓扑构型。图 \ref{fig:ch4_fig4-5_stop_k1} 给出了传统单分辨率框架（STOP）的基准结果，此时设计变量与位移分析单元一一对应；图 \ref{fig:ch4_fig4-5_mtop_k1}–\ref{fig:ch4_fig4-5_mtop_k4} 则对应多分辨率框架（MTOP）的结果，其中每个位移分析单元进一步细分为 $4\times4$ 个子密度单元，从而在保持设计域与载荷边界条件一致的前提下，将设计自由度 $\rho_{\mathrm{dof}}$ 由 $600$ 提升至 $9600$。各子图均标注了分析自由度 $u_{\mathrm{dof}}$ 与设计自由度 $\rho_{\mathrm{dof}}$，以刻画不同 $k$ 下的分析规模与设计分辨率变化。映射与正则化策略沿用第 \ref{subsec:ch4_setup_framework} 节统一设置。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[STOP:~$k=1,r_{\min}=1.2,u_{\mathrm{dof}}=1342,\rho_{\mathrm{dof}}=600$]{
+		\label{fig:ch4_fig4-5_stop_k1}
+		\includegraphics[width=0.95\textwidth]{fig4-5a}
+	}
+	\par\medskip
+	
+	\subfigure[MTOP:~$k=1,r_{\min}=1.0,u_{\mathrm{dof}}=1342,\rho_{\mathrm{dof}}=9600$]{
+		\label{fig:ch4_fig4-5_mtop_k1}
+		\includegraphics[width=0.95\textwidth]{fig4-5b}
+	}
+	\par\medskip
+	
+	\subfigure[MTOP:~$k=2,r_{\min}=0.75,u_{\mathrm{dof}}=5082,\rho_{\mathrm{dof}}=9600$]{
+		\label{fig:ch4_fig4-5_mtop_k2}
+		\includegraphics[width=0.95\textwidth]{fig4-5c}
+	}
+	\par\medskip
+	
+	\subfigure[MTOP:~$k=4,r_{\min}=0.5,u_{\mathrm{dof}}=19762,\rho_{\mathrm{dof}}=9600$]{
+		\label{fig:ch4_fig4-5_mtop_k4}
+		\includegraphics[width=0.95\textwidth]{fig4-5d}
+	}
+	\par\medskip
+	
+	\caption{STOP 与 MTOP 在不同分析阶次 $k$ 下的优化拓扑构型对比。}
+	\label{fig:ch4_fig4-5}
+\end{figure}
+
+结合图 \ref{fig:ch4_fig4-5} 的优化拓扑结果可见，MTOP 通过“分析网格—设计网格”解耦，在相同分析规模下显著提升了构型边界的连续性与几何表达能力。对比图 \ref{fig:ch4_fig4-5_stop_k1} 和图 \ref{fig:ch4_fig4-5_mtop_k1}，两者位移自由度相同（$u_{\mathrm{dof}}=1342$）。在传统 STOP 框架中，设计变量与分析单元一一对应，设计更新受到粗分析网格显式限制，为抑制棋盘格等网格相关的伪影，需取相对更大的过滤半径 $r_{\min}=1.2$，从而对边界细节产生更强的平滑作用，使终态构型呈现较明显的阶梯状边界。相比之下，MTOP 将每个分析单元细分为 $4\times4$ 个子密度单元，使设计自由度由 $\rho_{\mathrm{dof}}=600$ 提升至 $9600$，从而在不增加 $u_{\mathrm{dof}}$ 的前提下获得更高的设计分辨率，在该设置下，即使取更小的过滤半径 $r_{\min}=1.0$，所得构型仍保持较为光滑的连续边界且未出现显著数值伪影，体现出更好的网格鲁棒性。
+
+进一步地，由图 \ref{fig:ch4_fig4-5_mtop_k1}–\ref{fig:ch4_fig4-5_mtop_k4} 可观察到：在 MTOP 框架下，当设计分辨率保持不变（$\rho_{\mathrm{dof}}=9600$）并逐步提高分析阶次（$k=1\to2\to4$）时，过滤半径可以相应减小（$r_{\min}=1.0\rightarrow0.75\rightarrow0.5$），从而释放更多细尺度杆件与多层级传力路径，使构型逐步呈现更丰富的分支与层级特征。需要指出的是，细尺度构件的 “可表达” 与 “可评估” 是相互耦合的，只有当分析精度随阶次提高而同步增强时，细部构型的力学贡献才能被更可靠地刻画并有效参与优化更新。为进一步比较不同配置下的迭代收敛行为与目标函数终值差异，下面将给出目标函数与体积分数随迭代步演化的对比曲线（见图 \ref{fig:ch4_fig4-6_convergence}）。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[STOP:~$k=1,\ r_{\min}=1.2$]{
+		\label{fig:ch4_mtop_ex41_mbb_conv_stop_k1}
+		\includegraphics[width=0.47\textwidth]{fig4-6a}
+	}
+	\hfill
+	\subfigure[MTOP:~$k=1,\ r_{\min}=1.0$]{
+		\label{fig:ch4_mtop_ex41_mbb_conv_mtop_k1}
+		\includegraphics[width=0.47\textwidth]{fig4-6b}
+	}
+	
+	\par\medskip
+	
+	\subfigure[MTOP:~$k=2,\ r_{\min}=0.75$]{
+		\label{fig:ch4_mtop_ex41_mbb_conv_mtop_k2}
+		\includegraphics[width=0.47\textwidth]{fig4-6c}
+	}
+	\hfill
+	\subfigure[MTOP:~$k=4,\ r_{\min}=0.5$]{
+		\label{fig:ch4_mtop_ex41_mbb_conv_mtop_k4}
+		\includegraphics[width=0.47\textwidth]{fig4-6d}
+	}
+	
+	\caption{STOP 与 MTOP 在不同分析阶次 $k$ 下的收敛曲线对比（实线：柔顺度 $c$；虚线：体积分数 $V_f$）。}
+	\label{fig:ch4_fig4-6_convergence}
+\end{figure}
+
+图 \ref{fig:ch4_fig4-6_convergence} 展示了 STOP 与 MTOP 在不同分析阶次 $k$ 下目标函数 $c$ 与体积分数 $V_f$ 的迭代演化过程。各子图横轴长度不同，源于不同配置下终止准则触发的迭代步数存在差异。虚线所示体积分数 $V_f$ 在少量迭代后即快速逼近并稳定在目标值附近，表明体积分数约束在整个优化过程中得到有效满足。实线中出现的阶梯式变化主要由第 \ref{subsec:ch4_setup_framework} 节采用的惩罚延续策略导致，即惩罚指数 $p$ 按 $n=30$ 的间隔分段更新，使得参数更新节点附近发生阶段性结构重构并伴随再收敛。
+
+从收敛结果与不同配置的对比来看，MTOP 框架在相同分析阶次 $k=1$ 下相较 STOP 表现出更稳定的收敛形态与更低的平台值，这与图 \ref{fig:ch4_fig4-5} 中 “在相同 $u_{\mathrm{dof}}$ 下允许更小的 $r_{\min}$ 并获得更平滑边界” 的观察一致。进一步地，在 MTOP 内部随着分析阶次由 $k=1$ 提升至 $k=2,4$，惩罚参数更新后的再收敛过程总体更为平稳，且终态平台值呈现进一步降低的趋势。该结果表明，“细网格设计（高分辨率密度自由度）”与“高阶分析（更高力学逼近精度）”之间存在协同关系：更高阶的力学分析能够更可靠地评估细尺度杆件与多层级传力路径的刚度贡献，从而支撑更小 $r_{\min}$ 所释放的细部构型被稳定地保留并形成有效的优化更新。由此，多分辨率设计与高阶分析的匹配不仅提升了构型表达能力，也对应体现为更优的目标函数收敛结果与更稳健的迭代行为。
+
+尽管上述结果表明提高分析阶次有助于增强力学评估精度，但要进一步论证 MTOP 框架在工程应用中的可行性，还需回答一个关键问题：在求解规模被严格约束的条件下，MTOP 中通过阶次提升获得的优化结果，能否达到 STOP 框架中通过网格加密所能达到的水平。为此，本节设计了一组严格控制变量的配对对比实验（如表 4.1 所示）。在每一组配对中，两种策略在位移自由度与设计自由度规模上保持一致，即
+\[
+u_{\mathrm{dof}}\in\{5082,\,19762,\,77922\},\qquad  \rho_{\mathrm{dof}}\in\{2400,\,9600,\,38400\}
+\]
+并在相同体积分数约束与相同优化参数设置下进行比较；其中最小长度尺度控制参数 $r_{\min}$ 以统一的物理意义取值。通过在上述等规模约束下比较终态拓扑构型与相应性能指标，本节旨在验证：在多分辨率设计分辨率的支撑下，粗分析网格上的高阶离散能否在给定求解规模内获得与细密低阶网格相近的构型特征与性能水平，从而体现 “多分辨率 + 高阶分析” 协同策略的有效性。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{同等自由度规模下网格加密与阶次提升策略的优化结果对比}
+	\label{tab:ch4_tab4-1_h_vs_p}
+	
+	\setlength{\tabcolsep}{6pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.12\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+			}
+			\toprule
+			过滤半径 & 网格加密 & 阶次提升 \\
+			\midrule
+			
+			\makecell{$r_{\min} = 0.75$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h1_k1}\\[-0.5mm]\footnotesize $120\times20$（$k=1$）}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h1_k2}\\[-0.5mm]\footnotesize $60\times10$（$k=2$）}
+			\\
+			\midrule
+			
+			\makecell{$r_{\min} = 0.5$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h4_k1}\\[-0.5mm]\footnotesize $240\times40$（$k=1$）}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h1_k4}\\[-0.5mm]\footnotesize $60\times10$（$k=4$）}
+			\\
+			\midrule
+			
+			\makecell{$r_{\min} = 0.25$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h8_k1}\\[-0.5mm]\footnotesize $480\times80$（$k=1$）}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab4-1_h8_k1}\\[-0.5mm]\footnotesize $60\times10$（$k=8$）}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+具体对比结果如表 \ref{tab:ch4_tab4-1_h_vs_p} 所示。随着最小特征尺度 $r_{\min}$ 从 $0.75$ 逐步减小至 $0.25$，阶次提升策略在固定分析网格 $60\times10$ 上依次采用 $k=2,4,8$ 的高阶单元，并分别配套 $2\times2$、$4\times4$、$8\times8$ 的子密度单元细化；与之对应，网格加密策略在低阶单元 $k=1$ 下将网格规模从 $120\times20$ 逐步加密至 $480\times80$。在各组配对算例中，两类策略在相同的 $⁡r_{\min}$ 约束下呈现出高度一致的拓扑演化趋势：主承载骨架的布局与传力路径基本重合，细部层级结构（包括高分辨率下的扇形分支与类 Michell 桁架特征）在形态上亦具有良好的一致性。该结果表明，在 MTOP 框架中，通过 “高阶分析” 与 “高分辨率设计表示（子密度细化）” 的协同，可以在给定自由度规模约束下获得与细密低阶网格加密相近的优化构型与性能水平，从而为本章提出的多分辨率—高阶耦合策略提供了进一步的数值证据。需要指出的是，继续细化子密度单元能够提升密度场的几何表达分辨率，但其对优化结果的有效贡献仍需与分析精度（单元阶次与积分精度等）相匹配，以确保细部构件的力学效应得到可靠评估。
+
+
+\subsection{映射机制对优化结果与收敛行为的影响}
+\label{subsec:mapping_influence}
