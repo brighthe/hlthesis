@@ -119,7 +119,7 @@ School of Mathematics and Computational Science, Xiangtan University, Xiangtan 4
 
 %%%%% Begin Abstract %%%%%%%%%%%
 \begin{abstract}
-Topology optimization (TO) is a powerful structural design method, but its application remains challenging due to the deep expertise and extensive development effort required. Traditional TO methods, tightly coupled with computational mechanics like FEM, result in intrusive algorithms demanding a comprehensive system understanding. This paper presents SOPTX, a TO package based on FEALPy, which implements a modular architecture that decouples analysis from optimization, supports multiple computational backends (NumPy, PyTorch, JAX), and achieves a non-intrusive design. Core innovations include: (1) a cross-platform design supporting multiple backends for efficient CPU/GPU execution, while leveraging automatic differentiation (AD) for sensitivity computation; (2) fast matrix assembly techniques that overcome performance bottlenecks of traditional methods, significantly accelerating finite element computations; (3) a modular framework supporting TO problems for arbitrary dimensions and meshes, allowing flexible configuration of optimization workflows. Using the density-based method for a classic compliance minimization problem, numerical experiments demonstrate SOPTX's significant improvements in computational speed and memory usage, showcasing its strong potential for research and engineering applications.
+Topology optimization (TO) is a powerful structural design method, but its application remains challenging due to the deep expertise and extensive development effort required. Traditional TO methods, tightly coupled with computational mechanics like \textcolor{red}{finite element method (FEM)}, result in intrusive algorithms demanding a comprehensive system understanding. This paper presents SOPTX, a TO package based on FEALPy, which implements a modular architecture that decouples analysis from optimization, supports multiple computational backends (NumPy, PyTorch, JAX), and achieves a non-intrusive design. Core innovations include: (1) a cross-platform design supporting multiple backends for efficient CPU/GPU execution, while leveraging automatic differentiation (AD) for sensitivity computation; (2) fast matrix assembly techniques that overcome performance bottlenecks of traditional methods, significantly accelerating finite element computations; (3) a modular framework supporting TO problems for arbitrary dimensions and meshes, allowing flexible configuration of optimization workflows. Using the density-based method for a classic compliance minimization problem, numerical experiments demonstrate SOPTX's significant improvements in computational speed and memory usage, showcasing its strong potential for research and engineering applications.
 \end{abstract}
 %%%%% end %%%%%%%%%%%
 
@@ -134,7 +134,7 @@ Topology optimization (TO) is a powerful structural design method, but its appli
 
 %%%% Start %%%%%%
 \section{Introduction}
-Topology optimization (TO) is a class of structural optimization techniques aimed at improving structural performance by optimizing material distribution within a given design domain. Widely applied in aerospace, automotive, and civil engineering, TO addresses critical design challenges by efficiently utilizing materials. Among various approaches, density-based methods are particularly popular due to their intuitive concept and practicality. The Solid Isotropic Material with Penalization (SIMP) method, introduced by Bendsøe et al.~\cite{Bendsøe2004}, is the most widely adopted density-based approach, promoting binary (0 - 1) solutions by penalizing intermediate densities and integrating effectively with finite element method (FEM).
+Topology optimization (TO) is a class of structural optimization techniques aimed at improving structural performance by optimizing material distribution within a given design domain. Widely applied in aerospace, automotive, and civil engineering, TO addresses critical design challenges by efficiently utilizing materials. Among various approaches, density-based methods are particularly popular due to their intuitive concept and practicality. The Solid Isotropic Material with Penalization (c) method, introduced by Bendsøe et al.~\cite{Bendsøe2004}, is the most widely adopted density-based approach, promoting binary (0 - 1) solutions by penalizing intermediate densities and integrating effectively with \textcolor{red}{finite element method (FEM)}.
 
 However, TO inherently involves large-scale computations due to the tight coupling between structural analysis and optimization. Each iteration requires solving boundary value problems and performing sensitivity analysis for gradient-based optimization algorithms. For large-scale problems, repeatedly solving large linear systems and evaluating sensitivities imposes significant demands on computational resources. Therefore, improving computational efficiency and scalability without sacrificing accuracy remains a major challenge in TO research and applications.
 
@@ -155,7 +155,7 @@ To address the aforementioned challenges, this paper proposes SOPTX, a modular a
 \vspace{-1ex}
 \begin{enumerate}
 	\item FEALPy supports multiple computational backends, including NumPy, PyTorch, and JAX, enabling efficient execution across a wide range of hardware architectures such as central processing units (CPUs) and graphics processing units (GPUs).
-	\item FEALPy supports a broad range of numerical schemes, including FEM of arbitrary order and dimension, as well as alternative methods such as the virtual element method (VEM) and the finite difference method (FDM).
+	\item FEALPy supports a broad range of numerical schemes, including \textcolor{red}{FEM} of arbitrary order and dimension, as well as alternative methods such as the virtual element method (VEM) and the finite difference method (FDM).
 	\item FEALPy adopts highly efficient vectorized operations that fully exploit the computational power of modern processors.
 	\item FEALPy features a clean and extensible API design, which aligns well with our goal of developing a modular and reusable TO framework.
 \end{enumerate}
@@ -181,7 +181,7 @@ The core objective of TO is to determine the optimal material distribution withi
 %	\item $0 < \rho(x) < 1$ corresponds to intermediate densities, introduced to avoid the non-convexity inherent in discrete optimization problems by employing continuous design variables.
 %\end{itemize}
 
-In a discretized design domain, the mechanical properties (e.g., stiffness) of material elements transition smoothly between solid and void states via interpolation models~\cite{bendsoe1989optimal}. A widely used model is the Solid Isotropic Material with Penalization (SIMP) approach~\cite{zhou1991coc}, establishes a power-law relationship between the material density $\rho$ and Young's modulus $E$:
+In a discretized design domain, the mechanical properties (e.g., stiffness) of material elements transition smoothly between solid and void states via interpolation models~\cite{bendsoe1989optimal}. A widely used model is the \textcolor{red}{SIMP} approach~\cite{zhou1991coc}, establishes a power-law relationship between the material density $\rho$ and Young's modulus $E$:
 \begin{equation*}
 	E(\rho) = \rho^p E_0,\quad \rho \in [0,1],
 \end{equation*}
@@ -196,7 +196,7 @@ where $E_{\min} = 10^{-9} E_0$. This modification ensures that the stiffness mat
 However, optimization results may still exhibit intermediate densities, or "gray areas", which can complicate manufacturing. To address this, techniques like Heaviside projection and sensitivity/density filtering are commonly used to achieve clearer topologies and mitigate numerical issues such as checkerboard patterns.
 
 \subsection{Compliance Minimization Problem}
-The goal of compliance minimization with a volume constraint is to find a material density field $\rho(x)\in[0,1]$ that minimizes the total strain energy of an elastic body occupying a bounded domain $\Omega\subset\mathbb{R}^d~(d=2,3)$ under prescribed loads and boundary conditions, while the available material does not exceed a given volume $V^*$. Throughout this paper we assume the displacement $u\in{H}^1(\Omega;\mathbb{R}^d)$, the density $\rho\in{L}^{\infty}(\Omega)$ and the material stiffness tensor $D(\rho)\in{L}^{\infty}(\Omega;\mathbb{R}^{d,4})$, where $\mathbb{R}^d$ denotes the $d$-dimensional Euclidean space and $\mathbb{R}^{d,4}$ the space of fourth-order tensors over $\mathbb{R}^d$.
+The goal of compliance minimization with a volume constraint is to find a material density field $\rho(x)\in[0,1]$ that minimizes the total strain energy of an elastic body occupying a bounded domain $\Omega\subset\mathbb{R}^d~(d=2,3)$ under prescribed loads and boundary conditions, while the available material does not exceed a given volume \textcolor{red}{$V^*\in(0,|\Omega|)$, where $|\Omega|$ is the total volume of the design domain}. Throughout this paper we assume the displacement $u\in{H}^1(\Omega;\mathbb{R}^d)$, the density $\rho\in{L}^{\infty}(\Omega)$ \textcolor{red}{and the material stiffness tensor $D(\rho)\in{L}^{\infty}(\Omega;\mathbb{R}^{d\times{d}\times{d}\times{d}})$, where $\mathbb{R}^d$ denotes the $d$-dimensional Euclidean space and $\mathbb{R}^{d\times{d}\times{d}\times{d}}$ the space of fourth-order tensors over $\mathbb{R}^d$}.
 
 The compliance minimization problem in its continuous form can be formulated as follows:
 \begin{equation}\label{eq:cmpc}
@@ -209,7 +209,7 @@ The compliance minimization problem in its continuous form can be formulated as 
 		&~u = 0~\text{on}~\Gamma_D,\quad\sigma(u)\cdot{n} = t~\text{on}~\Gamma_N,
 	\end{aligned}
 \end{equation}
-where $c(\rho)$ is defined as $\int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x$, this definition equals twice the strain energy, a convention widely adopted in TO literature, $g(\rho) = v(\rho) - V^*\leq0$ denotes the volume constraint, $v(\rho) = \int_{\Omega}\rho~\mathrm{d}x$ is the material volume, $\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)$ is the strain tensor, and $\sigma(u) = D(\rho):\varepsilon(u)$ is the stress tensor. \textcolor{red}{Here $f$ and $t$ denote body forces and surface tractions, respectively. The boundary is decomposed into Dirichlet and Neumann parts such that $\Gamma_D \cup \Gamma_N = \partial\Omega$ and $\Gamma_D \cap \Gamma_N = \emptyset$.}\textcolor{gray}{Here $f$ and $t$ denote body forces and surface tractions, respectively, and $\Gamma_D \cup \Gamma_N = \partial\Omega$.}
+where $c(\rho)$ is defined as $\int_{\Omega}\sigma(u):\varepsilon(u)~\mathrm{d}x$, this definition equals twice the strain energy, a convention widely adopted in TO literature, $g(\rho) = v(\rho) - V^*\leq0$ denotes the volume constraint, $v(\rho) = \int_{\Omega}\rho~\mathrm{d}x$ is the material volume, $\varepsilon(u) = \frac{1}{2}(\nabla{u}+\nabla{u}^T)$ is the strain tensor, and $\sigma(u) = D(\rho):\varepsilon(u)$ is the stress tensor. \textcolor{red}{Here $f$ and $t$ denote body forces and surface tractions, respectively. The boundary is decomposed into Dirichlet and Neumann parts such that $\Gamma_D \cup \Gamma_N = \partial\Omega$ and $\Gamma_D \cap \Gamma_N = \emptyset$}.
 
 Discretising $\Omega$ into $N_e$ finite elements and letting $\bs{\rho} = [\rho_1, \rho_2, \dots, \rho_{N_e}]^T$ be the element-wise constant densities, the problem becomes
 \begin{equation}\label{eq:cmpd}
@@ -269,7 +269,7 @@ where $m$ is the move limit and $\eta\in(0,1]$ is a damping exponent. The algori
 	\end{minipage}
 \end{algorithm}
 
-In TO, in addition to the OC method, the Method of Moving Asymptotes (MMA) is a widely used gradient-based optimization algorithm proposed by Svanberg \cite{svanberg1987method}. It is particularly well-suited for problems involving multiple constraints or complex objective functions. The core idea of MMA is to dynamically adjust the approximation range of the design variables using "moving asymptotes", thereby transforming the original nonlinear optimization problem into a sequence of convex subproblems. This strategy ensures numerical stability throughout the iterative process.
+In TO, in addition to the OC method, the \textcolor{red}{MMA} is a widely used gradient-based optimization algorithm proposed by Svanberg \cite{svanberg1987method}. It is particularly well-suited for problems involving multiple constraints or complex objective functions. The core idea of MMA is to dynamically adjust the approximation range of the design variables using "moving asymptotes", thereby transforming the original nonlinear optimization problem into a sequence of convex subproblems. This strategy ensures numerical stability throughout the iterative process.
 
 In the compliance minimization problem, MMA approximates the original problem by the following convex subproblem:
 \begin{equation*}
@@ -358,7 +358,7 @@ As shown in Figure~\ref{fs:fig1}, FEALPy adopts a layered architecture with four
 
 Specifically, the functions of each layer are as follows:
 \begin{enumerate} 
-	\item \textbf{Tensor level}: Provides core tensor operations and manages backends via the \textit{Tensor Backend Manager}, supporting SOPTX's multi-backend switching. It also enables automatic differentiation (AD) in PyTorch and JAX, simplifying sensitivity computations in topology optimization (TO).
+	\item \textbf{Tensor level}: Provides core tensor operations and manages backends via the \textit{Tensor Backend Manager}, supporting SOPTX's multi-backend switching. It also enables \textcolor{red}{AD} in PyTorch and JAX, simplifying sensitivity computations in topology optimization (TO).
 	\item \textbf{Common level}: Includes mesh generation and finite element spaces, supporting rapid construction of meshes and function spaces for finite element analysis in SOPTX.
 	\item \textbf{Algorithm level}: Encompasses solvers and optimization algorithms, offering efficient and stable computational support for SOPTX's optimization methods.
 	\item \textbf{Field level}: Targets specific physical problems (e.g., linear elasticity), enabling SOPTX to address diverse TO problems, such as compliance minimization under volume constraints, with tailored application support.
@@ -379,7 +379,7 @@ As shown in Figure~\ref{fs:fig2}, SOPTX adopts a modular architecture consisting
 \end{figure}
 
 \subsubsection{Material Module}
-The material module in SOPTX currently focuses on linear elastic materials, extending FEALPy's implementation with TO-specific interfaces for computing Lamé constants, elasticity matrices, and strain matrices. It implements the Solid Isotropic Material with Penalization (SIMP) model, commonly employing a penalization factor of $p=3$, to penalize  continuous density fields towards discrete material distributions. The module's abstract interface design ensures extensibility. This allows future support for other models, such as the Rational Approximation of Material Properties (RAMP), or complex behaviors like anisotropy, hyperelasticity, and elastoplasticity through subclassing.
+The material module in SOPTX currently focuses on linear elastic materials, extending FEALPy's implementation with TO-specific interfaces for computing Lamé constants, elasticity matrices, and strain matrices. It implements the \textcolor{red}{SIMP} model, commonly employing a penalization factor of $p=3$, to penalize  continuous density fields towards discrete material distributions. The module's abstract interface design ensures extensibility. This allows future support for other models, such as the Rational Approximation of Material Properties (RAMP), or complex behaviors like anisotropy, hyperelasticity, and elastoplasticity through subclassing.
 
 The module encapsulates the interpolation, update, and evaluation of elastic constants within a unified interface, providing essential material data for downstream modules. Its key functional interfaces include:
 \begin{enumerate}
@@ -393,11 +393,11 @@ These interfaces ensure consistent backend compatibility and optimized performan
 \subsubsection{Solver Module}
 The solver module forms the computational core of the SOPTX framework, tasked with solving physical field problems (e.g., displacement fields) based on given material properties, boundary conditions, and external loads. The module is designed to be efficient, flexible, and backend-independent. This design addresses the demands of repeatedly solving large-scale linear systems in TO. To achieve this, the module enhances computational efficiency through optimized matrix assembly, intelligent caching, and multi-backend acceleration, supporting backends including NumPy, PyTorch, and JAX.
 
-In its current version, SOPTX primarily adopts the finite element method (FEM) to solve linear elasticity equations, leveraging FEALPy's finite element module. The key features of the solver module include:
+In its current version, SOPTX primarily adopts the \textcolor{red}{FEM} to solve linear elasticity equations, leveraging FEALPy's finite element module. The key features of the solver module include:
 \begin{itemize}
 	\item Dimensional and element adaptability: It supports various spatial dimensions, element types, and boundary conditions, where the density field is represented as piecewise constant per element and the displacement field uses linear finite elements, ensuring both stability and computational efficiency.
 	\item Efficient numerical strategies: The module implements a fast matrix assembly technique that separates element-independent and element-dependent components to eliminate redundant computations. Additionally, it incorporates symbolic integration to boost efficiency by precomputing exact expressions.
-	\item Multiple solution strategies: It provides both direct solvers (e.g., MUMPS) and iterative solvers (e.g., Conjugate Gradient, CG), with automatic optimization tailored to the backend, such as utilizing GPU acceleration on PyTorch and JAX.
+	\item Multiple solution strategies: It provides both direct solvers (e.g., MUMPS) and iterative solvers (e.g., \textcolor{red}{Conjugate Gradient (CG)}, with automatic optimization tailored to the backend, such as utilizing GPU acceleration on PyTorch and JAX.
 \end{itemize}
 
 The solver module is designed with strong extensibility, enabling the future incorporation of additional physical fields (e.g., stress fields) and numerical methods (e.g., Virtual Element Method), as well as adaptation to nonlinear mechanics and multiphysics coupling scenarios."
@@ -440,7 +440,7 @@ Through its modular and extensible design, the filter module not only addresses 
 \subsubsection{Optimization Module}
 The optimization module serves as the computational core of the SOPTX framework, tasked with defining and solving optimization problems by integrating physical field solutions with user-defined objectives. It collaborates seamlessly with the material, solver, and filter modules to drive the TO pipeline. Adhering to the framework's multi-backend design, it offers a unified interface across NumPy, PyTorch, and JAX, utilizing backend-specific optimizations, including GPU acceleration in PyTorch and JAX, to enhance performance.
 
-The module currently focuses on compliance minimization under volume constraints, a foundational problem in TO. It supports two mainstream algorithms: Optimality Criteria (OC) and the Method of Moving Asymptotes (MMA). OC is a lightweight method for volume-constrained problems, while MMA, based on Svanberg's 2007 formulation~\cite{Svanberg2007MmaAG}, has been adapted for multi-backend compatibility and optimized for efficiency.
+The module currently focuses on compliance minimization under volume constraints, a foundational problem in TO. It supports two mainstream algorithms: Optimality Criteria (OC) and the \textcolor{red}{MMA}. OC is a lightweight method for volume-constrained problems, while MMA, based on Svanberg's 2007 formulation~\cite{Svanberg2007MmaAG}, has been adapted for multi-backend compatibility and optimized for efficiency.
 
 The design of the optimization module follows two core principles
 \begin{enumerate}
@@ -495,7 +495,7 @@ pip install -e .
 For the complete installation guide, please refer to the official documentation at: \url{https://github.com/weihuayi/fealpy}.
 
 \subsection{Example: 2D Cantilever Beam}\label{sec:exp_canti_beam}
-We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever})~\cite{bendsoe2013topology}. The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform quadrilateral mesh is used. The target volume fraction is set to 0.4, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns.
+We use a popular compliance minimization benchmark to demonstrate the usage of SOPTX: minimizing the structural compliance of a cantilever beam under tip loading (see Figure~\ref{fig:cantilever})~\cite{bendsoe2013topology}. The left end of the beam is fixed, and a downward concentrated load $T = -1$ is applied to the bottom of the right end. A $160 \times 100$ uniform quadrilateral mesh is used. The target volume fraction is set to 0.4, with material properties $E = 1$ and $\nu = 0.3$. The penalization factor is $p = 3$, and the sensitivity filter radius is $r = 6.0$, which matches the mesh element size to ensure structural smoothness and eliminate checkerboard patterns. To facilitate reproducibility, the complete source code for this demonstration is available on GitHub at \url{https://github.com/brighthe/soptx/blob/main/soptx/demo/cicp_cantil_2d.py}.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.5\textwidth]{figures/cantilever_2d.png}
@@ -519,7 +519,7 @@ from soptx.pde import Cantilever2dData1
 pde = Cantilever2dData1(xmin=0, xmax=160, ymin=0, ymax=100,	T = -1)
 \end{lstlisting}
 
-Next, we define the mesh and finite element spaces (Code~\ref{code:mesh_space}). The displacement field uses a first-order continuous Lagrange space, while the density field is represented in a zeroth-order discontinuous Lagrange space, aligning with typical TO discretizations.
+Next, we define the mesh and finite element spaces (Code~\ref{code:mesh_space}). \textcolor{red}{The displacement field uses a continuous and piecewise linear Lagrange finite element space, while the density field is represented in a piecewise constant Lagrange element space, aligning with typical TO discretizations}.
 
 \begin{lstlisting}[language=python, caption={Mesh and function space definitions}, label={code:mesh_space}]
 mesh = UniformMesh(extent=[0, 160, 0, 100], h=[1, 1], origin=[0, 0])
@@ -528,7 +528,7 @@ tensor_space_C = TensorFunctionSpace(scalar_space=space_C, shape=(-1, 2))
 space_D = LagrangeFESpace(mesh=mesh, p=0, ctype='D')
 \end{lstlisting}
 
-The material module is then instantiated with the specified properties and Solid Isotropic Material with Penalization (SIMP) interpolation model (Code~\ref{code:material}). This module handles material property computations based on the density field.
+The material module is then instantiated with the specified properties and \textcolor{red}{SIMP} interpolation model (Code~\ref{code:material}). This module handles material property computations based on the density field.
 
 \begin{lstlisting}[language=python, caption={Material module}, label={code:material}]
 material_config = DensityBasedMaterialConfig(
@@ -632,7 +632,7 @@ Figure~\ref{fig:canti_1_all} shows the topology layouts at iterations 6, 33, and
 These results highlight the robustness of SOPTX in handling different initial conditions and its efficiency in achieving convergence with the OC algorithm.
 
 \section{Numerical Examples}
-This section presents numerical examples to validate the SOPTX framework's capabilities in topology optimization (TO), spanning 2D MBB beam problems to 3D cantilever structures. These examples demonstrate SOPTX's versatility across diverse partial differential equation (PDE) models, meshes, filters, and algorithms, while showcasing advanced features like fast matrix assembly, automatic differentiation (AD), and multi-backend switching. All runs are performed on a desktop computer running Ubuntu 24.04, using a CPU AMD Ryzen 9 9950X @ 4.5GHz, 2 × 32 GB of RAM, and an NVIDIA GeForce RTX 5070Ti GPU.
+This section presents numerical examples to validate the SOPTX framework's capabilities in topology optimization (TO), spanning 2D MBB beam problems to 3D cantilever structures. These examples demonstrate SOPTX's versatility across diverse partial differential equation (PDE) models, meshes, filters, and algorithms, while showcasing advanced features like fast matrix assembly, \textcolor{red}{AD}, and multi-backend switching. All runs are performed on a desktop computer running Ubuntu 24.04, using a CPU AMD Ryzen 9 9950X @ 4.5GHz, 2 × 32 GB of RAM, and an NVIDIA GeForce RTX 5070Ti GPU.
 
 The section is organized as follows: Section~\ref{sec:exp_mbb_beam} tests robustness across mesh resolutions; Section 5.2 explores filtering effects; Section 5.3 introduces algorithm switching and an updated MMA optimizer; Section 5.4 extends to 3D TO; Section 5.5 quantifies matrix assembly gains; Section 5.6 highlights AD in sensitivity analysis; and Section 5.7 assesses multi-backend and graphics processing units (GPUs) acceleration benefits. These examples underscore SOPTX's strengths and its potential in research and engineering.
 
@@ -706,7 +706,7 @@ The optimized topologies are shown in Figure~\ref{fig:mbb_filter_all}. The densi
 In summary, SOPTX's flexibility allows efficient exploration of filter impacts on design smoothness, manufacturability, and performance.
 
 \subsection{Different Optimization Algorithms}
-In TO, the choice of optimization algorithm impacts both computational efficiency and design quality. SOPTX's modular design allows seamless switching between optimizers, such as from the Optimality Criteria (OC) method to the more versatile Method of Moving Asymptotes (MMA). This section demonstrates this process using the MBB beam problem and highlights the refactored MMA in SOPTX.
+In TO, the choice of optimization algorithm impacts both computational efficiency and design quality. SOPTX's modular design allows seamless switching between optimizers, such as from the Optimality Criteria (OC) method to the more versatile \textcolor{red}{MMA}. This section demonstrates this process using the MBB beam problem and highlights the \textcolor{red}{re-implemented} MMA in SOPTX.
 
 To switch to MMA, users simply import and configure the \texttt{MMAOptimizer} class:
 \begin{lstlisting}[language=python]
@@ -731,7 +731,7 @@ For the MBB beam problem, MMA produces topologies nearly identical to OC's, with
 	\label{fig:mbb_mma_all}
 \end{figure}
 
-SOPTX's MMA, refactored from Krister Svanberg's implementation ~\cite{Svanberg2007MmaAG}, allows users to adjust internal parameters, including \texttt{m}, \texttt{n}, \texttt{xmin}, \texttt{xmax}, and control parameters like \texttt{a0}, \texttt{a}, \texttt{c}, \texttt{d}. This provides greater flexibility than traditional "black-box" versions, enhancing performance and adaptability across platforms. An example configuration is shown below:
+SOPTX's MMA, \textcolor{red}{developed based on} Krister Svanberg's implementation\textcolor{red}{~\cite{Svanberg2007MMA}}, allows users to adjust internal parameters, including \texttt{m}, \texttt{n}, \texttt{xmin}, \texttt{xmax}, and control parameters like \texttt{a0}, \texttt{a}, \texttt{c}, \texttt{d}. This provides greater flexibility than traditional "black-box" versions, enhancing performance and adaptability across platforms. An example configuration is shown below:
 \begin{lstlisting}[language=python]
 optimizer.options.set_advanced_options(m=1, n=NC,
 			xmin=bm.zeros((NC, 1)), xmax=bm.ones((NC, 1)),
@@ -739,21 +739,78 @@ optimizer.options.set_advanced_options(m=1, n=NC,
 			c=1e4 * bm.ones((1, 1)), d=bm.zeros((1, 1)))
 \end{lstlisting}
 
-Through this refactoring, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in TO.
+Through this \textcolor{red}{re-implementation}, SOPTX not only enhances the performance of the MMA algorithm but also overcomes the limitations of conventional implementations. It provides users with greater control and cross-platform flexibility, making it particularly advantageous for both research and engineering applications in TO.
 
 \textcolor{blue}{\subsection{Additional 2D Benchmark Problems}\label{sec:exp_2d}}
-While the MBB beam example presented earlier serves as an excellent benchmark for validating the performance and stability of optimization algorithms, SOPTX is designed as a general-purpose framework capable of flexibly handling diverse boundary conditions and loading scenarios. To further demonstrate the applicability of SOPTX across a broader range of 2D engineering contexts, this section introduces two additional classic benchmark problems: the bridge structure and the half-wheel structure. Numerical experiments demonstrate that users can seamlessly apply the framework to new physical problems by simply inheriting and defining new PDE data classes, without the need to modify the core solver or optimization modules. This capability fully highlights the advantages of SOPTX's decoupled architecture.
+While the MBB beam example presented earlier serves as an excellent benchmark for validating the performance and stability of optimization algorithms, SOPTX is designed as a general-purpose framework capable of flexibly handling diverse boundary conditions and loading scenarios. To further demonstrate the applicability of SOPTX across a broader range of 2D engineering contexts, this section introduces two additional classic benchmark problems: the bridge structure and the half-wheel structure. These examples demonstrate the extensibility of the SOPTX framework. Users can seamlessly adapt to new physical problems by simply inheriting and defining new PDE data classes, without modifying the core solver or optimization modules.
 
-2D Simple Bridge Structure
+\vspace{0.5em}
+\noindent \textbf{2D Simple Bridge Structure}
+\vspace{0.5em}
 
-Consider the bridge structure design problem shown in Figure [Ref]. In this example, the design domain is defined as a $60 \times 30$ rectangular region, discretized by a uniform quadrilateral mesh. The boundary conditions consist of fully fixed supports at the two bottom corners. A downward concentrated load $T=-1$ is applied at the midpoint of the bottom edge. The target volume fraction is set to 0.3, and the sensitivity filter radius is set to $r=2.4$ (chosen to match the mesh element size, ensuring structural smoothness and suppressing checkerboard patterns).
+Consider the bridge structure design problem shown in Figure~\ref{fig:simple_bridge_2d}. In this example, the design domain is defined as a $60 \times 30$ rectangular region, discretized by a uniform quadrilateral mesh. The boundary conditions consist of fully fixed supports at the two bottom corners. A downward concentrated load $T=-1$ is applied at the midpoint of the bottom edge. The target volume fraction is set to 0.3, and the sensitivity filter radius is set to $r=2.4$ (chosen to match the mesh element size, ensuring structural smoothness and suppressing checkerboard patterns).
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.5\textwidth]{figures/simple_bridge_2d.png}
-	\caption{Geometric configuration of the 3D cantilever beam. The left end is fully fixed, and a downward concentrated load is applied at the bottom of the right end.}
+	\includegraphics[width=0.5\textwidth]{figures/simple_bridge_2d.jpg}
+	\caption{Geometric configuration of the 2D simple bridge structure. The bottom two corners are fully fixed, and a downward concentrated load is applied at the midpoint of the bottom edge.}
 	\label{fig:simple_bridge_2d}
 \end{figure}
 
+Compared to the cantilever beam example in Section~\ref{sec:exp_canti_beam}, adapting SOPTX to this simple bridge problem requires only a simple substitution of the PDE model. The core definition of the \texttt{SimpleBridge2dData1} model is as follows(see Appendix~\ref{sec:code_simple_bridge} for the complete implementation):
+\begin{lstlisting}[language=python]
+from soptx.pde import SimpleBridge2dData1 
+pde = SimpleBridge2dData1(xmin=0, xmax=60, ymin=0, ymax=30, T=-1)
+\end{lstlisting}
+
+The optimized topology and convergence history are presented in Figure~\ref{fig:bridge_results}. As shown in Figure~\ref{fig:bridge_topology}, the material distribution automatically evolves into a distinct arch-like structure. This configuration efficiently transfers the central downward load to the supports via axial compression. Furthermore, the convergence history in Figure~\ref{fig:bridge_convergence} indicates that the structural compliance decreases rapidly within the first 10 iterations and stabilizes around iteration 30, with the volume constraint strictly satisfied throughout the process."
+\begin{figure}[htb]
+	\centering
+	\subfloat[(a)~Optimized arch-like topology]{
+		\includegraphics[width=0.56\textwidth]{figures/top.png}
+		\label{fig:bridge_topology}
+	}
+	\hfill 
+	\subfloat[(b)~Convergence of compliance $c(\rho)$ and volume fraction $v(\rho)$]{
+		\includegraphics[width=0.40\textwidth]{figures/convergence.png}
+		\label{fig:bridge_convergence}
+	}
+	\caption{Optimization results for the 2D simple bridge problem. (a) The final material distribution evolves into a clear arch structure. (b) Convergence history showing rapid decrease in compliance and strict satisfaction of the volume constraint.}
+	\label{fig:bridge_results}
+\end{figure}
+
+\vspace{0.5em}
+\noindent \textbf{2D Half-Wheel Structure}
+\vspace{0.5em}
+
+Following the bridge example, we consider the half-wheel benchmark problem (also known as a variant of the Michell structure) shown in Figure~\ref{fig:half_wheel_2d}. The aspect ratio of the geometry remains consistent with the bridge example ($2:1$). However, to capture a clearer spoke-like structure, the design domain is enlarged to $120 \times 60$ and discretized by a corresponding $120 \times 60$ quadrilateral mesh. The loading condition remains unchanged, with a downward force applied at the midpoint of the bottom edge. The key difference lies in the boundary conditions: the bottom-left corner is fully fixed, while the bottom-right corner is supported by a roller, constraining only the vertical displacement and allowing horizontal sliding. The target volume fraction is set to 0.3, and the sensitivity filter radius is set to $r=1.5$.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/half_wheel_2d.jpg}
+	\caption{Geometric configuration of the 2D half-wheel structure. The bottom-left corner is fully fixed, while the bottom-right corner is supported by a roller. A downward concentrated load is applied at the midpoint of the bottom edge.}
+	\label{fig:half_wheel_2d}
+\end{figure}
+
+Similarly, adapting SOPTX to the half-wheel problem requires only a simple substitution of the PDE model. The core definition of the \texttt{HalfWheel2dData1} model is as follows(see Appendix~\ref{sec:code_half_wheel} for the complete implementation):
+\begin{lstlisting}[language=python]
+from soptx.pde import HalfWheel2dData1
+pde = HalfWheel2dData1(xmin=0, xmax=120, ymin=0, ymax=60, T=-1)
+\end{lstlisting}
+
+The optimization results are presented in Figure~\ref{fig:half_wheel_results}. As shown in Figure~\ref{fig:half_wheel_topology}, SOPTX successfully captures a complex topology resembling bicycle spokes, which is a typical characteristic of the theoretical optimal configuration (Michell-like structure) under these boundary conditions.The convergence history is plotted in Figure~\ref{fig:half_wheel_convergence}. The structural compliance decreases rapidly within the first 20 iterations and stabilizes. It is worth noting that although the volume fraction curve exhibits high-frequency oscillations visually, the scale of the right y-axis reveals that the fluctuation amplitude is confined within the order of $10^{-4}$ (less than $0.03\%$ error relative to the target). This indicates that the volume constraint is strictly satisfied throughout the optimization process.
+\begin{figure}[htb]
+	\centering
+	\subfloat[(a)~Optimized arch-like topology]{
+		\includegraphics[width=0.56\textwidth]{figures/half_wheel_topology.png}
+		\label{fig:half_wheel_topology}
+	}
+	\hfill 
+	\subfloat[(b)~Convergence of compliance $c(\rho)$ and volume fraction $v(\rho)$]{
+		\includegraphics[width=0.40\textwidth]{figures/half_wheel_convergence.png}
+		\label{fig:half_wheel_convergence}
+	}
+	\caption{Optimization results for the 2D half-wheel structure. (a) The final material distribution evolves into a clear spoke-like structure. (b) Convergence history showing rapid decrease in compliance and strict satisfaction of the volume constraint..}
+	\label{fig:half_wheel_results}
+\end{figure}
 
 \subsection{3D Extension}\label{sec:exp_canti3d}
 SOPTX's modular design enables a smooth transition from 2D to 3D TO. This section showcases its capability with a 3D cantilever beam compliance minimization problem (see Figure~\ref{fig:cantilever_3d}). The beam is fixed on the left and bears a downward load $T=-1$ at the bottom right. A $60\times20\times4$ hexahedral mesh is applied, with a target volume fraction of 0.3, material properties $E=1$ and $\nu=0.3$, and penalization factor $p=3$. A sensitivity filter (radius $r=1.5$) ensures smooth results.
@@ -967,7 +1024,7 @@ mesh = UniformMesh(extent=extent, h=h, origin=origin, device='cuda')
 
 GPU acceleration is essential for 3D TO due to the significant increase in computational complexity as mesh size grows. For instance, in the 3D cantilever beam example from Section~\ref{sec:exp_canti3d}, doubling the mesh to $120\times40\times8$ increases the density design variables to 38,400 and displacement degrees of freedom to 133,947. On the CPU, this leads to prolonged optimization times due to matrix assembly and linear solving costs. In contrast, GPU's parallel computing capabilities greatly enhance efficiency and reduce computation time.
 
-To demonstrate this, we compare CPU and GPU computation times under the PyTorch backend for the same problem. Parameters remain consistent with Section~\ref{sec:exp_canti3d}, except for increasing the filter radius from 1.5 to 3.0 to maintain structural smoothness in the larger domain. Additionally, we use the Conjugate Gradient (CG) method instead of a direct solver (e.g., MUMPS) to handle the larger sparse linear systems, leveraging the GPU's parallel processing for efficient matrix-vector operations.
+To demonstrate this, we compare CPU and GPU computation times under the PyTorch backend for the same problem. Parameters remain consistent with Section~\ref{sec:exp_canti3d}, except for increasing the filter radius from 1.5 to 3.0 to maintain structural smoothness in the larger domain. Additionally, we use the \textcolor{red}{CG} method instead of a direct solver (e.g., MUMPS) to handle the larger sparse linear systems, leveraging the GPU's parallel processing for efficient matrix-vector operations.
 
 As shown in Figure~\ref{fig:canti3d_device_compare}, the optimized topologies using CPU and GPU are nearly identical. Minor differences in compliance and volume fraction, both within $1\%$, arise from variations in floating-point precision and parallel implementation strategies across hardware platforms. These differences are negligible in TO and do not impact the quality or performance of the final design.
 \begin{figure}[htbp]
@@ -1001,7 +1058,7 @@ Given the consistency in optimization results, we evaluate the computational eff
 	\label{tab:device_performance}
 \end{table}
 
-Notably, the Conjugate Gradient (CG) method exhibits faster convergence in early iterations due to the uniform material density, which results in a well-conditioned stiffness matrix. As optimization advances, increased heterogeneity in material distribution elevates the matrix condition number, thereby prolonging CG convergence and iteration times.
+Notably, \textcolor{red}{CG} method exhibits faster convergence in early iterations due to the uniform material density, which results in a well-conditioned stiffness matrix. As optimization advances, increased heterogeneity in material distribution elevates the matrix condition number, thereby prolonging CG convergence and iteration times.
 
 \section{Conclusion}
 This study presents SOPTX, a modular and extensible topology optimization (TO) framework built on the open-source FEALPy platform. SOPTX addresses key challenges in TO by offering a modular, efficient, and accessible solution for both academic and industrial applications. Its fully open-source design eliminates reliance on commercial software, broadening its accessibility for research and education.
@@ -1009,7 +1066,7 @@ This study presents SOPTX, a modular and extensible topology optimization (TO) f
 The core innovations of SOPTX are reflected in the following three aspects:
 \begin{enumerate} 
 	\item \textbf{Modular Architecture}: A loosely coupled design supports 2D and 3D TO problems across structured and unstructured meshes. This flexibility, paired with a rich set of configurable components, empowers users to tailor and extend optimization workflows efficiently.
-	\item \textbf{Multi-Backend Support and Automatic differentiation}: Integration of NumPy, PyTorch, and JAX enables fast central processing units (CPUs) and graphics processing units (GPUs) computation. In benchmark tests, GPU computations reduced time to approximately $12\%$ of CPU time. Automatic differentiation (AD) automates gradient calculations, enhancing accuracy.
+	\item \textbf{Multi-Backend Support and Automatic differentiation}: Integration of NumPy, PyTorch, and JAX enables fast central processing units (CPUs) and graphics processing units (GPUs) computation. In benchmark tests, GPU computations reduced time to approximately $12\%$ of CPU time. \textcolor{red}{AD} automates gradient calculations, enhancing accuracy.
 	\item \textbf{Efficient Matrix Assembly}: By optimizing assembly processes and exploiting sparsity, SOPTX reduces average assembly time from \SI{0.838}{s} to \SI{0.273}{s} (approximately $33\%$ of the original), significantly boosting efficiency.
 \end{enumerate}
 
@@ -1027,7 +1084,7 @@ These extensions will solidify SOPTX's role in advancing TO for both research an
 %%%% Acknowledgments %%%%%%%%
 \section*{Acknowledgments}
 National Natural Science Foundation of China (NSFC) (Grant Nos. 12371410, 12261131501).
-The Construction of Innovative Provinces in Hunan Province (Grant No. 2021GK1010)
+The Construction of Innovative Provinces in Hunan Province (Grant No. 2021GK1010)\textcolor{red}{.}
 
 \appendix
 \renewcommand{\thesection}{Appendix\,\Alph{section}}
@@ -1090,55 +1147,169 @@ class Cantilever2dData1:
 \label{sec:code_mbb}
 \begin{lstlisting}[language=python]
 class MBBBeam2dData1:
-def __init__(self, 
-			xmin: float=0, xmax: float=60, 
-			ymin: float=0, ymax: float=20,
-			T: float = -1):
-	self.xmin, self.xmax = xmin, xmax
-	self.ymin, self.ymax = ymin, ymax
-	self.T = T
-	self.eps = 1e-12
+	def __init__(self, 
+				xmin: float=0, xmax: float=60, 
+				ymin: float=0, ymax: float=20,
+				T: float = -1):
+		self.xmin, self.xmax = xmin, xmax
+		self.ymin, self.ymax = ymin, ymax
+		self.T = T
+		self.eps = 1e-12
+	
+	def domain(self) -> list:
+		box = [self.xmin, self.xmax, self.ymin, self.ymax]
+		return box
+	
+	@cartesian
+	def force(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		y = points[..., 1]
+		coord = ((bm.abs(x - domain[0]) < self.eps) & 
+				 (bm.abs(y - domain[3]) < self.eps))
+		kwargs = bm.context(points)
+		val = bm.zeros(points.shape, **kwargs)
+		val[coord, 1] = self.T
+		return val
+	
+	@cartesian
+	def dirichlet(self, points: TensorLike) -> TensorLike:
+		kwargs = bm.context(points)
+		return bm.zeros(points.shape, **kwargs)
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		coord = bm.abs(x - domain[0]) < self.eps
+		return coord
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		y = points[..., 1]
+		coord = ((bm.abs(x - domain[1]) < self.eps) &
+				 (bm.abs(y - domain[0]) < self.eps))
+		return coord
+	
+	def threshold(self) -> Tuple[Callable, Callable]:
+		return (self.is_dirichlet_boundary_dof_x, 
+				self.is_dirichlet_boundary_dof_y)
+\end{lstlisting}
 
-def domain(self) -> list:
+\section{HalfWheel2dData1}
+\label{sec:code_half_wheel}
+\begin{lstlisting}[language=python]
+class HalfWheel2dData1:
+	def __init__(self,
+				xmin: float=0, xmax: float=120, 
+				ymin: float=0, ymax: float=60,
+				T: float = -1) -> None:
+		xmin: float=0, xmax: float=120, 
+		ymin: float=0, ymax: float=60,
+		T: float = -1
+		
+	def domain(self) -> list:
+		box = [self.xmin, self.xmax, self.ymin, self.ymax]
+		return box
+		
+	@cartesian
+	def force(self, points: TensorLike) -> TensorLike:
+		domain = self.domain()
+		x = points[..., 0]
+		y = points[..., 1]
+		on_bottom_boundary = bm.abs(y - domain[2]) < self._eps
+		mid_x = (domain[0] + domain[1]) / 2.0
+		on_middle_boundary = bm.abs(x - mid_x) < self._eps
+		coord = on_bottom_boundary & on_middle_boundary
+		kwargs = bm.context(points)
+		val = bm.zeros(points.shape, **kwargs)
+		val[coord, 1] = self.T
+		return val
+		
+	@cartesian
+	def dirichlet(self, points: TensorLike) -> TensorLike:
+		kwargs = bm.context(points)
+		return bm.zeros(points.shape, **kwargs)
+	
+    @cartesian
+	def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
+	domain = self._domain
+	x, y = points[..., 0], points[..., 1]
+	left_bottom = (bm.abs(x - domain[0]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+	
+	return left_bottom
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_y(self, points: 'TensorLike') -> 'TensorLike':
+		domain = self._domain
+		x, y = points[..., 0], points[..., 1]
+		left_bottom = (bm.abs(x - domain[0]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+		right_bottom = (bm.abs(x - domain[1]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+		return left_bottom | right_bottom
+	
+	
+	def threshold(self) -> Tuple[Callable, Callable]:
+		return (self.is_dirichlet_boundary_dof_x, 
+				self.is_dirichlet_boundary_dof_y)
+\end{lstlisting}
+
+\section{SimpleBridge2dData1}
+\label{sec:code_simple_bridge}
+\begin{lstlisting}[language=python]
+	class SimpleBridge2dData1:
+	def __init__(self,
+	xmin: float=0, xmax: float=60, 
+	ymin: float=0, ymax: float=30,
+	T: float = -1) -> None:
+	xmin: float=0, xmax: float=60, 
+	ymin: float=0, ymax: float=20,
+	T: float = -1
+	
+	def domain(self) -> list:
 	box = [self.xmin, self.xmax, self.ymin, self.ymax]
 	return box
-
-@cartesian
-def force(self, points: TensorLike) -> TensorLike:
+	
+	@cartesian
+	def force(self, points: TensorLike) -> TensorLike:
 	domain = self.domain()
 	x = points[..., 0]
 	y = points[..., 1]
-	coord = ((bm.abs(x - domain[0]) < self.eps) & 
-			 (bm.abs(y - domain[3]) < self.eps))
+	on_bottom_boundary = bm.abs(y - domain[2]) < self._eps
+	mid_x = (domain[0] + domain[1]) / 2.0
+	on_middle_boundary = bm.abs(x - mid_x) < self._eps
+	coord = on_bottom_boundary & on_middle_boundary
 	kwargs = bm.context(points)
 	val = bm.zeros(points.shape, **kwargs)
 	val[coord, 1] = self.T
 	return val
-
-@cartesian
-def dirichlet(self, points: TensorLike) -> TensorLike:
+	
+	@cartesian
+	def dirichlet(self, points: TensorLike) -> TensorLike:
 	kwargs = bm.context(points)
 	return bm.zeros(points.shape, **kwargs)
-
-@cartesian
-def is_dirichlet_boundary_dof_x(self, points: TensorLike) -> TensorLike:
-	domain = self.domain()
-	x = points[..., 0]
-	coord = bm.abs(x - domain[0]) < self.eps
-	return coord
-
-@cartesian
-def is_dirichlet_boundary_dof_y(self, points: TensorLike) -> TensorLike:
-	domain = self.domain()
-	x = points[..., 0]
-	y = points[..., 1]
-	coord = ((bm.abs(x - domain[1]) < self.eps) &
-			 (bm.abs(y - domain[0]) < self.eps))
-	return coord
-
-def threshold(self) -> Tuple[Callable, Callable]:
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_x(self, points: 'TensorLike') -> 'TensorLike':
+	domain = self._domain
+	x, y = points[..., 0], points[..., 1]
+	left_bottom = (bm.abs(x - domain[0]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+	right_bottom = (bm.abs(x - domain[1]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+	return left_bottom | right_bottom
+	
+	@cartesian
+	def is_dirichlet_boundary_dof_y(self, points: 'TensorLike') -> 'TensorLike':
+	domain = self._domain
+	x, y = points[..., 0], points[..., 1]
+	left_bottom = (bm.abs(x - domain[0]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+	right_bottom = (bm.abs(x - domain[1]) < self._eps) & (bm.abs(y - domain[2]) < self._eps)
+	return left_bottom | right_bottom
+	
+	
+	def threshold(self) -> Tuple[Callable, Callable]:
 	return (self.is_dirichlet_boundary_dof_x, 
-			self.is_dirichlet_boundary_dof_y)
+	self.is_dirichlet_boundary_dof_y)
 \end{lstlisting}
 
 \section{Cantilever3dData1}
