@@ -727,7 +727,7 @@ For the MBB beam problem, MMA produces topologies nearly identical to OC's, with
 		\includegraphics[width=0.5\textwidth]{figures/mbb_mma_tri.png}
 		\label{fig:mbb_mma_tri}
 	}
-	\caption{Optimized topologies of the MBB beam using MMA optimizer on a structured quadrilateral mesh (left) and a triangular mesh (right).}
+	\caption{\textcolor{red}{Optimized topologies of the MBB beam using MMA optimizer on a structured quadrilateral mesh (left) and a triangular mesh (right).}}
 	\label{fig:mbb_mma_all}
 \end{figure}
 
@@ -943,8 +943,7 @@ As observed from Figure~\ref{fig:canti3d_ad_convergence} and Figure~\ref{fig:can
 
 \textcolor{red}
 {To evaluate the computational efficiency of AD, we compare the optimization times of AD and manual differentiation under the same 3D cantilever beam problem setting. As shown in Table~\ref{tab:ad_vs_manual}, the total optimization time and average iteration time for both methods are nearly identical. Since manual differentiation involves the direct execution of analytical formulas and typically serves as the performance benchmark/upper bound~\cite{norgaardApplicationsAutomaticDifferentiation2017b, chandrasekhar2021auto, neofytouLevelSetTopology2024}, matching this performance demonstrates that SOPTX’s AD implementation is highly efficient. It introduces negligible computational overhead, thereby allowing users to leverage the modeling flexibility and development speed of AD without incurring the performance penalties often observed in other frameworks.}
-\textcolor{gray}
-{To evaluate the computational efficiency of AD, we compare the optimization times of AD and manual differentiation under the same 3D cantilever beam problem setting. As shown in Table~\ref{tab:ad_vs_manual}, the total optimization time and average iteration time for both methods are nearly identical, demonstrating that SOPTX's AD implementation is highly efficient, introducing no significant computational overhead while maintaining the same high precision as manual differentiation.}
+
 \begin{table}[htbp]
 	\centering
 	\setlength{\tabcolsep}{4pt} % 减小列间距
