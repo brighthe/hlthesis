@@ -1,0 +1,50 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.10">
+  <diagram name="第 1 页" id="2NdQMXlcwmL3Vot7J_oz">
+    <mxGraphModel dx="1251" dy="660" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-3" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="oRcW_m9mmcUmcacIf6-q-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="优化模型建立" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-5" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="oRcW_m9mmcUmcacIf6-q-4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-2" parent="1" style="whiteSpace=wrap;html=1;rounded=1;" value="结构响应分析" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-19" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="oRcW_m9mmcUmcacIf6-q-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-4" parent="1" style="whiteSpace=wrap;html=1;rounded=1;" value="目标/约束与灵敏度" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-21" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="oRcW_m9mmcUmcacIf6-q-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-6" parent="1" style="whiteSpace=wrap;html=1;rounded=1;" value="设计变量映射与正则化" vertex="1">
+          <mxGeometry height="60" width="120" x="390" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-18" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="oRcW_m9mmcUmcacIf6-q-17" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-15" parent="1" style="whiteSpace=wrap;html=1;rounded=1;" value="优化问题求解" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="414" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-20" edge="1" parent="1" source="oRcW_m9mmcUmcacIf6-q-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="oRcW_m9mmcUmcacIf6-q-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oRcW_m9mmcUmcacIf6-q-17" parent="1" style="whiteSpace=wrap;html=1;rounded=1;" value="结构拓扑更新" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="510" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

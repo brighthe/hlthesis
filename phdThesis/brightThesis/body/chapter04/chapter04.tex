@@ -320,7 +320,11 @@ H_{(e,i)(s,j)}=\max\Bigl\{0,\; r_{\min}-\mathrm{dist}\bigl((e,i),(s,j)\bigr)\Big
 	\]
 	即初始 $p=1$，每迭代 $30$ 次增加 $0.5$，直至达到上限 $p=3$ 后保持不变。
 	
-	\item 映射机制：采用密度过滤对应的线性映射 $\boldsymbol{\rho}=f(\boldsymbol{d})$ 对设计变量进行正则化处理。
+	\item 映射机制：基准测试中，默认采用密度过滤对应的线性映射 $\boldsymbol{\rho} = f(\boldsymbol{d})$ 对设计变量进行正则化处理。而在涉及 Heaviside 投影的对比研究中（如第 \ref{subsec:mapping_influence} 节），采用双曲正切型投影算子，并取固定阈值 $\eta=0.5$。为兼顾优化早期的鲁棒性与后期的边界清晰度，对投影陡峭度参数 $\beta$ 施加指数型延续策略：
+	\[
+	\beta^{(n)} = \min\left(512, 2^{\lfloor n/50 \rfloor} \right)
+	\]
+	即初始 $\beta=1$，每迭代 50 次数值翻倍，直至达到上限 $\beta=512$ 后保持不变。
 	
 	\item 最小尺度控制与过滤半径：统一采用过滤算子实现最小特征尺度控制，过滤半径 $r_{\min}$  以设计域的物理长度度量（与第 3.6.1 节一致），离散实现时，过滤邻域由设计网格尺寸 $h_\rho$ 确定，也就是
 	\[
@@ -497,6 +501,8 @@ u_{\mathrm{dof}}\in\{5082,\,19762,\,77922\},\qquad  \rho_{\mathrm{dof}}\in\{2400
 
 在第 \ref{subsec:mtop_verification} 节中，我们已在统一的多分辨率离散设置下，以密度过滤对应的线性映射作为基准结果，验证了多分辨率策略在不同单元阶次下的构型一致性与收敛特征。为保证映射机制对比的公平性，本节固定采用与图 \ref{fig:ch4_fig4-5} 相同的多分辨率设置，即每个分析单元内进行 $4\times4$ 子密度单元细分，并保持 $(k,r_{\min})$ 取值及其余优化参数不变。在此基础上，将基准的密度过滤结果作为参考解，进一步对比两类常用映射/正则化机制：其一为灵敏度过滤（恒等密度映射 $\boldsymbol{\rho}=\boldsymbol{d}$，过滤作用仅施加于目标函数灵敏度场，见第 \ref{subsec:mapping-sens-identity} 节）；其二为 Heaviside 投影（通过非线性投影算子实现从设计变量到物理密度的映射与 “0–1” 促进，见第 \ref{subsec:mapping-heaviside-nonlinear} 节）。以下重点分析二者相对于参考解在最终拓扑形态及迭代收敛行为方面的差异。
 
+图 \ref{fig:ch4_fig4-7} 展示了灵敏度过滤（恒等映射）在不同分析阶次下的最终优化拓扑。与第 \ref{subsec:mtop_verification} 节中的密度过滤（线性映射）参考解相比，该组结果在边界特征与拓扑丰富度上呈现显著差异。
+
 \begin{figure}[!htbp]
 	\centering
 	\captionsetup{justification=centering}
@@ -523,25 +529,92 @@ u_{\mathrm{dof}}\in\{5082,\,19762,\,77922\},\qquad  \rho_{\mathrm{dof}}\in\{2400
 	\label{fig:ch4_fig4-7}
 \end{figure}
 
+首先，在边界表现上，由于恒等映射未对物理密度场施加显式平滑约束，结构边界呈现出自然的灰度过渡而非强制模糊化。如图 ~\ref{fig:ch4_fig4-7_sens_k4} 所示，随着分析阶次提升至 $k=4$ 且过滤半径减小至 $r_{\min}=0.5$，边界弥散带显著收窄，结构轮廓愈发清晰，证实了高阶分析与高分辨率设计结合能有效支持更细锐的边界表达。其次，在拓扑形态上，灵敏度过滤所得构型明显更为简化。对比图~\ref{fig:ch4_fig4-5_mtop_k4}（密度过滤）中丰富的层级分支结构，图~\ref{fig:ch4_fig4-7_sens_k4} 在相同参数下倾向于合并细微特征，形成由少数粗壮杆件构成的主骨架。这表明，由于恒等映射未对物理密度场引入显式的空间相关性约束（即缺乏物理意义上的最小特征尺度直接控制），优化器更容易陷入包含较少拓扑细节的局部极值，从而得到较为保守的结构设计。
+
+图~\ref{fig:ch4_fig4-8} 进一步给出了灵敏度过滤下目标函数 $c$ 与体积分数 $V_f$ 的迭代演化历程。观察可知，体积分数（虚线）在所有阶次下均能迅速满足约束并保持稳定。目标函数（实线）则呈现出典型的阶梯状下降特征，这是由于惩罚因子 $p$ 的延拓策略（每 30 步更新）引发的结构重构与再收敛过程。
+
 \begin{figure}[!htbp]
 	\centering
 	\captionsetup{justification=centering}
 	
 	\subfigure[$k=1$，$r_{\min} = 1.0$]{
 		\label{fig:fig:ch4_fig4-8_sens_k1}
-		\includegraphics[width=0.31\textwidth]{fig4-8a}
+		\includegraphics[width=0.47\textwidth]{fig4-8a}
 	}
-	\hfill
+	\hfill % 在两个子图之间通过弹性空白撑开，使其对齐左右边缘
 	\subfigure[$k=2$，$r_{\min} = 0.75$]{
 		\label{fig:fig:ch4_fig4-8_sens_k2}
-		\includegraphics[width=0.31\textwidth]{fig4-8b}
+		\includegraphics[width=0.47\textwidth]{fig4-8b}
 	}
-	\hfill
+	
+	\vspace{1em}
+
 	\subfigure[$k=4$，$r_{\min} = 0.5$]{
 		\label{fig:fig:ch4_fig4-8_sens_k4}
-		\includegraphics[width=0.31\textwidth]{fig4-8c}
+		\includegraphics[width=0.48\textwidth]{fig4-8c}
 	}
 	
 	\caption{灵敏度过滤（恒等映射）下不同分析阶次的优化迭代收敛历程}
 	\label{fig:ch4_fig4-8}
 \end{figure}
+
+若将图~\ref{fig:ch4_fig4-8} 与图~\ref{fig:ch4_fig4-6_convergence}（密度过滤结果）进行横向对比，可以发现灵敏度过滤下的收敛曲线在局部呈现出更多的微小震荡，且在惩罚参数跳变后的再稳定过程相对较长。这是因为恒等映射未对物理密度场施加显式的空间平滑约束，使得优化过程对设计变量的局部离散更新更为敏感。然而，在此基础上重点对比图~\ref{fig:ch4_fig4-8} 内部不同阶次的表现可以发现：尽管缺乏密度过滤那样的强几何约束，高阶分析（$k=4$）（图~\ref{fig:fig:ch4_fig4-8_sens_k4}）相较于低阶分析（图~\ref{fig:fig:ch4_fig4-8_sens_k1}）依然表现出了显著的稳定性提升。在高阶单元下，目标函数曲线在参数跳变后的调整过程更为迅速且平滑，最终收敛平台也更为平稳。这表明，高阶有限元提供的高精度物理场梯度信息，能够有效抑制由灵敏度过滤弱正则化带来的潜在数值噪声，从而保障算法实现稳健收敛。
+
+接下来考察基于 Heaviside 投影的非线性映射策略。正如前文所述，线性密度过滤虽能稳定数值计算，但不可避免地在边界处引入灰度过渡带。为了实现严格的 “0--1” 离散设计，本部分将映射机制替换为双曲正切型投影算子。投影参数严格遵循第 \ref{subsec:ch4_setup_framework} 节定义的统一框架：阈值取 $\eta=0.5$，陡峭度 $\beta$ 采用指数延续策略（从 1 逐步增至 512）。该策略旨在优化初期利用较小的 $\beta$ 保持问题凸性以寻找全局轮廓，随后逐步锐化边界以消除灰度。图 \ref{fig:ch4_fig4-9} 展示了在不同分析阶次下，采用 Heaviside 投影机制获得的最终拓扑构型。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$k=1$，$r_{\min} = 1.0$]{
+		\label{fig:ch4_fig4-9_pro_k1}
+		\includegraphics[width=0.95\textwidth]{fig4-9a}
+	}
+	\par\medskip
+	
+	\subfigure[$k=2$，$r_{\min} = 0.75$]{
+		\label{fig:ch4_fig4-9_pro_k2}
+		\includegraphics[width=0.95\textwidth]{fig4-9b}
+	}
+	\par\medskip
+	
+	\subfigure[$k=4$，$r_{\min} = 0.5$]{
+		\label{fig:ch4_fig4-9_pro_k4}
+		\includegraphics[width=0.95\textwidth]{fig4-9c}
+	}
+	\par\medskip
+	
+	\caption{Heaviside 投影（非线性映射）下不同分析阶次的最终优化拓扑构型}
+	\label{fig:ch4_fig4-9}
+\end{figure}
+
+与前述恒等映射（灵敏度过滤）及线性映射（密度过滤）相比，非线性投影通过对密度场的显式重构，综合了二者的优势：它既保留了线性过滤对最小特征尺度的显式控制能力，又通过阈值截断有效消除了由此引入的边界灰度带，从而在所有阶次下均实现了严格且几何规整的 “0–1” 离散。然而，对比不同阶次的结果可见显著差异。在低阶分析（$k=1$，图 \ref{fig:ch4_fig4-9_pro_k1}）下，结构呈现出明显的条带化伪影与连接断裂。这是由于投影参数 $\beta$ 的延续更新会导致局部密度发生剧烈跃迁，而低阶单元的刚度评估精度不足以适应这种快速变化，致使优化器陷入非物理的局部极值。相比之下，高阶分析（$k=2, 4$，图 \ref{fig:ch4_fig4-9_pro_k2}-\ref{fig:ch4_fig4-9_pro_k4}）凭借其优异的逼近能力，能够准确捕捉投影诱导的锐利边界对整体刚度的实际贡献。因此，高阶框架在保证清晰二值化特征的同时，成功引导拓扑演化至力学性能更优的 Michell 桁架类构型，避免了低阶分析中的数值不稳定性。
+
+图 \ref{fig:ch4_fig4-10} 进一步记录了 Heaviside 投影机制下目标函数 $c$ 与体积分数 $V_f$ 的迭代演化历程。观察可知，由于采用了投影参数 $\beta$ 的指数型延续策略（每 50 步翻倍），目标函数曲线呈现出显著的 “锯齿状” 跳跃特征。每一次跳跃对应着 $\beta$ 的更新，此时结构边界的陡峭度增加，导致中间密度单元的刚度贡献发生剧烈变化，从而引发目标函数的短期震荡与重构。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$k=1$，$r_{\min} = 1.0$]{
+		\label{fig:fig:ch4_fig4-10_pro_k1}
+		\includegraphics[width=0.47\textwidth]{fig4-10a}
+	}
+	\hfill % 在两个子图之间通过弹性空白撑开，使其对齐左右边缘
+	\subfigure[$k=2$，$r_{\min} = 0.75$]{
+		\label{fig:fig:ch4_fig4-10_pro_k2}
+		\includegraphics[width=0.47\textwidth]{fig4-10b}
+	}
+	
+	\vspace{1em}
+
+	\subfigure[$k=4$，$r_{\min} = 0.5$]{
+		\label{fig:fig:ch4_fig4-10_pro_k4}
+		\includegraphics[width=0.48\textwidth]{fig4-10c}
+	}
+	
+	\caption{Heaviside 投影（非线性映射）下不同分析阶次的优化迭代收敛历程}
+	\label{fig:ch4_fig4-10}
+\end{figure}
+
+在低阶分析（$k=1$，图 \ref{fig:fig:ch4_fig4-10_pro_k1}）下，收敛曲线在参数跳变后的再稳定过程较慢，且随着 $\beta$ 增大（迭代后期），曲线呈现出持续的微小震荡，难以形成平滑的收敛平台。这与图 \ref{fig:ch4_fig4-9_pro_k1} 中破碎的拓扑形态相对应，表明低阶单元难以准确响应由强非线性投影诱导的剧烈刚度变化，导致优化器在局部极值间反复徘徊。相比之下，高阶分析（$k=2, 4$，图 \ref{fig:fig:ch4_fig4-10_pro_k2}-\ref{fig:fig:ch4_fig4-10_pro_k4}）表现出极佳的鲁棒性。尽管 $\beta$ 的成倍增长引入了强烈的数值冲击，但高阶单元凭借对物理场的高精度逼近，使得目标函数在短暂跳变后能够迅速回调并锁定在新的平稳平台。这种“即时响应—快速镇定”的收敛特性，进一步证实了高阶有限元框架能够有效消化非线性映射带来的数值扰动，为获得清晰、规整的 “0–1” 拓扑设计提供坚实的算法支撑。
