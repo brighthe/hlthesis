@@ -1,0 +1,340 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{url}
+
+% --- Custom Colors and Styles ---
+\definecolor{commentbg}{RGB}{240, 242, 245}
+\definecolor{cicpblue}{RGB}{0, 51, 102}
+
+% Reviewer Comment Box
+\newtcolorbox{reviewercomment}[1][]{
+	colback=commentbg,
+	colframe=gray!20,
+	title={\textbf{Reviewer Comment:}},
+	coltitle=black,
+	fonttitle=\bfseries,
+	sharp corners,
+	boxrule=0.5pt,
+	left=5pt, right=5pt, top=5pt, bottom=5pt,
+	#1
+}
+
+% --- Hyperlink Setup ---
+\hypersetup{
+	colorlinks=true,
+	linkcolor=cicpblue,
+	urlcolor=blue,
+	citecolor=cicpblue
+}
+
+% --- Document Info (Placeholder) ---
+\title{\textbf{Point-by-Point Response to Reviewers}}
+\date{\today}
+
+\begin{document}
+	
+	% =======================================================
+	% 1. Header Information (保留此部分以确保文件身份明确)
+	% =======================================================
+	\begin{center}
+		{\Large \textbf{Point-by-Point Response to Reviewers}} \\[0.5cm]
+		\textbf{Manuscript ID:} CICP-OA-2025-0168 \\[0.2cm]
+		\textbf{Title:} SOPTX: A Modular and Extensible Framework for Topology Optimization with Multi-Backend Support \\[0.2cm]
+		\textbf{Authors:} Liang He, Huayi Wei, and Tian Tian.
+	\end{center}
+	
+	\vspace{0.3cm}
+	\hrule
+	\vspace{0.5cm}
+	
+	% =======================================================
+	% 2. Brief Opening (极简开场，一句话带过，直接进入正题)
+	% =======================================================
+	\noindent We appreciate the reviewer's detailed and constructive comments. The manuscript has been revised accordingly. Our specific responses are listed below.
+	
+	\vspace{0.5cm}
+	
+	% =======================================================
+	% 3. Responses (直接开始回复)
+	% =======================================================
+	
+	% --- Point 1 ---
+	\begin{reviewercomment}
+		\textbf{Point 1:} Some recent related advances in topology optimization should be discussed in e.g., Introduction. GPU is shown in Table 3 to be very efficient for topology optimization compared with CPU. See recent advance in topology optimization based on GPU (\url{https://www.sciencedirect.com/science/article/abs/pii/S0168874X25000770}).
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We sincerely thank the reviewer for this insightful suggestion. We agree that providing a comprehensive review of recent GPU-based topology optimization methods is essential to properly contextualize the performance results presented in our Table 3.
+	
+	\noindent \textbf{Action:} \\
+	We have added a new paragraph in the Introduction dedicated to the state-of-the-art in hardware-accelerated topology optimization. We discussed the work of Träff et al. (2023) to illustrate the potential of lightweight, high-performance GPU codes using C++/OpenMP. Following the reviewer’s recommendation, we highlighted the recent work by Hou et al. (2025). We emphasized their contribution to leveraging the Python ecosystem and vectorized programming for solving large-scale problems, which closely aligns with the design philosophy of our SOPTX framework. This effectively bridges the gap between existing computational challenges and our proposed multi-backend solution.
+	
+	\noindent \textbf{Location:} [Page 3, Introduction]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 2 ---
+	\begin{reviewercomment}
+		\textbf{Point 2:} Is it normal that in Table 2 the computational costs on Manual Differentiation and AD are nearly the same and AD has no advantage?
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We appreciate this crucial observation and the opportunity to clarify our performance metrics. Matching the speed of manual differentiation is actually a highly desirable outcome and a key indicator of SOPTX's efficiency.
+	
+	\begin{itemize}
+		\item \textbf{Manual Differentiation as the Speed Limit:} As established in the literature (e.g., Nørgaard et al. 2017; Chandrasekhar et al. 2021; Neofytou et al. 2024), manual differentiation (discrete adjoint) represents the theoretical "efficiency ceiling" because it executes the minimal necessary mathematical operations without any framework overhead. Previous studies often show AD tools running 1.5x to 1.8x slower than manual implementations.
+		\item \textbf{SOPTX’s Achievement:} The fact that SOPTX’s AD computational cost is nearly identical to manual differentiation (Table 2) demonstrates that our framework has successfully eliminated the typical runtime overhead associated with AD.
+		\item \textbf{The Real "Advantage" of AD:} The advantage of AD lies in development efficiency (saving weeks of derivation time) and versatility (handling complex constraints), not in surpassing the runtime speed of analytical formulas.
+	\end{itemize}
+	
+	\noindent \textbf{Action:} \\
+	We have revised the relevant text in Section 5.7 to explicitly articulate this point and cited the relevant literature to support this benchmark comparison.
+	
+	\noindent \textbf{Location:} [Page 31, Section 5.7]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 3 ---
+	\begin{reviewercomment}
+		\textbf{Point 3:} top of page 6: The fact that the intersection of two sets is empty should be specified.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We agree. Specifying the disjoint nature of the boundaries is necessary for mathematical rigor.
+	
+	\noindent \textbf{Action:} \\
+	We have updated the description of the boundary conditions to explicitly state that the Dirichlet boundary $\Gamma_{D}$ and the Neumann boundary $\Gamma_{N}$ are disjoint. 
+	Revised Text: "... with $\Gamma_{D} \cup \Gamma_{N} = \partial\Omega$ and $\Gamma_{D} \cap \Gamma_{N} = \emptyset$."
+	
+	\noindent \textbf{Location:} [Page 6, Section 2.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 4 ---
+	\begin{reviewercomment}
+		\textbf{Point 4:} Could you test the simple bridge or the half-wheel benchmark example?
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We greatly appreciate this suggestion to demonstrate the framework's versatility.
+	
+	\noindent \textbf{Action:} \\
+	We have added a new section, Section 5.4: Additional 2D Benchmark Problems, where we implemented both the 2D Simple Bridge and the 2D Half-Wheel structures.
+	\begin{itemize}
+		\item These examples illustrate SOPTX's ability to handle diverse boundary conditions (e.g., rollers vs. fixed supports).
+		\item We highlighted that adapting the framework to these new problems required only defining a new PDE data class without modifying the core solvers.
+		\item To ensure reproducibility, the complete code definitions are provided in the newly added Appendix E and Appendix F.
+	\end{itemize}
+	
+	\noindent \textbf{Location:} [Page 24-27, Section 5.4; Appendices E $\&$ F]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 5 ---
+	\begin{reviewercomment}
+		\textbf{Point 5:} "Method of Moving Asymptotes (MMA)" appears at least 3 times (page 6, page 14, and page 23). Please simplify the terminology for only once. Also for the "finite element method (FEM)" (page 2, page 12) and automatic differentiation (AD). FEM in Abstract is not defined.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We thank the reviewer for identifying these redundancies and the missing definition in the Abstract. We have carefully proofread the entire manuscript to ensure strictly consistent terminology.
+	
+	\noindent \textbf{Action:} \\
+	We have performed a comprehensive audit with the following specific changes:
+	\begin{itemize}
+		\item \textbf{In the Abstract:} Added the definition of "Finite Element Method (FEM)" at its first occurrence.
+		\item \textbf{Removal of Redundancies:} We corrected the specific instances noted by the reviewer (e.g., MMA on original Pages 6, 14, and 23; FEM on Pages 2 and 12).
+		\item \textbf{Global Standardization:} We ensured that all acronyms (including MMA, FEM, AD, and SIMP) are fully defined only at their first appearance (typically in the Introduction or Section 2). All subsequent mentions in Sections 3, 5, and the Conclusion now strictly use acronyms.
+	\end{itemize}
+	
+	\noindent \textbf{Location:} [Abstract; Pages 2, 6, 12, 14, 23; Throughout manuscript]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 6 ---
+	\begin{reviewercomment}
+		\textbf{Point 6:} The notation $\mathbb{R}^{d,4}$ is strange. Please check.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Corrected. The original notation was misleading for a fourth-order tensor space.
+	
+	\noindent \textbf{Action:} \\
+	We have updated the notation to accurately represent the space of fourth-order tensors. Revised Notation: $D(\rho) \in L^{\infty}(\Omega; \mathbb{R}^{d \times d \times d \times d})$
+	
+	\noindent \textbf{Location:} [Page 6, Section 2.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 7 ---
+	\begin{reviewercomment}
+		\textbf{Point 7:} $V^*$ should be defined in an interval (page 5).
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	We agree. Defining the valid range is essential for a well-posed optimization problem.
+	
+	\noindent \textbf{Action:} \\
+	We updated the problem formulation to explicitly state that the target volume must lie within the valid interval. Revised Text: 
+	\begin{quote}
+		``...while the available material does not exceed a given volume $V^{*} \in (0, |\Omega|)$."
+	\end{quote}
+	
+	\noindent \textbf{Location:} [Page 6, Section 2.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 8 ---
+	\begin{reviewercomment}
+		\textbf{Point 8:} Conjugate Gradient, CG -> Conjugate Gradient (CG)
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Corrected.
+	
+	\noindent \textbf{Action:} \\
+	We have updated the format to standard parenthetical abbreviation.
+	
+	\noindent \textbf{Location:} [Page 13, Section 3.2.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 9 ---
+	\begin{reviewercomment}
+		\textbf{Point 9:} page 17: modifications: The displacement field uses a continuous and piecewise linear Lagrange finite element space...
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Revised as suggested.
+	
+	\noindent \textbf{Action:} \\
+	We have adopted the reviewer's precise wording to better align with standard topology optimization terminology. Revised Text: 
+	\begin{quote}
+		``The displacement field uses a continuous and piecewise linear Lagrange finite element space, while the density field is represented in a piecewise constant Lagrange element space, aligning with typical TO discretizations.''
+	\end{quote}
+	
+	\noindent \textbf{Location:} [Page 17, Section 4.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 10 ---
+	\begin{reviewercomment}
+		\textbf{Point 10:} page 23: what does "refactored" mean?
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Clarified. The term was intended to mean "re-implemented in Python," but we acknowledge it may be ambiguous.
+	
+	\noindent \textbf{Action:} \\
+	We have replaced "refactored" with "re-implemented" or "developed based to clearly indicate that we ported Svanberg's algorithm to our modular Python framework without altering the underlying logic. Original Text:
+	\begin{quote}
+		 ``...refactored from Krister Svanberg's implementation...'', ``...highlights the refactored MMA in SOPTX.''
+	\end{quote}
+	Revised Text: 
+	\begin{quote}
+		``...developed based on Krister Svanberg's implementation...'', ``...highlights the re-implemented MMA in SOPTX.''
+	\end{quote}
+	
+	\noindent \textbf{Location:} [Page 23,24, Section 5.3]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 11 ---
+	\begin{reviewercomment}
+		\textbf{Point 11:} page 24: Figure 11 (left) the design is on triangular meshes rather than quadrilateral mesh...
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Corrected. We apologize for this editing error.
+	
+	\noindent \textbf{Action:} \\
+	We have updated Figure 11 to correctly display the result on a structured quadrilateral mesh in the left panel, matching the caption and the text description.
+	
+	\noindent \textbf{Location:} [Page 24, Figure 11]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 12 ---
+	\begin{reviewercomment}
+		\textbf{Point 12:} A period is missing in the second sentence of the Acknowledgments.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Corrected.
+	
+	\noindent \textbf{Action:} \\
+	The missing period has been added.
+	
+	\noindent \textbf{Location:} [Page 37, Acknowledgments]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 13 ---
+	\begin{reviewercomment}
+		\textbf{Point 13:} A GitHub link for a demo of the codes is suggested to add in the paper.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Agreed. Accessible code is vital for reproducibility.
+	
+	\noindent \textbf{Action:} \\
+	We have added a direct link to the executable demo script for the 2D cantilever beam problem. Link: \url{https://github.com/brighthe/soptx/blob/main/soptx/demo/cicp_cantil_2d.py}
+	
+	\noindent \textbf{Location:} [Page 16, Section 4.2]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 14 ---
+	\begin{reviewercomment}
+		\textbf{Point 14:} [18] should be updated if it was published.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Verified.
+	
+	\noindent \textbf{Action:} \\
+	To the best of our knowledge, Reference [18] (Gupta et al.) remains an arXiv preprint and has not been published in a journal under this title. We have retained the arXiv citation as it is the most accurate source.
+	
+	\vspace{0.5cm}
+	
+	% --- Point 15 ---
+	\begin{reviewercomment}
+		\textbf{Point 15:} [32]: scheme of this reference seems too simple and two "2007"s.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Corrected.
+	
+	\noindent \textbf{Action:} \\
+	We have updated the citation for Krister Svanberg's MMA documentation to the standard Technical Report format, including the department and institution details. Revised Reference:
+	\begin{quote}
+	 ``K. Svanberg. MMA and GCMMA, versions September 2007. Technical Report, Optimization and Systems Theory, Department of Mathematics, KTH Royal Institute of Technology, Stockholm, Sweden, 2007.''
+	\end{quote}
+
+	\noindent \textbf{Location:} [References]
+	
+	\vspace{0.5cm}
+	
+	% --- Point 16 ---
+	\begin{reviewercomment}
+		\textbf{Point 16:} Capitalize the first character for some journal names, e.g., Numerical Software [1], Structural Optimization [3], International Journal for Numerical Methods in Engineering [7], Computer Methods in Applied Mechanics and Engineering [9], [11] ..., etc.
+	\end{reviewercomment}
+	
+	\noindent \textbf{Response:} \\
+	Done.
+	
+	\noindent \textbf{Action:} \\
+	We have audited the bibliography and standardized the capitalization for all journal titles to comply with the journal's Title Case requirement
+	
+	\noindent \textbf{Location:} [References]
+	
+\end{document}
