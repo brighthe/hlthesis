@@ -92,8 +92,7 @@
 	We appreciate this crucial observation and the opportunity to clarify our performance metrics. Matching the speed of manual differentiation is actually a highly desirable outcome and a key indicator of SOPTX's efficiency.
 	
 	\begin{itemize}
-		\item \textbf{Manual Differentiation as the Speed Limit:} As established in the literature (e.g., Nørgaard et al. 2017; Chandrasekhar et al. 2021; Neofytou et al. 2024), manual differentiation (discrete adjoint) represents the theoretical "efficiency ceiling" because it executes the minimal necessary mathematical operations without any framework overhead. Previous studies often show AD tools running 1.5x to 1.8x slower than manual implementations.
-		\item \textbf{SOPTX’s Achievement:} The fact that SOPTX’s AD computational cost is nearly identical to manual differentiation (Table 2) demonstrates that our framework has successfully eliminated the typical runtime overhead associated with AD.
+		\item \textbf{Performance Benchmark:} As established in the literature (e.g., Nørgaard et al. 2017; Chandrasekhar et al. 2021; Neofytou et al. 2024), manual differentiation represents the theoretical "efficiency ceiling" because it executes the minimal necessary mathematical operations without framework overhead. By achieving performance parity with this benchmark, SOPTX demonstrates that it has successfully eliminated the runtime overhead typically associated with AD tools.
 		\item \textbf{The Real "Advantage" of AD:} The advantage of AD lies in development efficiency (saving weeks of derivation time) and versatility (handling complex constraints), not in surpassing the runtime speed of analytical formulas.
 	\end{itemize}
 	
@@ -210,7 +209,7 @@
 	
 	% --- Point 9 ---
 	\begin{reviewercomment}
-		\textbf{Point 9:} page 17: modifications: The displacement field uses a continuous and piecewise linear Lagrange finite element space...
+		\textbf{Point 9:} page 17: modifications: The displacement field uses a continuous and piecewise linear Lagrange finite element space, while the density field is represented in piecewise constant Lagrange element space, aligning with typical TO discretizations.
 	\end{reviewercomment}
 	
 	\noindent \textbf{Response:} \\
@@ -302,7 +301,7 @@
 	Verified.
 	
 	\noindent \textbf{Action:} \\
-	To the best of our knowledge, Reference [18] (Gupta et al.) remains an arXiv preprint and has not been published in a journal under this title. We have retained the arXiv citation as it is the most accurate source.
+	To the best of our knowledge, Reference [18] (Gupta et al.) remains an arXiv preprint and has not been published in a journal under this title. We have retained the arXiv citation as it is the most accurate source. (This reference numbering remains [18] in the revised manuscript.)
 	
 	\vspace{0.5cm}
 	
@@ -315,7 +314,7 @@
 	Corrected.
 	
 	\noindent \textbf{Action:} \\
-	We have updated the citation for Krister Svanberg's MMA documentation to the standard Technical Report format, including the department and institution details. Revised Reference:
+	We have updated the citation for Krister Svanberg's MMA documentation to the standard Technical Report format, including the department and institution details. Please note that due to the insertion of new references in the preceding text, this citation is renumbered as [35] in the revised manuscript. Revised Reference:
 	\begin{quote}
 	 ``K. Svanberg. MMA and GCMMA, versions September 2007. Technical Report, Optimization and Systems Theory, Department of Mathematics, KTH Royal Institute of Technology, Stockholm, Sweden, 2007.''
 	\end{quote}
@@ -330,7 +329,7 @@
 	\end{reviewercomment}
 	
 	\noindent \textbf{Response:} \\
-	Done.
+	We have carefully audited the bibliography and standardized the capitalization of all journal titles to comply with the journal's requirements.
 	
 	\noindent \textbf{Action:} \\
 	We have audited the bibliography and standardized the capitalization for all journal titles to comply with the journal's Title Case requirement.

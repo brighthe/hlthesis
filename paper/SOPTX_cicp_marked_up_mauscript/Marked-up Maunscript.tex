@@ -151,7 +151,7 @@ In recent years, the adoption of AD in TO has gradually increased. For instance,
 
 Although existing TO programs, ranging from educational codes to open-source implementations, have significantly advanced the field, they often employ a procedural programming paradigm that tightly couples analysis modules, such as FEA, with optimization modules. This tight coupling restricts software extensibility, necessitating invasive changes for new features, and diminishes reusability, complicating integration into broader frameworks like multidisciplinary design optimization (MDO) in aerospace. Consequently, developing a decoupled architecture that enhances both extensibility and reusability without sacrificing accuracy remains a critical challenge in TO.
 
-To address the aforementioned challenges, this paper proposes SOPTX, a modular and extensible TO framework built upon the FEALPy platform ~\cite{fealpy}. FEALPy is an open-source intelligent CAX computing engine providing an efficient, flexible, and extensible platform for numerical simulation. Its selection as the underlying platform is supported by key advantages:
+To address the aforementioned challenges, this paper proposes SOPTX, a modular and extensible TO framework built upon the FEALPy platform ~\cite{fealpy, zhengFEALPyV3Crossplatform2025a}. FEALPy is an open-source intelligent CAX computing engine providing an efficient, flexible, and extensible platform for numerical simulation. Its selection as the underlying platform is supported by key advantages:
 \vspace{-1ex}
 \begin{enumerate}
 	\item FEALPy supports multiple computational backends, including NumPy, PyTorch, and JAX, enabling efficient execution across a wide range of hardware architectures such as central processing units (CPUs) and graphics processing units (GPUs).
@@ -348,7 +348,7 @@ The filter radius $r_{\min}$ significantly affects the result: small $r_{\min}$ 
 This section introduces the design principles and key components of the SOPTX framework, emphasizing its multi-backend switching capability for improved computational performance and flexibility on central processing units (CPUs) and graphics processing units (GPUs). The section is divided into three parts: an overview of the FEALPy architecture as the tensor computation foundation, a description of SOPTX's modular structure (material, solver, filter, and optimization modules), and an analysis of the multi-backend mechanism supporting NumPy, PyTorch, and JAX for diverse computational needs.
 
 \subsection{FEALPy Architecture Design}
-As shown in Figure~\ref{fs:fig1}, FEALPy adopts a layered architecture with four levels, arranged from bottom to top: tensor, common, algorithm, and field. Building on this, FEALPy introduces the \textit{Tensor Backend Manager}, which unifies the management of computational backends like NumPy, PyTorch, and JAX. This manager provides a consistent tensor operation interface, following the Python Array API Standard v2023.12~\cite{arrayapi2023}, enabling seamless adaptation across various software and hardware platforms.
+As shown in Figure~\ref{fs:fig1}, FEALPy adopts a layered architecture with four levels, arranged from bottom to top: tensor, common, algorithm, and field. Building on this, FEALPy introduces the \textit{Tensor Backend Manager}, which unifies the management of computational backends like NumPy, PyTorch, and JAX. This manager provides a consistent tensor operation interface, following the Python Array API Standard v2023.12~\cite{python_array_api}, enabling seamless adaptation across various software and hardware platforms.
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=0.85\textwidth]{figures/fealpy_structure.png}
@@ -440,7 +440,7 @@ Through its modular and extensible design, the filter module not only addresses 
 \subsubsection{Optimization Module}
 The optimization module serves as the computational core of the SOPTX framework, tasked with defining and solving optimization problems by integrating physical field solutions with user-defined objectives. It collaborates seamlessly with the material, solver, and filter modules to drive the TO pipeline. Adhering to the framework's multi-backend design, it offers a unified interface across NumPy, PyTorch, and JAX, utilizing backend-specific optimizations, including GPU acceleration in PyTorch and JAX, to enhance performance.
 
-The module currently focuses on compliance minimization under volume constraints, a foundational problem in TO. It supports two mainstream algorithms: Optimality Criteria (OC) and the \textcolor{red}{MMA}. OC is a lightweight method for volume-constrained problems, while MMA, based on Svanberg's 2007 formulation~\cite{Svanberg2007MmaAG}, has been adapted for multi-backend compatibility and optimized for efficiency.
+The module currently focuses on compliance minimization under volume constraints, a foundational problem in TO. It supports two mainstream algorithms: Optimality Criteria (OC) and the \textcolor{red}{MMA}. OC is a lightweight method for volume-constrained problems, while MMA, based on Svanberg's 2007 formulation~\cite{Svanberg2007MMA}, has been adapted for multi-backend compatibility and optimized for efficiency.
 
 The design of the optimization module follows two core principles
 \begin{enumerate}
