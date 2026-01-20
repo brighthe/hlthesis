@@ -1,0 +1,54 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{authblk} % 用于处理多作者和多单位
+\usepackage{amsmath}
+
+% 页面边距设置
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% --- SOPTX 专家修改点 1：调整单位字体大小和样式 ---
+% 将单位字体设为小号(\small)并倾斜(\itshape)，视觉上更轻盈
+\renewcommand\Affilfont{\itshape\small} 
+
+\title{\textbf{SOPTX: A Modular and Extensible Framework for Topology Optimization with Multi-Backend Support}}
+
+% 作者信息设置
+\author[1]{Liang He}
+\author[1,2,*]{Huayi Wei}
+\author[3]{Tian Tian}
+
+% 单位信息
+\affil[1]{School of Mathematics and Computational Science, Xiangtan University, Xiangtan 411105, China}
+\affil[2]{National Center of Applied Mathematics in Hunan, Hunan Key Laboratory for Computation and Simulation in Science and Engineering, Xiangtan 411105, China}
+\affil[3]{School of Mathematics and Computational Science, Xiangtan University, Xiangtan 411105, China}
+
+% 去掉默认日期
+\date{}
+
+\begin{document}
+	
+	\maketitle
+	
+	% 通讯作者脚注
+	\thispagestyle{empty} % 首页不显示页码
+	\let\thefootnote\relax\footnotetext{\textbf{* Corresponding author.}}
+	\footnotetext{Email address: \texttt{weihuayi@xtu.edu.cn} (Huayi Wei)}
+	
+	% --- SOPTX 专家修改点 2：微调元数据间距 ---
+	\vspace{0.5cm} % 原来的 1cm 可能略大，改为 0.5cm 更紧凑
+	\noindent \textbf{Running Head:} SOPTX: A Framework for Topology Optimization
+	
+	\vspace{0.3cm}
+	\noindent \textbf{AMS Subject Classifications:} 74P15, 68N30, 65N30
+	
+	\vspace{0.3cm}
+	\noindent \textbf{Keywords:} Topology Optimization, Multiple Computational Backends, Automatic Differentiation, Modular Framework
+	
+	% 致谢部分
+	% 使用 section* 也可以，但有时直接用粗体标题更像 Title Page 风格，这里保留你的 section* 没问题
+	\section*{Acknowledgments}
+	This work was supported by the National Natural Science Foundation of China (NSFC) (Grant Nos. 12371410, 12261131501) and the Construction of Innovative Provinces in Hunan Province (Grant No. 2021GK1010).
+	
+\end{document}
