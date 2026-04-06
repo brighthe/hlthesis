@@ -1,0 +1,1290 @@
+% !TeX root = ../../brightPhD.tex
+\chapter{拓扑优化中的任意次胡张混合有限元方法研究}
+\label{chap:hz_top}
+
+%\iffalse
+
+\section{引言}
+\label{sec:ch5_intro}
+
+传统连续体结构拓扑优化在处理近不可压缩材料或严苛局部应力约束时，常受限于低阶 $C^0$ 连续位移有限元的理论瓶颈。一方面，在处理泊松比 $\nu \rightarrow 0.5$ 的不可压缩极限时，低阶位移元易引发严重的体积闭锁现象，导致结构刚度被严重高估，从而演化出虚假的拓扑构型。另一方面，在传统位移法中，应力作为通过位移场梯度派生的次级物理量，不仅在跨单元交界面处通常不连续，且其逼近精度在收敛阶上通常低于基本位移场。这种局部力学特征刻画能力的不足，叠加由于密度趋于零时引发的应力奇异性难题，极大限制了局部应力约束拓扑优化求解的稳定性与理论可靠性。
+
+为从数值离散层面有效突破上述瓶颈，本章引入混合有限元方法。与最小势能原理不同，基于 Hellinger-Reissner 混合变分原理的离散格式将应力张量提升为与位移同等地位的独立主变量进行求解。不同于早期局限于规则网格最低阶格式的 HMZ 拓扑优化尝试~\cite{bruggiTopologyOptimizationMixed2016a}，本章特别采用由 Hu 等人~\cite{huFiniteElementApproximations2015} 提出并发展的任意次单纯形胡张混合有限元空间进行空间离散。该离散空间在高阶情形下天然满足离散的 inf-sup 稳定性，对非结构网格具有良好的适应性，且能在跨单元边界上严格保证法向牵引力的连续性，从数学底层天然免疫体积闭锁效应。同时，为了打破高阶单元带来的计算规模限制，本章进一步引入了跳量稳定化变分格式~\cite{chenStabilizedMixedFinite2017a}，将该方法的适用范围向下拓展至低阶情形以兼顾计算效率，并采用顶点应力连续性局部松弛策略，有效克服了复杂工程边界角点处的过约束难题~\cite{huPartialRelaxation02021a}。
+
+基于上述高精度且具有较强鲁棒性的物理场求解框架，本章系统构建了面向任意次单纯形胡张混合有限元的拓扑优化数学模型。针对柔顺度最小化问题，推导了基于互补应变能的灵敏度解析格式，有效简化了灵敏度分析过程，规避了复杂的伴随方程求解；针对近不可压缩材料设计，结合修正的泊松比插值策略消除了低密度区的非物理压力震荡；针对局部应力约束问题，摒弃了传统依赖实体应力的松弛技术，直接利用胡张混合有限元原生的高精度表观应力构造无奇异的约束函数，并在增广拉格朗日框架下实现了大规模局部约束的高效稳定求解。
+
+
+\section{线弹性问题的混合变分原理}
+\label{sec:hz_variational_principle}
+
+本节旨在为后续任意次单纯形胡张混合有限元的空间离散与拓扑优化列式奠定数学基础。由于传统位移法在处理不可压缩极限时存在固有的理论缺陷，本章采用将应力张量作为独立求解变量的混合变分框架。以下将沿用第~\ref{sec:notation_spaces} 节的符号与函数空间记号，首先回顾线弹性问题的应力--位移混合强形式，进而导出基于 Hellinger-Reissner 原理的混合变分弱形式。
+
+
+\subsection{线弹性问题的应力--位移混合强形式}
+\label{subsec:hz_strong_form}
+
+在第~\ref{sec:linear_elastic} 节位移法模型基础上，本小节回顾 Hellinger–Reissner 变分原理所对应的应力--位移混合描述~\cite{brezziMixedHybridFinite1991}。取应力张量 $\boldsymbol\sigma$ 为主要未知量，引入柔度算子 $\mathcal A=\mathbb C^{-1}$ 以刻画线弹性本构关系：
+\[
+\boldsymbol\varepsilon(\boldsymbol u)=\mathcal A\boldsymbol\sigma,\qquad  \boldsymbol\sigma=\mathbb C:\boldsymbol\varepsilon(\boldsymbol u).
+\]
+对于均匀各向同性材料，$\mathcal{A}$ 对任意 $\boldsymbol{\tau}\in\mathbb{S}$ 的作用可写为
+\[
+\mathcal{A}\boldsymbol{\tau} =\frac{1}{2\mu}\Big(\boldsymbol{\tau} -\frac{\lambda}{2\mu+d\lambda}\,\operatorname{tr}(\boldsymbol{\tau})\,\boldsymbol{I}\Big),
+\]
+因而混合形式的强解 $(\boldsymbol{\sigma},\boldsymbol{u})$ 满足：
+\begin{equation} \label{eq:ch5_mixed_strong_form}
+	\begin{cases}
+		-\operatorname{div}\boldsymbol{\sigma} = \boldsymbol{b}, &\quad \text{in } \Omega, \\
+		\mathcal{A}\boldsymbol{\sigma} = \boldsymbol{\varepsilon}(\boldsymbol{u}), &\quad \text{in } \Omega, \\
+		\boldsymbol{u} = \boldsymbol{u}_{D}, &\quad \text{on } \Gamma_D, \\
+		\boldsymbol{\sigma}\boldsymbol{n} = \boldsymbol{g}, &\quad \text{on } \Gamma_N.
+	\end{cases}
+\end{equation}
+上述方程组通过平衡方程与基于柔度算子 $\mathcal{A}$ 的本构关系，完整刻画了线弹性体内部应力场与位移场的相互依赖关系。
+
+
+\subsection{Hellinger-Reissner 混合变分原理}
+\label{subsec:hz_hr_principle}
+
+为推导 Hellinger–Reissner 混合弱形式，首先引入应力与位移的函数空间。记
+\[
+\boldsymbol{\Sigma} := {H}(\operatorname{div},\Omega;\mathbb{S}),\qquad\boldsymbol{V} := L^2(\Omega;\mathbb{R}^d),
+\]
+其中 $\boldsymbol{\Sigma}$ 为对称张量值 $H(\operatorname{div})$ 空间，其法向迹 $\boldsymbol{\tau}\boldsymbol{n}$ 可通过迹定理在边界 $\partial\Omega$ 上定义。为处理牵引边界条件 $\boldsymbol{\sigma}\boldsymbol{n}=\boldsymbol{g}$，引入齐次与非齐次的应力测试空间与试探空间：
+\[
+\boldsymbol{\Sigma}_0 :=\big\{\boldsymbol{\tau}\in{H}(\operatorname{div},\Omega;\mathbb{S}) : \boldsymbol{\tau}\boldsymbol{n}=\boldsymbol{0}\ \text{on }\Gamma_N\big\}, \quad \boldsymbol{\Sigma}_g :=\big\{\boldsymbol{\tau}\in{H}(\operatorname{div},\Omega;\mathbb{S}): \boldsymbol{\tau}\boldsymbol{n}=\boldsymbol{g}\ \text{on }\Gamma_N\big\}.
+\]
+
+对本构方程
+\[
+\mathcal{A}\boldsymbol{\sigma} - \boldsymbol{\varepsilon}(\boldsymbol{u}) = 0\quad\text{in}\,\Omega
+\]
+取任意测试函数 $\boldsymbol{\tau}\in\boldsymbol{\Sigma}_0$ 作 $L^2$ 内积，得到
+\[
+(\mathcal{A}\boldsymbol{\sigma},\boldsymbol{\tau}) - (\boldsymbol{\varepsilon}(\boldsymbol{u}),\boldsymbol{\tau}) = 0,
+\]
+由于 $\boldsymbol{\tau}$ 为对称张量，满足 $(\boldsymbol{\varepsilon}(\boldsymbol{u}),\boldsymbol{\tau}) = (\nabla\boldsymbol{u},\boldsymbol{\tau})$，故有
+\[
+(\mathcal{A}\boldsymbol{\sigma},\boldsymbol{\tau}) - (\nabla\boldsymbol{u},\boldsymbol{\tau}) = 0.
+\]
+进一步利用 Green 公式，可得
+\[
+(\nabla\boldsymbol{u},\boldsymbol{\tau}) = -(\boldsymbol{u},\operatorname{div}\boldsymbol{\tau}) + \langle\boldsymbol{u},\boldsymbol{\tau}\boldsymbol{n}\rangle_{\partial\Omega},
+\]
+注意到 $\boldsymbol{\tau}\in\boldsymbol{\Sigma}_{0}$ 在 $\Gamma_{N}$ 上满足 $\boldsymbol{\tau}\boldsymbol{n} = \boldsymbol{0}$，且位移在 $\Gamma_D$ 上满足给定的位移边界条件 $\boldsymbol{u} = \boldsymbol{u}_{D}$，于是有
+\[
+(\nabla\boldsymbol{u},\boldsymbol{\tau}) =-(\boldsymbol{u},\operatorname{div}\boldsymbol{\tau}) +\langle\boldsymbol{u}_D,\boldsymbol{\tau}\boldsymbol{n}\rangle_{\Gamma_D},
+\]
+其中 $\langle\cdot,\cdot\rangle_{\Gamma_D}$ 表示 $\Gamma_D$ 上的边界作用项。将其代回本构方程的内积关系，最终得到混合变分弱形式的第一个方程：
+\[
+(\mathcal{A}\boldsymbol{\sigma},\boldsymbol{\tau}) + (\operatorname{div}\boldsymbol{\tau}, \boldsymbol{u}) = \langle\boldsymbol{u}_D,\boldsymbol{\tau}\boldsymbol{n}\rangle_{\Gamma_D},\qquad\forall\boldsymbol{\tau}\in\boldsymbol{\Sigma}_0.
+\]
+
+另一方面，对平衡方程
+\[
+-\operatorname{div}\boldsymbol{\sigma} = \boldsymbol{b}\quad\text{in}\,\Omega
+\]
+取任意测试函数 $\boldsymbol{v}\in\boldsymbol{V}$ 作内积，得到
+\[
+(-\operatorname{div}\boldsymbol{\sigma},\boldsymbol{v}) = (\boldsymbol{b},\boldsymbol{v}),
+\]
+即混合变分弱形式的第二个方程：
+\[
+(\operatorname{div}\boldsymbol{\sigma},\boldsymbol{v}) =(-\boldsymbol{b},\boldsymbol{v}), \qquad\forall\,\boldsymbol{v}\in\boldsymbol{V}.
+\]
+综上，联立上述两式，线弹性问题的 Hellinger–Reissner 混合弱形式可表述为：求 $(\boldsymbol{\sigma},\boldsymbol{u})\in\boldsymbol{\Sigma}_g\times\boldsymbol{V}$，使得
+\begin{equation} \label{eq:ch5_hr_weak_form}
+	\begin{cases} 
+		(\mathcal{A}\boldsymbol{\sigma},\boldsymbol{\tau}) + (\operatorname{div}\boldsymbol{\tau}, \boldsymbol{u}) =\langle\boldsymbol{u}_D,\boldsymbol{\tau}\boldsymbol{n}\rangle_{\Gamma_D}, &\quad \forall\,\boldsymbol{\tau}\in\boldsymbol{\Sigma}_0,\\[0.4em] 
+		(\operatorname{div}\boldsymbol{\sigma},\boldsymbol{v}) = -(\boldsymbol{b},\boldsymbol{v}), &\quad \forall\,\boldsymbol{v}\in\boldsymbol{V}. 
+	\end{cases}
+\end{equation}
+
+上述 Hellinger-Reissner 混合弱形式在数学结构上属于典型的鞍点问题。与基于最小势能原理的位移法不同，其双线性型不具备全局强制性，连续与离散问题的适定性需由 Brezzi 定理保证~\cite{brezziMixedHybridFinite1991}：即空间对及其离散形式必须满足 inf-sup 条件（亦称 Babuška-Brezzi 条件，简称 B-B 条件），方能保证系统唯一可解且具备最优收敛阶。值得特别指出的是，满足离散 inf-sup 条件的稳定混合方法，其核心理论优势在于离散稳定性常数完全独立于拉梅常数 $\lambda$（或泊松比 $\nu$）。因此，在逼近不可压缩极限（$\nu\to 0.5$）时，该方法依然能保持严格的数值稳定性，从数学底层彻底消除了传统位移元中极易引发的体积闭锁现象。这一优良的理论性质，为后续引入任意次胡张混合元在拓扑优化框架下稳健处理近不可压缩材料问题奠定了坚实的理论基石。
+
+
+\section{任意次胡张混合有限元空间的构造}
+\label{sec:hz_space_construction}
+
+本节旨在构造适用于拓扑优化的任意次单纯形胡张混合有限元空间。为严格满足 $H(\operatorname{div})$ 协调性要求，本节首先基于单纯形的几何分解，构造高阶对称张量多项式形函数空间及其对应的自由度体系。随后，针对拓扑优化中复杂工程边界易引发的角点过约束难题，引入顶点应力连续性的局部松弛策略，为后续构建高逼近精度、强数值鲁棒性的全局离散应力空间奠定基础。
+
+
+\subsection{单纯形胡张元空间的构造}
+\label{subsec:hz_space_construct}
+
+设 $T$ 为 $\mathbb{R}^d$ 中的一个单纯形，记 $\Delta({T})$ 为 $T$ 的所有子单纯形的集合，$\Delta_{\ell}(T)$ 为其中维数为 $\ell(0\leq\ell\leq{d})$ 的子单纯形集合。对于二阶对称张量空间 $\mathbb{S}$，其维数为 $d(d+1)/2$。胡张元选用 $\mathbb{S}$ 值多项式空间 $P_k(T; \mathbb{S})$ 作为形函数空间~\cite{huFiniteElementApproximations2015}。为了构造 $H(\operatorname{div})$ 协调的有限元空间，即保证跨单元边界的法向迹 $\boldsymbol{\sigma}\boldsymbol{n}$ 连续，我们需要根据单纯形的几何结构对 $\mathbb{S}$ 进行分解。
+
+对于任意维数为 $\ell$ 的子单纯形 $f \in \Delta_{\ell}(T)$，我们可以建立一组局部正交标架。取 $f$ 的 $\ell$ 个线性无关的切向向量 $\{\boldsymbol{t}_{f,1}, \cdots, \boldsymbol{t}_{f,\ell}\}$ 和 $d-\ell$ 个线性无关的法向向量 $\{\boldsymbol{n}_{f,1}, \cdots, \boldsymbol{n}_{f,d-\ell}\}$。定义对应的对偶切向向量 $\{\hat{\boldsymbol{t}}_{f,i}\}$ 和对偶法向向量 $\{\hat{\boldsymbol{n}}_{f,i}\}$，使其满足如下双正交性：
+\[
+\hat{\boldsymbol{t}}_{f, i} \cdot \boldsymbol{t}_{f, j} = \delta_{ij}, \quad \hat{\boldsymbol{n}}_{f, i} \cdot \boldsymbol{n}_{f, j} = \delta_{ij}, \quad \hat{\boldsymbol{t}}_{f, i} \cdot \boldsymbol{n}_{f, j} = 0, \quad \hat{\boldsymbol{n}}_{f, i} \cdot \boldsymbol{t}_{f, j} = 0.
+\]
+基于此标架，可以将对称张量空间 $\mathbb{S}$ 分解为与法向牵引相关的法向部分，以及与法向牵引无关的切向部分。具体而言，定义如下两组基底张量：
+\begin{itemize}
+	\item 法向对称张量基，记为 $\mathcal{N}_f(\mathbb{S})$，包含涉及法向向量的张量积项：
+	\[
+	\mathcal{N}_f(\mathbb{S}) := \left\{ \mathrm{sym}(\boldsymbol{n}_{f, i} \otimes \boldsymbol{n}_{f, j}) \right\}_{1 \leq i \leq j \leq d-\ell} \bigcup \left\{ \mathrm{sym}(\boldsymbol{n}_{f, i} \otimes \boldsymbol{t}_{f, j}) \right\}_{\substack{1 \leq i \leq d-\ell,1 \leq j \leq \ell}}.
+	\]
+	该集合包含 $\frac{(d-\ell)(d-\ell+1)}{2} + (d-\ell)\ell$ 个基元，刻画了决定该子单纯形上牵引力的应力分量。
+	
+	\item 切向对称张量基，记为 $\mathcal{T}_f(\mathbb{S})$，仅由切向向量的对称张量积构成：
+	\[
+	\mathcal{T}_f(\mathbb{S}) := \left\{ \mathrm{sym}(\boldsymbol{t}_{f, i} \otimes \boldsymbol{t}_{f, j}) \right\}_{1 \leq i \leq j \leq \ell}.
+	\]
+	该集合包含 $\frac{\ell(\ell+1)}{2}$ 个基元，对应于纯切向应力分量，其在子单纯形 $f$ 边界上的法向牵引贡献严格为零。
+\end{itemize}
+显然，集合 $\mathcal{B}_f(\mathbb{S}) := \mathcal{N}_f(\mathbb{S}) \cup \mathcal{T}_f(\mathbb{S})$ 构成了空间 $\mathbb{S}$ 的一组完备基。利用对偶向量，可显式写出相应的对偶张量基：
+\begin{itemize}
+	\item 对偶法向张量基：
+	\[
+	\hat{\mathcal{N}}_f(\mathbb{S}) := \left\{ \mathrm{sym}(\hat{\boldsymbol{n}}_{f, i} \otimes \hat{\boldsymbol{n}}_{f, j}) \right\} \bigcup \left\{ \mathrm{sym}(\hat{\boldsymbol{n}}_{f, i} \otimes \hat{\boldsymbol{t}}_{f, j}) \right\}.
+	\]
+	
+	\item 对偶切向张量基：
+	\[
+	\hat{\mathcal{T}}_f(\mathbb{S}) := \left\{ \mathrm{sym}(\hat{\boldsymbol{t}}_{f, i} \otimes \hat{\boldsymbol{t}}_{f, j}) \right\}.
+	\]
+\end{itemize}
+
+以二维情形为例，令 $T$ 为一个三角形。对每个子单纯形 $f\in\Delta_\ell(T)$，按照 “$\ell$ 个切向 + $2-\ell$ 个法向” 的原则选取局部标架。当 $\ell=0$（顶点）时无切向方向，取全局基 $\boldsymbol e_1,\boldsymbol e_2$ 作为两个法向方向；当 $\ell=1$（边）时取单位切向 $\boldsymbol t_e$ 沿边方向，并按统一的方向约定确定单位法向 $\boldsymbol n_e$；当 $\ell=2$（单元内部）时无法向方向，取 $\boldsymbol e_1,\boldsymbol e_2$ 作为两个切向方向。相应标架示意见图~\ref{fig:ch5_simplex_frame}，为便于后续张量分解与自由度编号的一致性，图中用红色标架标示子单纯形 $f$ 上法向迹的分量集合 $\mathcal{N}_f(\mathbb{S})$，黑色标架用于对比展示其余分量；编号 $\textcircled{\small{1}}\textcircled{\small{2}}\textcircled{\small{3}}$ 表示在给定局部标架下，三类基本对称张量分量的选取与排列顺序。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.6\textwidth]{ch5_simplex_frame}
+	\caption{三角形单元各子单纯形局部正交标架选取与张量分量编号示意}
+	\label{fig:ch5_simplex_frame}
+\end{figure}
+
+我们采用单纯形晶格 $\mathbb{T}_k^d$（定义见第~\ref{subsec:simplex_lagrange} 节）构造节点型胡张元的张量值基函数~\cite{chenGeometricDecompositionEfficient2024b}。对任意多重指标 $\boldsymbol{\alpha}\in\mathbb{T}_k^d$，其对应的拉格朗日插值点记为 $\boldsymbol{x}_{\boldsymbol{\alpha}}$​，并令 $\phi_{\boldsymbol{\alpha}}$ 表示与 $\boldsymbol{\alpha}$ 对应的 $k$ 次标量拉格朗日基函数。为确定每个插值点处应采用哪一种张量分量划分，需要进行几何归属判定：对每个 $\boldsymbol{\alpha}$，存在唯一的维数最低的子单纯形 $f\in\Delta(T)$，使得 $\boldsymbol{x}_{\boldsymbol{\alpha}}$ 位于 $f$ 的相对内部，记该子单纯形为 $f(\boldsymbol{\alpha})$。基于这种几何对应关系，在插值点 $\boldsymbol{x}_{\boldsymbol{\alpha}}$ 处，我们将应力张量的分量按 $f(\boldsymbol{\alpha})$ 对应的两类子空间 $\mathcal{N}_{f(\boldsymbol{\alpha})}(\mathbb{S})$ 与 $\mathcal{T}_{f(\boldsymbol{\alpha})}(\mathbb{S})$ 进行划分：其中 $\mathcal{N}_{f}(\mathbb{S})$ 表示决定法向牵引的分量集合，$\mathcal{T}_{f}(\mathbb{S})$ 表示在 $f$ 上法向牵引贡献严格为零的纯切向分量集合。
+
+据此，胡张元可用一组“节点 $\times$ 张量基元”的张量值基函数来表述：对每个晶格点 $\boldsymbol{\alpha}\in\mathbb{T}_k^d$，令 $f=f(\boldsymbol{\alpha})$，并分别取 $\{ \boldsymbol{N}\}$ 为 $\mathcal{N}_{f}(\mathbb{S})$ 的一组基、$\{\boldsymbol{T}\}$ 为 $\mathcal{T}_{f}(\mathbb{S})$ 的一组基，则相应的局部张量值基函数可写为
+\[
+\boldsymbol{\Phi}_{\boldsymbol{\alpha},\boldsymbol{N}}(\boldsymbol{x})=\phi_{\boldsymbol{\alpha}}(\boldsymbol{x})\,\boldsymbol{N},\quad \boldsymbol{N}\in\mathcal{N}_{f(\boldsymbol{\alpha})}(\mathbb{S}), \qquad \boldsymbol{\Phi}_{\boldsymbol{\alpha},\boldsymbol{T}}(\boldsymbol{x})=\phi_{\boldsymbol{\alpha}}(\boldsymbol{x})\,\boldsymbol{T},\quad \boldsymbol{T}\in\mathcal{T}_{f(\boldsymbol{\alpha})}(\mathbb{S}).
+\]
+与上述基函数对应的自由度可以用点值型泛函来刻画：对每个 $\boldsymbol{\alpha}\in\mathbb{T}_k^d$ 及其归属几何对象 $f(\boldsymbol{\alpha})$，定义
+\begin{itemize}
+	\item $\mathcal{N}$-型（法向相关）自由度：对任意 $\boldsymbol{N}\in\mathcal{N}_{f}(\mathbb{S})$，取
+	\[
+	\boldsymbol{\sigma}(\boldsymbol{x}_{\boldsymbol{\alpha}}):\boldsymbol{N}.
+	\]
+	当 $f$ 为 $(d-1)$-维面（二维情形为边、三维情形为面）时，$\mathcal{N}_{f}(\mathbb{S})$ 与该面上的牵引力向量 $\boldsymbol{\sigma}\boldsymbol{n}$ 的分量一一对应，因此这些自由度在公共 $(d-1)$-面上的单值性可保证跨单元边界法向迹的连续性，从而满足 $H(\operatorname{div})$ 协调性要求。
+	
+	\item $\mathcal{T}$-型（切向相关）自由度：对任意 $\boldsymbol{T}\in\mathcal{T}_{f}(\mathbb{S})$，取
+	\[
+	\boldsymbol{\sigma}(\boldsymbol{x}_{\boldsymbol{\alpha}}):\boldsymbol{T}.
+	\]
+	该类自由度主要刻画相对于 $f$ 的纯切向应力分量，不影响 $(d-1)$-面上的法向牵引 $\boldsymbol{\sigma}\boldsymbol{n}$ 的连续性。
+\end{itemize}
+
+基于上述局部构造，我们可以在全域网格 $\mathcal{T}_h$ 上定义 $k$ 次全局离散胡张应力空间 $\boldsymbol{\Sigma}_h^k$。该空间由分片多项式对称张量组成，并通过公共 $(d-1)$-面上的 $\mathcal{N}$-型自由度单值性实现 $H(\operatorname{div})$ 协调性：
+\begin{equation} \label{eq:ch5_hz_global_stress_space}
+	\begin{aligned} 
+		\boldsymbol{\Sigma}_h^k := \Big\{ \boldsymbol{\sigma}_h \in L^2(\Omega; \mathbb{S}) : \ & \boldsymbol{\sigma}_h|_T \in P_k(T; \mathbb{S}), \ \forall T \in \mathcal{T}_h; \\ & \text{且 } \forall f \in \Delta(\mathcal{T}_h), \ \mathcal{N}\text{-型自由度在}~f~\text{上是单值的} \Big\}. 
+	\end{aligned}
+\end{equation}
+其中，$\Delta(\mathcal{T}_h)$ 表示网格中所有子单纯形（顶点、边、面等）的集合；“$\mathcal{N}$-型自由度在 $f$ 上单值” 指：对任意共享内部 $(d-1)$-面 $f$ 的相邻单元 $T^+$ 与 $T^-$，由两侧单元导出的 $\mathcal{N}$-型自由度取值严格一致。由于 $\mathcal{N}$-型自由度与牵引力向量 $\boldsymbol{\sigma}_h\boldsymbol{n}$ 的分量一一对应，该约束本质上保证了法向迹在跨单元界面上的连续性，从而确保了全局离散空间满足 $\boldsymbol{\Sigma}_h^k \subset H(\operatorname{div},\Omega;\mathbb{S})$。
+
+该构造方式在算法实现层面具有显著优势：它将 $H(\operatorname{div})$ 协调性所要求的“跨单元法向迹单值性”，转化为全局装配时对共享几何对象上 $\mathcal{N}$-型自由度的统一编号与耦合。相应地，切向相关的 $\mathcal{T}$-型自由度由于不影响法向牵引的连续性，为系统矩阵的性质优化提供了空间。例如，完全位于单元内部的 $\mathcal{T}$-型自由度不与相邻单元发生耦合，在装配时保持单元局部性，可根据计算需要进行局部消元。上述基于单纯形晶格与几何分解的节点型构造方式~\cite{chenGeometricDecompositionEfficient2024b}，与 Hu~\cite{huFiniteElementApproximations2015} 中以子单纯形积分矩定义的自由度在空间定义上是完全等价的。
+
+% ！！！ 有用但不适合放在博士论文中！！！
+%为便于后续复杂度评估与程序实现对照，下面给出胡张应力空间在二维三角形网格上的自由度层级结构与计数。其核心是：$\mathcal N$-型自由度对应边上的法向牵引 $\sigma n$，需要跨单元共享编号；$\mathcal T$-型及内部自由度保持单元局部性。
+%
+%二维三角形单元上应力形函数空间取 $\mathbb P_k(T;\mathbb S)$，局部总自由度为
+%\[
+%\mathrm{ldof}_\sigma = 3\dim \mathbb P_k(T)=3\binom{k+2}{2}=\frac{3(k+1)(k+2)}{2},
+%\]
+%自由度按几何实体分层组织为：顶点处 3 个分量自由度（$\sigma_{xx},\sigma_{xy},\sigma_{yy}$）全局连续；每条边在局部正交标架 $(\boldsymbol{n},\boldsymbol{t})$ 下，连续部分对应牵引 $\boldsymbol\sigma \boldsymbol{n}$ 的两个分量（$\sigma_{nn},\sigma_{nt}$），其边自由度数为 
+%\[
+%\mathrm{eldof}_c=2(k-1),
+%\]
+%不连续部分对应切向正应力 $\sigma_{tt}$，其边自由度数为 
+%\[
+%\mathrm{eldof}_d=k-1,
+%\]
+%单元内部自由度完全不连续，数目为
+%\[
+%\mathrm{cldof}=3\binom{k-1}{2}=\frac{3(k-1)(k-2)}{2},
+%\]
+%因此若网格包含 $\mathrm{NN}$ 个顶点、$\mathrm{NE}$ 条边、$\mathrm{NC}$ 个单元，则应力空间全局自由度规模为
+%\[
+%\mathrm{gdof}_\sigma =3\,\mathrm{NN} +\mathrm{eldof}_c\,\mathrm{NE} +\mathrm{NC}\bigl(3\,\mathrm{eldof}_d+\mathrm{cldof}\bigr).
+%\]
+
+
+\subsection{位移有限元空间的选取}
+\label{subsec:disp_fem_space}
+
+为了与第~\ref{subsec:hz_space_construct} 节构造的 $k$ 次 $H(\operatorname{div})$ 协调胡张应力空间 $\boldsymbol{\Sigma}_h^k$ 形成稳定的混合有限元对，位移空间应选取为次数低一阶的全不连续分片多项式空间。在单纯形网格 $\mathcal{T}_h$ 上定义：
+\begin{equation} \label{eq:ch5_hz_global_disp_space}
+	\boldsymbol{V}_h^{k-1} := \{ \boldsymbol{v} \in L^2(\Omega; \mathbb{R}^d) : \boldsymbol{v}|_T \in P_{k-1}(T; \mathbb{R}^d), \ \forall T \in \mathcal{T}_h \}.
+\end{equation}
+由于 $\boldsymbol{V}_h^{k-1}$ 不要求跨单元边界连续，因此通常有 $\boldsymbol{V}_h^{k-1}\not\subset H^1(\Omega;\mathbb{R}^d)$。这与 Hellinger-Reissner 混合变分形式的函数空间设定一致：位移变量在理论上仅需属于 $L^2(\Omega;\mathbb R^d)$，单元间的力学耦合通过应力变量的 $H(\operatorname{div})$ 协调性（即跨单元界面法向迹的连续性）在弱形式中自然实现，而非通过位移场的 $C^0$ 连续性强加。
+
+需要特别强调的是，为保证离散混合问题在无稳定化项的情形下严格满足离散 inf-sup 条件，胡张元的阶次需满足如下限制：
+\[
+k\ge d+1,
+\]
+其中 $d$ 为空间维数。这意味着在二维情形下，最低阶的天然稳定配对为“$P_3$ 应力 / $P_2$ 位移”；而在三维情形下，则需达到“$P_4$ 应力 / $P_3$ 位移”。
+
+在上述阶次条件与足够正则性假设下，Hu~\cite{huFiniteElementApproximations2015} 证明了该离散混合方法满足稳定性与最优阶收敛：存在与网格尺度 $h$ 无关的常数 $C$，使得
+\begin{equation} \label{eq:ch5_hz_error_estimate}
+	\|\boldsymbol\sigma - \boldsymbol\sigma_h\|_{H(\operatorname{div},\Omega)} + \|\boldsymbol{u} - \boldsymbol{u}_h\|_{0,\Omega} \le C h^k (\|\boldsymbol\sigma\|_{k+1,\Omega} + \|\boldsymbol{u}\|_{k,\Omega}),
+\end{equation}
+其中，右端项涉及的范数 $\|\cdot\|_{k+1,\Omega}$ 与 $\|\cdot\|_{k,\Omega}$ 均为文献~\cite{huFiniteElementApproximations2015} 中采用的标准高阶 Sobolev 范数。该先验误差估计表明，该混合离散格式在网格加密过程中能够达到理论上的最优逼近精度，从而为后续将胡张混合离散嵌入拓扑优化迭代框架提供了坚实的分析基础。
+
+
+\subsection{复杂边界条件的处理：顶点应力连续性的部分松弛}
+\label{subsec:vertex_relaxation}
+
+在前述第~\ref{subsec:hz_space_construct} 节的胡张元构造中，为了获得一组“晶格点 $\times$ 张量基元”的点值自由度，我们在网格顶点处对部分应力分量施加了单值约束（等价于顶点处的 $C^0$ 连续性）。然而，当顶点位于复杂边界交汇处（例如，相邻两段边界施加不同类型的边界条件，或牵引力数据在角点两侧不相容）时，若仍强制该顶点处的所有相关应力分量取单值，由于对应的节点插值方程组不存在解，会引发施加边界条件时的本质困难，导致离散应力场无法精确匹配两侧的物理边界条件。
+
+为解决这一固有痛点，本文借鉴 Hu 与 Ma~\cite{huPartialRelaxation02021a} 提出的顶点应力连续性局部松弛策略：仅在上述复杂边界顶点处，对与切向相关的顶点自由度进行局部拆分与解耦，使其分别服务于角点两侧的边界条件；同时，严格保持与法向迹连续性相关的自由度为单值，从而在不破坏全局 $H(\operatorname{div})$ 协调性的前提下解决边界条件的不相容问题。以三角形单元为例，其核心操作可概括如下（对应图 \ref{fig:ch5_vertex_relaxation}）：
+
+\begin{enumerate}
+	\item \textbf{几何划分}：对包含复杂角点 $x_c$ 的单元 $K$，在其内部引入一条虚拟分割线 $e$，将 $K$ 划分为两个子三角形 $K^+$ 与 $K^-$。需要指出的是，该分割仅用于局部基函数与自由度的重构，并不改变全局宏观网格的拓扑结构。
+	
+	\item \textbf{自由度解耦}：将角点 $x_c$ 处原本要求单值的纯切向应力分量（即 $\mathcal{T}$-型自由度），沿分割线 $e$ 拆分为两个相互独立的自由度，分别归属于 $K^+$ 与 $K^-$。通过这种局部的解耦，两侧的离散应力可以独立地满足各自边界上的局部约束需求。
+	
+	\item \textbf{法向保持单值}：决定法向迹的应力分量（即 $\mathcal{N}$-型自由度）在 $x_c$ 处及分割线 $e$ 上仍严格保持单值，以确保扩展后的混合有限元空间依然满足 $H(\operatorname{div})$ 协调性要求。
+	
+	\item \textbf{局部自由度扩充}：以三角形单元为例，角点处的对称应力张量原包含 3 个独立的点值自由度；经过上述松弛拆分后，其中 1 个纯切向分量被独立扩展为两个，使得该复杂角点处的全局独立自由度数由 3 增加至 4（对应图~\ref{fig:ch5_vertex_relaxation}(d)）。
+\end{enumerate}
+
+\begin{figure}[H]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.9\textwidth]{ch5_vertex_relaxation}
+	\caption{复杂边界角点处顶点应力 $C^0$ 连续性的部分松弛示意}
+	\label{fig:ch5_vertex_relaxation}
+\end{figure}
+
+通过在复杂角点处对切向相关的顶点自由度进行局部扩充与解耦，这种部分松弛策略将由顶点 $C^0$ 连续性引发的插值方程组无解困境转化为“分侧满足”的自由度结构。这使得离散应力在角点邻域能够精确且独立地匹配分割线两侧的不相容牵引边界数据，从而有效消除了由边界条件不精确满足所主导的误差集中现象。该思路可自然推广至更复杂的二维多单元交汇角点以及三维情形下的顶点与棱边连续性处理，更一般的空间构造细节与讨论可参见文献~\cite{huPartialRelaxation02021a}。
+
+
+\section{线弹性问题的任意次胡张混合有限元方法}
+\label{sec:hz_method_formulation}
+
+基于第~\ref{sec:hz_space_construction} 节构造的胡张混合有限元空间及顶点松弛策略，本节将正式建立线弹性问题的数值求解格式。我们将依次给出标准的离散变分方程与边界处理机制，引入针对低阶情形的跳量稳定化策略，并探讨该格式的代数矩阵组装结构。
+
+
+\subsection{离散混合变分格式}
+\label{subsec:hz_discrete_form}
+
+沿用第~\ref{subsec:hz_hr_principle} 节 Hellinger–Reissner 应力--位移混合模型的符号约定与边界分解。设 $\mathcal{T}_h$ 为求解域 $\Omega$ 的单纯形网格剖分。我们在该网格上采用第~\ref{sec:hz_space_construction} 节构造的 $k$ 次胡张离散应力空间 $\boldsymbol{\Sigma}_h^k\subset H(\operatorname{div},\Omega;\mathbb{S})$，以及对应的 $k-1$ 次全不连续离散位移空间 $\boldsymbol{V}_h^{k-1}\subset L^2(\Omega;\mathbb{R}^d)$。与传统位移型有限元 “位移为本质边界、牵引力为自然边界”的处理方式不同，在混合框架下，应力张量为主未知量。由于 $\boldsymbol{\Sigma}_h^k\subset H(\operatorname{div},\Omega;\mathbb{S})$，应力的法向迹 $\boldsymbol{\tau}_h\boldsymbol{n}$ 在边界 $\partial\Omega$ 上是良定的。因此，$\Gamma_N$ 上的牵引力边界条件可以直接在应力试探空间中强加。据此，定义满足牵引力边界数据的数据子空间与相应的齐次子空间：
+\[
+\boldsymbol{\Sigma}_{h,\boldsymbol{g}_N}^k := \{\boldsymbol{\tau}_h\in\boldsymbol{\Sigma}_h^k:\boldsymbol{\tau}_h\boldsymbol{n}=\boldsymbol{g}_N\ \text{on }\Gamma_N\},\quad \boldsymbol{\Sigma}_{h,0}^k := \{\boldsymbol{\tau}_h\in\boldsymbol{\Sigma}_h^k:\boldsymbol{\tau}_h\boldsymbol{n}=\boldsymbol{0}\ \text{on }\Gamma_N\}.
+\]
+另一方面，$\Gamma_D$ 上的位移边界条件 $\boldsymbol{u}=\boldsymbol{u}_D$ 作为自然边界条件，通过变分方程弱形式中的对偶边界积分项予以施加。
+
+为表述简洁，引入如下双线性型与线性泛函：
+\[
+a(\boldsymbol{\sigma},\boldsymbol{\tau}):=(\mathcal{A}\boldsymbol{\sigma},\boldsymbol{\tau})_{\Omega},\qquad b(\boldsymbol{\tau},\boldsymbol{u}):=(\operatorname{div}\boldsymbol{\tau},\boldsymbol{u})_{\Omega},
+\]
+\[
+\ell(\boldsymbol{\tau}):=\langle \boldsymbol{u}_D,\boldsymbol{\tau}\boldsymbol{n}\rangle_{\Gamma_D},\qquad f(\boldsymbol{v}):=(-\boldsymbol{b},\boldsymbol{v})_{\Omega}.
+\]
+则线弹性问题的任意次胡张混合有限元离散格式为：求 $(\boldsymbol{\sigma}_h,\boldsymbol{u}_h)\in \boldsymbol{\Sigma}_{h,\boldsymbol{g}_N}^k\times \boldsymbol{V}_h^{k-1}$，使得：
+\begin{equation} \label{eq:ch5_hz_discrete_weak_form}
+	\begin{cases}
+		a(\boldsymbol{\sigma}_h,\boldsymbol{\tau}_h)+b(\boldsymbol{\tau}_h,\boldsymbol{u}_h)=\ell(\boldsymbol{\tau}_h), &\quad \forall\,\boldsymbol{\tau}_h\in\boldsymbol{\Sigma}_{h,0}^k,\\[0.4em] 
+		b(\boldsymbol{\sigma}_h,\boldsymbol{v}_h) = f(\boldsymbol{v}_h), &\quad \forall\,\boldsymbol{v}_h\in \boldsymbol{V}_h^{k-1}. 
+	\end{cases}
+\end{equation}
+将应力与位移分别在有限元全局基函数上展开。设 $N_\sigma$ 与 $N_u$ 分别为齐次应力空间 $\boldsymbol{\Sigma}_{h,0}^k$ 与位移空间 $\boldsymbol{V}_h^{k-1}$ 的维数（即全局未知自由度总数），并记 $\{\boldsymbol{\Phi}_i\}_{i=1}^{N_\sigma}$ 与 $\{\boldsymbol{\phi}_j\}_{j=1}^{N_u}$ 为对应的全局基函数。令 $\boldsymbol{\sigma}_h = \boldsymbol{\sigma}_{h,g} + \sum_{i=1}^{N_\sigma}\Sigma_i\boldsymbol{\Phi}_i$，$\boldsymbol{u}_h=\sum_{j=1}^{N_u}U_j\boldsymbol{\phi}_j$（其中 $\boldsymbol{\sigma}_{h,g} \in \boldsymbol{\Sigma}_{h,\boldsymbol{g}_N}^k$ 为满足非齐次牵引力边界条件的特解）。代入上述离散变分方程，可得到典型的对称鞍点线性代数系统：
+\begin{equation} \label{eq:ch5_saddle_point_system}
+	\begin{bmatrix} 
+		\boldsymbol{A}_{\sigma\sigma} & \boldsymbol{B}_{\sigma u}\\ \boldsymbol{B}_{u\sigma} & \boldsymbol{0} 
+	\end{bmatrix} 
+	\begin{Bmatrix} 
+		\boldsymbol{\Sigma}\\ \boldsymbol{U} 
+	\end{Bmatrix} = 
+	\begin{Bmatrix} 
+		\boldsymbol{F}_{\sigma}\\ \boldsymbol{F}_{u} 
+	\end{Bmatrix}, 
+	\qquad \boldsymbol{B}_{u\sigma}=\boldsymbol{B}_{\sigma u}^{\top}.
+\end{equation}
+其中，系统矩阵各分块与载荷向量的元素定义为
+\[
+(\boldsymbol{A}_{\sigma\sigma})_{ij}:=a(\boldsymbol{\Phi}_j,\boldsymbol{\Phi}_i)=(\mathcal{A}\boldsymbol{\Phi}_j,\boldsymbol{\Phi}_i)_\Omega,\quad
+(\boldsymbol{B}_{\sigma u})_{ij}:=b(\boldsymbol{\Phi}_i,\boldsymbol{\phi}_j)=(\operatorname{div}\boldsymbol{\Phi}_i,\boldsymbol{\phi}_j)_\Omega,
+\]
+\[
+(\boldsymbol{F}_{\sigma})_{i}:=\ell(\boldsymbol{\Phi}_i) - a(\boldsymbol{\sigma}_{h,g}, \boldsymbol{\Phi}_i) = \langle \boldsymbol{u}_D,\boldsymbol{\Phi}_i\boldsymbol{n}\rangle_{\Gamma_D} - (\mathcal{A}\boldsymbol{\sigma}_{h,g}, \boldsymbol{\Phi}_i)_\Omega,
+\]
+\[
+(\boldsymbol{F}_{u})_{j}:=f(\boldsymbol{\phi}_j) - b(\boldsymbol{\sigma}_{h,g}, \boldsymbol{\phi}_j) =(-\boldsymbol{b},\boldsymbol{\phi}_j)_\Omega - (\operatorname{div}\boldsymbol{\sigma}_{h,g}, \boldsymbol{\phi}_j)_\Omega.
+\]
+需要强调的是，$\Gamma_N$ 上的牵引力数据 $\boldsymbol{g}_N$ 已通过特解 $\boldsymbol{\sigma}_{h,g}$ 强制满足，并在代数层面作为已知量移至右端载荷项中。
+
+最后，对于各向同性线弹性材料（设 Lamé 常数为 $\lambda$ 与 $\mu$），柔度算子作用下的张量逐点内积可具体表示为
+\[
+(\mathcal{A}\boldsymbol{\sigma}):\boldsymbol{\tau} = \frac{1}{2\mu}\,\boldsymbol{\sigma}:\boldsymbol{\tau} - \frac{\lambda}{2\mu(2\mu+d\lambda)}\,\operatorname{tr}(\boldsymbol{\sigma})\,\operatorname{tr}(\boldsymbol{\tau}),
+\]
+从而，系统代数方程中的柔度矩阵元素可显式地展开为如下积分形式：
+\[
+(\boldsymbol{A}_{\sigma\sigma})_{ij} = \int_{\Omega}\left( \frac{1}{2\mu}\,\boldsymbol{\Phi}_j:\boldsymbol{\Phi}_i - \frac{\lambda}{2\mu(2\mu+d\lambda)}\,\operatorname{tr}(\boldsymbol{\Phi}_j)\operatorname{tr}(\boldsymbol{\Phi}_i) \right)\mathrm{d}\boldsymbol{x}.
+\]
+
+
+\subsection{低阶情形的稳定化处理}
+\label{subsec:hz_stabilization}
+
+如第~\ref{subsec:disp_fem_space} 节所述，标准胡张混合有限元在单纯形网格上，当多项式阶次满足 $k\ge d+1$ 时能够自然满足离散 inf-sup 稳定性条件。然而，在低阶区间 $1\le k\le d$ 内，由于离散应力散度空间 $\operatorname{div}\boldsymbol{\Sigma}_h^k$ 与位移空间 $\boldsymbol{V}_h^{k-1}$ 相容性不足，无法满足离散的 inf-sup 条件，会导致离散鞍点系统的稳定性缺失。为了将该混合求解框架推广至任意低阶情形，可在变分弱形式的位移方程中引入基于网格面（或二维中的边）跳量的稳定化双线性型。该机制通过对位移场在单元内部界面处的非协调部分进行适度惩罚，从而有效弥补缺失的强制性，恢复全局离散稳定性。
+
+考虑到非齐次位移本质边界条件 $\boldsymbol{u} = \boldsymbol{u}_D$，引入稳定化项后的离散混合变分格式可写为：求 $(\boldsymbol{\sigma}_h,\boldsymbol{u}_h)\in \boldsymbol{\Sigma}_{h,\boldsymbol{g}_N}^k\times \boldsymbol{V}_h^{k-1}$，使得：
+\begin{equation} \label{eq:ch5_stabilized_weak_form}
+	\begin{cases}
+		a(\boldsymbol{\sigma}_h,\boldsymbol{\tau}_h)+b(\boldsymbol{\tau}_h,\boldsymbol{u}_h)=\ell(\boldsymbol{\tau}_h),&\quad \forall\,\boldsymbol{\tau}_h\in\boldsymbol{\Sigma}_{h,0}^k,\\
+		b(\boldsymbol{\sigma}_h,\boldsymbol{v}_h) - c(\boldsymbol{u}_h,\boldsymbol{v}_h)= f(\boldsymbol{v}_h) - c_{\text{bdy}}(\boldsymbol{u}_D, \boldsymbol{v}_h),&\quad \forall\,\boldsymbol{v}_h\in\boldsymbol{V}_{h}^{k-1}. 
+	\end{cases}
+\end{equation}
+其中，$c(\cdot,\cdot)$ 为全局跳量稳定化双线性型，$c_{\text{bdy}}(\cdot,\cdot)$ 为由非齐次位移边界数据 $\boldsymbol{u}_D$ 诱导的已知边界补偿项。在低阶情形 $1\le k\le d$ 下，显式激活该项（即 $c \neq 0$）；而在满足 $k\ge d+1$ 的高阶情形下，可直接令 $c=0$，从而使代数系统退化为标准胡张格式。下文将具体给出两种在低阶区间 $1\le k\le d$ 内常用的跳量稳定化构造方案。
+
+为了与弹性力学中的应力--应变张量形式保持一致，Chen 等~\cite{chenStabilizedMixedFinite2017a} 提出基于对称梯度（即应变）的矩阵型跳量稳定化项，并证明该稳定化项可恢复低阶离散格式的 inf-sup 稳定性。需要特别强调的是，为了不破坏牵引力边界的自然属性，该惩罚项仅施加在网格的内部面和位移边界上，而不施加在牵引力边界上。
+
+设 $\mathcal{F}_h = \mathcal{F}_h^{i}\cup\mathcal{F}_h^{D}$ 为实际参与惩罚的 $(d-1)$ 维面集合，其中 $\mathcal{F}_h^{i}$ 为内部面集合，$\mathcal{F}_h^{D}$ 为位于位移边界 $\Gamma_D$ 上的面集合。对于任意 $F \in \mathcal{F}_h$，记 $h_F$ 为该面的直径，对任意内部面 $F = K^+\cap K^-$，记 $\boldsymbol{\nu}^{\pm}$ 为单元 $K^{\pm}$ 沿面 $F$ 的单位外法向量。对向量场 $\boldsymbol{w}$，定义其在面 $F \in \mathcal{F}_h^i$ 上的对称矩阵型跳量为
+\[
+[\![ \boldsymbol{w} ]\!] := \frac{1}{2}(\boldsymbol{w}^+(\boldsymbol{\nu}^+)^T + \boldsymbol{\nu}^+(\boldsymbol{w}^+)^T + \boldsymbol{w}^-(\boldsymbol{\nu}^-)^T + \boldsymbol{\nu}^-(\boldsymbol{w}^-)^T).
+\] 
+则取外法向量 $\boldsymbol{\nu}$，对应的单侧矩阵型跳量退化为
+\[
+[\![ \boldsymbol{w} ]\!] := \frac{1}{2}(\boldsymbol{w}\boldsymbol{\nu}^T + \boldsymbol{\nu}\boldsymbol{w}^T).
+\]
+对于给定的非齐次位移边界条件 $\boldsymbol{u}_D$，边界上的实际惩罚算子作用在位移偏差 $(\boldsymbol{u}_h - \boldsymbol{u}_D)$ 上。提取未知量部分，对应的矩阵型稳定化双线性项定义为
+\[
+c_{\text{mat}}(\boldsymbol{u}_h, \boldsymbol{v}_h) := \sum_{F \in \mathcal{F}_h} h_F \int_{F} [\![ \boldsymbol{u}_h ]\!] : [\![ \boldsymbol{v}_h ]\!] ~\mathrm{d}\boldsymbol{s}.
+\]
+同时，提取已知数据部分，形成前述离散格式右端附加的边界载荷补偿项
+\[
+c_{\text{bdy}}(\boldsymbol{u}_D, \boldsymbol{v}_h) := \sum_{F \in \mathcal{F}_h^D} h_F \int_{F} [\![ \boldsymbol{u}_D ]\!] : [\![ \boldsymbol{v}_h ]\!] ~\mathrm{d}\boldsymbol{s}.
+\]
+在该稳定化项的作用下，低阶离散格式重新满足了 inf-sup 条件，从而确保了离散代数系统的唯一可解性与数值稳定性。在精确解具有足够正则性及网格形状正则的假设下，离散应力与位移的数值解可获得如下 $k$ 阶最优先验误差估计：
+\[
+\|\boldsymbol{\sigma} - \boldsymbol{\sigma}_h\|_{H(\operatorname{div},\Omega)} + \|\boldsymbol{u} - \boldsymbol{u}_h\|_{0,\Omega} \le C h^k (\|\boldsymbol{\sigma}\|_{k+1,\Omega} + \|\boldsymbol{u}\|_{k,\Omega}).
+\]
+
+除此之外，Chen 等~\cite{chenFastAuxiliarySpace2017a} 采用了间断伽辽金 (Discontinuous Galerkin, DG) 方法中经典的向量型跳量（内惩罚）稳定化项来处理低阶情形。对任意面 $F\in\mathcal{F}_h$，预先固定一个单位法向 $\boldsymbol{\nu}_F$。对于定义在剖分上的逐段向量场 $\boldsymbol{w}$，其在面 $F$ 上的向量型跳量定义为
+\[
+[\boldsymbol{w}] =  
+\begin{cases} 
+	\boldsymbol{w}^+(\boldsymbol{\nu}^+\cdot\boldsymbol{\nu}_F) + \boldsymbol{w}^-(\boldsymbol{\nu}^-\cdot\boldsymbol{\nu}_F), & \text{if } F \in \mathcal{F}_h^i \\ \boldsymbol{w}, & \text{if } F \in \mathcal{F}_h^{D} 
+\end{cases}
+\]
+该算子直接刻画并惩罚了位移场在单元界面处的非协调跳跃。与前述基于对称梯度的矩阵型跳量不同，为了确保在位移范数下的一致稳定性，该稳定化项采用 $h_F^{-1}$ 进行缩放，相应的双线性型定义为
+\[
+c_{\text{vec}}(\boldsymbol{u}_h, \boldsymbol{v}_h) := \sum_{F \in \mathcal{F}_h} h_F^{-1}\int_{F} [\boldsymbol{u}_h] \cdot [\boldsymbol{v}_h] ~ \mathrm{d}\boldsymbol{s}.
+\]
+同样地，对于非齐次位移边界条件 $\boldsymbol{u}_D$，需要引入相应的边界补偿项 $c_{\text{bdy}}(\boldsymbol{u}_D, \boldsymbol{v}_h)$。在低阶区间 $1 \le k \le d$ 内引入上述向量型稳定化项后，离散混合格式能够重新满足 inf-sup 条件，并显著提升位移场在粗网格下的数值表现。
+
+需要特别指出的是，上述定义的稳定化项均是在无量纲的理论框架（如假设求解域特征长度 $L_0 \approx 1$ 且材料剪切模量 $\mu \approx 1$）下推导而得。在将该混合有限元方法应用于实际工程物理问题时，必须对稳定化项进行物理量纲匹配，以确保离散系统的数值稳定性。对于线弹性问题，变分方程的柔度项 $a(\boldsymbol{\sigma}_h, \boldsymbol{\tau}_h)$ 与散度项 $b(\boldsymbol{\tau}_h, \boldsymbol{u}_h)$ 均具有能量或虚功的物理量纲（例如在二维情形下，采用 $\mathrm{MPa}$ 和 $\mathrm{mm}$ 作为单位时，其量纲为 $\mathrm{MPa} \cdot \mathrm{mm}^2$）。然而，若直接采用纯几何计算，矩阵型稳定化项 $c_{\mathrm{mat}}$ 的量纲为 $\mathrm{mm}^4$。这种量纲上的严重失配会导致代数系统中惩罚项矩阵的系数远大于物理刚度矩阵，从而引发“过度惩罚”现象，并诱发严重的数值自锁与收敛困难。
+
+为消除这一问题，必须在工程实现中引入具有明确物理意义的缩放系数 $\alpha$ 以平衡量纲。为了使矩阵型跳量项 $\tilde{c}_{\text{mat}}$ 的单位与主导方程保持一致，需选取材料剪切模量 $\mu$ 与宏观特征长度 $L_0$ 构建缩放系数 $\alpha = \mu / L_0^2$。对应工程适用的修正格式为
+\[
+\tilde{c}_{\text{mat}}(\boldsymbol{u}_h, \boldsymbol{v}_h) := \sum_{F \in \mathcal{F}_h} \left( \frac{\mu}{L_0^2} \right) h_F \int_{F} [\![ \boldsymbol{u}_h ]\!] : [\![ \boldsymbol{v}_h ]\!] ~\mathrm{d}\boldsymbol{s}.
+\]
+相应地，等式右端的非齐次边界补偿项也需同步采用物理缩放：
+\[
+\tilde{c}_{\text{bdy}}(\boldsymbol{u}_D, \boldsymbol{v}_h) := \sum_{F \in \mathcal{F}_h^D} \left( \frac{\mu}{L_0^2} \right) h_F \int_{F} [\![ \boldsymbol{u}_D ]\!] : [\![ \boldsymbol{v}_h ]\!] ~\mathrm{d}\boldsymbol{s}.
+\]
+选取材料的剪切模量 $\mu$ 作为尺度乘子，不仅能够确保能量量纲的严格一致，更能真实地反映材料抵抗单元界面处局部剪切错位与法向分离的物理刚度。此外，相较于体积模量或第一拉梅常数 $\lambda$，使用纯偏斜属性的 $\mu$ 可确保稳定化项不随泊松比 $\nu \to 0.5$ 而趋向无穷大，从而维持算法在近不可压缩极限下的强鲁棒性。
+
+
+\subsection{任意次胡张混合有限元的收敛性验证}
+\label{subsec:hz_fe_verification}
+
+为验证本文构建的任意次胡张混合有限元方法的数值精度与收敛阶次，本节选取具有光滑解析解的二维纯线弹性基准测试问题进行无量纲数值实验。考虑单位正方形求解域 $\Omega = [0, 1]^2$，假设材料为均匀各向同性线弹性体并处于平面应变状态，取拉梅第一常数 $\lambda = 1$，剪切模量 $\mu = 0.5$。构造如下的光滑精确位移解：
+\[
+\boldsymbol{u}(x,y) = \begin{pmatrix} \sin(\pi x) \sin(\pi y) \\ \sin(\pi x) \sin(\pi y) \end{pmatrix},
+\]
+相应的精确应力解 $\boldsymbol{\sigma}$ 与体力密度 $\boldsymbol{b}$ 可分别由线弹性本构关系和平衡方程 $-\nabla \cdot \boldsymbol{\sigma} = \boldsymbol{b}$ 解析导出。求解域边界 $\partial\Omega$ 划分为位移边界 $\Gamma_D = \{x = 0\} \cup \{y = 0\}$ 与牵引边界 $\Gamma_N = \{x = 1\} \cup \{y = 1\}$。其中，在 $\Gamma_D$ 上施加齐次位移边界条件 $\boldsymbol{u} = \boldsymbol{0}$；在 $\Gamma_N$ 上强施加自然边界条件 $\boldsymbol{\sigma}\boldsymbol{n} = \boldsymbol{g}$，该外载荷 $\boldsymbol{g}$ 由前述精确应力解 $\boldsymbol{\sigma}$ 在对应边界上的法向迹直接计算得到。
+
+数值测试在三角形网格上进行。依据离散 inf-sup 稳定性条件（$k \ge d+1$），本小节首先针对天然满足该稳定性的最低阶情形（$k=3$，$P_3$ 应力/$P_2$ 位移）与高阶情形（$k=4$，$P_4$ 应力/$P_3$ 位移）进行收敛性分析。为了全面衡量数值解的质量，误差度量采用标准 $L^2$ 范数，并额外引入散度误差以评估物理守恒性。
+
+\begin{table}[htbp]
+	\centering
+	\caption{二维线弹性问题下高阶胡张混合元的数值误差与收敛阶（$k=3, 4$）}
+	\label{tab:ch5_error_analysis_k34}
+	\renewcommand{\arraystretch}{1.3} % 拉开行距，避免指数上标与上一行重叠
+	\begin{tabular}{cccccccc}
+		\toprule
+		$k$ & $h$ & $\|\bm{u} - \bm{u}_h\|_{0,\Omega}$ & order & $\|\bm{\sigma} - \bm{\sigma}_h\|_{0,\Omega}$ & order & $\|\bm{\sigma} - \bm{\sigma}_h\|_{H(\mathrm{div},\Omega)}$ & order \\
+		\midrule
+		\multirow{5}{*}{3} 
+		& 0.5     & $3.232 \times 10^{-2}$ & ---  & $8.937 \times 10^{-2}$ & ---  & $9.061 \times 10^{-1}$ & ---  \\
+		& 0.25    & $3.700 \times 10^{-3}$ & 3.13 & $5.022 \times 10^{-3}$ & 4.15 & $1.064 \times 10^{-1}$ & 3.09 \\
+		& 0.125   & $4.590 \times 10^{-4}$ & 3.01 & $2.977 \times 10^{-4}$ & 4.08 & $1.321 \times 10^{-2}$ & 3.01 \\
+		& 0.0625  & $5.731 \times 10^{-5}$ & 3    & $1.815 \times 10^{-5}$ & 4.04 & $1.649 \times 10^{-3}$ & 3    \\
+		& 0.03125 & $7.162 \times 10^{-6}$ & 3    & $1.121 \times 10^{-6}$ & 4.02 & $2.061 \times 10^{-4}$ & 3    \\
+		\midrule
+		\multirow{5}{*}{4} 
+		& 0.5     & $1.192 \times 10^{-3}$ & ---  & $1.837 \times 10^{-3}$ & ---  & $3.431 \times 10^{-2}$ & ---  \\
+		& 0.25    & $1.929 \times 10^{-4}$ & 2.63 & $1.942 \times 10^{-4}$ & 3.24 & $5.552 \times 10^{-3}$ & 2.63 \\
+		& 0.125   & $1.297 \times 10^{-5}$ & 3.89 & $6.682 \times 10^{-6}$ & 4.86 & $3.732 \times 10^{-4}$ & 3.89 \\
+		& 0.0625  & $8.235 \times 10^{-7}$ & 3.98 & $2.172 \times 10^{-7}$ & 4.94 & $2.370 \times 10^{-5}$ & 3.98 \\
+		& 0.03125 & $5.167 \times 10^{-8}$ & 3.99 & $6.914 \times 10^{-9}$ & 4.97 & $1.487 \times 10^{-6}$ & 3.99 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+表~\ref{tab:ch5_error_analysis_k34} 的数值结果表明，应力变量 $\bm{\sigma}_h$ 的 $L^2$ 误差达到了 $\mathcal{O}(h^{k+1})$ 的理论最优逼近精度。相较于同阶次位移有限元（$P_{k-1}$ 位移）因形函数求导导致应力降阶至 $\mathcal{O}(h^{k-1})$，胡张混合元在应力场刻画上展现出了显著的精度优势。同时，应力的 $H(\operatorname{div})$ 误差与位移变量 $\boldsymbol{u}_h$ 的 $L^2$ 误差均呈现出稳定且一致的 $k$ 阶最优收敛阶。由于 $H(\operatorname{div})$ 误差实质上由应力的 $L^2$ 逼近误差与散度误差共同主导，其严格的收敛性从数值层面证实了胡张单元完全满足跨单元边界的法向牵引力连续性。这种单元级别的局部力平衡，从底层离散层面确保了内力的物理真实性，这对于后续彻底消除应力约束拓扑优化中极易引发的虚假应力震荡具有决定性的先决意义。
+
+如第~\ref{subsec:hz_stabilization} 节所述，当多项式阶次较低（二维情形下 $k < 3$）时，胡张混合有限元无法自然满足 inf-sup 稳定性条件，容易导致数值求解过程出现非物理震荡或严重的自锁现象。本节选取低阶的 $k=1$（$P_1$ 应力/$P_0$ 位移）与 $k=2$（$P_2$ 应力/$P_1$ 位移）进行收敛性分析。基于带有矩阵型跳量惩罚项的稳定化混合变分格式，相应的数值测试结果如表~\ref{tab:ch5_error_analysis_k12} 所示。
+
+\begin{table}[htbp]
+	\centering
+	\caption{二维线弹性问题下低阶稳定化胡张混合元的数值误差与收敛阶（$k=1, 2$）}
+	\label{tab:ch5_error_analysis_k12}
+	\renewcommand{\arraystretch}{1.3} % 拉开行距，避免指数上标与上一行重叠
+	\begin{tabular}{cccccccc}
+		\toprule
+		$k$ & $h$ & $\|\bm{u} - \bm{u}_h\|_{0,\Omega}$ & order & $\|\bm{\sigma} - \bm{\sigma}_h\|_{0,\Omega}$ & order & $\|\bm{\sigma} - \bm{\sigma}_h\|_{H(\mathrm{div},\Omega)}$ & order \\
+		\midrule
+		\multirow{5}{*}{1} 
+		& 0.5     & $5.147 \times 10^{-1}$ & ---  & $2.605 \times 10^{0} $ & ---  & $1.262 \times 10^{0} $ & ---  \\
+		& 0.25    & $3.131 \times 10^{-1}$ & 0.72 & $8.362 \times 10^{-1}$ & 1.64 & $6.445 \times 10^{0} $ & 0.97 \\
+		& 0.125   & $1.627 \times 10^{-1}$ & 0.94 & $2.702 \times 10^{-1}$ & 1.63 & $3.341 \times 10^{0} $ & 0.95 \\
+		& 0.0625  & $8.292 \times 10^{-2}$ & 0.97 & $9.262 \times 10^{-2}$ & 1.54 & $1.710 \times 10^{0} $ & 0.97 \\
+		& 0.03125 & $4.197 \times 10^{-2}$ & 0.98 & $3.160 \times 10^{-2}$ & 1.55 & $8.671 \times 10^{-1}$ & 0.98 \\
+		\midrule
+		\multirow{5}{*}{2} 
+		& 0.5     & $1.039 \times 10^{-1}$ & ---  & $4.019 \times 10^{-1}$ & ---  & $2.616 \times 10^{0}$ & ---  \\
+		& 0.25    & $3.430 \times 10^{-2}$ & 1.6  & $1.309 \times 10^{-1}$ & 1.62 & $1.416 \times 10^{0}$ & 0.89 \\
+		& 0.125   & $9.273 \times 10^{-3}$ & 1.89 & $3.547 \times 10^{-2}$ & 1.88 & $7.284 \times 10^{-1}$ & 0.96 \\
+		& 0.0625  & $2.389 \times 10^{-3}$ & 1.96 & $9.156 \times 10^{-3}$ & 1.95 & $3.721 \times 10^{-1}$ & 0.97 \\
+		& 0.03125 & $6.044 \times 10^{-4}$ & 1.98 & $2.320 \times 10^{-3}$ & 1.98 & $1.881 \times 10^{-1}$ & 0.98 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+表~\ref{tab:ch5_error_analysis_k12} 的数值结果表明，引入物理量纲缩放的跳量稳定化项后，低阶胡张混合有限元有效克服了离散 inf-sup 条件的限制。对于计算成本最低的 $k=1$ 情形，位移的 $L^2$ 误差与应力的 $H(\mathrm{div})$ 误差均严格达到了理论最优的 1 阶收敛，验证了该策略成功消除了低阶单元的自锁与数值震荡。对于 $k=2$ 情形，位移与应力的 $L^2$ 误差保持了良好的 2 阶收敛，但应力的 $H(\mathrm{div})$ 误差表现出向 1 阶退化的降阶现象。这一表现与 Chen 等~\cite{chenStabilizedMixedFinite2017a} 在纯位移边界条件下得到的 2 阶最优收敛不同，其根源在于本文算例所考察的混合边界条件。为保持牵引力边界的物理属性，稳定化惩罚项并未施加于 $\Gamma_N$ 上。这种局部稳定化的减弱叠加非多项式牵引数据在 $\Gamma_N$ 上的投影误差，使离散平衡方程受到位移跳量惩罚项的扰动。此数值扰动在单元内部引入了非物理残差，主导并降低了散度的逼近精度。尽管散度收敛降阶，该稳定化格式仍以极低的计算开销提供了高精度的位移与全局应力场，完全满足后续拓扑优化的底层求解需求。
+
+
+\section{基于胡张混合有限元的拓扑优化列式}
+\label{sec:hz_top_opt_formulation}
+
+本节将前述章节建立的任意次胡张混合有限元离散格式推广至连续体结构的拓扑优化设计。基于混合变分原理，我们分别给出了基于应变能（位移--刚度型）和基于互补能（应力--柔度型）的两种拓扑优化数学模型，并探讨了二者在理论上的等价关系。
+在应力--位移混合有限元框架下，本构关系通过柔度张量 $\mathcal{A}$ 描述。由于柔度张量在代数上是刚度张量的逆算子，若针对第 $e$ 个单元引入一般化的材料刚度插值函数 $m_E(\rho_e)$，该单元柔度矩阵的离散格式可一般性地表示为
+\[
+\boldsymbol{A}_{\sigma\sigma}(\rho_e) = \frac{1}{m_E(\rho_e)} \boldsymbol{A}_{\sigma\sigma}^{(0)},
+\]
+其中 $\boldsymbol{A}_{\sigma\sigma}^{(0)}$ 为完全由实体材料填充时对应的单元基准柔度矩阵。当采用拓扑优化中经典的 SIMP 惩罚模型（即 $m_E(\rho_e) = \rho_e^p$）时，单元柔度矩阵即呈现为如下的逆幂律插值格式：
+\[
+\boldsymbol{A}_{\sigma\sigma}(\rho_e) = \rho_e^{-p} \boldsymbol{A}_{\sigma\sigma}^{(0)}.
+\]
+该式直观表明，低密度区域（$\rho_e \to 0$）将具有趋于无穷大的柔度（即零刚度），从而在物理上正确模拟了材料的缺失。
+
+
+\subsection{最小柔顺度问题的互补能列式}
+\label{subsec:hz_topopt_baseline_compliance}
+
+考虑经典的最小柔顺度（即最大刚度）拓扑优化问题。假设结构忽略体力（即 $\boldsymbol{F}_u=\boldsymbol{0}$）且受到齐次位移边界条件约束（即 $\boldsymbol{F}_\sigma=\boldsymbol{0}$），牵引力外载荷作为本质边界条件被强施加于对应的应力自由度上。因此，系统离散方程组的右端项严格为零向量。需要强调的是，此时整个代数系统之所以存在非平凡解，完全是由上述非零的牵引力边界自由度所驱动的，这与传统位移法通过非零右端载荷项驱动的逻辑截然不同。
+
+在传统的拓扑优化框架中，位移--刚度型模型是最常见的形式，其物理本质是最小化外力功（或两倍应变能）。若在混合有限元系统中沿用该思路，其优化数学模型可表述为：
+\[
+\begin{aligned} 
+	\min_{\boldsymbol{\rho}} \quad & c(\boldsymbol{U},\boldsymbol{\rho}) = \boldsymbol{U}^T\boldsymbol{K}(\boldsymbol{\rho})\boldsymbol{U} \\ 
+	\mathrm{subject~to} \quad & 
+	\begin{bmatrix}
+		\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho}) & \boldsymbol{B}_{\sigma{u}}\\
+		\boldsymbol{B}_{u\sigma} & \boldsymbol{0}
+	\end{bmatrix}
+	\begin{Bmatrix}
+		\boldsymbol\Sigma\\
+		\boldsymbol{U}
+	\end{Bmatrix} =  
+	\begin{Bmatrix}
+		\boldsymbol{0}\\
+		\boldsymbol{0}
+	\end{Bmatrix},\\
+	& g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} - V_f \leq 0,\\ 
+	& \rho_e \in [\rho_{\min}, 1],\quad{e}=1,\cdots,N_c.
+\end{aligned}
+\]
+其中，全局刚度矩阵 $\boldsymbol{K}(\boldsymbol{\rho})$ 并非由位移有限元直接组装，而是通过本构方程与平衡方程消元得到的等效形式：
+\[
+\boldsymbol{K}(\boldsymbol{\rho}) = \boldsymbol{B}_{u\sigma}\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho})^{-1}\boldsymbol{B}_{\sigma{u}}.
+\]
+根据伴随变量法，目标函数关于单元设计变量 $\rho_e$ 的灵敏度依赖于全局等效刚度矩阵的偏导数 $\partial \boldsymbol{K} / \partial \rho_e$。若将其在混合离散框架下展开，该导数将呈现为极其复杂的格式：
+\[
+\frac{\partial \boldsymbol{K}}{\partial \rho_e} = \boldsymbol{B}_{u\sigma} \left( -\boldsymbol{A}_{\sigma\sigma}^{-1} \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{A}_{\sigma\sigma}^{-1} \right) \boldsymbol{B}_{\sigma u}.
+\]
+上述推导清晰地表明，若强制采用传统的位移--刚度型模型，灵敏度分析将不可避免地涉及柔度矩阵的求逆操作（$\boldsymbol{A}_{\sigma\sigma}^{-1}$）及多次矩阵乘法运算。这不仅极大地增加了计算开销与内存负担，更在数学形式上破坏了混合变分原本优美的解耦结构，完全未能发挥出将应力作为独立变量求解的理论优势。
+
+为了彻底克服这一缺陷，我们可以利用胡张混合有限元将应力作为独立变量高精度求解的特性。根据线弹性理论，柔顺度的最小化等价于互补应变能的最小化。因此，我们可以直接在应力空间中原生构建基于互补能的目标函数，即建立应力--柔度型模型：
+\begin{equation} \label{eq:ch5_hz_complementary_energy_model}
+	\begin{aligned} 
+		\min_{\boldsymbol{\rho}} \quad & c(\boldsymbol{\Sigma},\boldsymbol{\rho}) = \boldsymbol{\Sigma}^T\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho})\boldsymbol{\Sigma}\\ 
+		\mathrm{subject~to} \quad & 
+		\begin{bmatrix}
+			\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho}) & \boldsymbol{B}_{\sigma{u}}\\
+			\boldsymbol{B}_{u\sigma} & \boldsymbol{0}
+		\end{bmatrix}
+		\begin{Bmatrix}
+			\boldsymbol\Sigma\\
+			\boldsymbol{U}
+		\end{Bmatrix} =  
+		\begin{Bmatrix}
+			\boldsymbol{0}\\
+			\boldsymbol{0}
+		\end{Bmatrix},\\
+		& g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} - V_f \leq 0,\\ 
+		& \rho_e \in [\rho_{\min}, 1],\quad{e}=1,\cdots,N_c.
+	\end{aligned}
+\end{equation}
+与位移法繁琐的求逆操作不同，应力--柔度型模型下的灵敏度分析可以直接利用离散变分方程自身的代数性质进行极大简化。目标函数 $c$ 关于单元密度 $\rho_e$ 的导数为
+\[
+\frac{\partial c}{\partial \rho_e} = \frac{\partial \boldsymbol{\Sigma}^T}{\partial \rho_e} \boldsymbol{A}_{\sigma\sigma} \boldsymbol{\Sigma} + \boldsymbol{\Sigma}^T \left( \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} + \boldsymbol{A}_{\sigma\sigma} \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} \right).
+\]
+利用柔度矩阵 $\boldsymbol{A}_{\sigma\sigma}$ 的对称性，上式第一项与第三项转置相等，整理可得
+\[
+\frac{\partial c}{\partial \rho_e} = 2 \boldsymbol{\Sigma}^T \boldsymbol{A}_{\sigma\sigma} \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} + \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma}.
+\]
+为了消除上式中计算代价高昂的应力场隐式导数项 $\partial \boldsymbol{\Sigma} / \partial \rho_e$，对混合元离散方程组的第一行（即离散本构方程） $\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho})\boldsymbol{\Sigma} + \boldsymbol{B}_{\sigma u}\boldsymbol{U} = \boldsymbol{0}$ 关于密度 $\rho_e$ 求导，可得
+\[
+\frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} + \boldsymbol{A}_{\sigma\sigma} \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} + \boldsymbol{B}_{\sigma u} \frac{\partial \boldsymbol{U}}{\partial \rho_e} = \mathbf{0},
+\]
+移项并整理，得到
+\[
+\boldsymbol{A}_{\sigma\sigma} \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} = - \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} - \boldsymbol{B}_{\sigma u} \frac{\partial \boldsymbol{U}}{\partial \rho_e}.
+\]
+对上式两边取转置，并利用 $\boldsymbol{A}_{\sigma\sigma}$ 的对称性以及 $\boldsymbol{B}_{\sigma u}^T = \boldsymbol{B}_{u\sigma}$，有
+\[
+\frac{\partial \boldsymbol{\Sigma}^T}{\partial \rho_e} \boldsymbol{A}_{\sigma\sigma} = - \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} - \frac{\partial \boldsymbol{U}^T}{\partial \rho_e} \boldsymbol{B}_{u\sigma},
+\]
+在方程两边同时右乘应力向量 $\boldsymbol{\Sigma}$：
+\[
+\frac{\partial \boldsymbol{\Sigma}^T}{\partial \rho_e} \boldsymbol{A}_{\sigma\sigma} \boldsymbol{\Sigma} = - \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} - \frac{\partial \boldsymbol{U}^T}{\partial \rho_e} \left( \boldsymbol{B}_{u\sigma} \boldsymbol{\Sigma} \right).
+\]
+注意到混合元方程组的第二行（即离散平衡方程）要求 $\boldsymbol{B}_{u\sigma}\boldsymbol{\Sigma} = \mathbf{0}$，因此上式最右侧项为零。于是我们得到代数关系式：
+\[
+\boldsymbol{\Sigma}^T \boldsymbol{A}_{\sigma\sigma} \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} = \frac{\partial \boldsymbol{\Sigma}^T}{\partial \rho_e} \boldsymbol{A}_{\sigma\sigma} \boldsymbol{\Sigma} = - \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma}.
+\]
+利用该关系式，即可在灵敏度分析中完全规避对应力场隐式导数的直接求解。综合上述推导，互补能目标函数的灵敏度公式可进一步化简为
+\[
+\frac{\partial c}{\partial \rho_e} = 2 \left( - \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} \right) + \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} = - \boldsymbol{\Sigma}^T \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma}.
+\]
+将材料柔度插值模型 $\boldsymbol{A}_{\sigma\sigma, e}(\rho_e) = \frac{1}{m_E(\rho_e)} \boldsymbol{A}_{\sigma\sigma, e}^{(0)}$ 代入，即可得到最终的解析解：
+\begin{equation} \label{eq:ch5_hz_compliance_sensitivity}
+	\frac{\partial c}{\partial \rho_e} = -\frac{m_E'(\rho_e)}{m_E^2(\rho_e)} \left( \boldsymbol{\Sigma}_e^{\top} \boldsymbol{A}_{\sigma\sigma, e}^{(0)} \boldsymbol{\Sigma}_e \right),
+\end{equation}
+其中 $\boldsymbol{\Sigma}_e^T \boldsymbol{A}_{\sigma\sigma, e}^{(0)} \boldsymbol{\Sigma}_e$ 的物理意义为当前单元处于实体状态下的两倍互补应变能密度。
+
+尽管上述两种模型在离散代数结构与数值求解路径上存在显著差异，但根据 Hellinger-Reissner 混合变分原理，两者在理论上是严格等价的。Bruggi~\cite{bruggiTopologyOptimizationMixed2016a} 也在拓扑优化框架下验证了基于混合有限元互补能计算的结构柔顺度与传统位移法结果的高度一致性。这意味着在实际的数值计算中，我们可以直接利用胡张混合元求解出的高精度全局应力场 $\boldsymbol{\Sigma}$ 来构建并评估目标函数，从而彻底摆脱了传统位移法中依赖形函数求导及后处理重构应力场的计算瓶颈，充分发挥了“真正混合”体系的理论优势。
+
+
+\subsection{近不可压缩材料情形下的插值模型修正}
+\label{subsec:hz_topopt_incompressible_compliance}
+
+在连续体结构拓扑优化中，不可压缩或近不可压缩材料（如橡胶、生物软组织等）的设计是一类具有代表性的数值困难问题。对于各向同性线弹性材料，在三维或平面应变情形下，传统位移法中的刚度张量显式依赖于拉梅第一常数
+\[
+\lambda=\frac{E\nu}{(1+\nu)(1-2\nu)},
+\]
+当材料趋于不可压缩极限（即 $\nu\to0.5$）时，$\lambda\to\infty$，这将引起有限元刚度矩阵的条件数急剧恶化，在数值计算中表现为过强的体积约束，使得低阶位移单元往往容易出现体积闭锁现象。
+
+对于本文采用的应力--位移混合列式，本构关系通过柔度算子 $\mathcal A$ 描述。对各向同性材料，其双线性型可写为
+\[
+(\mathcal A\boldsymbol{\sigma},\boldsymbol{\tau}) =\frac{1}{2\mu}(\boldsymbol{\sigma},\boldsymbol{\tau}) -\frac{\lambda}{2\mu(2\mu+d\lambda)}(\operatorname{tr}\boldsymbol{\sigma},\operatorname{tr}\boldsymbol{\tau}).
+\]
+进一步地，将应力张量分解为偏应力部分与各向同性部分，即
+\[
+\boldsymbol{\sigma}=\operatorname{dev}\boldsymbol{\sigma}+\frac{1}{d}\operatorname{tr}(\boldsymbol{\sigma})\boldsymbol{I}, \qquad \operatorname{dev}\boldsymbol{\sigma}:=\boldsymbol{\sigma}-\frac{1}{d}\operatorname{tr}(\boldsymbol{\sigma})\boldsymbol{I},
+\]
+其中，$\operatorname{dev}\boldsymbol{\sigma}$ 表示应力张量的偏应力部分，即去掉各向同性部分后得到的无迹张量。由此可得
+\[
+(\mathcal A\boldsymbol{\sigma},\boldsymbol{\sigma}) =\frac{1}{2\mu}\|\operatorname{dev}\boldsymbol{\sigma}\|_{0,\Omega}^2 +\frac{1}{d(2\mu+d\lambda)}\|\operatorname{tr}\boldsymbol{\sigma}\|_{0,\Omega}^2.
+\]
+由上式可见，当 $\lambda\to\infty$ 时，柔度算子对体积部分的控制逐渐减弱，其极限仅保留对偏应力部分的作用。严格地说，此时柔度算子在全应力空间上不再保持严格强制性；但由于其对偏应力部分仍提供稳定控制，并结合应力--位移耦合项满足的 inf-sup 稳定性，在适当的连续与离散稳定性条件下，相关混合鞍点系统在不可压缩极限附近仍可保持稳定。也正因如此，胡张混合有限元在处理不可压缩或近不可压缩材料时，较传统低阶位移法通常表现出更好的抗体积闭锁能力。
+
+%在连续体结构拓扑优化中，不可压缩或近不可压缩材料（如橡胶、生物软组织等）的设计是一个极具挑战性的课题。在线性弹性力学的传统位移法列式中，各向同性材料的刚度张量 $\mathbb{C}$ 显式依赖于拉梅第一常数 $\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)}$。当材料趋于不可压缩极限（即 $\nu \to 0.5$）时，分母项 $(1-2\nu)$ 趋于零，导致 $\lambda \to \infty$。这将引起有限元刚度矩阵的条件数急剧恶化，在数值计算中表现为过强的体积约束，使得低阶位移单元无法正确描述变形场，即遭遇体积闭锁现象。
+
+% ！！！ 工程写法！！！
+%相比之下，本文采用的胡张混合有限元方法通过引入应力作为独立变量，其本构关系采用柔度算子 $\mathcal{A}$ 描述 。回顾第 5.4.1 节中的公式，对于各向同性材料，其双线性型可写为：
+%\[
+%(\mathcal{A}\sigma):\tau = \frac{1}{2\mu}\sigma:\tau - \frac{\lambda}{2\mu(2\mu+d\lambda)}\text{tr}(\sigma)\text{tr}(\tau)
+%\]
+%当 $\nu \to 0.5$ 即 $\lambda \to \infty$ 时，上述柔度算子的极限为：
+%\[
+%\lim_{\lambda \to \infty} (\mathcal{A}\sigma):\tau = \frac{1}{2\mu} \left( \sigma - \frac{1}{d}\text{tr}(\sigma)I \right) : \tau
+%\]
+%显然，即使在完全不可压缩极限下，柔度算子退化为对应力张量偏斜部分的作用，其映射始终是良定且有界的。因此，混合有限元方法在底层数值离散层面上天然免疫了体积闭锁问题。
+
+然而，在拓扑优化设计中，即便底层离散采用了抗体积闭锁的混合有限元格式，仍需进一步关注材料插值模型的物理一致性问题。这是因为，前述讨论针对的是有限元离散层面的稳定性，而拓扑优化中低密度区域的弱材料建模则属于材料参数插值层面的问题。若在三维或平面应变假设下，低密度区域仍保持接近不可压缩的泊松比，即 $\nu(\rho)\to0.5$，则根据体积模量
+\[
+K(\rho)=\frac{E(\rho)}{3(1-2\nu(\rho))}
+\]
+可知，即使杨氏模量 $E(\rho)$ 经惩罚后趋于极小值，体积模量仍会相对剪切模量异常偏大。特别地，在理论极限 $\nu(\rho)=0.5$ 时，体积模量将趋于无穷。这意味着结构内部会遗留大量剪切模量极小而体积模量极大的低密度单元。此类单元几乎不具备常规的抗剪承载能力，却仍强烈抵抗微小的体积变化，从而在结构内部形成非物理的虚假静水压力支撑，干扰材料边界的正常演化。
+
+为避免低密度区域呈现非物理的近不可压缩行为，必须引入更为合理的材料插值策略。参考 Bruggi~\cite{bruggiTopologyOptimizationIncompressible2007a} 的研究，本文对杨氏模量与泊松比分别进行密度相关插值：对于杨氏模量，采用带非零下界的 SIMP 插值，以避免刚度矩阵奇异；对于泊松比，则引入数值松弛函数，使低密度区域表现为可压缩弱材料，而高密度区域逐步逼近目标实体材料的近不可压缩特性。具体地，取
+\[
+\begin{aligned}  
+	E(\rho) &= E_{\min} + \rho^p (E_{0} - E_{\min}), \\  
+	\nu(\rho) &= \nu_{\text{void}} + \rho^{p_{\nu}} (\nu_{0} - \nu_{\text{void}}),  
+\end{aligned}
+\]
+其中，$E_0,\nu_0$ 为实体材料参数，$E_{\min}>0$ 与 $\nu_{\mathrm{void}}$ 分别表示低密度弱材料的杨氏模量下界与泊松比，其中通常取 $\nu_{\mathrm{void}}=0.3$，使低密度区域保持良好的可压缩性，从而显著缓解由弱材料近不可压缩性引起的虚假静水压力响应。$p$ 与 $p_\nu$ 分别为杨氏模量和泊松比的惩罚指数，其中通常取 $p_\nu\ge 1$，以保证泊松比随密度增加单调地向实体材料参数过渡。
+
+由上述插值关系，可进一步定义与密度相关的拉梅常数 $\mu(\rho)$ 与 $\lambda(\rho)$，从而显式构造出受密度场驱动的局部柔度算子 $\mathcal{A}(\rho)$。因此，第~\ref{subsec:hz_topopt_baseline_compliance} 节中建立的基于互补能的优化模型与离散形式均保持严格不变。在数值求解与灵敏度分析时，仅需将常参数本构关系无缝替换为上述密度相关的本构模型即可，从而在不破坏混合变分框架优良代数性质的前提下，彻底排除了不可压缩极限下的非物理演化干扰。
+
+% ！！！K-G SIMP 方法！！！
+%此外，另一种常用的策略是基于体积/剪切模量解耦的 K-G SIMP 法 。在该策略下，不再对杨氏模量 $E$ 与泊松比 $\nu$ 进行插值，而是直接对柔度算子 $\mathcal{A}(\rho)$ 中的偏斜（剪切）柔度分量与体积柔度分量进行独立惩罚：
+%$$\mathcal{A}(\rho)\sigma = \frac{1}{2G(\rho)} \left( \sigma - \frac{1}{d}\text{tr}(\sigma)I \right) + \frac{1}{d^2 K(\rho)} \text{tr}(\sigma)I$$依据 Bruggi 等人的研究 ，体积模量与剪切模量分别采用独立的 SIMP 惩罚模型 ：
+%$$K(\rho) = \rho^s K_0, \quad G(\rho) = \rho^t G_0$$式中，$K_0$ 和 $G_0$ 分别为完全实体材料的体积模量与剪切模量 。在数值实现中，通常取剪切惩罚指数 $t=3$ 。为了在低密度区域充分放松不可压缩约束，体积惩罚指数 $s$ 通常被赋予更大的值（例如 $s \ge 6$）。这种独立插值的方式保证了材料在向孔洞过渡时，其体积抵抗能力的衰减快于抗剪能力的衰减 ，从而直接有效消除了平面应变等条件下的虚假静水压力，保障了不可压缩材料拓扑演化的物理正确性与数值稳定性 。
+
+
+\subsection{基于独立应力的增广拉格朗日约束框架}
+\label{subsec:hz_topopt_stress_constrained}
+
+在第四章中，针对位移法有限元框架，构建了基于 ALM 的应力约束拓扑优化求解体系。然而，在传统的位移法中，应力场是通过位移场的导数计算得来的。这种依赖形函数求导的后处理方式，往往导致应力在单元边界处不连续，且精度相比位移场会下降一个阶次，这在捕捉复杂应力集中现象时存在固有的数值瓶颈。
+
+胡张混合有限元的引入从数值离散底层有效突破了这一瓶颈。在混合变分框架下，应力张量被提升为独立的基本变量，并通过具有 $H(\mathrm{div})$ 协调性的张量形函数空间进行离散。这意味着连续且高精度的全局应力场 $\boldsymbol{\Sigma}$ 成为有限元系统的原生解，彻底避免了位移法中因形函数求导导致的跨单元应力跳跃和精度折损问题。将第四章建立的轻量化设计模型推广至胡张混合有限元框架，结构体积最小化且满足局部应力约束的原始数学模型可重新表述为：
+\begin{equation} \label{eq:ch5_hz_stress_constraint_model}
+	\begin{aligned} 
+		\min_{\boldsymbol{\rho}} \quad & f(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} \\ 
+		\mathrm{subject~to} \quad & 
+		\begin{bmatrix}
+			\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho}) & \boldsymbol{B}_{\sigma{u}}\\
+			\boldsymbol{B}_{u\sigma} & \boldsymbol{0}
+		\end{bmatrix}
+		\begin{Bmatrix}
+			\boldsymbol\Sigma\\
+			\boldsymbol{U}
+		\end{Bmatrix} =  
+		\begin{Bmatrix}
+			\boldsymbol{0}\\
+			\boldsymbol{0}
+		\end{Bmatrix}, \\
+		& g_{\sigma, e}(\boldsymbol{\Sigma}) = \sigma_{e}^{\text{vM}}(\boldsymbol{\Sigma}) - \bar{\sigma} \le 0, \quad e = 1, \dots, N_e, \\ 
+		& \rho_e \in [\rho_{\min}, 1].
+	\end{aligned}
+\end{equation}
+类似于第~\ref{subsec:hz_topopt_baseline_compliance} 节，该离散系统的非平凡解由应力边界上的非齐次牵引力强施加驱动。这种将牵引力作为本质边界条件的处理方式，与传统位移法将其作为自然边界条件积分至右端载荷项的逻辑存在根本差异，体现了胡张混合元原生求解应力的理论优势。在此模型下，局部应力约束 $g_{\sigma, e}$ 直接依赖于系统原生求解出的独立应力自由度向量 $\boldsymbol{\Sigma}$，其中 $\sigma_e^{\mathrm{vM}}$ 表示基于该高精度独立应力场提取的第 $e$ 个单元的 von Mises 等效应力评估值，$\bar{\sigma}$ 为材料的许用应力。
+
+在胡张混合有限元框架下，数值系统直接求解获得的全局独立应力场 $\boldsymbol{\Sigma}$ 在物理含义上对应于宏观表观应力。在变密度拓扑优化的插值框架下，表观应力与材料内部真实的实体应力（记为 $\boldsymbol{\sigma}_0$）之间的联系可由材料刚度插值模型近似描述为 $\boldsymbol{\Sigma} \approx m_E(\rho) \boldsymbol{\sigma}_0$。若在混合元框架下直接沿用第四章中基于实体应力构建的归一化因子 $\Lambda_e$ 或消失约束技术，其物理实质变为了利用数值量级随密度衰减的表观应力去校核实体材料的许用强度 $\bar{\sigma}$。这种建模逻辑的偏差将导致在低密度区域（即当 $\rho_e \to 0$ 且 $\boldsymbol{\Sigma} \to \boldsymbol{0}$ 时）严重低估结构的局部真实应力水平，进而诱发非物理的“绝对安全”数值误判，使得优化算法无法对孔洞区域的应力分布进行有效的演化约束。
+
+针对独立表观应力变量 $\boldsymbol{\Sigma}$，第 $e$ 个单元的宏观屈服条件应修正为 $\sigma_e^{\text{vM}}(\boldsymbol{\Sigma}) \le m_E(\rho_e)\bar{\sigma}$。为了避免传统拓扑优化中由于推导实体应力（涉及设计变量逆项）而引发的应力奇异性问题，本研究避开了包含密度分母的常规应力松弛格式，直接构建作用于表观应力的无奇异约束函数。为防止极低密度区域梯度消失导致的数值不稳定，引入微小松弛参数 $\epsilon > 0$，定义松弛后的约束函数为：
+\begin{equation}
+	g_e(\boldsymbol{\rho}, \boldsymbol{\Sigma}) = \frac{\sigma_e^{\text{vM}}(\boldsymbol{\Sigma})}{\bar{\sigma}} - \eta(\rho_e) \le 0,
+	\label{eq:ch5_apparent_stress_constraints}
+\end{equation}
+其中，$\eta(\rho_e)$ 为基于表观应力的松弛阈值函数：
+\[
+\eta(\rho_e) = m_E(\rho_e) + \epsilon(1 - m_E(\rho_e)).
+\]
+该列式巧妙利用了混合元直接求解宏观表观应力的物理特性，在不同密度区间展现出优良的数值特性：
+\begin{itemize}
+	\item 当 $\rho_e \to 0$（孔洞区域）时，$\sigma_e^{\text{vM}}(\boldsymbol{\Sigma}) \to 0$，阈值 $\eta(\rho_e) \to \epsilon$，约束函数退化为 $-\epsilon \le 0$。此时不仅自然满足约束，而且在数学上彻底消除了分母为零的奇异点。
+	
+	\item 当 $\rho_e \approx 1$（实体区域）时，$m_E(\rho_e) \approx 1$，阈值 $\eta(\rho_e) \approx 1$，约束精确等价于原始的实体材料屈服条件 $\sigma_e^{\text{vM}}(\boldsymbol{\Sigma}) \le \bar{\sigma}$。
+\end{itemize}
+特别地，上述基于混合元的应力约束函数 $g_e(\boldsymbol{\rho}, \boldsymbol{\Sigma})$ 仅显式依赖于系统的应力自由度 $\boldsymbol{\Sigma}$，而与位移自由度 $\boldsymbol{U}$ 完全解耦。这一优良的代数性质将极大简化后续基于伴随变量法的灵敏度分析及增广拉格朗日系统的求解流程。
+
+为稳健处理具有大规模局部约束的应力拓扑优化问题，本研究引入归一化的 ALM。在第 $k$ 个外部增广拉格朗日迭代步中，原始受约束优化问题被转化为如下无约束子问题的求解：
+\[
+\min_{\boldsymbol{\rho}} \quad \mathcal{J}^{(k)}(\boldsymbol{\rho}, \boldsymbol{\Sigma}(\boldsymbol{\rho})) = f(\boldsymbol{\rho}) + \frac{1}{N_e} P^{(k)}(\boldsymbol{\rho}, \boldsymbol{\Sigma})
+\]
+其中，$f(\boldsymbol{\rho})$ 为归一化的目标函数。引入归一化系数 $1/N_e$ 的目的是使惩罚项 $P^{(k)}$ 与目标函数在数值量级上保持匹配，从而增强算法对网格规模的鲁棒性。增广拉格朗日惩罚项 $P^{(k)}$ 的具体构造为
+\[
+P^{(k)}(\boldsymbol{\rho}, \boldsymbol{\Sigma}) = \sum_{e=1}^{N_e} \left[ \lambda_e^{(k)} h_e(\boldsymbol{\rho}, \boldsymbol{\Sigma}) + \frac{\mu^{(k)}}{2} h_e(\boldsymbol{\rho}, \boldsymbol{\Sigma})^2 \right],
+\]
+其中，$\lambda_e^{(k)}$ 表示第 $k$ 步迭代中对应于第 $e$ 个单元局部应力约束的拉格朗日乘子，$\mu^{(k)} > 0$ 为惩罚因子。为处理不等式约束，定义有效约束函数 $h_e(\boldsymbol{\rho}, \boldsymbol{\Sigma})$ 为
+\[
+h_e(\boldsymbol{\rho}, \boldsymbol{\Sigma}) = \max \left[ g_e(\boldsymbol{\rho}, \boldsymbol{\Sigma}), -\frac{\lambda_e^{(k)}}{\mu^{(k)}} \right].
+\]
+
+在完成当前步无约束子问题 $\mathcal{J}^{(k)}$ 的近似求解后，根据各单元应力约束的违反情况，按照如下准则对乘子向量 $\boldsymbol{\lambda}^{(k)}$ 和惩罚因子 $\mu^{(k)}$ 进行更新，以驱动算法向可行域演化：
+\[
+\lambda_e^{(k+1)} = \lambda_e^{(k)} + \mu^{(k)} h_e(\boldsymbol{\rho}, \boldsymbol{\Sigma}),
+\]
+\[
+\mu^{(k+1)} = \min \left[ \alpha \mu^{(k)}, \mu_{\max} \right],
+\]
+式中，$\alpha > 1$ 为惩罚因子放大系数（通常取 $1.1 \sim 1.2$），$\mu_{\max}$ 为防止系统矩阵因过度惩罚而陷入病态设置的数值上限。在优化起始阶段，通常初始化乘子 $\lambda_e^{(0)} = 0$，并将 $\mu^{(0)}$ 设为一个较小的正数，以允许算法在初始阶段充分探索设计空间。
+
+为了使用基于梯度的优化算法更新设计变量，必须高效地计算增广拉格朗日无约束子问题目标函数 $\mathcal{J}^{(k)}$ 关于单元密度 $\rho_e$ 的全导数。由于目标函数不仅显式依赖于设计变量 $\boldsymbol{\rho}$，还通过混合有限元平衡方程隐式依赖于状态变量 $\boldsymbol{\Sigma}$ 与 $\boldsymbol{U}$。为消除计算代价极高的隐式导数项 $\partial \boldsymbol{\Sigma} / \partial \rho_e$ 和 $\partial \boldsymbol{U} / \partial \rho_e$，本研究引入伴随变量法进行解析灵敏度推导。
+
+首先，构造包含混合有限元状态方程残差的拉格朗日泛函：
+\[
+\mathcal{L} = f(\boldsymbol{\rho}) + \frac{1}{N_e} P^{(k)}(\boldsymbol{\rho}, \boldsymbol{\Sigma}) - \boldsymbol{\lambda}_\sigma^{\top} \left( \boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho})\boldsymbol{\Sigma} + \boldsymbol{B}_{\sigma u}\boldsymbol{U} \right) - \boldsymbol{\lambda}_u^{\top} \left( \boldsymbol{B}_{u\sigma}\boldsymbol{\Sigma} \right),
+\]
+式中，$\boldsymbol{\lambda}_\sigma$ 和 $\boldsymbol{\lambda}_u$ 为引入的伴随向量。根据链式法则，$\mathcal{L}$ 对第 $e$ 个单元密度 $\rho_e$ 的全导数为
+\[
+\begin{aligned}
+	\frac{d \mathcal{L}}{d \rho_e} =& \frac{\partial f}{\partial \rho_e} + \frac{1}{N_e} \frac{\partial P^{(k)}}{\partial \rho_e} - \boldsymbol{\lambda}_\sigma^{\top} \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \boldsymbol{\Sigma} \\
+	&+ \left( \frac{1}{N_e} \frac{\partial P^{(k)}}{\partial \boldsymbol{\Sigma}} - \boldsymbol{\lambda}_\sigma^{\top} \boldsymbol{A}_{\sigma\sigma} - \boldsymbol{\lambda}_u^{\top} \boldsymbol{B}_{u\sigma} \right) \frac{\partial \boldsymbol{\Sigma}}{\partial \rho_e} \\
+	&+ \left( - \boldsymbol{\lambda}_\sigma^{\top} \boldsymbol{B}_{\sigma u} \right) \frac{\partial \boldsymbol{U}}{\partial \rho_e}.
+\end{aligned}
+\]
+令上述方程中 $\partial \boldsymbol{\Sigma} / \partial \rho_e$ 与 $\partial \boldsymbol{U} / \partial \rho_e$ 的系数项为零。利用系统矩阵的对称性（$\boldsymbol{A}_{\sigma\sigma} = \boldsymbol{A}_{\sigma\sigma}^{\top}$ 以及 $\boldsymbol{B}_{\sigma u}^{\top} = \boldsymbol{B}_{u\sigma}$），可推导出求解伴随向量的线性方程组：
+\begin{equation} \label{eq:ch5_hz_adjoint_equation}
+	\begin{bmatrix}
+		\boldsymbol{A}_{\sigma\sigma}(\boldsymbol{\rho}) & \boldsymbol{B}_{\sigma u}\\
+		\boldsymbol{B}_{u\sigma} & \boldsymbol{0}
+	\end{bmatrix}
+	\begin{Bmatrix}
+		\boldsymbol{\lambda}_\sigma\\
+		\boldsymbol{\lambda}_u
+	\end{Bmatrix} =  
+	\begin{Bmatrix}
+		\boldsymbol{F}_{\text{adj}} \\
+		\boldsymbol{0}
+	\end{Bmatrix},
+\end{equation}
+其中，$\boldsymbol{F}_{\text{adj}}$ 为直接作用于全局应力自由度上的伴随载荷向量。上述伴随方程揭示了混合有限元在局部应力约束拓扑优化中的一个显著计算优势：伴随方程的左端项系数矩阵与状态方程的全局系统矩阵完全等价。这意味着在实际数值计算中，我们仅需在求解状态方程时对全局混合系统矩阵执行一次直接分解，在后续伴随分析时便可直接复用该分解因子，仅需执行一次高效的前后代入运算即可获取伴随向量。
+
+全局伴随载荷向量 $\boldsymbol{F}_{\text{adj}}$ 的组装显式依赖于增广拉格朗日惩罚项对全局应力自由度 $\boldsymbol{\Sigma}$ 的偏导数，其代数关系定义为
+\[
+\boldsymbol{F}_{\text{adj}} = \frac{1}{N_e} \left( \frac{\partial P^{(k)}}{\partial \boldsymbol{\Sigma}} \right)^{\top}.
+\]
+根据 ALM 的定义，利用链式法则可将惩罚项对第 $e$ 个单元局部应力自由度的偏导数进一步展开为
+\[
+\frac{\partial P^{(k)}}{\partial \boldsymbol{\Sigma}_e} = \left( \lambda_e^{(k)} + \mu^{(k)} h_e \right) \frac{\partial h_e}{\partial g_e} \frac{\partial g_e}{\partial \boldsymbol{\Sigma}_e},
+\]
+由于采用了无奇异表观应力约束~\eqref{eq:ch5_apparent_stress_constraints}，约束函数对局部应力张量的导数可通过进一步的链式法则，解耦为标量常数与张量偏导数的乘积：
+\[
+\frac{\partial g_e}{\partial \boldsymbol{\Sigma}_e} = \frac{\partial g_e}{\partial \sigma_e^{\mathrm{vM}}} \frac{\partial \sigma_e^{\mathrm{vM}}}{\partial \boldsymbol{\Sigma}_e} = \frac{1}{\bar{\sigma}} \frac{\partial \sigma_e^{\mathrm{vM}}}{\partial \boldsymbol{\Sigma}_e}.
+\]
+联立上述公式即可获得最终的右端伴随载荷分量。基于有效约束 $h_e$ 的最大值函数形式，其偏导数 $\partial h_e / \partial g_e$ 呈现出天然的分段阶跃特征，可严密表示为
+\[
+\frac{\partial h_e}{\partial g_e} = 
+\begin{cases} 
+	0, & \text{若 } g_e < -\frac{\lambda_e^{(k)}}{\mu^{(k)}}, \\ 
+	1, & \text{若 } g_e \ge -\frac{\lambda_e^{(k)}}{\mu^{(k)}}. 
+\end{cases}
+\]
+由上式可知，当 $g_e < -\lambda_e^{(k)}/\mu^{(k)}$ 时，表示该局部约束在当前 ALM 迭代步中处于安全余量充足的非激活状态；反之，则约束处于激活或违约状态。这一优良的数学特性赋予了伴随系统在装配全局载荷时自动屏蔽非激活约束的能力，极大削减了无效的计算开销。
+
+更为关键的是，由于胡张混合元将应力分量直接作为有限元节点自由度，计算 $\partial \sigma_e^{\mathrm{vM}} / \partial \boldsymbol{\Sigma}_e$ 时仅需对 von Mises 应力不变量进行显式的代数张量求导。这一原生特性彻底规避了传统位移法中依赖应变--位移矩阵 $\boldsymbol{B}$ 及材料雅可比矩阵的繁琐链式映射，从底层离散逻辑上保证了应力灵敏度分析的高效性与精确性。
+
+得益于上述无奇异表观应力约束列式的引入，应力状态评估与局部密度惩罚在代数求导层面上实现了完全解耦。对于处于激活状态的局部约束，约束函数对单元密度 $\rho_e$ 的显式偏导数可极大地简化为标量阈值函数的导数：
+\[
+\frac{\partial g_e}{\partial \rho_e} = - \eta'(\rho_e) = - (1 - \epsilon) m_E'(\rho_e),
+\]
+基于该式，即可直接且高效地计算出增广拉格朗日惩罚项对设计变量的显式偏导数分量，即
+\[
+\frac{\partial P^{(k)}}{\partial \rho_e} = \left( \lambda_e^{(k)} + \mu^{(k)} h_e \right) \frac{\partial h_e}{\partial g_e} \frac{\partial g_e}{\partial \rho_e}.
+\]
+
+在求解出伴随向量 $\boldsymbol{\lambda}_\sigma$ 后，将其代回全导数展开式。由于在满足状态方程时 $\frac{d \mathcal{J}^{(k)}}{d \rho_e} \equiv \frac{d \mathcal{L}}{d \rho_e}$，目标函数的最终灵敏度表达式被极大地化简为
+\[
+\frac{d \mathcal{J}^{(k)}}{d \rho_e} = \frac{\partial f}{\partial \rho_e} + \frac{1}{N_e} \frac{\partial P^{(k)}}{\partial \rho_e} - \boldsymbol{\lambda}_\sigma^{\top} \left( \frac{\partial \boldsymbol{A}_{\sigma\sigma}}{\partial \rho_e} \right) \boldsymbol{\Sigma}.
+\]
+注意到在上述求导过程中，全局柔度矩阵 $\boldsymbol{A}_{\sigma\sigma}$ 对 $\rho_e$ 的偏导数仅在第 $e$ 个单元的对应矩阵块上非零。考虑到混合有限元中局部柔度矩阵与刚度插值函数互为倒数关系，即 $\boldsymbol{A}_{\sigma\sigma, e}(\rho_e) = \frac{1}{m_E(\rho_e)} \boldsymbol{A}_{\sigma\sigma, e}^{(0)}$，对其关于单元密度求导可得 $\frac{\partial \boldsymbol{A}_{\sigma\sigma, e}}{\partial \rho_e} = - \frac{m_E'(\rho_e)}{m_E^2(\rho_e)} \boldsymbol{A}_{\sigma\sigma, e}^{(0)}$。提取局部单元的非零贡献并代入上式，即可得到适用于任意材料刚度插值模型的灵敏度一般解析式：
+\begin{equation} \label{eq:ch5_hz_stress_final_sensitivity}
+	\frac{d \mathcal{J}^{(k)}}{d \rho_e} = \frac{1}{V_0} \frac{\partial V}{\partial \rho_e} + \frac{1}{N_e} \frac{\partial P^{(k)}}{\partial \rho_e} + \frac{m_E'(\rho_e)}{m_E^2(\rho_e)} \left( \boldsymbol{\lambda}_{\sigma, e}^{\top} \boldsymbol{A}_{\sigma\sigma, e}^{(0)} \boldsymbol{\Sigma}_e \right),
+\end{equation}
+式中最后一项具有鲜明的力学内涵，它直观地表示为“伴随应力场”（$\boldsymbol{\lambda}_{\sigma, e}$）与“状态应力场”（$\boldsymbol{\Sigma}_e$）在局部单元上的互补能内积。
+
+
+\section{数值算例}
+\label{sec:hz_numerical_examples}
+
+本节旨在通过一系列典型数值算例，对前文建立的任意次胡张混合有限元拓扑优化方法进行系统验证与综合评估。在统一的计算基准下，本节将依次探讨线弹性基准问题、近不可压缩材料极限测试，以及局部应力约束应用推广。通过与标准位移有限元的严格对照实验，系统剖析离散格式、多项式阶次（低阶稳定化与高阶原生）以及泊松比对体积闭锁抑制能力、应力场逼近精度及最终拓扑构型的具体影响机制。
+
+\subsection{算例设置与统一框架}
+\label{subsec:hz_setup_framework}
+
+为系统验证任意阶胡张混合有限元方法在拓扑优化中的有效性与数值鲁棒性，本节算例在物理与本构假设（各向同性小变形线弹性体）、单位体系（$\mathrm{mm}/\mathrm{N}/\mathrm{MPa}$）以及收敛判定逻辑等方面，均与第~\ref{subsec:ch3_case_framework} 节保持一致。在此基础上，针对胡张混合有限元框架的数值特性，补充如下统一约定：
+
+\begin{description}
+	\item[离散格式与稳定性控制]：针对不同多项式阶次采取差异化处理策略。对于天然满足 inf-sup 稳定性条件的高阶情形（$k \ge 3$），直接采用标准的混合变分格式；而对于极易发生数值震荡与自锁的低阶情形（$k=1, 2$），则统一采用第~\ref{subsec:hz_stabilization} 节中引入的、带有物理量纲缩放的矩阵型跳量稳定化格式进行底层物理场求解。
+	
+	\item[集中载荷分布化]：混合元框架与传统位移法在载荷处理上存在本质区别。在位移法中分布化仅为缓解应力奇异性，而在混合变分列式中则是数学适定性的必然要求。由于位移测试空间被限定于 $L^2(\Omega)$，无法进行逐点求值，且受力边界在混合元中转化为应力空间的本质边界条件。因此，统一将集中力 $\boldsymbol{P}$ 转化为局部边界 $\Gamma_N$ 上的等效均布牵引力 $\bar{\boldsymbol{t}} = \boldsymbol{P}/l$（特征长度 $l$ 依网格尺寸自适应获取），并在离散层面通过对应力自由度进行强制赋值（即强施加 $\boldsymbol{\sigma}\boldsymbol{n} = \bar{\boldsymbol{t}}$）来实现，从而确保离散鞍点问题的适定性与数值稳定性。
+	
+	\item[复杂边界局部松弛]：针对承载、固支与自由边界交汇易引发的角点过约束难题，全文算例默认引入第~\ref{subsec:vertex_relaxation} 节所述的局部松弛策略。具体而言，在复杂几何角点处对切向相关的顶点应力自由度进行局部解耦分侧，同时严格保持法向连续性相关的自由度为单值。该处理在维系全局 $H(\operatorname{div})$ 协调性的前提下，使离散应力场能够精确匹配物理边界条件，从而保障了拓扑演化过程的稳定性。
+	
+	\item[材料插值与惩罚参数]：采用修正的 SIMP 材料插值模型，实体材料杨氏模量设为 $E_0 = 1\,\mathrm{MPa}$，空置区域引入下界 $E_{\min} = 10^{-9}\,\mathrm{MPa}$ 以维持系统矩阵的非奇异性。对于体积约束下的柔顺度最小化问题，杨氏模量惩罚因子固定为 $p=3$；对于涉及局部应力约束的问题，惩罚因子取为 $p=3.5$。
+	
+	\item[正则化与过滤半径]：统一采用密度过滤技术实现最小特征尺度控制。过滤半径 $r_{\min}$ 严格按设计域的绝对物理长度进行度量，以消除网格尺寸对拓扑特征的干扰。
+	
+	\item[优化算法]：针对不同约束类型选择相应的更新算法。对于仅包含体积分数约束的基准算例，采用 OC 法进行设计变量更新；而对于应力约束下的体积最小化问题，则采用 MMA 进行求解。
+\end{description}
+
+
+\subsection{基准算例}
+\label{subsec:hz_foundmental_example}
+
+本节选取拓扑优化领域的经典二维基准问题，旨在验证任意阶胡张混合有限元方法在线弹性结构拓扑优化中的通用性与数值鲁棒性。通过与同等离散规模下的标准位移有限元方法进行对比，论证本文所提方法在求解基准问题时，能够获得物理意义明确、边界清晰的拓扑构型。
+
+\subsubsection*{算例 5.1：中点受载的两端固支梁}
+
+该算例考察经典的两端固支梁结构，如图~\ref{fig:ch5_fixed_fixed_beam_geo} 所示，设计域 $\Omega$ 为矩形薄板，几何尺寸设定为 $L \times 0.125L$，其中特征长度取 $L=160\,\mathrm{mm}$。设计域左、右两侧垂直边界实施完全固支约束（即位移 $\boldsymbol{u} = \boldsymbol{0}$），在下边界的中点 $(0.5L, 0)$ 处施加一个竖直向下的集中载荷 $P = 3\,\mathrm{N}$。依据~\ref{subsec:hz_setup_framework} 节所述策略将其转化为等效局部均布牵引力，为最大程度逼近理想集中载荷，取特征长度 $l = 1\,\mathrm{mm}$。除受力区域外，其余边界均为自由应力边界（即 $\boldsymbol{\sigma}\boldsymbol{n} = \mathbf{0}$）。考虑到几何构型及物理响应的对称性，计算中取左半部分设计域进行离散求解，并在对称面处施加相应的位移与应力约束。材料杨氏模量取为 $E = 30\,\mathrm{MPa}$，泊松比 $\nu = 0.4$，优化问题定义为：在满足体积分数约束 $V_f = 0.4$ 的条件下，寻找材料的最优分布以最小化结构柔顺度。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.9\textwidth]{ch5_fixed_fixed_beam_geo}
+	\caption{两端固支梁设计域、载荷与边界条件示意图}
+	\label{fig:ch5_fixed_fixed_beam_geo}
+\end{figure}
+
+为验证本文所建的任意次胡张混合有限元框架在拓扑优化中的正确性与适用性，本算例选取了跨越低阶与高阶区间的代表性多项式阶次（$k=2, 3, 4$）进行测试。需要特别指出的是，本节未考察 $k=1$（即 $P_1$ 应力 / $P_0$ 位移）的最低阶情形。尽管该配置在引入跳量稳定化后可实现常规静力学的收敛求解，但其 $P_0$ 位移空间无法完备包含刚体位移空间（Rigid Body Motion space，简称 RM 空间），即丧失了表征单元局部微小旋转的能力。在变密度拓扑演化过程中，这种 RM 空间的缺失会导致低密度区域局部应变能评估严重失真，使系统过度依赖人工界面惩罚，进而极易引发严重的数值震荡与非物理拓扑。因此，本算例选取 $k=2$ 作为验证低阶稳定化格式有效性的下限（其 $P_1$ 位移空间已完备包含 RM 空间，能提供稳健的底层物理驱动），而选取 $k=3, 4$ 则用于考察高阶原生格式的数值性能。通过对比不同多项式阶次下的拓扑构型与目标函数值，论证该框架在不同离散精度下均能保持物理结果的高度一致性。在数值实现上，求解域统一采用 $80 \times 20$ 的结构化三角形网格剖分，且为排除数值尺度效应的干扰，所有测试组的密度过滤半径均严格固定为 $r_{\min} = 2.4\,\mathrm{mm}$。
+
+图~\ref{fig:ch5_fixed_fixed_beam_top} 给出了单分辨率离散体系下，分别采用标准位移有限元与胡张混合有限元求解所得的最终拓扑构型。为进行系统对比，图中左列 (a), (c), (e) 依次展示了位移法在 $k = 2, 3, 4$ 阶次下的演化结果，右列 (b), (d), (f) 则为对应阶次下胡张混合元的设计结果。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[标准位移法 ($k=2$)]{
+		\label{fig:ch5_lfem_k2}
+		\includegraphics[width=0.47\textwidth]{ch5_lfem_k2}
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=2$)]{
+		\label{fig:ch5_hzfem_k2}
+		\includegraphics[width=0.47\textwidth]{ch5_hzfem_k2}
+	}
+	
+	\par\medskip
+	
+	\subfigure[标准位移法 ($k=3$)]{
+		\label{fig:ch5_lfem_k3}
+		\includegraphics[width=0.47\textwidth]{ch5_lfem_k3}
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=3$)]{
+		\label{fig:ch5_hzfem_k3}
+		\includegraphics[width=0.47\textwidth]{ch5_hzfem_k3}
+	}
+	
+	\par\medskip
+	
+		\subfigure[标准位移法 ($k=4$)]{
+		\label{fig:ch5_lfem_k4}
+		\includegraphics[width=0.47\textwidth]{ch5_lfem_k4}
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=4$)]{
+		\label{fig:ch5_hzfem_k4}
+		\includegraphics[width=0.47\textwidth]{ch5_hzfem_k4}
+	}
+	
+	\caption{不同离散方法与多项式阶次 $k$ 下两端固支梁的最终拓扑构型对比}
+	\label{fig:ch5_fixed_fixed_beam_top}
+\end{figure}
+
+由图~\ref{fig:ch5_fixed_fixed_beam_top} 结果可知，尽管两类离散方法在底层主变量定义与数值稳定性维持机制上存在本质差异，但二者在相同多项式阶次下收敛得到的拓扑特征展现出极高的物理吻合度，均清晰、准确地捕捉到了固支梁经典的交叉承载杆件构型。这种跨越不同物理场求解框架的高度一致性，有力地验证了本文所建立的胡张混合有限元拓扑优化模型在驱动材料演化方面的正确性，以及对不同离散精度的适应性。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[标准位移法]{
+		\label{fig:ch5_lfem_convergence}
+		\includegraphics[width=0.47\textwidth]{ch5_lfem_convergence}
+	}
+	\hfill
+	\subfigure[胡张混合法]{
+		\label{fig:ch5_hzmfem_convergence}
+		\includegraphics[width=0.47\textwidth]{ch5_hzmfem_convergence}
+	}
+	
+	\caption{两端固支梁优化过程的目标函数与体积分数收敛历史曲线对比}
+	\label{fig:ch5_fixed_fixed_beam_convergence}
+\end{figure}
+
+进一步分析图~\ref{fig:ch5_fixed_fixed_beam_convergence} 所示的优化收敛过程。在定量对比方面，标准位移法在 $k=2,3,4$ 阶次下的最终柔顺度均收敛于 32 附近，而胡张混合法则稳定在 27 附近。这部分数值差异从根本上源于离散空间的数学属性：传统位移法因位移场 $C^0$ 连续性要求极易引入人工数值刚度，导致对结构柔顺度的评估偏高；相比之下，胡张混合有限元基于 $H(\operatorname{div})$ 协调的对称张量空间进行离散，有效缓解了局部的连续性过约束，从而能够更准确地逼近真实的互补应变能（即获得更优的柔顺度数值）。此外，两类方法的目标函数迭代曲线均展现出优异的单调性与平滑度，且体积分数严格稳定在 0.40 的约束边界上。尽管胡张混合法因底层自由度规模较大而增加了优化迭代步数，但其换取的高精度原生应力场，为后续处理复杂的局部应力约束问题奠定了可靠的分析基础。
+
+
+\subsection{应用推广：近不可压缩问题}
+\label{subsec:near_incompressible_problem}
+
+为检验胡张混合有限元方法在逼近不可压缩极限下的抗体积闭锁能力，本节在统一几何、边界及优化参数的前提下，仅改变实体材料泊松比 $\nu_0$ 进行严格的对比分析。具体实验设置如下：可压缩基准组取 $\nu_0=0.3$；在近不可压缩实验组中，为保证物理参数的绝对一致性并凸显底层离散格式的差异，标准位移法与胡张混合法均统一取 $\nu_0=0.4999$。同时，为排除孔洞区域因弱材料体积模量过大而引发的物理闭锁干扰（详见第~\ref{subsec:hz_topopt_incompressible_compliance} 节），所有算例均采用修正的泊松比插值策略，固定孔洞泊松比 $\nu_{\text{void}}=0.3$ 并取惩罚指数 $p_{\nu}=1$。该设置确保了最终拓扑构型演化的差异仅源于底层离散格式的数值稳定性。
+
+
+\subsubsection*{算例 5.2：二维轴承装置}
+
+本算例考察二维轴承装置的拓扑优化问题，其设计域及边界条件如图~\ref{fig:ch5_bearing_device_diagram} 所示。设计域几何尺寸定义为 $3L \times L$，其中特征长度取 $L=40\,\mathrm{mm}$。结构底部边界施加完全的固定位移约束（$u_x=u_y=0$）；顶部边界施加竖直向下的均布牵引载荷 $\boldsymbol{t} = (0, -t_0)^{\top}$，其中 $t_0 = 8 \times 10^{-2}\,\mathrm{N/mm}$；其余左右两侧边界均为自由应力边界。材料的杨氏模量设定为 $E = 1\,\mathrm{MPa}$（泊松比按前述控制变量方案分别取值）。优化问题定义为：在满足体积分数上限 $V_f=0.35$ 的条件下，寻找材料的最优分布以最小化结构的总体柔顺度。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.75\textwidth]{ch5_bearing_device_diagram}
+	\caption{二维轴承装置设计域、载荷与边界条件示意图}
+	\label{fig:ch5_bearing_device_diagram}
+\end{figure}
+
+为了全面评估本文构建的任意阶胡张混合有限元方法在逼近不可压缩极限下的有效性与抗体积闭锁能力，本节在统一的参数设置（$120 \times 40$ 三角形网格剖分，密度过滤半径 $r_{\min} = 2.0\,\mathrm{mm}$，以及均匀的初始密度分布 $\rho_0 = 0.35$）下设置了严格的对照实验。分别采用多项式阶次为 $k=2$ 的标准位移法与胡张混合法对该二维轴承装置问题进行独立求解与对比分析。图~\ref{fig:ch5_bearing_device_k2} 展示了两种离散方法分别在可压缩基准组（$\nu_0=0.3$）与近不可压缩实验组（$\nu_0=0.4999$）下最终演化得到的拓扑构型与目标柔顺度 $c$。
+
+%！！！注意这里混合元实际上展示的 nu=0.5 的结果！！！
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$c=123.3753$]{
+		\label{fig:ch5_bearing_device_lfemk2_nu03}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_lfemk2_nu03}
+	}
+	\hfill
+	\subfigure[$c=55.7879$]{
+		\label{fig:ch5_bearing_device_lfemk2_nu04999}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_lfemk2_nu04999}
+	}
+	
+	\par\medskip
+	
+	\subfigure[$c=128.4504$]{
+		\label{fig:ch5_bearing_device_hzmfemk2_nu03}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_hzmfemk2_nu03}
+	}
+	\hfill
+	\subfigure[$c=102.7948$]{
+		\label{fig:ch5_bearing_device_hzmfemk2_nu05}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_hzmfemk2_nu05}
+	}
+	
+	\caption{二维轴承装置拓扑构型与柔顺度对比：上排为标准位移法结果，下排为胡张混合法结果；左列为可压缩基准组（$\nu_0 = 0.3$），右列为近不可压缩实验组（$\nu_0 = 0.4999$）}
+	\label{fig:ch5_bearing_device_k2}
+\end{figure}
+
+观察图~\ref{fig:ch5_bearing_device_k2} 可知，底层离散格式的数值稳定性对不可压缩极限下的拓扑演化具有决定性影响。在可压缩基准组（$\nu_0=0.3$）中，标准二次位移法与胡张混合法均演化出边界清晰的多拱形支撑结构（图~\ref{fig:ch5_bearing_device_lfemk2_nu03} 与图~\ref{fig:ch5_bearing_device_hzmfemk2_nu03}），且两者柔顺度数值接近（分别为 $123.3753$ 与 $128.4504$），验证了混合有限元框架在常规材料拓扑优化中的正确性。
+
+然而，在近不可压缩实验组中，两种方法的表现出现剧烈分化。当材料逼近不可压缩极限（$\nu_0=0.4999$）时，标准位移法（图~\ref{fig:ch5_bearing_device_lfemk2_nu04999}）遭遇了严重的体积闭锁。在拓扑构型上，优化算法为抵抗由于不可压缩约束产生的虚假静水压力，被迫大面积堆积材料并形成不合理的局部铰链，导致原本高效的传力结构彻底失效；在数值表现上，其柔顺度异常骤降至 $c=55.7879$。这种极低的目标函数值并非结构性能的真实提升，而是低阶位移单元处理无散度约束能力不足所引发的 人工刚化假象。形成鲜明对比的是，胡张混合法在相同的近不可压缩参数（$\nu_0=0.4999$）下进行求解（图~\ref{fig:ch5_bearing_device_hzmfemk2_nu05}），依然稳健地生成了与可压缩状态高度一致的清晰多拱结构。其柔顺度值（$c=102.7948$）合理反映了近不可压缩材料真实的力学抵抗行为。这得益于混合变分原理中柔度算子在 $\nu_0 \to 0.5$ 时的良定性，使得该方法天然免疫体积闭锁，确保了基于梯度的拓扑演化由真实的抗剪承载能力主导，充分证明了本文框架在处理近不可压缩问题时的数值优势。
+
+为了进一步验证本文所构建的任意阶胡张混合有限元框架在不可压缩极限下的普适性与高阶逼近优势，本节继续考察了高阶情形（$k=3$ 与 $k=4$）的拓扑演化行为。与低阶情形类似，高阶混合法同样在统一的近不可压缩参数（$\nu_0=0.4999$）下进行求解，其最终演化的拓扑构型与柔顺度对比结果如图~\ref{fig:ch5_bearing_device_hzmfem_nu05} 所示。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$c=100.4405$]{
+		\label{fig:ch5_bearing_device_hzmfemk_nu05}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_hzmfemk3_nu05}
+	}
+	\hfill
+	\subfigure[$c=99.6252$]{
+		\label{fig:ch5_bearing_device_hzmfemk4_nu05}
+		\includegraphics[width=0.47\textwidth]{ch5_bearing_device_hzmfemk4_nu05}
+	}
+	
+	\caption{高阶胡张混合法在完全不可压缩极限（$\nu_0 = 0.5$）下的拓扑构型与柔顺度 $c$ 对比：(a) $k=3$；(b) $k=4$}
+	\label{fig:ch5_bearing_device_hzmfem_nu05}
+\end{figure}
+
+图~\ref{fig:ch5_bearing_device_hzmfem_nu05} 的结果表明，无论是 $k=3$ 还是 $k=4$，高阶胡张混合有限元均能彻底免疫体积闭锁，稳健地演化出与图 5.7(d) 高度一致的无铰链、多拱形传力构型。进一步定量对比可以发现，随着多项式阶次的提高，高阶单元展现出了更强的物理场逼近能力。其最终的柔顺度评估值由 $k=2$ 时的 102.7948 进一步下降至 100.4405（$k=3$）与 99.6252（$k=4$）。这不仅印证了基于柔度算子的混合变分原理处理无散度约束的物理正确性，更验证了本文方法在跨越不同多项式阶次时的高度离散独立性与数值鲁棒性，有效实现了高阶精度与近不可压缩材料拓扑优化的统一。
+
+
+\subsubsection*{算例 5.3：两点载荷夹持板结构}
+
+考察一个受两点载荷作用的夹持板结构~\cite{bruggiTopologyOptimizationMixed2016a}，其设计域及边界条件如图~\ref{fig:ch5_clamped_beam_diagram} 所示。设计域几何尺寸定义为 $L \times 0.5L$，其中特征长度取 $L=80\,\mathrm{mm}$。结构左右两侧的下半部分（即 $y \in [0, 0.25L]$ 的边界区域）施加完全固支约束（$u_x = u_y = 0$），结构顶部中点与底部中点分别施加竖直向下的集中载荷 $P = 2\,\mathrm{N}$，特征分布长度取 $l=1\,\mathrm{mm}$，其余边界均为自由应力边界。材料的杨氏模量设定为 $E=1\,\mathrm{MPa}$。优化问题定义为：在满足体积分数上限 $V_f = 0.3$ 的条件下，寻找材料的最优分布以最小化结构的总体柔顺度。
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.75\textwidth]{ch5_clamped_beam_diagram}
+	\caption{两点载荷夹持板设计域、载荷与边界条件示意图}
+	\label{fig:ch5_clamped_beam_diagram}
+\end{figure}
+
+为验证本文方法在不同几何与复杂受力状态下的普适性，本算例采用上述两点载荷夹持板模型进行进一步的对比分析。考虑到在二维情形下，当单元阶次 $k \ge 3$ 时胡张混合有限元能够天然满足离散 inf-sup 稳定性条件，直接选取 $k=3$ 的高阶多项式空间进行离散。旨在考察不含附加稳定化项的原生混合变分列式在逼近不可压缩极限下的数值表现。设计域离散为 $80 \times 40$ 的三角形网格，密度过滤半径设为 $r_{\min} = 2.0\,\mathrm{mm}$，均匀的初始密度分布 $\rho_0 = 0.3$。图~\ref{fig:ch5_clamped_beam_k3} 展示了高阶位移法与高阶胡张混合法（$k=3$）在可压缩基准组（$\nu_0=0.3$）与不可压缩实验组（$\nu_0=0.4999$）下的拓扑构型与目标柔顺度对比。
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$c=151.5643$]{
+		\label{fig:ch5_clamped_lfemk3_nu03}
+		\includegraphics[width=0.47\textwidth]{ch5_clamped_lfemk3_nu03}
+	}
+	\hfill
+	\subfigure[$c=117.4088$]{
+		\label{fig:ch5_clamped_lfemk3_nu04999}
+		\includegraphics[width=0.47\textwidth]{ch5_clamped_lfemk3_nu04999}
+	}
+	
+	\par\medskip
+	
+	\subfigure[$c=140.0837$]{
+		\label{fig:ch5_clamped_hzmfemk3_nu03}
+		\includegraphics[width=0.47\textwidth]{ch5_clamped_hzmfemk3_nu03}
+	}
+	\hfill
+	\subfigure[$c=119.4079$]{
+		\label{fig:ch5_clamped_hzmfemk3_nu04999}
+		\includegraphics[width=0.47\textwidth]{ch5_clamped_hzmfemk3_nu04999}
+	}
+	
+	\caption{两点载荷夹持板拓扑构型与柔顺度对比：上排为标准位移法结果，下排为胡张混合法结果；左列为可压缩基准组（$\nu_0 = 0.3$），右列为近不可压缩实验组（$\nu_0 = 0.4999$）}
+	\label{fig:ch5_clamped_beam_k3}
+\end{figure}
+
+观察图~\ref{fig:ch5_clamped_beam_k3} 可知，在面临复杂受力与边界约束时，原生的高阶胡张混合有限元（$k=3$）依然展现出优异的抗体积闭锁能力。在可压缩基准组（$\nu_0 = 0.3$）中，高阶位移法与混合法均演化出清晰的宏观菱形传力框架（图~\ref{fig:ch5_clamped_lfemk3_nu03} 与图~\ref{fig:ch5_clamped_hzmfemk3_nu03}），且两者的拓扑特征表现出高度的几何相似性，验证了高阶单元在处理常规弹性问题时的数值精度与适用性。
+
+然而，在近不可压缩实验组中，两者的局部构型特征产生了显著差异。当采用位移法逼近不可压缩极限（$\nu_0 = 0.4999$）时，结构内部几何转角处出现了明显的非物理虚假连杆（图~\ref{fig:ch5_clamped_lfemk3_nu04999}）。这些虚假铰链是算法为释放由不可压缩约束引发的局部虚假静水压力而产生的典型闭锁畸变。在数值表现上，尽管位移法的最终柔顺度（$c = 117.4088$）并未发生剧烈偏离，但这实际上是优化系统利用此类病态构型强行松弛物理约束的结果，并不能代表真实材料的力学性能。 形成鲜明对比的是，胡张混合法在相同的近不可压缩参数（$\nu_0 = 0.4999$）下进行求解（图~\ref{fig:ch5_clamped_hzmfemk3_nu04999}），内部构型清晰且无任何畸变连杆，柔顺度评估值（$c = 119.4079$）合理反映了近不可压缩材料真实的力学抵抗行为。这证明了本文混合变分框架在无需稳定化惩罚的情形下，依然能从底层变分机制上有效消除此类非物理的拓扑畸变，为近不可压缩材料结构的轻量化设计提供了稳健的数值保障。
+
+
+\subsection{应用推广：应力约束问题}
+\label{subsec:hz_stress_constraint}
+
+在第四章的位移法框架中，为滤除孔洞区域因弱材料（极小刚度）引发的非物理虚假应力（即应力奇异性现象），通常需要在后处理阶段引入材料插值函数进行应力松弛干预。然而，在基于互补能的胡张混合有限元框架下，系统直接求解得到的是独立且全局协调的应力场 $\boldsymbol{\Sigma}$。从物理意义上讲，该应力场本质上对应于多孔材料的表观应力。随着单元密度 $\rho_e \to 0$，孔洞区域的局部柔度算子趋于无穷大；为保证系统总互补应变能的有界性与变分极值，底层物理机制自然迫使该区域的应力解 $\boldsymbol{\Sigma}$ 严格衰减为零。这意味着，混合有限元格式在底层数学构造上具备自动过滤虚假应力的能力，完全免除了传统位移法中对应力场的人工松弛干预。
+
+基于上述优异的表观应力演化特性，针对第 $e$ 个单元，混合元框架下归一化的 von Mises 应力测度可简明地定义为
+\[
+\tilde{\sigma}_{e}^{\text{vM}} = \frac{\sigma_{e}^{\text{vM}}(\boldsymbol{\Sigma})}{\bar{\sigma}},
+\]
+式中，$\sigma_{e}^{\text{vM}}(\boldsymbol{\Sigma})$ 为由混合变分系统直接求解出的独立应力张量所计算的局部等效应力，$\bar{\sigma}$ 为许用应力。在后续优化迭代中，提取全域最大应力测度 $\max(\tilde{\sigma}_{e}^{\text{vM}})$ 并与 1.0 进行比对，即可作为检验全局应力安全性的可靠判据。
+
+
+\subsubsection*{算例 5.4：端部中点受载的二维悬臂梁}
+
+考察经典的端部中点受载二维悬臂梁结构（如图~\ref{fig:ch5_canti2d_middle} 所示），该模型的几何区域、位移边界条件以及载荷设定均沿用第~\ref{subsec:lfem_stress_constraint} 节算例 4.2 的配置，设计域为长宽比 $2:1$ 的矩形薄板，特征长度 $L=80\,\mathrm{mm}$，高度为 $0.5L$；设计域左侧边缘实施全固支约束；在右侧边缘中点处施加竖直向下的总载荷 $P = 400\,\mathrm{N}$，为保证混合变分列式的适定性，该载荷按特征分布长度 $l = 6\,\mathrm{mm}$ 转化为等效的局部均布牵引力。材料杨氏模量设定为 $E = 70,000\,\mathrm{MPa}$，泊松比为 $\nu = 0.25$。优化问题定义为：在满足结构内各局部点的 von Mises 等效应力均不超过许用应力 $\bar{\sigma} = 180\,\mathrm{MPa}$ 的严格约束下，寻找使结构总体积最小化的最优材料分布。
+
+\begin{figure}[H]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.75\textwidth]{ch5_canti2d_middle_diagram}
+	\caption{端部中点受载的二维悬臂梁设计域、载荷与边界条件示意图}
+	\label{fig:ch5_canti2d_middle}
+\end{figure}
+
+为了全面评估本文构建的胡张混合有限元应力约束拓扑优化框架的有效性，本节在统一的参数设置（$80\times40$ 三角形网格剖分，密度过滤半径 $r_{\min}=6.0\,\mathrm{mm}$，以及均匀的初始密度分布 $\rho_0=0.5$）下设置了严格的对照实验。分别采用多项式阶次均为 $k=2$ 的标准位移法与胡张混合法对该悬臂梁问题进行独立求解与对比分析，其最终演化的拓扑构型与归一化 von Mises 等效应力分布如图~\ref{fig:ch5_canti2d_middle_result} 所示。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\setlength{\figheight}{3.2cm}   % ← 只需调这一个值
+	
+	\subfigure[标准位移法 ($k=2$) 最终拓扑构型]{
+		\label{fig:ch5_canti2d_middle_top}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_top}
+	}
+	\hfill
+	\subfigure[标准位移法 ($k=2$) 归一化 von Mises 应力]{
+		\label{fig:ch5_canti2d_middle_vm}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_vm}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=2$) 最终拓扑构型]{
+		\label{fig:ch5_canti2d_middle_top_hzk2}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_top_hzk2}
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=2$) 归一化 von Mises 应力]{
+		\label{fig:ch5_canti2d_middle_vm_hzk2}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_vm_hzk2}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	
+	\caption{悬臂梁应力约束体积最小化优化结果对比}
+	\label{fig:ch5_canti2d_middle_result}
+\end{figure}
+
+观察图~\ref{fig:ch5_canti2d_middle_result} 可知，无论是标准位移法还是胡张混合法，均成功演化出了边界清晰、传力路径明确的 V 型交叉承载杆件结构，两者在宏观拓扑构型上表现出高度的一致性。然而，深入对比局部应力场细节可以发现，传统位移法因对应力场进行形函数求导，导致应力在单元交界处存在明显的非物理跳跃；而胡张混合法作为将应力作为原生独立变量的求解框架，基于底层的 $H(\operatorname{div})$ 空间协调性，天然保证了跨单元边界法向应力分量的严格连续。因此，从图~\ref{fig:ch5_canti2d_middle_vm_hzk2} 可见，混合法应力场在实体杆件内部及交叉节点处表现得更加平滑、连续，有效抑制了因有限元网格依赖性引发的局部应力数值震荡，为复杂的局部应力约束评估提供了更为精确可靠的底层物理场信息。
+
+除了宏观构型与应力分布的定性对比，本节进一步提取了寻优过程中的体积与应力演化数据，以定量评估算法的数值稳健性。多项式阶次均为 $k=2$ 的标准位移法与胡张混合法的优化收敛历史，以及主应力空间下的 von Mises 屈服面与实体单元应力分布，如图~\ref{fig:ch5_canti2d_middle_quantity} 所示。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\setlength{\figheight}{4.5cm}   % ← 只需调这一个值
+	
+	\subfigure[标准位移法 ($k=2$) 收敛历史]{
+		\label{fig:ch5_canti2d_middle_lfem_convergence}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_lfem_convergence}
+	}
+	\hfill
+	\subfigure[标准位移法 ($k=2$) 应力分布]{
+		\label{fig:ch5_canti2d_middle_lfem_yield_surface}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_lfem_yield_surface}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=2$) 收敛历史]{
+		\label{fig:ch5_canti2d_middle_hzmfem_convergence}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzmfem_convergence}
+	}
+	\hfill
+	\subfigure[胡张混合法 ($k=2$) 应力分布]{
+		\label{fig:ch5_canti2d_middle_hzmfem_yield_surface}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzmfem_yield_surface}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	
+	\caption{悬臂梁应力约束优化收敛历史与主应力空间实体单元分布对比}
+	\label{fig:ch5_canti2d_middle_quantity}
+\end{figure}
+
+由图~\ref{fig:ch5_canti2d_middle_quantity} 右侧的主应力散点图可知，两种方法的大量实体单元均紧贴 von Mises 屈服边界。位移法与混合法的最大归一化应力分别为 1.0008 与 0.9978，前者存在微小越界，而后者严格收敛于约束边界内。这种应力评估上的精度差异直接影响了算法的材料移除策略，进而导致了最终体积结果的显著偏离：位移法最终体积分数为 0.3499（实体单元数 2266，实体单元平均归一化应力 0.6067）；而混合法给出的设计偏于保守，体积分数达 0.3877（实体单元数 2549，相应平均归一化应力降至 0.5509）。这一现象深刻揭示了传统位移法因应力降阶与抹平效应低估了局部应力峰值，导致过度移除材料而陷入“过优化”陷阱；混合法则凭借原生应力解析的高精度，精准捕捉危险区域，通过保留更多材料以共同分担载荷，切实保证了结构在真实物理工况下的安全性。
+
+此外，图~\ref{fig:ch5_canti2d_middle_quantity} 左侧的收敛历史曲线也直观反映了算法动态寻优性能的显著差异。由于底层物理场解析精度的提升，胡张混合元为优化系统提供了平滑且高度可靠的梯度信息。反映在迭代轨迹上，混合法仅需约 110 步即可迅速平息波动并达成最优构型；而位移法则伴随着明显的高频数值震荡，耗费约 230 步才勉强达到收敛标准。这进一步印证了本文混合有限元框架在处理高度非线性局部应力约束时显著的收敛优势与数值稳定性。
+
+为验证本文所建应力约束拓扑优化框架的普适性与数值鲁棒性，本节将其推广至不同多项式阶次的胡张混合离散，进一步考察了高阶情形（$k=3$ 与 $k=4$）。在此测试中，应力与位移空间的阶次配对分别采用 $P_3$ 应力 / $P_2$ 位移（$k=3$）与 $P_4$ 应力 / $P_3$ 位移（$k=4$）。值得指出的是，由于高阶胡张元天然满足离散的 inf-sup 稳定性条件，底层物理场可直接采用标准混合变分格式进行求解，无需引入低阶情形下的跳量稳定化惩罚项。所有优化参数、网格剖分及初始设计均与前述 $k=2$ 的基准算例保持严格一致，其最终演化结果如图~\ref{fig:ch5_canti2d_middle_hzk3_4} 所示。
+
+\begin{figure}[htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\setlength{\figheight}{3.2cm}   % ← 只需调这一个值
+	
+	\subfigure[$k=3$ 最终拓扑构型]{
+		\label{fig:ch5_canti2d_middle_hzk3_top}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzk3_top}
+	}
+	\hfill
+	\subfigure[$k=3$ 归一化 von Mises 等效应力]{
+		\label{fig:ch5_canti2d_middle_hzk3_vm}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzk3_vm}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	\hfill
+	\subfigure[$k=4$ 最终拓扑构型]{
+		\label{fig:ch5_canti2d_middle_hzk4_top}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzk4_top}
+	}
+	\hfill
+	\subfigure[$k=4$ 归一化 von Mises 等效应力]{
+		\label{fig:ch5_canti2d_middle_hzk4_vm}
+		\includegraphics[height=\figheight]{ch5_canti2d_middle_hzk4_vm}%
+		\raisebox{-5pt}{%      % ← 向下偏移，数值与上面减去的 pt 一致
+			\hspace{4pt}%
+			\begin{tikzpicture}
+				\begin{axis}[
+					hide axis,
+					scale only axis,
+					height=\dimexpr\figheight - 5pt\relax,  % ← 手动微调，减去多余边距
+					width=0.1cm,
+					colormap/jet,
+					colorbar right,
+					point meta min=0,
+					point meta max=1,
+					colorbar style={
+						width=0.3cm,
+						ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+						yticklabel style={font=\small},
+					},
+					]
+					\addplot [draw=none] coordinates {(0,0)(1,1)};
+				\end{axis}
+			\end{tikzpicture}
+		}%
+	}
+	
+	\caption{高阶离散情形下悬臂梁应力约束体积最小化优化结果对比}
+	\label{fig:ch5_canti2d_middle_hzk3_4}
+\end{figure}
+
+观察图~\ref{fig:ch5_canti2d_middle_hzk3_4} 可知，尽管多项式阶次有所增加且完全脱离了稳定化惩罚算子的干预，高阶混合法依然稳健地演化出与 $k=2$ 基准结果高度一致的拓扑构型，充分验证了本文应力约束模型具备优异的离散独立性。进一步对比局部细节，高阶情形下的应力分布在宏观上与 $k=2$ 保持一致，但在局部特征解析上展现出显著改善：得益于高阶多项式更强的函数逼近能力，其杆件边界更加清晰锐利，灰度过渡单元显著减少；同时，纯正的原生变分格式规避了低阶稳定化项可能引入的局部抹平效应，使得交叉节点等几何突变处的应力梯度解析更为精细自然。这表明，高阶胡张混合法在摆脱人工稳定化参数干扰后，能为敏感的局部应力约束提供更高精度的物理场支撑，进一步证实了本文框架在不同阶次下的普适性及高阶逼近优势。
+
+
+\section{本章小结}
+\label{sec:hz_summary}
+
+本章针对低阶位移有限元在处理近不可压缩材料与局部应力约束时面临的体积闭锁及应力逼近精度不足问题，系统开展了基于任意次胡张混合有限元的拓扑优化研究。通过引入 Hellinger-Reissner 混合变分原理，将对称应力张量作为独立主变量，从数学底层构建了满足 $H(\operatorname{div})$ 协调性的高精度物理场求解体系。本章推导了互补能灵敏度解析格式与无奇异表观应力约束模型，并成功应用于近不可压缩极限与大规模应力约束的稳健优化设计中。主要结论如下：
+
+\begin{enumerate}
+	\item \textbf{胡张混合空间的构造与全阶次适定性}：构建了任意次单纯形胡张离散体系，实现了跨单元法向迹严格连续与局部力平衡。通过引入带物理量纲缩放的跳量稳定化与顶点应力部分松弛技术，有效克服了低阶 inf-sup 稳定性缺失及复杂边界过约束难题，保障了系统在全阶次区间内的数值适定性。
+	
+	\item \textbf{互补能优化列式的构建与高精度驱动}：建立了应力--柔度型拓扑优化模型并推导了互补应变能的解析灵敏度格式，在代数层面彻底规避了应力场隐式导数求解与柔度矩阵求逆。相比传统位移法，该离散空间通过缓解局部过约束，能以更优精度逼近真实的互补能响应，为获取高性能构型提供了更精确的变分驱动力。
+	
+	\item \textbf{近不可压缩问题的抗闭锁与物理一致性}：利用混合元离散稳定性常数独立于材料拉梅常数的特性，从变分底层彻底免疫了体积闭锁效应。结合修正的弹性参数联合插值策略，排除了低密度区因弱材料近不可压缩性引发的非物理静水压力干扰，确保了不可压缩极限下拓扑演化的真实性与鲁棒性。
+	
+	\item \textbf{局部应力约束的天然过滤与稳健控制}：揭示了混合变分机制驱动低密度区表观应力自然衰减的特性，无需人工松弛即可从数学上消除应力奇异性。直接利用原生独立应力场构建无奇异约束函数，结合归一化 ALM 框架，有效克服了传统位移法因形函数求导引发的应力跳跃，实现了应力约束边界的平滑逼近，避免了“过优化”陷阱。
+\end{enumerate}
+
+综上所述，任意次胡张混合有限元方法通过应力--位移双变量的一体化处理，极大释放了 $H(\operatorname{div})$ 离散空间在解决复杂约束及特殊材料问题中的潜力。针对高精度物理分析与复杂优化流程带来的计算规模挑战，下一章将依托开源引擎 FEALPy 设计实现高性能拓扑优化软件平台 SOPTX，通过自动微分与多后端加速技术，为上述数值模型提供工程可复现的计算支撑。
+
+
+%\fi

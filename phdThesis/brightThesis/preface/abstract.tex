@@ -1,25 +1,38 @@
 %----摘要----------------------------------------------------------------------------------------
 \begin{cnabstract}
 
+连续体结构拓扑优化是复杂工程结构轻量化与高性能设计的重要数学方法。尽管基于变密度方法的连续体结构拓扑优化已形成较为系统的理论与算法体系，但在高精度分析、复杂局部约束建模与求解以及高效计算实现方面仍面临关键数值挑战。其中，传统低阶位移有限元在局部应力场刻画、近不可压缩材料分析及局部应力约束评估等方面存在局限，而先进数值方法与高性能计算平台之间亦缺乏统一实现框架。针对上述问题，本文围绕连续体结构拓扑优化中的关键数值问题，系统研究高精度离散方法、复杂局部约束优化建模及其高性能实现。
 
-检查
+针对高精度离散建模问题，本文系统比较了任意次拉格朗日有限元在变密度拓扑优化中的离散表现及数值特征。通过考察不同单元类型、不同离散阶次以及单元密度与节点密度两类设计变量表征，分析了它们对优化构型、分析精度与计算性能的影响，揭示了高阶拉格朗日有限元在典型变密度拓扑优化问题中的适用特征与精度优势。在此基础上，针对传统单分辨率框架中高精度物理分析与高分辨率拓扑描述难以兼顾的问题，构建了基于高阶有限元的多分辨率拓扑优化计算框架。该框架通过设计网格与分析网格的解耦，建立了设计变量到物理密度的映射机制，以及相应的优化列式、刚度矩阵数值积分与灵敏度分析方法，并进一步推广到应力约束拓扑优化问题。研究结果表明，该框架能够在控制计算规模的同时兼顾结构分析精度与拓扑表达分辨率，并在应力约束拓扑优化问题中表现出良好的适用性。
 
+针对复杂局部约束与特殊材料情形下的拓扑优化建模问题，本文进一步研究了基于任意次胡张混合有限元的高精度拓扑优化方法。基于 Hellinger–Reissner 混合变分原理，本文系统建立了线弹性问题的应力--位移混合描述、任意次胡张混合有限元离散框架及其相应的拓扑优化列式，并通过低阶稳定化处理与复杂边界条件下顶点应力连续性的部分松弛策略，提升了该方法在非结构网格、低阶情形及复杂工程边界下的适用性，进一步面向最小柔顺度、近不可压缩材料与局部应力约束等典型问题构建了相应的数值求解框架。研究结果表明，任意次胡张混合有限元方法在缓解体积闭锁以及提升局部应力约束评估的可靠性方面具有明显优势。
+
+面向前述高精度离散模型与优化算法的统一实现需求，本文依托 FEALPy 开源智能 CAX 计算引擎，设计并实现了高性能拓扑优化软件平台 SOPTX。该平台在继承 FEALPy 底层张量抽象与多后端机制的基础上，围绕拓扑优化闭环构建了面向领域问题的分层架构与核心模块体系，实现了分析过程、灵敏度分析与优化更新之间的模块化解耦。在关键技术层面，平台重点发展了基于解析预计算与张量收缩的高效矩阵组装与算子缓存机制、自动微分驱动的灵敏度分析实现，以及面向 NumPy、PyTorch、JAX 等不同后端与 CPU/GPU 异构设备的性能可移植执行机制。通过典型数值实验，进一步验证了 SOPTX 在高效矩阵组装与自动微分灵敏度分析方面的正确性与计算效率，以及在多后端与异构设备切换方面的扩展性与计算性能。该平台为本文所提出的多类拓扑优化模型与数值方法提供了统一、可复现且可扩展的软件实现支撑。
+
+综上，本文围绕连续体结构拓扑优化中的若干关键数值问题，从高阶有限元离散方法、多分辨率高精度计算、任意次胡张混合有限元建模到高性能软件平台实现，形成了一条贯通“高精度离散建模--复杂局部约束优化求解--统一软件实现验证”的系统研究主线。相关研究从数学模型、离散格式、灵敏度分析到软件实现与数值验证，建立了较为完整的理论--方法--实现研究链条，为连续体结构拓扑优化中高精度有限元离散、复杂局部约束建模及工程可复现计算提供了较为系统的理论、方法与平台支撑。
 
 \end{cnabstract}
 
 \begin{cnkeywords}
-有限元方法; 
+	高阶有限元；胡张混合有限元；多分辨率拓扑优化；应力约束拓扑优化；拓扑优化软件平台 SOPTX
 \end{cnkeywords}
-
 
 %----Abstract----------------------------------------------------------------
 \newpage
 \begin{enabstract}
-
-balabala
-
+	
+	Continuum structural topology optimization is an important mathematical approach for the lightweight and high-performance design of complex engineering structures. Although density-based continuum structural topology optimization has developed into a relatively systematic theoretical and algorithmic framework, it still faces several critical numerical challenges in high-accuracy analysis, the modeling and solution of complex local constraints, and efficient computational implementation. In particular, conventional low-order displacement-based finite elements exhibit clear limitations in the characterization of local stress fields, the analysis of nearly incompressible materials, and the evaluation of local stress constraints. Meanwhile, a unified implementation framework that can systematically bridge advanced numerical methods and high-performance computing platforms is still lacking. To address these issues, this dissertation systematically investigates high-accuracy discretization methods, optimization modeling under complex local constraints, and their high-performance implementation for several key numerical problems in continuum structural topology optimization.
+	
+	To address high-accuracy discretization modeling in topology optimization, this dissertation systematically compares the discrete behavior and numerical characteristics of arbitrary-order Lagrange finite elements in density-based topology optimization. By examining different element families, different polynomial orders, and two design-variable representations, namely element-based and node-based density representations, the effects of these factors on optimized topologies, analysis accuracy, and computational efficiency are analyzed, thereby revealing the applicability features and accuracy advantages of high-order Lagrange finite elements in typical density-based topology optimization problems. On this basis, to overcome the difficulty of simultaneously achieving high-accuracy physical analysis and high-resolution topology representation within the conventional single-resolution framework, a multiresolution topology optimization framework based on high-order finite elements is established. Through the decoupling of the design mesh and the analysis mesh, this framework develops the mapping mechanism from design variables to physical densities, together with the associated optimization formulations, numerical integration methods for stiffness matrices, and sensitivity analysis methods, and is further extended to stress-constrained topology optimization problems. The results show that this framework can simultaneously achieve structural analysis accuracy and topology representation resolution under controlled computational cost, and exhibits good applicability to stress-constrained topology optimization problems.
+	
+	For topology optimization modeling under complex local constraints and special material conditions, this dissertation further investigates a high-accuracy topology optimization method based on arbitrary-order Hu–Zhang mixed finite elements. Based on the Hellinger–Reissner mixed variational principle, a stress-displacement mixed formulation for linear elasticity, an arbitrary-order Hu–Zhang mixed finite element discretization framework, and the corresponding topology optimization formulations are systematically established. Through low-order stabilization techniques and a partial relaxation strategy for vertex stress continuity under complex boundary conditions, the applicability of the proposed method to unstructured meshes, low-order cases, and complex engineering boundaries is further enhanced. Corresponding numerical solution frameworks are then developed for typical problems, including compliance minimization, nearly incompressible materials, and local stress constraints. Numerical results show that the arbitrary-order Hu–Zhang mixed finite element method has clear advantages in alleviating volumetric locking and enhancing the reliability of local stress constraint evaluation.
+	
+	To meet the unified implementation requirements of the aforementioned high-accuracy discretization models and optimization algorithms, this dissertation designs and implements a high-performance topology optimization software platform, SOPTX, based on FEALPy, an open-source intelligent CAX computing engine. Building upon FEALPy’s tensor abstraction and multi-backend mechanism, the platform constructs a domain-oriented layered architecture and a core modular system around the topology optimization loop, thereby realizing modular decoupling among structural analysis, sensitivity analysis, and optimization updates. At the technical level, the platform develops an efficient matrix assembly and operator caching mechanism based on analytical precomputation and tensor contraction, a sensitivity analysis implementation based on automatic differentiation, and a performance-portable execution mechanism for different backends, including NumPy, PyTorch, and JAX, as well as heterogeneous CPU/GPU devices. Representative numerical experiments further verify the correctness and computational efficiency of SOPTX in efficient matrix assembly and sensitivity analysis based on automatic differentiation, as well as its extensibility and computational performance under multi-backend and heterogeneous CPU/GPU execution. The platform provides unified, reproducible, and extensible software support for the various topology optimization models and numerical methods developed in this dissertation.
+	
+	In summary, this dissertation addresses several key numerical issues in continuum structural topology optimization, and establishes a systematic research line spanning high-order finite element discretization methods, multiresolution high-accuracy topology optimization, arbitrary-order Hu–Zhang mixed finite element modeling, and high-performance software implementation. In particular, this work forms a coherent research line running through high-accuracy discretization modeling, optimization under complex local constraints, and unified software implementation and validation. Covering mathematical models, discretization schemes, sensitivity analysis, software implementation, and numerical validation, the related studies establish a relatively complete research chain integrating theory, methodology, and implementation. The present work provides systematic theoretical, methodological, and software support for high-accuracy finite element discretization, the modeling of complex local constraints, and reproducible computation for engineering applications in continuum structural topology optimization.
+	
 \end{enabstract}
 
 \begin{enkeywords}
-  Finite element method;
-\end{enkeywords} 
+	High-Order Finite Elements; Hu-Zhang Mixed Finite Elements; Multiresolution Topology Optimization; Stress-Constrained Topology Optimization; Topology Optimization Software Platform SOPTX
+\end{enkeywords}

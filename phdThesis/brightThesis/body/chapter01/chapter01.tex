@@ -1,2 +1,169 @@
 % !TeX root = ../../brightPhD.tex
-\chapter{引言}
+\chapter{绪论}
+\label{chap:introduction}
+
+\iffalse
+
+\section{研究背景}
+\label{sec:research_background}
+
+工程结构的设计与建造水平是衡量现代工业发展程度的重要标志。早期的结构设计多依赖经验数据与简易几何作图，通过反复试凑与被动校验来调整参数。这种模式不仅设计周期冗长，且难以触及系统性能的理论最优边界~\cite{GongChengJieGouYouHuaSheJiJiChuChengGengDongBianZhu2012, wangLightweightResearchEngineering2019}。随着航空航天、大型高层建筑及生物医学等领域的飞速发展~\cite{zhuTopologyOptimizationAircraft2016a, beghiniConnectingArchitectureEngineering2014a}（如图~\ref{fig:ch1_modern_applications} 所示），面对日益严苛的轻量化与高性能需求，传统方法已难以胜任复杂装备的设计挑战。20 世纪 60 年代以来，随着计算力学、计算机技术及现代优化理论的飞速发展，科技工作者开始将优化方法引入结构设计领域~\cite{Schmit1960}，使得结构设计产生了革命性的跃升，逐渐转变为主动改善设计，追求在满足多重物理约束与工程可行性的前提下，实现材料空间分布与系统性能的最优匹配~\cite{bendsoeTopologyOptimization2004a}。
+
+\begin{figure}[!htbp]
+	\centering
+	% 子图 a
+	\subfigure[航空航天装备承力结构]{
+		\label{fig:ch1_app_aerospace}
+		% 将高度从 4cm 缩小到 3.2cm，确保三张图总宽不超限
+		\includegraphics[height=3.5cm, keepaspectratio]{ch1_astro}
+	}
+	\hfill
+	% 子图 b
+	\subfigure[高层建筑抗侧力支撑体系]{
+		\label{fig:ch1_app_building}
+		\includegraphics[height=3.5cm, keepaspectratio]{ch1_building}
+	}
+	\hfill
+	% 子图 c
+	\subfigure[个性化生物医疗植入体]{
+		\label{fig:ch1_app_medical}
+		\includegraphics[height=3.5cm, keepaspectratio]{ch1_biology}
+	}
+	
+	\caption{现代复杂工程结构设计的典型应用场景}
+	\label{fig:ch1_modern_applications}
+\end{figure}
+
+根据设计变量的类型，结构优化设计可分为尺寸优化、形状优化和拓扑优化三个递进层次~\cite{bendsoeTopologyOptimization2004a, deatonSurveyStructuralMultidisciplinary2014a}（如图~\ref{fig:ch1_struct_opt} 所示）。前两者的设计空间相对局限：尺寸优化通常以截面积、板厚等有限维参数为设计变量；形状优化则在既有拓扑构型的基础上，将内外边界的几何曲线或曲面作为优化对象（本质为区域变分问题）。相比之下，拓扑优化彻底突破了初始构型的限制，直接将设计域内的材料分布（通常被抽象为特征函数或连续的密度场）作为设计变量，旨在给定设计空间内寻求材料的最优分布与拓扑连通性（如内部孔洞的生成与演化）。在现代工程自顶向下的设计流程中，拓扑优化不仅率先确立了结构的宏观基调并决定了性能上限，其本质更是一类极具挑战性的无穷维空间分布参数优化问题，因而是整个设计流程中最核心、最具决定意义的关键步骤。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.75\textwidth]{ch1_struct_opt}
+	\caption{结构优化设计的三个递进层次：尺寸优化、形状优化与拓扑优化}
+	\label{fig:ch1_struct_opt}
+\end{figure}
+
+根据研究对象的物理形态与离散特性，拓扑优化主要分为离散结构拓扑优化与连续体结构拓扑优化两大类~\cite{rozvanyAimsScopeMethods2001}。前者主要针对桁架或框架等由离散杆件构成的系统；后者则面向二维平面、板壳或三维实体等连续介质，其本质是在给定设计域内寻求材料的最优空间分布，以优化结构的宏观力学性能~\cite{bendsoeOptimalShapeDesign1989a}。相较于离散结构拓扑优化，连续体结构拓扑优化无需预设节点连接关系与初始拓扑构型，具备更高的设计自由度，因而能够更充分地发掘结构潜在的承载路径与拓扑形态，现已成为现代工程前沿设计中的重要研究方向~\cite{sigmundTopologyOptimizationApproaches2013a}。
+
+然而，机遇与挑战并存。连续体结构拓扑优化在迈向复杂工程应用时，其底层数值算法与软件生态仍面临多重亟待突破的瓶颈。在数值求解的离散精度方面，传统低阶 $C^0$ 位移有限元在捕捉复杂变形模式时受限于形函数阶次，极易引发体积锁死或剪切锁死现象~\cite{zienkiewiczFiniteElementMethod2010}，导致基础位移响应的逼近精度严重不足。与此同时，由于应力场是通过位移场的梯度派生而来，应力在单元交界面处通常是不连续的，难以获取高精度的局部应力分布，这对极度依赖局部力学特征的拓扑演化造成了严重的数值干扰。更为棘手的是，除了离散精度上的缺陷，应力约束拓扑优化在数学模型本身还面临着固有的病态挑战。当单元材料密度趋近于零时，应力约束的可行域会发生退化并形成奇异点，导致基于梯度的优化算法无法跨越不可行域以访问真正的全局最优解，这便是著名的应力奇异性现象~\cite{kirschSingularTopologiesOptimum1990, chengStudyTopologyOptimization1992, duysinxTopologyOptimizationContinuum1998a}。进一步地，为获得边界清晰、局部细节丰富的拓扑构型，往往需要采用极高分辨率的设计网格。但在传统物理与设计网格严格绑定的单分辨率耦合框架下，若直接引入高阶有限元以提升精度，将导致求解规模呈指数级膨胀，使得高精度物理离散与高分辨率拓扑设计面临难以兼顾的计算矛盾~\cite{nguyenComputationalParadigmMultiresolution2010a}。
+
+此外，在底层计算软件实现维度，现有主流商业软件受限于自身的封闭性与架构的迭代滞后性，难以快速集成高阶有限元、混合有限元等先进离散格式以及多分辨率等前沿计算框架。面对包含大量设计变量的大规模优化问题时，由于缺乏支持底层算子定制、自动微分技术~\cite{norgaardApplicationsAutomaticDifferentiation2017c} 以及跨异构硬件高性能并行的基础支撑~\cite{zegardGPUAcceleratedTopology2013}，先进的数值理论往往难以转化为切实的高效计算生产力。这已成为横亘在理论突破与工程落地之间的巨大鸿沟。
+
+
+\section{结构拓扑优化领域研究综述}
+\label{sec:literature_review}
+
+为明确本文在偏微分方程数值算法及底层软件实现方面的研究动机，本节将对连续体结构拓扑优化的研究现状展开系统综述。下文将依次回顾主流拓扑优化理论的基础数学模型，剖析典型设计问题面临的核心数值计算挑战，并审视现有软件生态在支撑大规模优化时的技术局限。
+
+
+\subsection{连续体结构拓扑优化理论与方法}
+\label{subsec:continuum_topo_opt_methods}
+
+自 1981 年 Cheng 与 Olhoff~\cite{chengInvestigationConcerningOptimal1981} 关于实心弹性薄板材料布局的先驱性研究以来，连续体结构拓扑优化迎来了蓬勃发展。在随后的几十年中，研究者们基于不同的数学与力学理念，发展出了多种极具代表性的拓扑优化分支方法。根据拓扑构型的数学表达与数值演化策略，当前主流的连续体结构拓扑优化方法可归纳为以下三大类~\cite{rozvanyCriticalReviewEstablished2009, deatonSurveyStructuralMultidisciplinary2014a, JieGouTuoBuYouHuaShuZhiFangFaYanJiuJinZhan}：
+
+\begin{enumerate}
+	\item \textbf{基于材料分布的方法}：以设计域内的材料空间分布状态为优化对象。根据对材料微观物理模型与宏观属性映射方式的差异，该类方法主要包括早期的均匀化方法（Homogenization Method）以及随后被广泛应用的变密度方法（Density-based Method）。
+	
+	\item \textbf{进化方法}：基于启发式准则直接增删材料单元，典型代表包括渐进结构优化法（Evolutionary Structural Optimization, ESO）与双向渐进结构优化法（Bi-directional Evolutionary Structural Optimization, BESO）。
+	
+	\item \textbf{基于边界演化的方法}：通过隐式或显式追踪结构几何边界进行优化，典型代表包括水平集方法（Level Set Method）、相场方法（Phase Field Method）以及移动变形组件法（Moving Morphable Components, MMC）等。
+\end{enumerate}
+
+基于材料分布的方法，其核心数学思想是将非凸且极具组合爆炸风险的 0-1 离散拓扑设计问题，松弛为具有良好解析性质的连续体材料分布问题。作为该类方法的理论奠基，Bendsøe 与 Kikuchi 于 1988 年提出的均匀化方法~\cite{bendsoeGeneratingOptimalTopologies1988} 率先引入具有周期性微孔洞的复合材料，利用严格的渐近展开理论建立了微观几何与宏观等效弹性张量间的解析映射。然而，由于空间离散后数量众多的微观几何参数以及繁琐的宏观刚度积分，其在求解大规模工程问题时遭遇了严重的维数灾难。
+
+为克服均匀化方法中设计变量多、计算繁冗等缺陷，学者们摒弃了复杂的微观结构假设，将设计域离散为一系列有限单元，并直接引入可在 $[0,1]$ 区间连续变化的人工密度，常称为密度变量或伪密度，用以表征材料分布状态。实质上，结构拓扑优化的终极目标是获取完全的 0（材料不存在）或 1（材料存在）的离散设计结果。然而，为了能够使用高效的连续变量数值优化算法，离散变量被松弛为连续变量，这不可避免地会导致优化结果中存在大量缺乏明确物理意义的中间密度值。为了解决这一矛盾，必须依照特定的惩罚规则，在单元人工密度与材料物理属性（如弹性模量）之间建立高度非线性的材料插值映射关系。在这方面，Bendsøe~\cite{bendsoeOptimalShapeDesign1989a} 于 1989 年率先提出了幂次惩罚的材料模型；随后，Rozvany~\cite{rozvanyGeneralizedShapeOptimization1992} 以及 Mlejnek 和 Schirrmacher~\cite{mlejnekEngineersApproachOptimal1993} 等学者在 20 世纪 90 年代进一步明确了密度惩罚思想，共同奠定了变密度方法的基础。基于这些先驱性的工作，发展出了最为经典的带惩罚的固体各向同性微结构模型（Solid Isotropic Material with Penalization, SIMP）~\cite{bendsoeMaterialInterpolationSchemes1999, bendsoeTopologyOptimization2004a}。SIMP 模型利用高度非线性的幂函数对中间密度的刚度贡献进行惩罚，从而在数学规划迭代中将单元的人工密度强行推向 0 或 1 的两端，以获得轮廓清晰的拓扑构型。此后，为了克服 SIMP 模型在处理动力学或多物理场问题时可能引发的局部奇异性，学者们又进一步提出了材料属性有理近似模型（Rational Approximation of Material Properties, RAMP）~\cite{stolpeAlternativeInterpolationScheme2001a} 等替代方案。
+
+尽管变密度方法拥有诸多优势，但在结合传统低阶有限元进行空间离散时，极易陷入数值病态，典型表现为棋盘格现象与网格依赖性。为确保优化设计中材料分布的适定性，学者们引入并发展了一系列空间正则化技术。Sigmund~\cite{sigmundDesignCompliantMechanisms1997a, sigmundNumericalInstabilitiesTopology1998} 率先使用灵敏度过滤将原问题的灵敏度替换为周围单元的加权插值；Bourdin~\cite{bourdinFiltersTopologyOptimization2001} 则在柔顺度最小化问题中引入了密度过滤技术，有效克服了网格依赖性。为了进一步实现对结构最小尺寸的隐式控制并有效抑制灰度边界现象，Guest 等~\cite{guestAchievingMinimumLength2004b} 引入了基于 Heaviside 阶跃函数的投影技术。此后，过滤理论不断深化，Sigmund~\cite{sigmundMorphologybasedBlackWhite2007b} 提出了基于图像形态学处理的黑白过滤方法，针对传统密度过滤无法保证中间单元过滤前后体积一致性的难题，Xu 和 Cheng 等~\cite{xuVolumePreservingNonlinear2010} 提出了非线性密度过滤方案，使得优化结果能够达到极其稳定的纯 0-1 分布。
+
+与前述变密度方法不同，Xie 和 Steven~\cite{xieSimpleEvolutionaryProcedure1993} 基于“优胜劣汰”的启发式力学准则，提出了 ESO 方法，通过在迭代中逐步删减对目标函数贡献较小的低效材料来实现拓扑演化。针对原始 ESO 方法在实际应用中遇到的数值不稳定及复杂约束处理能力有限等问题，Rong 等~\cite{rongImprovedMethodEvolutionary2001} 提出了一系列改进策略，并将其拓展至屈曲等复杂受力工况下的结构优化设计中。随后，为弥补 ESO 方法仅能单向删减单元的局限，Querin 以及随后的 Huang 等人~\cite{querinEvolutionaryStructuralOptimisation1998, huangConvergentMeshindependentSolutions2007, huangEvolutionaryTopologyOptimization2010a} 进一步发展了 BESO 方法，引入了灵敏度过滤与材料再引入机制，使优化过程中能够同时执行材料的删除与添加。尽管 ESO/BESO 类方法在工程实现上较为直观，且能够直接得到清晰的 0-1 离散拓扑，但现有研究更多从演化规则与数值实现角度讨论其有效性。相较而言，其在统一变分框架、严格优化理论解释以及收敛性分析等方面的系统研究仍有待进一步完善。
+
+不同于基于材料插值的变密度方法，基于边界演化的方法直接将结构边界的几何形态作为优化与演化对象。作为该流派的理论基础，Osher 与 Sethian~\cite{osherFrontsPropagatingCurvaturedependent1988, sethianStructuralBoundaryDesign2000} 提出的水平集方法随后被引入拓扑优化领域，并在此后发展出了众多衍生的演化算法~\cite{vandijkLevelsetMethodsStructural2013a}。该方法利用高维连续隐函数的零等值面隐式表征材料边界，基于形状导数或拓扑导数构造边界演化速度场，并通过求解非线性的 Hamilton-Jacobi 偏微分方程驱动结构边界的演化以及孔洞的融合与分裂。由于其边界表示具有天然的黑白特性，该方法避免了变密度方法中常见的中间灰度单元问题，通常能够获得边界清晰且较为平滑的拓扑构型。在此基础上，Zhu 等~\cite{liuTwogridBinaryLevel2023, tanDiscontinuousGalerkinLevel2023} 进一步提出了基于双网格与间断伽辽金的高效数值离散算法，有效改善了水平集演化的数值鲁棒性与计算效率。然而，从计算数学角度看，水平集方法在迭代过程中需要反复求解瞬态偏微分方程，计算成本相对较高；同时，为维持数值稳定性，算法通常依赖重新初始化等附加处理；此外，传统隐式水平集演化在实体内部自发成核方面存在一定局限，这在一定程度上限制了其拓扑变化能力与全局寻优能力。
+
+针对传统水平集方法在边界追踪、重新初始化以及拓扑变化处理等方面的局限，研究者沿着不同方向对边界演化类方法进行了进一步拓展。其一是引入基于热力学相变理论的相场方法~\cite{wangPhaseFieldVariational2004, blankPhasefieldApproachesStructural2012a}。该方法通过构造 Van der Waals-Cahn-Hilliard 型自由能泛函，将尖锐几何边界松弛为带有界面能惩罚的弥散界面，从而将原有的界面演化问题转化为相应变分问题及其梯度流演化方程的求解。针对相场法的数值求解框架，Wang 等~\cite{chenRobustStablePhase2026} 提出了一种鲁棒且稳定的相场演化算法，
+进一步提升了复杂几何拓扑演化过程中的数值稳定性。其二是以 Guo 等学者提出的 MMC 方法~\cite{guoDoingTopologyOptimization2014, guoExplicitStructuralTopology2016} 为代表的显式边界法。该方法不再依赖隐式边界演化偏微分方程，而是通过一系列显式参数化几何图元的布尔组合来表征结构边界，从而将边界演化问题转化为由有限个几何参数控制的显式优化问题，显著简化了拓扑表达与优化建模过程。在此基础上，Duan 等~\cite{yanThermoelasticStructuralTopology2021, hanStressbasedTopologyOptimization2022} 进一步将该框架推广到热弹性多物理场以及含摩擦接触的复杂应力约束结构优化问题中。总体而言，边界演化类方法在几何特征表达方面具有天然优势，但在处理极大规模三维系统与高度非线性的多约束优化问题时，其数值鲁棒性与通用软件实现能力仍有待进一步提升。
+
+综上所述，上述三类拓扑优化方法在数学表达、边界表示与演化机制等方面各有侧重，并在不同工程场景中展现出各自的适用性。然而，当本文的研究目标聚焦于拓扑优化与高精度数值离散方法的耦合，以及统一软件实现框架的构建时，变密度方法表现出更强的适应性。其成为本文开展相关算法研究的主要框架，主要基于以下三方面考虑：
+
+\begin{enumerate}
+	\item \textbf{建模与求解的便利性}：通过连续化松弛，原本离散的拓扑设计问题可转化为连续优化问题，从而较好契合移动渐近线法（Method of Moving Asymptotes, MMA）等基于梯度的优化算法，也便于开展灵敏度分析与数值实现。
+	
+	\item \textbf{良好的理论扩展性}：无论是后续讨论的任意次拉格朗日高阶有限元，还是能够实现高精度应力逼近的胡张混合有限元，都可以较为自然地嵌入 SIMP 材料插值框架之中，从而为高精度离散方法在拓扑优化中的推广提供统一建模基础。
+	
+	\item \textbf{较好的软件实现兼容性}：该方法在数学表达上与经典有限元分析框架具有较好的衔接性，既便于构造基于伴随思想的高效灵敏度分析流程，也为 SOPTX 平台中自动微分机制的引入、多计算后端的统一封装以及异构计算加速提供了方法基础。
+\end{enumerate}
+
+尽管如此，SIMP 模型在连续优化建模层面具有较为完整的数学表达，但在与传统低阶有限元方法结合进行空间离散求解时，仍会引发棋盘格现象、网格依赖性以及局部极值等一系列典型数值病态问题。这表明，要获得边界清晰、局部细节丰富的拓扑构型，并实现对物理状态的高精度评估，不能仅局限于拓扑演化策略本身的改进，还需要从有限元离散格式与数值分析方法出发，进一步寻求更为稳健的求解途径。这也为本文后续深入讨论拓扑优化中的有限元数值问题与高精度离散格式奠定了相应的研究背景与逻辑基础。
+
+
+\subsection{典型拓扑优化问题及其数值挑战}
+\label{subsec:top_problems_numerical_challenges}
+
+随着工程应用不断拓展到更复杂的物理背景，拓扑优化已广泛应用于静力响应、动力学响应、柔顺机构设计、热传导以及局部应力约束等典型问题。作为本文主要采用的理论框架，变密度方法在处理这些问题时表现出较好的建模适应性与优化效率~\cite{sigmundTopologyOptimizationApproaches2013a}。然而，当其与传统低阶位移有限元结合进行空间离散时，仍面临一系列不可忽视的数值困难~\cite{sigmundNumericalInstabilitiesTopology1998}。
+
+柔顺度最小化（即刚度最大化）是静力结构设计中最基础、也是研究最为广泛的拓扑优化模型。在变密度框架下，为适应基于梯度的连续优化算法，离散拓扑通常被连续化松弛，这不可避免地会在优化结果中产生大量缺乏明确物理意义的中间密度单元（即灰度区域）~\cite{bendsoeMaterialInterpolationSchemes1999}。为了获得边界清晰、可制造性较好的拓扑构型，通常需要在优化过程中引入过滤与投影机制。这实际上改变了原始优化问题或其可行设计空间，使所得结果更准确地说对应于经过正则化或投影修正后的优化问题，而不再是原始未修正模型下的最优解~\cite{wangProjectionMethodsConvergence2011a}。尽管其他流派，如基于离散变量演化的 BESO 方法，试图从根本上减少中间密度~\cite{querinEvolutionaryStructuralOptimisation1998, huangEvolutionaryTopologyOptimization2010a}，但受限于传统有限元网格的边界表达能力，仍易出现锯齿状边界与网格依赖性。因此，如何在变密度框架内兼顾连续优化的稳定性与几何边界的逼近精度，仍是一个重要问题。
+
+当优化目标由全局刚度进一步扩展到功能响应或更复杂的物理约束时，变密度方法中的数值困难往往更加突出。在动力学拓扑优化中，基于惩罚的人工材料插值容易在低密度区域诱发伪局部模态，从而造成特征频率或共振响应的失真，进而误导优化方向~\cite{pedersenMaximizationEigenvaluesUsing2000, tcherniakTopologyOptimizationResonating2002}。在柔顺机构设计中，由于问题通常是非自伴随的，加之低阶离散格式对复杂变形模式的刻画能力有限，结构关键部位容易形成单节点连接的“人工铰链”~\cite{sigmundDesignCompliantMechanisms1997a, peterssonSlopeConstrainedTopology1998}。这不仅会导致刚度矩阵病态，还会使优化结构在实际制造与承载过程中面临较高的失效风险。相比之下，尽管水平集方法在边界表示上具有一定优势，但在复杂三维工况下仍面临 Hamilton-Jacobi 方程演化求解与重新初始化所带来的较大计算开销~\cite{vandijkLevelsetMethodsStructural2013a}。由此可见，在变密度框架下，仅依赖材料插值与拓扑演化策略本身，往往难以充分应对复杂目标驱动下的数值稳定性与物理可信性问题。
+
+面向高可靠性设计的局部应力约束问题，则是变密度拓扑优化中更具挑战性的研究方向之一~\cite{leStressbasedTopologyOptimization2010b}。首先，存在固有的应力奇异性问题：当单元密度趋于零时，其派生应力并不一定随之消失，从而导致算法难以跨越不可行域并有效剔除材料~\cite{chengStudyTopologyOptimization1992}。尽管可通过引入 $\varepsilon$-松弛约束或其他应力松弛技术加以缓解~\cite{chengErelaxedApproachStructural1997, bruggiAlternativeApproachStress2008a}，但中间密度单元中的人工材料插值仍会对真实局部应力场产生明显扭曲。其次，应力场本质上由位移场梯度派生，在传统 $C^0$ 连续的低阶位移有限元下，单元交界面处的应力通常是不连续的，因而难以获得高精度的局部应力分布。再者，数以万计的局部应力约束及其灵敏度往往伴随明显的高频振荡~\cite{duysinxNewDevelopmentsHandling1998, parisTopologyOptimizationContinuum2009}，这进一步增加了优化算法在收敛性与演化稳定性方面的困难。
+
+综上所述，中间密度与边界失真、伪局部模态与人工铰链等非物理解，以及应力奇异性与低精度应力场所引发的收敛困难，并非单一因素造成，而是模型松弛、材料插值与数值离散共同作用的结果。尤其在传统低阶有限元框架下，由于位移与应力场的逼近能力有限，这些问题往往会被进一步放大。由此可见，要提升拓扑优化的分析精度、数值稳定性与工程可用性，不能仅停留于拓扑演化策略本身的改进，还需要从偏微分方程的数值离散层面引入更高精度、更稳健的求解技术。
+
+
+\subsection{拓扑优化中的高阶与混合有限元方法}
+\label{subsec:higher_order_fem_mfem}
+
+如前文所述，拓扑优化在面对复杂物理响应与严苛局部约束时所暴露出的诸多数值病态，与传统低阶有限元离散精度不足及其引起的数值误差密切相关。为了有效抑制离散误差、更准确地捕捉结构中的复杂变形、局部应力集中及高梯度场特征，将基于 $p$ 型细化（$p$-refinement）的高阶有限元逼近技术引入拓扑优化框架，已逐渐成为该方向的重要研究趋势。从有限元先验误差分析的角度来看，在解具有适当正则性的前提下，高阶有限元具备更优的先验误差收敛阶，能够在较少的网格自由度下，有效控制位移场与应力场近似的插值误差，为改善拓扑优化中的离散精度问题提供了较好的理论基础。总体来看，高阶有限元在拓扑优化中的研究，已由早期的探索性尝试逐步发展为改善数值正则性、拓展复杂问题求解边界的重要方向。
+
+围绕高阶单元在拓扑优化中的应用，已有研究从不同角度展开了持续探索。较早的代表性工作中，Parvizian 等~\cite{parvizianTopologyOptimizationUsing2012a} 基于有限胞元法 (Finite Cell Method) 讨论了高阶有限元用于拓扑优化的可行性，指出高阶近似能够更准确地逼近单元内部非均匀材料分布，并有助于提升材料边界附近局部力学场的刻画质量。随后，Nguyen 等~\cite{nguyenHighorderFiniteElements2013} 对高阶有限元拓扑优化进行了前期探索，推动了该方向由可行性验证向专门方法研究过渡。Xiao 等~\cite{xiaoRevisitingPrefinementStructural2021a} 进一步从 $p$ 型细化的角度系统考察了高阶单元在结构拓扑优化中的作用，对不同基准问题下的拓扑构型、柔顺度结果与计算代价进行了比较分析。近期，Sarkar 和 Kumar~\cite{sarkarTopologyOptimizationQuadrilateral2025a} 又针对多类四边形单元下的拓扑优化表现进行了系统比较，对不同阶次单元的分析质量与结构性能预测能力作了进一步评估。上述研究表明，高阶有限元在拓扑优化中的应用已从早期的可行性探索逐步走向方法比较、性能评估与适用性分析，并显示出在提高位移与应力场逼近质量、改善数值稳定性以及提升结构性能评估精度方面的良好潜力。
+
+然而，仅依靠高阶有限元并不能自动解决高分辨率拓扑设计所带来的计算规模问题。若仍采用传统的分析网格与设计网格一一对应的单分辨率耦合框架，则随着分析阶次提升和设计分辨率增加，系统自由度与设计变量数量都会显著增长，从而制约高阶分析方法在拓扑优化中的实际应用效率。为缓解这一矛盾，Nguyen 等~\cite{nguyenComputationalParadigmMultiresolution2010a} 提出了多分辨率拓扑优化（Multi-resolution Topology Optimization, MTOP）框架，通过将位移分析、设计变量表示与密度场描述置于不同离散层次，在较低分析成本下获得高分辨率拓扑设计。随后又进一步提出基于多重离散策略的改进方案~\cite{nguyenImprovingMultiresolutionTopology2012}，完善了该框架下不同离散层次之间的组织方式。进一步地，Nguyen 等~\cite{nguyenTopologyOptimizationUsing2017a} 将 $p$ 型有限元方法引入 MTOP 框架，Groen 等~\cite{groenHigherorderMultiresolutionTopology2017a} 则从高阶多分辨率框架的角度系统研究了该类方法的潜力与局限，表明在较粗高阶分析网格上结合单元内高分辨率设计描述，有望兼顾分析精度与设计表达能力。与此同时，Gupta 等~\cite{guptaQRpatternsArtefactsMultiresolution2018, guptaDesignAnalysisAdaptivity2020} 围绕 MTOP 中的数值伪影与自适应策略开展了进一步研究，揭示了 QR-patterns 等典型数值伪影的形成机制，并促使该方向进一步关注稳定性控制与自适应策略设计。
+
+尽管高阶位移有限元结合多分辨率技术能够有效提升全局分析精度与结构边界分辨率，但当优化问题进一步涉及近不可压缩材料或局部应力约束时，传统位移法框架仍表现出固有局限。一方面，在近不可压缩或不可压缩极限下，标准位移有限元容易出现体积锁死现象，导致结构刚度被高估，从而使优化结果产生显著失真。围绕这一问题，Bruggi 等~\cite{bruggiTopologyOptimizationIncompressible2007a} 较早将混合有限元引入不可压缩介质的拓扑优化分析之中。另一方面，在位移法中，应力通常由位移梯度恢复得到，属于次级物理量，即使采用高阶位移单元，其跨单元的应力场一般仍难以满足局部应力约束问题对高精度、协调应力逼近的要求。针对这一困难，Bruggi 和 Venini~\cite{bruggiMixedFEMApproach2008a} 又进一步提出了面向应力约束拓扑优化的混合有限元方法。进一步地，Bruggi~\cite{bruggiTopologyOptimizationMixed2016a} 在规则网格背景下采用了 Hu-Man-Zhang（HMZ）族最低阶二维真混合有限元~\cite{huSimpleConformingMixed2014a}，将具备强对称性的应力张量作为主变量构建拓扑优化框架，使结构柔顺度能够通过余能形式计算，且应力约束得以直接施加，同时能够统一处理可压缩与不可压缩材料问题。这表明，相较于传统位移法，基于对称应力直接逼近的混合有限元，尤其是 HMZ 类稳定真混合元，在拓扑优化中的不可压缩性分析与局部应力控制方面展现出较好的理论适配性与数值潜力。
+
+
+\subsection{软件生态与数值计算平台}
+\label{subsec:software_computing_platform}
+
+在拓扑优化软件生态的发展过程中，较早产生广泛影响的是面向教学与原型验证的轻量级开源实现。Sigmund~\cite{sigmund99LineTopology2001a} 提出的 99 行 MATLAB 代码 \texttt{top99}、Andreassen 等~\cite{andreassenEfficientTopologyOptimization2011a} 给出的 88 行改进代码 \texttt{top88} 以及 Liu 和 Tovar~\cite{liuEfficient3DTopology2014a} 提出的三维 169 行代码 \texttt{top3d}，共同构成了二维与三维变密度拓扑优化的经典教学原型。近年来，这一方向仍在持续发展，例如 Ferrari 和 Sigmund~\cite{ferrariNewGeneration992020a} 于 2020 年提出了新一代的 \texttt{top99neo} 与 \texttt{top3D125} 程序，在保持紧凑实现风格的同时进一步提升了计算效率。此外，Wang 等~\cite{wangOpenSourceCodesTopology2023a} 在 2023 年的综述中也将面向初学者的开源代码作为独立主题进行了系统性梳理。总体来看，这类教学型代码的重要价值在于将拓扑优化的核心流程转化为可复现的标准原型，从而显著降低学习与验证门槛。然而，受限于其设计初衷，此类工具难以具备构建统一支撑复杂物理约束、先进离散格式以及异构高性能计算的大规模拓扑优化底层平台的能力。
+
+与前述主要服务于教学传播的轻量级实现不同，另一类研究更关注借助通用开源框架构建具有较强可扩展性的拓扑优化平台。典型代表如 Chung 等~\cite{chungTopologyOptimizationOpenMDAO2019a} 基于 \texttt{OpenMDAO}~\cite{grayOpenMDAOOpensourceFramework2019} 开展的工作，该研究将拓扑优化问题表述为模块化的多学科设计优化流程，将各子过程分解为若干组件，并由框架根据局部偏导自动组装计算总导数，从而增强了程序的可复用性与可重构性。随后，Gupta 等~\cite{gupta55lineCodeLargescale2020a} 于 2020 年基于开源有限元软件 \texttt{FEniCS}~\cite{alnaesFEniCSProjectVersion2015} 实现了支持二维、三维与并行计算的拓扑优化程序，并结合 \texttt{PETSc} 线性代数后端展示了基于开源有限元框架的拓扑优化实现在大规模问题中的应用潜力。此后，Ferro 和 Pavanello~\cite{marinferroSimpleEfficientStructural2023a} 进一步结合 \texttt{dolfin-adjoint} 与 \texttt{Ipopt}，实现了从弱形式建模到灵敏度分析与优化求解的完整计算流程，体现了开源软件生态在变分表达、伴随求导与标准优化接口集成方面的优势。近年，这一方向继续深入发展。例如 Jia 等~\cite{jiaFEniTopSimpleFEniCSx2024a} 于 2024 年提出的 \texttt{FEniTop} 基于新一代架构 \texttt{FEniCSx}~\cite{barattaDOLFINxNextGeneration2023} 构建了二维与三维拓扑优化软件，采用统一输入脚本与可替换模块设计，并集成自动微分与并行计算等通用计算机制，进一步推动了开源框架下拓扑优化实现向模块化与工程化方向发展。相较于早期教学型代码，这类研究已不再局限于对单一算法流程的紧凑展示，而是更强调对有限元分析、灵敏度计算与优化求解流程的解耦组织。然而，就面向拓扑优化的一体化计算平台而言，现有开源框架在复杂约束处理、先进离散格式支持以及异构高性能后端协同等方面，仍有进一步拓展与整合的空间。
+
+在灵敏度分析的实现层面，自动微分的引入为拓扑优化提供了新的技术路径。传统方法通常依赖对目标函数、约束条件、材料插值、过滤算子及投影映射进行手工推导与编码实现，当问题扩展至复杂约束、多物理耦合或非线性材料等情形时，灵敏度推导与程序实现的工作量会迅速增加，并容易引入人为错误。自动微分通过追踪程序中基本运算的复合关系自动传播导数信息~\cite{griewankEvaluatingDerivativesPrinciples2008}，从而避免了大量繁琐的手工求导与导数代码实现。对于标量目标函数的离散优化问题，自动微分的反向模式在一阶梯度计算层面与离散伴随法具有等价性，可视为伴随思想的程序化实现，从而显著降低了灵敏度分析的实现门槛。Nørgaard 等~\cite{norgaardApplicationsAutomaticDifferentiation2017c} 较早将其应用于拓扑优化，并讨论了其可行性及优势与不足，Chandrasekhar 等~\cite{chandrasekharAuTOFrameworkAutomatic2021a} 基于 JAX~\cite{jax2018github} 提出的 \texttt{AuTO}（Automatic Differentiation in Topology Optimization）框架，则将自动微分用于柔顺度最小化、柔顺机构设计和微结构设计等典型问题。与此同时，神经网络参数化方法也推动了自动微分在拓扑优化中的进一步应用。随后，Chandrasekhar 和 Suresh~\cite{chandrasekharTOuNNTopologyOptimization2021a} 提出的 \texttt{TOuNN} 方法借助神经网络的端到端可微表示实现了拓扑优化，拓展了自动微分在拓扑优化实现中的应用场景。近年来，相关工作又将该技术拓展至水平集方法等更复杂场景，并尝试通过稀疏自动微分策略缓解大规模问题中的内存开销~\cite{neofytouLevelSetTopology2024a}。总体来看，自动微分虽提升了模型扩展的便利性，但在面向大规模高阶有限元结构的高效适配与高性能并行实现方面，其实际计算中的稳定性与通用性仍是当前亟待突破的关键挑战。
+
+在计算平台与并行实现层面，面向大规模问题的 GPU 加速技术与异构高性能计算平台的发展也正在深刻影响拓扑优化的实现方式。随着三维高分辨率拓扑优化问题中单元规模与自由度规模持续增长，有限元分析中的矩阵组装、线性方程组求解及相关稀疏线性代数运算逐渐成为制约计算效率的主要瓶颈。为提升大规模问题的求解能力，研究者开始广泛利用 GPU 的大规模并行能力加速拓扑优化计算。Zegard 和 Paulino~\cite{zegardGPUAcceleratedTopology2013} 较早讨论了非结构网格上 GPU 加速拓扑优化的可行性，开启了相关研究在复杂网格离散情形下的探索。随后，Herrero-Pérez 等~\cite{herrero-perezMultiGPUAccelerationLargescale2021a} 进一步提出了基于多 GPU 的大规模密度法拓扑优化并行实现，通过聚合型代数多重网格预条件技术提升了线性求解效率，并扩展了可处理的问题规模。此外，Xia 等~\cite{xiaHybridParallelStrategy2024} 针对等几何拓扑优化提出了基于 CPU/GPU 异构计算的混合并行策略，并分别讨论了刚度矩阵组装、方程求解、灵敏度分析与设计变量更新等环节的异构实现，进一步体现了异构高性能计算在大规模拓扑优化中的应用潜力。近年，相关研究进一步呈现出兼顾计算效率与实现便捷性的发展趋势。Träff 等~\cite{traffSimpleEfficientGPU2023a} 提出了基于高层 GPU 并行编程框架的三维拓扑优化开源实现，在避免直接依赖底层 \texttt{CUDA}/\texttt{OpenCL} 编程的同时，实现了大规模单 GPU 加速。Hou 等~\cite{houParallelComputingGPU2025a} 则基于 \texttt{CuPy} 提出了向量化 GPU 并行框架，通过重构稀疏矩阵—向量乘法过程，提高了 Python 环境下面向大规模拓扑优化的实现效率。总体来看，GPU 加速与异构高性能计算显著提升了大规模拓扑优化问题的求解能力，但现有研究仍多围绕特定模型与特定计算流程展开，在统一支撑复杂约束、先进离散格式、自动微分链路以及多后端协同等方面，其通用适配性与全链路加速能力仍显不足。
+
+%总体来看，拓扑优化软件生态与数值计算平台的发展，已经由面向教学与原型验证的轻量实现，逐步迈向面向复杂工程问题的模块化、高性能与可移植实现。尽管自动微分、多后端框架与 GPU 异构加速等技术的发展为拓扑优化的工程化落地提供了重要支撑，但在统一支撑高阶离散方法、复杂局部约束模型与大规模高性能计算方面，现有平台仍缺乏成熟而系统的通用框架。这一现状表明，围绕高精度数值方法与高性能实现构建模块化、可扩展且可复现的拓扑优化软件平台，不仅具有明确的工程需求，也具有重要的研究意义。
+
+
+\section{研究目的与意义}
+\label{sec:research_purpose_significance}
+
+前文的研究背景与文献综述表明，连续体结构拓扑优化虽然已形成较为系统的理论与方法体系，但在高精度离散、复杂局部约束处理及大规模高效计算等方面仍面临若干关键瓶颈。特别是，传统低阶有限元离散在局部应力场刻画、近不可压缩材料分析及复杂约束处理等方面存在固有的局限性。同时，先进的数值理论与高性能计算硬件之间，尚缺乏统一、系统的实现框架。基于此，本文围绕连续体结构拓扑优化中的若干关键数值难题，系统开展高效数值算法、实现方法及其应用研究。
+
+具体而言，本文重点从以下几个方面展开系统性研究。首先，研究任意次拉格朗日有限元在变密度拓扑优化中的离散性质及其数值特征，剖析不同设计变量表征方式下离散模型、灵敏度表达与正则化策略之间的关系，系统考察高阶离散在柔顺度最小化等典型问题中的适用性与精度优势。其次，针对传统单分辨率框架中高精度物理分析与高分辨率拓扑描述之间的规模矛盾，构建基于高阶有限元的多分辨率高精度计算框架，通过引入设计网格与分析网格相解耦的映射机制，在控制计算规模的同时提升复杂结构优化的计算效率与拓扑表达能力。再次，面向复杂局部约束与特殊材料情形，推导并建立基于任意次胡张（Hu-Zhang）混合有限元的拓扑优化模型，深入探索混合变分框架在缓解体积锁死、直接逼近高精度局部应力场以及增强约束评估可靠性方面的核心优势。最后，面向上述高精度模型与先进算法的统一验证需求，依托 FEALPy~\cite{zhengFEALPyV3Crossplatform2025a} 开源智能 CAX 计算引擎，设计并开发支持自动微分、多后端无缝切换及异构设备协同计算的高性能拓扑优化软件平台 SOPTX~\cite{heSOPTXHighperformanceMultibackend2025a}，为相关数值方法的模块化落地与工程推广提供底层支撑。
+
+本文研究兼具理论意义与应用价值。从理论层面看，本文将高阶有限元、多分辨率思想与胡张混合有限元方法更系统地引入连续体结构拓扑优化框架，有助于推动拓扑优化在高精度离散、复杂局部约束处理及稳定数值求解等方面的发展，进一步丰富和完善相关问题的数值分析与算法实现体系。同时，本文将材料分布设计问题与偏微分方程离散理论、有限元误差控制思想以及高性能计算实现机制相结合，有助于深化对“优化模型--离散格式--计算实现”三者耦合关系的认识。从应用层面看，面向航空航天、高端装备与先进制造等领域对复杂结构高效设计与性能优化的需求，本文围绕高精度分析、复杂约束处理与大规模高效计算所开展的研究，有助于提升先进拓扑优化方法的工程适用性与计算可复现性。特别是，基于 FEALPy 开发的 SOPTX 软件平台为相关模型与算法提供了统一、可扩展的实现载体，从而为复杂工程结构的高效正向设计提供方法储备与技术支撑。
+
+总体而言，本文围绕连续体结构拓扑优化中的若干关键数值瓶颈，建立一条贯通“高精度离散建模--高效优化求解--高性能软件实现”的研究路线，从而在理论方法、数值框架与软件实现三个层面形成相互贯通、彼此支撑的系统研究体系。
+
+
+\section{本文结构}
+\label{sec:thesis_structure}
+
+本文围绕连续体结构拓扑优化中的若干关键数值问题展开研究，按照“拓扑优化模型与数值基础--高精度离散方法研究--高性能软件平台实现”的总体思路组织全文，其余章节主要内容安排如下。
+
+第 2 章拓扑优化模型与数值基础。本章首先给出全文所需的主要符号与基本函数空间，继而介绍变密度拓扑优化的连续模型与典型问题，包括体积约束下的柔顺度最小化问题、柔顺机构设计问题以及应力约束相关模型。随后，进一步讨论典型优化问题的灵敏度分析、常用优化算法与数值正则化策略，为后续各章的高精度离散方法研究与软件实现提供统一的理论支撑。
+
+第 3 章任意次多单元族拉格朗日有限元拓扑优化比较研究。本章围绕单纯形单元与张量积单元上的任意次拉格朗日有限元展开，系统介绍高阶有限元空间构造、线弹性问题的离散格式以及不同设计变量表征下的拓扑优化模型，重点比较不同单元类型、不同离散阶次以及不同密度表征方式对优化结果、数值精度与计算性能的影响，从而揭示任意次拉格朗日有限元在拓扑优化中的适用性与核心特点。
+
+第 4 章基于高阶有限元的多分辨率高精度拓扑优化。本章在高阶有限元离散研究的基础上，引入设计网格与分析网格相分离的多分辨率思想，构建兼顾高精度物理分析与高分辨率拓扑描述的计算框架。重点讨论多分辨率框架中的设计变量表征方式、设计变量到物理密度的映射机制以及相应拓扑优化模型的建立与实现，并通过典型数值算例验证该方法在提升分析精度、控制计算规模和改善优化效果方面的有效性。
+
+第 5 章拓扑优化中的任意次胡张混合有限元方法研究。本章基于混合变分思想，系统建立适用于拓扑优化问题的任意次胡张混合有限元离散框架，重点研究其在近不可压缩材料问题与应力约束问题中的应用，分析该方法在改善体积锁死、提高局部应力场逼近质量以及增强复杂约束评估可靠性方面的优势，并通过相应数值实验验证其有效性。
+
+第 6 章拓扑优化软件平台 SOPTX 的开发及应用。本章依托 FEALPy 开源智能 CAX 计算引擎，围绕本文前述模型与算法的统一实现需求，介绍高性能拓扑优化软件平台 SOPTX 的总体架构、核心模块设计与关键实现机制。重点展示其在自动微分、多后端切换、异构设备计算以及典型拓扑优化问题求解中的实现能力，并通过相关算例对平台的正确性、扩展性与计算性能进行验证。
+
+第 7 章总结与展望。本章对全文研究工作进行系统总结，概括本文在高阶有限元拓扑优化、多分辨率高精度计算、任意次胡张混合有限元建模以及 SOPTX 软件平台实现等方面的主要研究内容与结果，并结合连续体结构拓扑优化的发展趋势，对后续值得进一步深入研究的问题进行展望。
+
+
+\fi

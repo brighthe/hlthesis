@@ -2,11 +2,13 @@
 % !TEX encoding = UTF-8 Unicode
 
 \documentclass[UTF8, 12pt, oneside, a4paper]{ctexbook}
+%\documentclass[CJK,GBK,UTF8,12pt,oneside,a4paper,draft]{ctexbook} % 查重时候需要将图片都隐藏掉
 %-------------------------------------------------------
 % 包和格式设置
 %-------------------------------------------------------
 \usepackage{ctex}            % 中文支持（已包含 xeCJK 功能）
 \usepackage{xtuformat}       % 学校模板格式
+\usepackage[numbers,sort&compress]{gbt7714} 
 \usepackage{enumerate}       % 枚举环境
 \usepackage{tikz}            % 绘图
 \usepackage{pgfplots}        % 绘制图表
@@ -46,6 +48,7 @@
 \include{body/chapter04/chapter04}
 \include{body/chapter05/chapter05}
 \include{body/chapter06/chapter06}
+\include{body/chapter07/chapter07}
 % \include{body/ChapL}
 % \include{body/ChapHMMs}
 % \include{body/ChapCloak}
@@ -55,13 +58,13 @@
 %-------------------------------------------------------
 % 参考文献
 %-------------------------------------------------------
-\include{reference/references.tex}
+%\include{reference/references.tex}
 
 %-------------------------------------------------------
 % 附加内容
 %-------------------------------------------------------
-\include{body/thank}         % 致谢
+%\include{body/thank}         % 致谢
 % \include{body/appendix}    % 附录
-\include{body/aboutme}       % 关于作者
+%\include{body/aboutme}       % 关于作者
 
 \end{document}
