@@ -698,10 +698,10 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-4  无过滤/弱正则化结果：高阶分析更真实，但成本更高
+	%  02-4  基准优化问题与基准算例
 	% ============================================================
 	\begin{frame}
-		\frametitle{高阶有限元的优势与局限}
+		\frametitle{基准优化问题与基准算例}
 		
 		% ── 顶部总述条 ──────────────────────────────────────────────
 		\begin{tcolorbox}[
@@ -709,11 +709,192 @@
 			arc=3pt, boxrule=0.5pt,
 			top=2pt, bottom=2pt, left=8pt, right=8pt]
 			{\fontsize{7.5}{11}\selectfont\sffamily
-				高阶有限元主要提升物理响应评估质量；随阶次提高，低阶离散引起的虚假刚度与局部振荡明显减弱，%
-				棋盘格现象在一定程度上得到削弱，结构分析结果更接近真实物理水平。}
+				以下比较均基于统一的体积分数约束下柔顺度最小化模型与二维 MBB 梁基准算例展开。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 左右两栏 ────────────────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左栏：基准优化问题 ────────────────────────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 基准优化问题},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt,
+					height=0.6\paperheight, valign=top]
+					
+					{\fontsize{7.5}{11}\selectfont\sffamily 柔顺度最小化离散模型}
+					
+					\vspace{-12pt}
+					
+					{\fontsize{9}{15}\selectfont
+						\setlength{\abovedisplayskip}{4pt}
+						\setlength{\belowdisplayskip}{4pt}
+						\begin{align*}
+							\min_{\boldsymbol{\rho}}\;
+							& c(\boldsymbol{\rho}) = \boldsymbol{F}^\top \boldsymbol{U} \\
+							\text{s.t.}\;
+							& \boldsymbol{K}(\boldsymbol{\rho})\boldsymbol{U} = \boldsymbol{F}, \\
+							& \frac{V(\boldsymbol{\rho})}{V_0} \leq V_f, \quad \rho_i \in [\rho_{\min},1].
+					\end{align*}}
+				
+					\vspace{4pt}
+					
+					{\fontsize{7}{10}\selectfont\sffamily
+						其中，$\boldsymbol{K}(\boldsymbol{\rho})$ 为离散刚度矩阵，$\boldsymbol{U}$ 为位移自由度向量，$\boldsymbol{F}$ 为外载荷向量，$\boldsymbol{\rho}$ 为离散设计变量向量，%
+						$\rho_{\min}$ 为最小密度下界。}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右栏：基准算例 MBB 梁 ─────────────────────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 基准算例：二维 MBB 梁},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt,
+					height=0.6\paperheight, valign=top]
+					
+					{\fontsize{7.5}{11}\selectfont\sffamily 右半对称域示意图}
+					
+					\vspace{-4pt}
+					
+					\begin{center}
+						\includegraphics[width=0.90\linewidth,
+						height=0.30\paperheight, keepaspectratio]{mbb_schematic}
+					\end{center}
+					
+					\vspace{-8pt}
+					
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						右半对称域，左侧对称边界、右下滑移支撑、左上竖向点载 $P=1\,\mathrm{N}$；%
+						$E=1\,\mathrm{MPa},\; \nu=0.3,\; V_f=0.5$。}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-5  对比维度与统一设置
+	% ============================================================
+	\begin{frame}
+		\frametitle{对比维度与统一设置}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				围绕任意次拉格朗日有限元拓扑优化方法，从离散阶次、单元类型与密度表征%
+				三个维度展开系统比较，并在统一物理长度尺度与求解参数下分析其对优化结果的影响。}
 		\end{tcolorbox}
 		
 		\vspace{-1.0em}
+		
+		% ── 三列卡片 ────────────────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 卡片 01 ──────────────────────────────────────────────
+			\begin{column}{0.318\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 离散阶次},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt,
+					height=0.28\paperheight, valign=top]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						考察 $k=1,2,4$ 下优化构型、目标函数值与计算表现的变化。}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 卡片 02 ──────────────────────────────────────────────
+			\begin{column}{0.318\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 单元类型},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt,
+					height=0.28\paperheight, valign=top]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						比较单纯形单元与张量积单元在相同设置下的拓扑优化结果差异。}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 卡片 03 ──────────────────────────────────────────────
+			\begin{column}{0.318\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{03}\enspace 密度表征},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt,
+					height=0.28\paperheight, valign=top]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						比较单元密度与节点密度两类设计变量表征方式对优化结果的影响。}
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+		\vspace{0.4em}
+		
+		% ── 统一设置框 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg!60, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			\setlength{\parskip}{0pt}
+			{\fontsize{7}{9}\selectfont\bfseries\sffamily\color{structure.fg}
+				统一设置\enspace}%
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				统一物理长度尺度、体积分数约束、边界载荷与材料参数、%
+				优化求解参数下进行，以保证不同离散设置之间具有可比性。}
+		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-6  不同离散阶次的比较
+	% ============================================================
+	\begin{frame}
+		\frametitle{不同离散阶次的比较}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				高阶有限元主要提升状态方程离散精度；随阶次提高，低阶离散引起的虚假刚度与局部振荡明显减弱，%
+				目标函数评估更接近真实物理水平。}
+		\end{tcolorbox}
+		
+		\vspace{-1.2em}
 		
 		% ── 主体：左图 + 右侧两框 ───────────────────────────────────
 		\begin{columns}[T, totalwidth=\linewidth]
@@ -728,7 +909,7 @@
 					
 					% 公共说明（只写一次）
 					{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
-						MBB 梁，无过滤，单元密度表征\par}
+						MBB 梁，无过滤，四边形单元，单元密度表征\par}
 					
 					\vspace{5pt}
 					
@@ -759,28 +940,29 @@
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
 					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 削弱虚假刚度，提升分析真实性},
+					title={\circnum{01}\enspace 削弱虚假刚度，目标函数更真实},
 					arc=3pt, boxrule=0.5pt,
 					toptitle=1pt, bottomtitle=1pt,
 					top=5pt, bottom=5pt, left=6pt, right=6pt]
 					\setlength{\parskip}{0pt}\sloppy
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						升阶后，低阶离散引入的虚假刚度减弱，目标函数评估更接近真实物理响应。}
+						升阶后，低阶离散造成的刚度高估被纠正，柔顺度值回归合理区间。}
 				\end{tcolorbox}
 				
-				\vspace{4pt}
+				\vspace{-8pt}
 				
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
 					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 局部振荡减弱，构型更平顺},
+					title={\circnum{02}\enspace 局部振荡减弱，棋盘格得到削弱},
 					arc=3pt, boxrule=0.5pt,
 					toptitle=1pt, bottomtitle=1pt,
 					top=5pt, bottom=5pt, left=6pt, right=6pt]
 					\setlength{\parskip}{0pt}\sloppy
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						阶次提高，密度场中的局部细碎振荡减弱，材料分布更连贯，构型表达更平顺。}
+						升阶后，细碎局部振荡减弱，$k=1$ 时突出的棋盘格明显减少，%
+						材料分布更趋平顺与连贯。}
 				\end{tcolorbox}
 				
 			\end{column}
@@ -793,9 +975,198 @@
 			arc=3pt, boxrule=0pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}
-				\textbf{局限：}高阶有限元改善的是分析质量而非正则化机制，%
+				\textbf{局限：}高阶有限元改善的是离散精度，而非正则化机制，%
 				且计算规模随阶次提升而显著增长。}
 		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-7  不同单元类型的比较
+	% ============================================================
+	\begin{frame}
+		\frametitle{不同单元类型的比较}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				在统一灵敏度过滤下，对不同单元类型的优化结果进行系统比较，%
+				检验前述结论是否在不同单元类型下仍然成立。}
+		\end{tcolorbox}
+		
+		\vspace{-1.2em}
+		
+		% ── 主体：左图 + 右侧两框 ───────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左栏：四边形与三角形两图 ─────────────────────────────
+			\begin{column}{0.55\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!40,
+					arc=3pt, boxrule=0.5pt,
+					top=4pt, bottom=4pt, left=4pt, right=4pt,
+					valign=top]
+					
+					% 公共说明
+					{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
+						MBB 梁，灵敏度过滤，单元密度表征，$k=4$\par}
+					
+					\vspace{5pt}
+					
+					% 四边形单元
+					\centering
+					\includegraphics[width=0.88\linewidth,
+					height=0.143\paperheight, keepaspectratio]{mbb_filter_quad}
+					\\[3pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily 四边形单元，$c=230.88$}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!20}\rule{0.88\linewidth}{0.4pt}}
+					\vspace{6pt}
+					
+					% 三角形单元
+					\includegraphics[width=0.88\linewidth,
+					height=0.143\paperheight, keepaspectratio]{mbb_filter_tri}
+					\\[3pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily 三角形单元，$c=228.80$}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右栏：两个结论框 ──────────────────────────────────────
+			\begin{column}{0.43\linewidth}
+				
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 宏观构型高度一致},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						在统一过滤半径下，两类单元均收敛到拓扑骨架几近重合的清晰构型，%
+						主承载路径没有本质差异。}
+				\end{tcolorbox}
+				
+				\vspace{-8pt}
+				
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 结论具有跨单元类型普适性},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+					三角形单元上的比较结果与四边形单元所得结论一致，%
+					说明前述结论不依赖某一特定单元类型。}
+				\end{tcolorbox}
+				
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-8 不同密度表征的比较
+	% ============================================================
+	\begin{frame}
+		\frametitle{不同密度表征的比较}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				在相同单元类型与离散阶次下，进一步比较单元密度表征与节点密度表征，%
+				考察其对边界表达与求解效率的影响。}
+		\end{tcolorbox}
+		
+		\vspace{-1.2em}
+		
+		% ── 主体：左图 + 右侧两框 ───────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左栏：单元密度与节点密度两图 ─────────────────────────
+			\begin{column}{0.55\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!40,
+					arc=3pt, boxrule=0.5pt,
+					top=4pt, bottom=4pt, left=4pt, right=4pt,
+					height=0.60\paperheight, valign=top]
+					
+					% 公共说明
+					{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
+						MBB 梁，四边形单元，无过滤，$k=4$\par}
+					
+					\vspace{5pt}
+					
+					% 单元密度
+					\centering
+					\includegraphics[width=0.88\linewidth,
+					height=0.16\paperheight, keepaspectratio]{mbb_elemdensity_k4}
+					\\[3pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily
+						单元密度表征，$n=41,\; c=218.66$}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!20}\rule{0.88\linewidth}{0.4pt}}
+					\vspace{6pt}
+					
+					% 节点密度
+					\includegraphics[width=0.88\linewidth,
+					height=0.16\paperheight, keepaspectratio]{mbb_nodaldensity_k4}
+					\\[3pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily
+						节点密度表征，$n=500{+},\; c=216.04$}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右栏：两个结论框 ──────────────────────────────────────
+			\begin{column}{0.43\linewidth}
+				
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace $C^0$ 连续性引发隐式平滑},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						 节点密度的 $C^0$ 连续性产生隐式平滑效应，无需额外过滤即可抑制阶梯边界。%
+						 两者宏观骨架相近，但节点密度的局部过渡更平滑自然。}
+				\end{tcolorbox}
+				
+				\vspace{-8pt}
+				
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 空间约束与收敛效率的权衡},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=5pt, bottom=5pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						连续性特征限制了材料的极端跳跃分布，导致变量演化平缓、迭代步数显著增加}
+				\end{tcolorbox}
+				
+			\end{column}
+			
+		\end{columns}
 		
 	\end{frame}
 	
@@ -920,6 +1291,189 @@
 	% ============================================================
 	\section{代表性成果与项目}
 	% ============================================================
+	
+	% ============================================================
+	%  04-1 代表性成果与项目总览
+	% ============================================================
+	\begin{frame}
+		\frametitle{代表性成果与项目总览}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				博士期间围绕高阶有限元变密度拓扑优化的关键数值问题，持续开展方法研究、%
+				软件实现与科研实践，形成了较为完整的成果体系。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 三列卡片 ────────────────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 卡片 01：学术研究成果 ─────────────────────────────
+			\begin{column}{0.315\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 学术研究成果},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=6pt, bottom=6pt, left=6pt, right=6pt,
+					height=0.40\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					{\fontsize{7.5}{12}\selectfont\sffamily
+						围绕高阶有限元离散、多分辨率拓扑优化、胡张混合有限元方法等方向，%
+						形成了具有代表性的论文与方法成果。}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 卡片 02：软件平台与知识产权成果 ──────────────────
+			\begin{column}{0.315\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 软件平台与知识产权},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=6pt, bottom=6pt, left=6pt, right=6pt,
+					height=0.40\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					{\fontsize{7.5}{12}\selectfont\sffamily
+						围绕拓扑优化算法实现与平台建设，完成了相关软件系统开发，%
+						并形成了相应的软件著作权成果。}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 卡片 03：科研项目与实践经历 ───────────────────────
+			\begin{column}{0.315\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{03}\enspace 科研项目与实践经历},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=6pt, bottom=6pt, left=6pt, right=6pt,
+					height=0.40\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					{\fontsize{7.5}{12}\selectfont\sffamily
+						参与多项科研项目，在方案讨论、程序实现、数值实验与协同推进过程中，%
+						积累了较为扎实的科研实践经验。}
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+		\vspace{0.3em}
+		
+		% ── 底部总结条（主题色实底） ────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg, colframe=structure.fg,
+			arc=3pt, boxrule=0pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}
+				相关工作贯通了“数学模型—数值方法—软件实现—科研实践”的研究链条，%
+				体现了从理论研究到程序实现再到项目参与的综合科研能力。}
+		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  04-2  代表性论文成果
+	% ============================================================
+	\begin{frame}
+		\frametitle{代表性论文成果}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				博士期间形成了以拓扑优化软件平台研究为核心、%
+				相关数值方法与科学计算平台合作研究为补充的代表性论文成果。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 主体：左卡片 + 右卡片 ───────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左侧卡片：第一作者论文 ────────────────────────────
+			\begin{column}{0.50\linewidth}
+				\begin{tcolorbox}[
+					colback=structure.fg!6, colframe=structure.fg,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 代表性论文（第一作者）},
+					arc=3pt, boxrule=0.8pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=8pt, right=8pt,
+					height=0.60\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					
+					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
+						SOPTX: A Modular and Extensible Framework for
+						Topology Optimization with Multi-Backend Support\par}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						\textbf{发表情况：}\textit{Communications in Computational Physics}，已录用\par
+						
+						\vspace{2pt}
+						\textbf{论文介绍：}围绕拓扑优化软件平台的设计与实现，系统研究了模块化架构、%
+						面向多后端与异构设备的统一执行机制，以及典型优化模型与算法的集成实现。}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右侧卡片：两篇合作论文 ────────────────────────────
+			\begin{column}{0.47\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 合作论文成果（本人参与）},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=7pt, right=7pt,
+					height=0.60\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					
+					% 第一篇
+					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
+						Adaptive finite element method for phase field
+						fracture models based on recovery error estimates\par}
+					
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						\textbf{发表情况：}\textit{Journal of Computational and Applied Mathematics}, 2026, 472: 116732}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					% 第二篇
+					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
+						FEALPy:A Cross-platform Intelligent Numerical
+						Simulation Engine\par}
+					
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						\textbf{发表情况：}\textit{Communications in Computational Physics}，已录用}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
 	
 	% ============================================================
 	\section{未来工作安排}
