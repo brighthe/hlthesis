@@ -1079,7 +1079,7 @@
 	%  02-8 不同密度表征的比较
 	% ============================================================
 	\begin{frame}
-		\frametitle{不同密度表征的比较}
+		\frametitle{不同密度表征的比较：拓扑构型与边界特征}
 		
 		% ── 顶部总述条 ──────────────────────────────────────────────
 		\begin{tcolorbox}[
@@ -1087,8 +1087,7 @@
 			arc=3pt, boxrule=0.5pt,
 			top=2pt, bottom=2pt, left=8pt, right=8pt]
 			{\fontsize{7.5}{11}\selectfont\sffamily
-				在相同单元类型与离散阶次下，进一步比较单元密度表征与节点密度表征，%
-				考察其对边界表达与求解效率的影响。}
+				在相同的高阶有限元框架下，比较单元密度与节点密度表征对宏观拓扑构型及局部边界平滑性的直接影响。}
 		\end{tcolorbox}
 		
 		\vspace{-1.2em}
@@ -1102,7 +1101,7 @@
 					colback=white, colframe=structure.fg!40,
 					arc=3pt, boxrule=0.5pt,
 					top=4pt, bottom=4pt, left=4pt, right=4pt,
-					height=0.60\paperheight, valign=top]
+					valign=top]
 					
 					% 公共说明
 					{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
@@ -1113,10 +1112,10 @@
 					% 单元密度
 					\centering
 					\includegraphics[width=0.88\linewidth,
-					height=0.16\paperheight, keepaspectratio]{mbb_elemdensity_k4}
+					height=0.143\paperheight, keepaspectratio]{mbb_elemdensity_k4}
 					\\[3pt]
 					{\fontsize{7.5}{10}\selectfont\sffamily
-						单元密度表征，$n=41,\; c=218.66$}
+						单元密度表征，$c=218.66$}
 					
 					\vspace{-4pt}
 					{\color{structure.fg!20}\rule{0.88\linewidth}{0.4pt}}
@@ -1124,10 +1123,10 @@
 					
 					% 节点密度
 					\includegraphics[width=0.88\linewidth,
-					height=0.16\paperheight, keepaspectratio]{mbb_nodaldensity_k4}
+					height=0.143\paperheight, keepaspectratio]{mbb_nodaldensity_k4}
 					\\[3pt]
 					{\fontsize{7.5}{10}\selectfont\sffamily
-						节点密度表征，$n=500{+},\; c=216.04$}
+						节点密度表征，$c=216.04$}
 					
 				\end{tcolorbox}
 			\end{column}
@@ -1145,8 +1144,8 @@
 					top=5pt, bottom=5pt, left=6pt, right=6pt]
 					\setlength{\parskip}{0pt}\sloppy
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						 节点密度的 $C^0$ 连续性产生隐式平滑效应，无需额外过滤即可抑制阶梯边界。%
-						 两者宏观骨架相近，但节点密度的局部过渡更平滑自然。}
+						 节点密度的 $C^0$ 连续性在边界产生隐式平滑效应。%
+						 虽能抑制锯齿状边界，但因缺乏尺度控制，无法替代显式正则化。}
 				\end{tcolorbox}
 				
 				\vspace{-8pt}
@@ -1155,15 +1154,113 @@
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
 					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 空间约束与收敛效率的权衡},
+					title={\circnum{02}\enspace 宏观一致与局部差异},
 					arc=3pt, boxrule=0.5pt,
 					toptitle=1pt, bottomtitle=1pt,
 					top=5pt, bottom=5pt, left=6pt, right=6pt]
 					\setlength{\parskip}{0pt}\sloppy
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						连续性特征限制了材料的极端跳跃分布，导致变量演化平缓、迭代步数显著增加}
+						两种表征在宏观主承载骨架上基本一致，%
+						核心差异体现在局部细节：节点密度的几何边界过渡更为平滑自然。}
 				\end{tcolorbox}
 				
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-9  不同密度表征的收敛历程分析
+	% ============================================================
+	\begin{frame}
+		\frametitle{不同密度表征的收敛历程分析}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				对比目标函数与体积分数的演化曲线，说明两类密度表征在收敛速度与演化平滑性上的差异。}
+		\end{tcolorbox}
+		
+		\vspace{-1.2em}
+		
+		% ── 中部图区：左右两图并排 ──────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=4pt, bottom=4pt, left=6pt, right=6pt]
+			
+			% 中部总标题
+			{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
+				MBB 梁，四边形单元，无过滤，$k=4$\par}
+			
+			\vspace{4pt}
+			
+			\begin{columns}[T, totalwidth=\linewidth]
+				
+				% ── 左图：单元密度 ──────────────────────────────────
+				\begin{column}{0.495\linewidth}
+					\centering
+					{\fontsize{7.5}{10}\selectfont\sffamily\bfseries 单元密度表征\par}
+					\vspace{2pt}
+					\includegraphics[width=0.95\linewidth,
+					height=0.255\paperheight, keepaspectratio]{conv_elem}
+					\\[2pt]
+					{\fontsize{7}{9.5}\selectfont\sffamily $\text{Iter} = 41$}
+				\end{column}
+				
+				% ── 右图：节点密度 ──────────────────────────────────
+				\begin{column}{0.495\linewidth}
+					\centering
+					{\fontsize{7.5}{10}\selectfont\sffamily\bfseries 节点密度表征\par}
+					\vspace{2pt}
+					\includegraphics[width=0.95\linewidth,
+					height=0.255\paperheight, keepaspectratio]{conv_nodal}
+					\\[2pt]
+					{\fontsize{7}{9.5}\selectfont\sffamily $\text{Iter} = 500^{+}$（准收敛）}
+				\end{column}
+				
+			\end{columns}
+			
+		\end{tcolorbox}
+		
+		\vspace{-1.0em}
+		
+		% ── 底部结论：两框并排 ──────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 目标函数的演化差异},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=4pt, bottom=4pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						单元密度表征较早锁定主承载路径，目标函数下降更快。}
+				\end{tcolorbox}
+			\end{column}
+			
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 演化平滑性与体积控制},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=1pt, bottomtitle=1pt,
+					top=4pt, bottom=4pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}\sloppy
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						节点密度表征演化更平滑，但长尾迭代更明显；%
+						两类表征的体积分数控制基本一致。}
+				\end{tcolorbox}
 			\end{column}
 			
 		\end{columns}
@@ -1384,7 +1481,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  04-2  代表性论文成果
+	%  04-2 代表性论文成果
 	% ============================================================
 	\begin{frame}
 		\frametitle{代表性论文成果}
@@ -1407,11 +1504,11 @@
 			% ── 左侧卡片：第一作者论文 ────────────────────────────
 			\begin{column}{0.50\linewidth}
 				\begin{tcolorbox}[
-					colback=structure.fg!6, colframe=structure.fg,
+					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
 					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
 					title={\circnum{01}\enspace 代表性论文（第一作者）},
-					arc=3pt, boxrule=0.8pt,
+					arc=3pt, boxrule=0.5pt,
 					toptitle=2pt, bottomtitle=2pt,
 					top=7pt, bottom=7pt, left=8pt, right=8pt,
 					height=0.60\paperheight, valign=top]
@@ -1462,7 +1559,7 @@
 					
 					% 第二篇
 					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
-						FEALPy:A Cross-platform Intelligent Numerical
+						FEALPy: A Cross-platform Intelligent Numerical
 						Simulation Engine\par}
 					
 					{\fontsize{7}{10.5}\selectfont\sffamily
@@ -1474,6 +1571,230 @@
 		\end{columns}
 		
 	\end{frame}
+	
+	% ============================================================
+	%  04-3 软件著作权与平台成果
+	% ============================================================
+	\begin{frame}
+		\frametitle{软件著作权与平台成果}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				围绕科学计算软件开发与平台建设，形成了与结构优化及力学仿真相关的软件著作权成果。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 主体：左卡片 + 右卡片 ───────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左侧卡片：核心软件成果 ────────────────────────────
+			\begin{column}{0.50\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 核心软件成果},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=8pt, right=8pt,
+					height=0.58\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					
+					{\fontsize{8}{12}\selectfont\sffamily\bfseries
+						结构拓扑优化仿真计算软件\par}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					% 登记信息块
+					{\fontsize{7}{10}\selectfont\sffamily\bfseries 登记信息\par}
+					\vspace{2pt}
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						\begin{tabular}{@{}r@{~~}l@{}}
+							登记号：& 2025SR0887352 \\[1pt]
+							完成人：& 第一完成人 \\
+						\end{tabular}\par}
+
+					\vspace{2pt}
+					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					% 成果说明块
+					{\fontsize{7}{10}\selectfont\sffamily\bfseries 成果说明\par}
+					\vspace{2pt}
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						面向结构拓扑优化问题的数值求解与仿真分析，完成了相关算法实现与软件系统开发，%
+						体现了较强的程序开发与成果落地能力。\par}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右侧卡片：相关软件成果 ────────────────────────────
+			\begin{column}{0.47\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 相关软件成果},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=7pt, right=7pt,
+					height=0.58\paperheight, valign=top]
+					\setlength{\parskip}{0pt}
+					
+					{\fontsize{8}{12}\selectfont\sffamily\bfseries
+						建筑结构力学仿真计算软件\par}
+					
+					\vspace{-4pt}
+					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					% 登记信息块
+					{\fontsize{7}{10}\selectfont\sffamily\bfseries 登记信息\par}
+					\vspace{2pt}
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						\begin{tabular}{@{}r@{~~}l@{}}
+							登记号：& 2024SR0961048 \\[1pt]
+							完成人：& 第三完成人 \\
+						\end{tabular}\par}
+					
+					\vspace{2pt}
+					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
+					\vspace{-8pt}
+					
+					% 成果说明块
+					{\fontsize{7}{10}\selectfont\sffamily\bfseries 成果说明\par}
+					\vspace{2pt}
+					{\fontsize{7}{10.5}\selectfont\sffamily
+						围绕建筑结构力学仿真计算，参与了相关软件开发工作，%
+						形成了面向力学分析的软件成果积累。\par}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+%	% ============================================================
+%	%  04-4 核心算法的工程应用实践
+%	% ============================================================
+%	\begin{frame}
+%		\frametitle{核心算法的工程应用实践}
+%		
+%		% ── 高亮副标题条 ────────────────────────────────────────────
+%		\begin{tcolorbox}[
+%			colback=structure.fg, colframe=structure.fg,
+%			arc=3pt, boxrule=0pt,
+%			top=2pt, bottom=2pt, left=8pt, right=8pt]
+%			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}\bfseries
+%				企校合作项目：中建五局三公司建筑结构力学计算内核研发}
+%		\end{tcolorbox}
+%		
+%		\vspace{-1.5em}
+%		
+%		% ── 主体：左栏 + 右栏 ───────────────────────────────────────
+%		\begin{columns}[T, totalwidth=\linewidth]
+%			
+%			% ══════════════════════════════════════════════════════
+%			% 左栏：核心技术与应用成效
+%			% ══════════════════════════════════════════════════════
+%			\begin{column}{0.54\linewidth}
+%				
+%				% ── 子卡片 A：基于 C++ 的高性能底层实现 ──────────
+%				\begin{tcolorbox}[
+%					colback=white, colframe=structure.fg!50,
+%					colbacktitle=structure.fg, coltitle=white,
+%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+%					title={\circnum{01}\enspace 基于 C++ 的高性能底层实现},
+%					arc=3pt, boxrule=0.5pt,
+%					toptitle=2pt, bottomtitle=2pt,
+%					top=5pt, bottom=5pt, left=7pt, right=7pt]
+%					\setlength{\parskip}{0pt}
+%					{\fontsize{7}{10.5}\selectfont\sffamily
+%						\begin{tabular}{@{}r@{~~}p{0.78\linewidth}@{}}
+%							\textbf{工业级架构} &
+%							全程采用 C++ 自研有限元计算内核，实现内存高效管理与算子高度复用，保障大规模工程算例的计算效率。\\[4pt]
+%							\textbf{高性能组装} &
+%							将博士课题成果落地，针对三维高阶单元实现张量化快速组装机制，大幅降低刚度矩阵构建的时间成本。\\[4pt]
+%							\textbf{混合结构} &
+%							算法有效支持梁、桁架、板壳等多种混合实体单元的耦合计算。\\
+%						\end{tabular}\par}
+%				\end{tcolorbox}
+%				
+%				\vspace{3pt}
+%				
+%				% ── 子卡片 B：核心应用成效 ────────────────────────
+%				\begin{tcolorbox}[
+%					colback=white, colframe=structure.fg!50,
+%					colbacktitle=structure.fg, coltitle=white,
+%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+%					title={\circnum{02}\enspace 核心应用成效},
+%					arc=3pt, boxrule=0.5pt,
+%					toptitle=2pt, bottomtitle=2pt,
+%					top=5pt, bottom=5pt, left=7pt, right=7pt]
+%					\setlength{\parskip}{0pt}
+%					{\fontsize{7}{10.5}\selectfont\sffamily
+%						\begin{tabular}{@{}r@{~~}p{0.78\linewidth}@{}}
+%							\textbf{高精度评估} &
+%							成功克服传统低阶单元精度瓶颈，解决复杂工况（如 L 型区域）的位移捕捉难题。\\[4pt]
+%							\textbf{自主可控} &
+%							验证了高阶有限元理论在实际工程中的可行性，摆脱对商业软件底层内核的依赖。\\[4pt]
+%							\textbf{项目状态} &
+%							成果已于 2024 年 1 月顺利通过中建五局验收。\\
+%						\end{tabular}\par}
+%				\end{tcolorbox}
+%				
+%			\end{column}
+%			
+%			% ══════════════════════════════════════════════════════
+%			% 右栏：成果可视化展示
+%			% ══════════════════════════════════════════════════════
+%			\begin{column}{0.44\linewidth}
+%				\begin{tcolorbox}[
+%					colback=white, colframe=structure.fg!50,
+%					colbacktitle=structure.fg, coltitle=white,
+%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+%					title={成果可视化展示},
+%					arc=3pt, boxrule=0.5pt,
+%					toptitle=2pt, bottomtitle=2pt,
+%					top=6pt, bottom=6pt, left=6pt, right=6pt,
+%					height=0.575\paperheight, valign=top]
+%					\setlength{\parskip}{0pt}
+%					
+%					% 图 1（上）
+%					\centering
+%					\includegraphics[width=\linewidth,
+%					height=0.22\paperheight, keepaspectratio]{fig41}
+%					
+%					\vspace{2pt}
+%					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!80}
+%						图1\enspace L 型复杂区域位移仿真云图\par}
+%					
+%					\vspace{6pt}
+%					{\color{structure.fg!20}\rule{\linewidth}{0.4pt}}
+%					\vspace{6pt}
+%					
+%					% 图 2（下）
+%					\includegraphics[width=\linewidth,
+%					height=0.22\paperheight, keepaspectratio]{fig40}
+%					
+%					\vspace{2pt}
+%					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!80}
+%						图2\enspace 三维高阶程序残余力收敛曲线\par}
+%					
+%				\end{tcolorbox}
+%			\end{column}
+%			
+%		\end{columns}
+		
+%	\end{frame}
 	
 	% ============================================================
 	\section{未来工作安排}
