@@ -394,7 +394,7 @@
 	% ============================================================
 	
 	% ============================================================
-	%  02-1  主要研究工作概览
+	%  02-1 主要研究工作概览
 	% ============================================================
 	\begin{frame}
 		\frametitle{主要研究工作概览}
@@ -525,7 +525,11 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-2  研究动机与核心思路
+	\subsection{任意次拉格朗日有限元拓扑优化方法}
+	% ============================================================
+	
+	% ============================================================
+	%  02-1-1 研究动机与核心思路
 	% ============================================================
 	\begin{frame}
 		\frametitle{任意次拉格朗日有限元拓扑优化方法}
@@ -605,7 +609,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-3  比较研究结论
+	%  02-1-2 比较研究结论
 	% ============================================================
 	\begin{frame}
 		\frametitle{任意次拉格朗日有限元拓扑优化方法}
@@ -698,7 +702,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-4  基准优化问题与基准算例
+	%  02-1-3 基准优化问题与基准算例
 	% ============================================================
 	\begin{frame}
 		\frametitle{基准优化问题与基准算例}
@@ -788,7 +792,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-5  对比维度与统一设置
+	%  02-1-4 对比维度与统一设置
 	% ============================================================
 	\begin{frame}
 		\frametitle{对比维度与统一设置}
@@ -879,7 +883,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-6  不同离散阶次的比较
+	%  02-1-5 不同离散阶次的比较
 	% ============================================================
 	\begin{frame}
 		\frametitle{不同离散阶次的比较}
@@ -982,7 +986,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-7  不同单元类型的比较
+	%  02-1-6  不同单元类型的比较
 	% ============================================================
 	\begin{frame}
 		\frametitle{不同单元类型的比较}
@@ -1059,7 +1063,7 @@
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
 					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 结论具有跨单元类型普适性},
+					title={\circnum{02}\enspace 跨单元类型一致性},
 					arc=3pt, boxrule=0.5pt,
 					toptitle=1pt, bottomtitle=1pt,
 					top=5pt, bottom=5pt, left=6pt, right=6pt]
@@ -1076,10 +1080,10 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-8 不同密度表征的比较
+	%  02-1-7 不同密度表征的比较
 	% ============================================================
 	\begin{frame}
-		\frametitle{不同密度表征的比较：拓扑构型与边界特征}
+		\frametitle{不同密度表征的拓扑构型与边界特征}
 		
 		% ── 顶部总述条 ──────────────────────────────────────────────
 		\begin{tcolorbox}[
@@ -1171,7 +1175,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  02-9  不同密度表征的收敛历程分析
+	%  02-1-8  不同密度表征的收敛历程分析
 	% ============================================================
 	\begin{frame}
 		\frametitle{不同密度表征的收敛历程分析}
@@ -1184,8 +1188,6 @@
 			{\fontsize{7.5}{11}\selectfont\sffamily
 				对比目标函数与体积分数的演化曲线，说明两类密度表征在收敛速度与演化平滑性上的差异。}
 		\end{tcolorbox}
-		
-		\vspace{-1.2em}
 		
 		% ── 中部图区：左右两图并排 ──────────────────────────────────
 		\begin{tcolorbox}[
@@ -1226,44 +1228,310 @@
 			\end{columns}
 			
 		\end{tcolorbox}
+
 		
-		\vspace{-1.0em}
+		% ── 底部结论：单通栏框 ──────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white, colframe=structure.fg!50,
+			colbacktitle=structure.fg, coltitle=white,
+			fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+			title={收敛特征总结},
+			arc=3pt, boxrule=0.5pt,
+			toptitle=1pt, bottomtitle=1pt,
+			top=4pt, bottom=4pt, left=6pt, right=6pt]
+			\setlength{\parskip}{0pt}\sloppy
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				单元密度表征较早锁定主承载路径，目标函数下降更快；%
+				节点密度表征演化更平滑，但长尾迭代更明显，%
+				两类表征的体积分数控制基本一致。}
+		\end{tcolorbox}
 		
-		% ── 底部结论：两框并排 ──────────────────────────────────────
+	\end{frame}
+	
+	% ============================================================
+	%  02-1-9  单分辨率框架下高阶优势受限
+	% ============================================================
+	\begin{frame}
+		\frametitle{单分辨率框架下高阶优势受限}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				在单分辨率框架下，显式过滤与设计分辨率主导拓扑演化，%
+				单纯提高离散阶次难以显著改善最终拓扑构型。}
+		\end{tcolorbox}
+		
+		% ── 中部图区：左右两图并排 ──────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=4pt, bottom=4pt, left=6pt, right=6pt]
+			
+			% 中部总标题
+			{\centering\fontsize{7}{9}\selectfont\sffamily\color{structure.fg}
+				MBB 梁，四边形单元，单元密度表征，灵敏度过滤（分析网格 = 设计网格）\par}
+			
+			\begin{columns}[T, totalwidth=\linewidth]
+				
+				% ── 左图：k=1 ───────────────────────────────────────
+				\begin{column}{0.495\linewidth}
+					\centering
+					\includegraphics[width=0.95\linewidth,
+					height=0.280\paperheight, keepaspectratio]{mbb_filter_k1}
+					\\[2pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily $k=1$}
+				\end{column}
+				
+				% ── 右图：k=4 ───────────────────────────────────────
+				\begin{column}{0.495\linewidth}
+					\centering
+					\includegraphics[width=0.95\linewidth,
+					height=0.280\paperheight, keepaspectratio]{mbb_filter_k4}
+					\\[2pt]
+					{\fontsize{7.5}{10}\selectfont\sffamily $k=4$}
+				\end{column}
+				
+			\end{columns}
+			
+		\end{tcolorbox}
+		
+		% ── 底部结论：单通栏框 ──────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white, colframe=structure.fg!50,
+			colbacktitle=structure.fg, coltitle=white,
+			fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+			title={关键结论},
+			arc=3pt, boxrule=0.5pt,
+			toptitle=1pt, bottomtitle=1pt,
+			top=4pt, bottom=4pt, left=6pt, right=6pt]
+			\setlength{\parskip}{0pt}\sloppy
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				在单分辨率框架下，显式过滤主导了拓扑演化，不同阶次的宏观构型与主承载路径趋于一致；%
+				高阶有限元虽能提升物理状态评估质量，但其优势难以直接转化为拓扑表达优势。%
+				若继续同步提高分析精度与设计分辨率，计算规模将显著增长，%
+				因此需要进一步引入多分辨率解耦框架。}
+		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	\subsection{基于高阶有限元的多分辨率拓扑优化框架}
+	% ============================================================
+	
+	% ============================================================
+	%  02-2-1  从单分辨率到多分辨率：问题与思路
+	% ============================================================
+	\begin{frame}
+		\frametitle{从单分辨率到多分辨率：问题与思路}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				单分辨率框架中，分析网格与设计网格刚性耦合，使高精度分析与高分辨率拓扑表达难以兼顾；%
+				因此需要引入多分辨率解耦框架。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 左右两栏卡片 ────────────────────────────────────────────
 		\begin{columns}[T, totalwidth=\linewidth]
 			
+			% ── 左栏：单分辨率框架的局限 ────────────────────────────
 			\begin{column}{0.485\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 目标函数的演化差异},
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 单分辨率框架的局限},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=1pt, bottomtitle=1pt,
-					top=4pt, bottom=4pt, left=6pt, right=6pt]
-					\setlength{\parskip}{0pt}\sloppy
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=3pt, bottom=3pt, left=6pt, right=6pt,
+					height=0.48\paperheight, valign=top]
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						单元密度表征较早锁定主承载路径，目标函数下降更快。}
+						\begin{itemize}
+							\setlength{\itemsep}{3pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 一个分析单元通常对应一个设计变量，拓扑表达分辨率受分析网格尺度限制
+							\item 仅提升有限元阶次，改善的是物理分析精度，而不能同步提升拓扑表达分辨率
+							\item 若直接整体细化网格以提高设计分辨率，又会导致自由度与计算规模显著增长
+					\end{itemize}}
 				\end{tcolorbox}
 			\end{column}
 			
+			% ── 右栏：多分辨率框架的核心思路 ───────────────────────
 			\begin{column}{0.485\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 演化平滑性与体积控制},
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 多分辨率框架的核心思路},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=1pt, bottomtitle=1pt,
-					top=4pt, bottom=4pt, left=6pt, right=6pt]
-					\setlength{\parskip}{0pt}\sloppy
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=3pt, bottom=3pt, left=6pt, right=6pt,
+					height=0.48\paperheight, valign=top]
 					{\fontsize{7.5}{11}\selectfont\sffamily
-						节点密度表征演化更平滑，但长尾迭代更明显；%
-						两类表征的体积分数控制基本一致。}
+						\begin{itemize}
+							\setlength{\itemsep}{3pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 将设计变量表达、密度积分与位移分析分配到不同离散层级
+							\item 在较粗的高阶位移分析网格上完成准确物理分析，在更高分辨率设计空间中表达复杂拓扑细节
+							\item 从而在计算规模可控的前提下，兼顾分析精度与拓扑分辨率
+					\end{itemize}}
 				\end{tcolorbox}
 			\end{column}
 			
 		\end{columns}
+		
+		% ── 底部强调条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg, colframe=structure.fg,
+			arc=3pt, boxrule=0pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}
+				核心不是继续单纯升阶，而是打破分析分辨率与设计分辨率的刚性耦合。}
+		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-2-2  单分辨率框架的局限：精度错配
+	% ============================================================
+	\begin{frame}
+		\frametitle{单分辨率框架的局限：精度错配}
+		
+		% ── 顶部总述条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				在单分辨率框架中，分析精度与设计分辨率被同一网格锁定；%
+				单方面提升任一侧，都会导致精度错配。}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 左右两栏卡片 ────────────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ── 左栏：仅提升分析阶次 ────────────────────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 仅提升分析阶次：冗余高精度评估},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=4pt, bottom=4pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}
+					
+					% ── 双子图并列 ──────────────────────────────────
+					\noindent
+					\begin{minipage}[t]{0.46\linewidth}
+						\centering
+						\includegraphics[width=\linewidth,
+						height=0.20\paperheight, keepaspectratio]{topo_ana_k2}\\[2pt]
+						{\fontsize{6}{8}\selectfont\sffamily\color{structure.fg!80}
+							(a)\enspace $k=2$，$u_{\mathrm{dof}}=2562$}
+					\end{minipage}%
+					\hfill%
+					\begin{minipage}[t]{0.46\linewidth}
+						\centering
+						\includegraphics[width=\linewidth,
+						height=0.20\paperheight, keepaspectratio]{topo_ana_k4}\\[2pt]
+						{\fontsize{6}{8}\selectfont\sffamily\color{structure.fg!80}
+							(b)\enspace $k=4$，$u_{\mathrm{dof}}=9922$}
+					\end{minipage}
+					
+					\vspace{3pt}
+					
+					% ── 配文 ────────────────────────────────────────
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						\begin{itemize}
+							\setlength{\itemsep}{2pt}
+							\setlength{\topsep}{0pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 设计变量自由度保持不变，宏观拓扑骨架基本一致
+							\item 位移自由度显著增加，但拓扑表达分辨率并未同步提升
+							\item 本质上是对同一低分辨率几何的冗余高精度评估
+					\end{itemize}}
+					
+					\vspace{2pt}
+					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
+					\vspace{1pt}
+					
+					% ── 图下注释 ────────────────────────────────────
+					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!70}
+						同一设计自由度下，升阶主要增加分析规模，而未显著改变拓扑骨架。}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+			% ── 右栏：仅提升设计分辨率 ──────────────────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 仅提升设计分辨率：分析欠解析},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=4pt, bottom=4pt, left=6pt, right=6pt]
+					\setlength{\parskip}{0pt}
+					
+					% ── 单图 ────────────────────────────────────────
+					\begin{center}
+						\includegraphics[width=0.88\linewidth,
+						height=0.20\paperheight, keepaspectratio]{topo_design_osc}
+					\end{center}
+					
+					\vspace{3pt}
+					
+					% ── 配文 ────────────────────────────────────────
+					{\fontsize{7.5}{11}\selectfont\sffamily
+						\begin{itemize}
+							\setlength{\itemsep}{2pt}
+							\setlength{\topsep}{0pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 高频密度变化无法被当前分析模型准确辨识
+							\item 优化演化缺乏稳定可靠的物理判据
+							\item 结果易出现密度震荡、条纹状伪结构与收敛不稳定
+					\end{itemize}}
+					
+					\vspace{2pt}
+					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
+					\vspace{1pt}
+					
+					% ── 图下注释 ────────────────────────────────────
+					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!70}
+						分析自由度固定时，单方面提高设计分辨率会诱发明显的数值震荡与伪结构。}
+					
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+		% ── 底部强调条 ──────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg, colframe=structure.fg,
+			arc=3pt, boxrule=0pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}
+				无论单方面提升分析阶次还是设计分辨率，都难以实质改善优化结果；必须打破二者的刚性耦合。}
+		\end{tcolorbox}
 		
 	\end{frame}
 	
