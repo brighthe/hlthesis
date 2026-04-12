@@ -1415,8 +1415,8 @@
 			arc=3pt, boxrule=0.5pt,
 			top=2pt, bottom=2pt, left=8pt, right=8pt]
 			{\fontsize{7.5}{11}\selectfont\sffamily
-				在单分辨率框架中，分析精度与设计分辨率被同一网格锁定；%
-				单方面提升任一侧，都会导致精度错配。}
+				在单分辨率框架中，分析精度与设计分辨率被同一网格锁定，%
+				单方面提升任一侧都会导致精度错配。}
 		\end{tcolorbox}
 		
 		\vspace{-1.5em}
@@ -1441,17 +1441,17 @@
 					\begin{minipage}[t]{0.46\linewidth}
 						\centering
 						\includegraphics[width=\linewidth,
-						height=0.20\paperheight, keepaspectratio]{topo_ana_k2}\\[2pt]
-						{\fontsize{6}{8}\selectfont\sffamily\color{structure.fg!80}
-							(a)\enspace $k=2$，$u_{\mathrm{dof}}=2562$}
+						height=0.20\paperheight, keepaspectratio]{topo_ana_k2}\\
+						{\fontsize{6}{8}\selectfont\sffamily
+							$k=2,u_{\text{dof}}=2562$}
 					\end{minipage}%
 					\hfill%
 					\begin{minipage}[t]{0.46\linewidth}
 						\centering
 						\includegraphics[width=\linewidth,
-						height=0.20\paperheight, keepaspectratio]{topo_ana_k4}\\[2pt]
-						{\fontsize{6}{8}\selectfont\sffamily\color{structure.fg!80}
-							(b)\enspace $k=4$，$u_{\mathrm{dof}}=9922$}
+						height=0.20\paperheight, keepaspectratio]{topo_ana_k4}\\
+						{\fontsize{6}{8}\selectfont\sffamily
+							$k=4,u_{\text{dof}}=9922$}
 					\end{minipage}
 					
 					\vspace{3pt}
@@ -1467,14 +1467,6 @@
 							\item 位移自由度显著增加，但拓扑表达分辨率并未同步提升
 							\item 本质上是对同一低分辨率几何的冗余高精度评估
 					\end{itemize}}
-					
-					\vspace{2pt}
-					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
-					\vspace{1pt}
-					
-					% ── 图下注释 ────────────────────────────────────
-					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!70}
-						同一设计自由度下，升阶主要增加分析规模，而未显著改变拓扑骨架。}
 					
 				\end{tcolorbox}
 			\end{column}
@@ -1494,10 +1486,12 @@
 					% ── 单图 ────────────────────────────────────────
 					\begin{center}
 						\includegraphics[width=0.88\linewidth,
-						height=0.20\paperheight, keepaspectratio]{topo_design_osc}
+						height=0.20\paperheight, keepaspectratio]{topo_design_osc}\\
+						{\fontsize{6}{8}\selectfont\sffamily
+							$u_{\text{dof}}=2562,4\times4$ 子密度}
 					\end{center}
 					
-					\vspace{3pt}
+%					\vspace{3pt}
 					
 					% ── 配文 ────────────────────────────────────────
 					{\fontsize{7.5}{11}\selectfont\sffamily
@@ -1507,17 +1501,9 @@
 							\setlength{\parsep}{0pt}
 							\setlength{\parskip}{0pt}
 							\item 高频密度变化无法被当前分析模型准确辨识
-							\item 优化演化缺乏稳定可靠的物理判据
 							\item 结果易出现密度震荡、条纹状伪结构与收敛不稳定
+							\item 单方面提高设计分辨率，同样无法获得稳定可靠的优化结果。
 					\end{itemize}}
-					
-					\vspace{2pt}
-					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
-					\vspace{1pt}
-					
-					% ── 图下注释 ────────────────────────────────────
-					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!70}
-						分析自由度固定时，单方面提高设计分辨率会诱发明显的数值震荡与伪结构。}
 					
 				\end{tcolorbox}
 			\end{column}
@@ -1950,119 +1936,87 @@
 		
 	\end{frame}
 	
-%	% ============================================================
-%	%  04-4 核心算法的工程应用实践
-%	% ============================================================
-%	\begin{frame}
-%		\frametitle{核心算法的工程应用实践}
-%		
-%		% ── 高亮副标题条 ────────────────────────────────────────────
-%		\begin{tcolorbox}[
-%			colback=structure.fg, colframe=structure.fg,
-%			arc=3pt, boxrule=0pt,
-%			top=2pt, bottom=2pt, left=8pt, right=8pt]
-%			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}\bfseries
-%				企校合作项目：中建五局三公司建筑结构力学计算内核研发}
-%		\end{tcolorbox}
-%		
-%		\vspace{-1.5em}
-%		
-%		% ── 主体：左栏 + 右栏 ───────────────────────────────────────
-%		\begin{columns}[T, totalwidth=\linewidth]
-%			
-%			% ══════════════════════════════════════════════════════
-%			% 左栏：核心技术与应用成效
-%			% ══════════════════════════════════════════════════════
-%			\begin{column}{0.54\linewidth}
-%				
-%				% ── 子卡片 A：基于 C++ 的高性能底层实现 ──────────
-%				\begin{tcolorbox}[
-%					colback=white, colframe=structure.fg!50,
-%					colbacktitle=structure.fg, coltitle=white,
-%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-%					title={\circnum{01}\enspace 基于 C++ 的高性能底层实现},
-%					arc=3pt, boxrule=0.5pt,
-%					toptitle=2pt, bottomtitle=2pt,
-%					top=5pt, bottom=5pt, left=7pt, right=7pt]
-%					\setlength{\parskip}{0pt}
-%					{\fontsize{7}{10.5}\selectfont\sffamily
-%						\begin{tabular}{@{}r@{~~}p{0.78\linewidth}@{}}
-%							\textbf{工业级架构} &
-%							全程采用 C++ 自研有限元计算内核，实现内存高效管理与算子高度复用，保障大规模工程算例的计算效率。\\[4pt]
-%							\textbf{高性能组装} &
-%							将博士课题成果落地，针对三维高阶单元实现张量化快速组装机制，大幅降低刚度矩阵构建的时间成本。\\[4pt]
-%							\textbf{混合结构} &
-%							算法有效支持梁、桁架、板壳等多种混合实体单元的耦合计算。\\
-%						\end{tabular}\par}
-%				\end{tcolorbox}
-%				
-%				\vspace{3pt}
-%				
-%				% ── 子卡片 B：核心应用成效 ────────────────────────
-%				\begin{tcolorbox}[
-%					colback=white, colframe=structure.fg!50,
-%					colbacktitle=structure.fg, coltitle=white,
-%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-%					title={\circnum{02}\enspace 核心应用成效},
-%					arc=3pt, boxrule=0.5pt,
-%					toptitle=2pt, bottomtitle=2pt,
-%					top=5pt, bottom=5pt, left=7pt, right=7pt]
-%					\setlength{\parskip}{0pt}
-%					{\fontsize{7}{10.5}\selectfont\sffamily
-%						\begin{tabular}{@{}r@{~~}p{0.78\linewidth}@{}}
-%							\textbf{高精度评估} &
-%							成功克服传统低阶单元精度瓶颈，解决复杂工况（如 L 型区域）的位移捕捉难题。\\[4pt]
-%							\textbf{自主可控} &
-%							验证了高阶有限元理论在实际工程中的可行性，摆脱对商业软件底层内核的依赖。\\[4pt]
-%							\textbf{项目状态} &
-%							成果已于 2024 年 1 月顺利通过中建五局验收。\\
-%						\end{tabular}\par}
-%				\end{tcolorbox}
-%				
-%			\end{column}
-%			
-%			% ══════════════════════════════════════════════════════
-%			% 右栏：成果可视化展示
-%			% ══════════════════════════════════════════════════════
-%			\begin{column}{0.44\linewidth}
-%				\begin{tcolorbox}[
-%					colback=white, colframe=structure.fg!50,
-%					colbacktitle=structure.fg, coltitle=white,
-%					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-%					title={成果可视化展示},
-%					arc=3pt, boxrule=0.5pt,
-%					toptitle=2pt, bottomtitle=2pt,
-%					top=6pt, bottom=6pt, left=6pt, right=6pt,
-%					height=0.575\paperheight, valign=top]
-%					\setlength{\parskip}{0pt}
-%					
-%					% 图 1（上）
-%					\centering
-%					\includegraphics[width=\linewidth,
-%					height=0.22\paperheight, keepaspectratio]{fig41}
-%					
-%					\vspace{2pt}
-%					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!80}
-%						图1\enspace L 型复杂区域位移仿真云图\par}
-%					
-%					\vspace{6pt}
-%					{\color{structure.fg!20}\rule{\linewidth}{0.4pt}}
-%					\vspace{6pt}
-%					
-%					% 图 2（下）
-%					\includegraphics[width=\linewidth,
-%					height=0.22\paperheight, keepaspectratio]{fig40}
-%					
-%					\vspace{2pt}
-%					{\fontsize{6.5}{9}\selectfont\sffamily\color{structure.fg!80}
-%						图2\enspace 三维高阶程序残余力收敛曲线\par}
-%					
-%				\end{tcolorbox}
-%			\end{column}
-%			
-%		\end{columns}
+	% ============================================================
+	\subsection{科研项目与实践经历}
+	% ============================================================
+	
+	% ============================================================
+	%  04-3-1  工程应用实践：校企合作开发
+	% ============================================================
+	\begin{frame}
+		\frametitle{工程应用实践：校企合作开发}
 		
-%	\end{frame}
+		% ── 高亮副标题条 ───────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=2pt, bottom=2pt, left=8pt, right=8pt]
+			{\fontsize{7.5}{11}\selectfont\sffamily
+				中建五局创新研究院：建筑结构力学分析计算内核开发}                                    
+		\end{tcolorbox}
+		
+		\vspace{-0.5em}
+		
+		% ── 主体：全宽排版展示区 ────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white, colframe=structure.fg!50,
+			colbacktitle=structure.fg, coltitle=white,
+			fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
+			title={复杂结构仿真对比验证},
+			arc=3pt, boxrule=0.5pt,
+			toptitle=2pt, bottomtitle=2pt,
+			top=6pt, bottom=6pt, left=10pt, right=10pt]
+			\setlength{\parskip}{0pt}
+			
+			% --- 第 1 帧：展示 Figure 31 (桁架结构全屏 2x2 分布) ---
+			\only<1>{
+				% 第一排：Job3 位移云图对比
+				\centerline{
+					\begin{minipage}{0.35\linewidth}
+						\centering
+						\includegraphics[width=\linewidth, keepaspectratio]{job3_disp1}
+						\vspace{3pt}
+						{\fontsize{6.5}{8}\selectfont\sffamily\color{black!80} (a) 自研内核计算位移}
+					\end{minipage}
+					\hspace{0.08\linewidth}
+					\begin{minipage}{0.35\linewidth}
+						\centering
+						\includegraphics[width=\linewidth, keepaspectratio]{job3_disp2}
+						\vspace{3pt}
+						{\fontsize{6.5}{8}\selectfont\sffamily\color{black!80} (b) Abaqus 计算位移}
+					\end{minipage}
+				}
+				
+				% 第二排：Job3 Mises 应力云图对比
+				\centerline{
+					\begin{minipage}{0.35\linewidth}
+						\centering
+						\includegraphics[width=\linewidth, keepaspectratio]{job3_mises1}
+						\vspace{3pt}
+						{\fontsize{6.5}{8}\selectfont\sffamily\color{black!80} (c) 自研内核计算 Mises 应力}
+					\end{minipage}
+					\hspace{0.08\linewidth}
+					\begin{minipage}{0.35\linewidth}
+						\centering
+						\includegraphics[width=\linewidth, keepaspectratio]{job3_mises2}
+						\vspace{3pt}
+						{\fontsize{6.5}{8}\selectfont\sffamily\color{black!80} (d) Abaqus 计算 Mises 应力}
+					\end{minipage}
+				}
+				
+				\centering
+				{\fontsize{8}{11}\selectfont\sffamily\color{structure.fg!90}\bfseries
+					图1\enspace 空间网壳桁架结构仿真云图对比（Job3）\par}
+			}
+			
+			% --- 第 2 帧留白位置：在这里照葫芦画瓢加上图 32 即可 ---
+			% \only<2>{
+				%     ...
+				% }
+			
+		\end{tcolorbox}
+		
+	\end{frame}
 	
 	% ============================================================
 	\section{未来工作安排}
