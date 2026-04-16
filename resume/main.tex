@@ -2,7 +2,6 @@
 
 \usepackage{hyperref}
 \usepackage{xcolor}
-\usepackage{calc}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{fontspec}
@@ -10,32 +9,29 @@
 \usepackage{titlesec}
 \usepackage{enumitem}
 \usepackage{fancybox}
-\usepackage{tabularx}
-\usepackage{multicol}
 \hypersetup{hidelinks}
-\usepackage{pifont}
 
 %%%%%%%%%%%%%%%%%%%%
 % 设置
 %%%%%%%%%%%%%%%%%%%%
 
-\setlength{\parindent}{0pt}					% 取消全局段落缩进
-\pagenumbering{gobble}						% 取消页码显示
+\setlength{\parindent}{0pt}                 % 取消全局段落缩进
+\pagenumbering{gobble}                      % 取消页码显示
 \setlist[itemize]{nosep                     % 取消 itemize 的默认间距
 	, before={\vspace*{-\parskip}}          % 取消 itemize 和后续段落之间的空白
-	, leftmargin=*}		                    % 取消 itemize 的左边距
+	, leftmargin=*}                         % 取消 itemize 的左边距
 \setlist[enumerate]{
 	leftmargin=*,                           % 取消 enumerate 的左边距
-	before={\vspace*{-\parskip}}}	        % 取消 itemize 和后续段落之间的空白
+	before={\vspace*{-\parskip}}}           % 取消 enumerate 和后续段落之间的空白
 \renewcommand{\arraystretch}{1.2}           % 设置表格行间距
 \linespread{1.25}                           % 设置正文行间距
 
-\titleformat{\section}					    % 将原标题前面的数字取消了
-{\LARGE\bfseries\raggedright} 		        % 字体改为 LARGE，bold，左对齐
-{}{0em}                      			    % 可用于添加全局标题前缀
-{}                           			    % 可用于添加代码
+\titleformat{\section}                      % 将原标题前面的数字取消了
+{\LARGE\bfseries\raggedright}               % 字体改为 LARGE，bold，左对齐
+{}{0em}                                     % 可用于添加全局标题前缀
+{}                                          % 可用于添加代码
 [{\color{secondary_color}\titlerule}]       % 标题下方加一条线
-\titlespacing*{\section}{0cm}{*1.2}{*1.2}	% 标题左边留白，上方，下方
+\titlespacing*{\section}{0cm}{*1.2}{*1.2}  % 标题左边留白，上方，下方
 
 \usepackage[
 a4paper,
@@ -53,42 +49,34 @@ Extension=.otf,
 BoldFont=*-Bold,
 ]{NotoSerifSC}
 
-% 自定义颜色（参考 https://github.com/seumxc/SEU-Logo）
-\definecolor{primary_color}{RGB}{200, 60, 60}    % 松针绿
-\definecolor{secondary_color}{RGB}{200, 68, 28} % 金陵黄
+% 自定义颜色
+\definecolor{primary_color}{RGB}{200, 60, 60}    % 主色调（红）
+\definecolor{secondary_color}{RGB}{200, 68, 28}  % 辅色调（橙红）
 
 \newlength{\iconwidth}
-\setlength{\iconwidth}{1.5em}                   % 设置 section 标题部分图标占用的宽度
+\setlength{\iconwidth}{1.5em}               % 设置 section 标题部分图标占用的宽度
 
 %%%%%%%%%%%%%%%%%%%%
 % 文章内容
 %%%%%%%%%%%%%%%%%%%%
 
 % 学院
-\newcommand{\school}{数学与计算科学学院} 
+\newcommand{\school}{数学与计算科学学院}
 
 % 联系方式
 \newcommand{\contact}{
-	% 根据个人喜好选择字号
-	% \small                % 小
-	\footnotesize           % 更小
-	% \scriptsize           % 再小一号
+	\footnotesize
 	\textcolor{white}{
-		% 邮箱
-		\faEnvelope \quad \href{mailto:youremail@nbu.edu.cn}{lianghe@smail.xtu.edu.cn}
+		\faEnvelope \quad \href{mailto:lianghe@smail.xtu.edu.cn}{lianghe@smail.xtu.edu.cn}
 		\hspace{4em}
-		% 手机号
-		\faPhone \quad  17773031823
-%		% 别的联系方式，如微信、GitHub等
-%		\hspace{4em}
-%		\faWeixin \quad \href{http://113.45.153.151:3001/Bob}{http://113.45.153.151:3001/Bob}
+		\faPhone \quad 17773031823
 	}
 }
 
 \begin{document}
 	
 	%%%%%%%%%%%%%%%%%%%%
-	% 页眉、页脚和背景（如果有多页简历，请把页眉页脚和背景复制粘贴到第二页的内容之前）
+	% 页眉、页脚和背景
 	%%%%%%%%%%%%%%%%%%%%
 	
 	% 页眉：校标组合+学院名
@@ -107,12 +95,11 @@ BoldFont=*-Bold,
 	\end{tikzpicture}
 	\vspace{-3.5em}
 	
-	% 页脚，联系方式
+	% 页脚：联系方式
 	\begin{tikzpicture}[remember picture, overlay]
 		\node[anchor=south, inner sep=0pt](footer) at (current page.south){
 			\includegraphics[width=\paperwidth]{images/foot.png}
 		};
-		% 联系方式
 		\node[anchor=center] at(footer.center){\contact};
 	\end{tikzpicture}
 	
@@ -127,66 +114,58 @@ BoldFont=*-Bold,
 	% 简历正文
 	%%%%%%%%%%%%%%%%%%%%
 	
+	% 左侧：个人信息 + 教育背景，占 78%
 	\begin{minipage}[t]{0.78\textwidth}
+		
 		% 个人信息
-		\begin{minipage}[t]{\textwidth}
-			\section[个人信息]{\makebox[\iconwidth][c]{\color{primary_color}{\faAddressCard}}\quad 个人信息}
-			\begin{minipage}[t]{0.5\textwidth}
-				\textbf{姓\qquad 名}：何亮\\[0.5em]
-				\vspace{0.5em}
-				\textbf{出生年月}：1998年5月8日
-				\vspace{0.5em}
-			\end{minipage}
-			\begin{minipage}[t]{0.45\textwidth}
-				\textbf{性\qquad 别}：男\\[0.5em]
-				\vspace{0.5em}
-				\textbf{电\qquad 话}：17773031823
-				\vspace{0.5em}
-			\end{minipage}
-   			\begin{minipage}[t]{0.8\textwidth}
-				\textbf{邮\qquad 箱}：lianghe@smail.xtu.edu.cn
-				\vspace{0.5em}
-			\end{minipage}
-			\begin{minipage}[t]{0.5\textwidth}
-				\textbf{个人综述}：
-				计算数学博士，专注计算固体力学、拓扑优化与底层高效离散数值方法，
-				具备从理论推导到软件实现的全流程能力。参与多项校企合作项目，擅长面向对象的
-				高性能计算开发，致力于将前沿计算数学理论转化为可扩展的高性能科学计算平台。
-			\end{minipage}
-			\vspace{1em}
-		\end{minipage}
+		\section[个人信息]{\makebox[\iconwidth][c]{\color{primary_color}{\faAddressCard}}\quad 个人信息}
+		
+		\begin{tabular}{@{} p{0.50\linewidth} p{0.44\linewidth} @{}}
+			\textbf{姓\qquad 名}：何亮      & \textbf{性\qquad 别}：男          \\[0.4em]
+			\textbf{出生年月}：1998年5月8日  & \textbf{电\qquad 话}：17773031823 \\[0.4em]
+			\multicolumn{2}{@{}l}{\textbf{邮\qquad 箱}：lianghe@smail.xtu.edu.cn} \\[0.4em]
+		\end{tabular}
+		
+		\vspace{0.2em}
+		\textbf{个人综述}：计算数学博士，专注偏微分方程的高效数值方法及其在计算固体力学与 \\
+		拓扑优化中的应用，具备从理论推导到软件实现的全流程能力。参与多项校企合作 \\
+		项目，擅长面向对象的高性能数值计算框架与程序开发，致力于将前沿计算数学理\\
+		论转化为可扩展的高性能科学计算平台。
+		\vspace{1em}
 		
 		% 教育背景
-		\begin{minipage}[t]{\textwidth}
-        	\section[学习经历]{\makebox[\iconwidth][c]{\color{primary_color}{\faGraduationCap}}\quad 教育背景}
-
-			{\large \textbf{湖南工程学院}}，大学本科，信息与计算科学专业 \hfill 2016年9月--2020年6月
-			
-			\vspace{0.5em}
-			{\large \textbf{上海师范大学}}，硕士研究生，运筹学与控制论专业 \hfill 2020年9月--2023年6月
-			
-			\vspace{0.5em}
-			{\large \textbf{湘潭大学}}，博士研究生，数学专业  \hfill 2023年9月--2026年6月
-			
-			\vspace{1.2em}
-		\end{minipage}
+		\section[教育背景]{\makebox[\iconwidth][c]{\color{primary_color}{\faGraduationCap}}\quad 教育背景}
+		
+		\vspace{0.5em}
+		
+		{\large \textbf{湖南工程学院}}，大学本科，信息与计算科学专业 \hfill 2016年9月--2020年6月
+		
+		\vspace{0.5em}
+		{\large \textbf{上海师范大学}}，硕士研究生，运筹学与控制论专业 \hfill 2020年9月--2023年6月
+		
+		\vspace{0.5em}
+		{\large \textbf{湘潭大学}}，博士研究生，数学专业 \hfill 2023年9月--2026年6月\par
+		\begin{itemize}
+			\item \textbf{研究方向}：微分方程数值方法及应用（拓扑优化高效数值算法分析与实现）
+			\item \textbf{导\qquad 师}：魏华祎 教授
+		\end{itemize}
+		
+		\vspace{1.2em}
 		
 	\end{minipage}
 	\hfill
-	% 右半边，照片，比例占行宽20%
+	% 右侧：照片，占 20%
 	\begin{minipage}[t]{0.2\textwidth}
-		\vspace{2.5em} % 照片上侧内容
+		\vspace{2.5em}
 		\setlength{\fboxsep}{0pt}
 		\doublebox{\includegraphics[width=\linewidth]{images/heliang.jpg}}
 	\end{minipage}
 	
+	% 学术论文
 	\begin{minipage}[t]{\textwidth}
-		% 科研成果
-		\section[科研成果]{\makebox[\iconwidth][c]{\color{primary_color}{\faAtom}}\quad 科研成果}
+		\section[学术论文]{\makebox[\iconwidth][c]{\color{primary_color}{\faFile}}\quad 学术论文}
 		
-		{\large \textbf{【发表论文】}}
-		
-		\vspace{0.4em}
+		\vspace{0.5em}
 		
 		\begin{enumerate}[label={[\arabic*]}, leftmargin=2.5em]
 			\setlength{\itemsep}{0.2em}
@@ -195,36 +174,44 @@ BoldFont=*-Bold,
 			
 			\item Tian Tian, Chunyu Chen, \textbf{Liang He}, Huayi Wei. Adaptive finite element method for phase field fracture models based on recovery error estimates[J]. \textit{Journal of Computational and Applied Mathematics}, 472 (2026): 116732.
 			
-			\item Yangyang Zheng, Huayi Wei, Yunqing Huang, Chunyu Chen, Tian Tian, Hanbin Liu, Wenbin Wang, \textbf{Liang He}. FEALPy: A Cross-platform Intelligent
-			Numerical Simulation Engine[J]. Communications in Computational Physics,
-			已录用。
+			\item Yangyang Zheng, Huayi Wei, Yunqing Huang, Chunyu Chen, Tian Tian, Hanbin Liu, Wenbin Wang, \textbf{Liang He}. FEALPy: A Cross-platform Intelligent Numerical Simulation Engine[J]. \textit{Communications in Computational Physics}，已录用。
 		\end{enumerate}
 		
-		{\large \textbf{【知识产权】}}
+		\vspace{0.6em}
+	\end{minipage}
+	
+	% 软件著作权
+	\begin{minipage}[t]{\textwidth}
+		\section[软件著作权]{\makebox[\iconwidth][c]{\color{primary_color}{\faCopyright}}\quad 软件著作权}
 		
-		\vspace{-0.4em}
+		\vspace{0.5em}
 		
 		\begin{enumerate}[label={[\arabic*]}, leftmargin=2.5em]
 			\setlength{\itemsep}{0.2em}
 			
-			\item \textbf{结构拓扑优化仿真计算软件（2025SR0887352）} \quad 软著登字第 15543550 号，\quad 第一完成人。
+			\item \textbf{结构拓扑优化仿真计算软件}\\[0.3em]
+			\textbf{专利申请号}：2025SR0887352 \qquad \textbf{专利授权号}：软著登字第 15543550 号 \qquad \textbf{贡献}：第一完成人
 			
-			 \item \textbf{建筑结构力学仿真计算软件（2024SR0961048）} \quad 软著登字第 13364921 号，\quad 第三完成人。
+			\item \textbf{建筑结构力学仿真计算软件}\\[0.3em]
+			\textbf{专利申请号}：2024SR0961048 \qquad \textbf{专利授权号}：软著登字第 13364921 号 \qquad \textbf{贡献}：第三完成人
 		\end{enumerate}
 		
 		\vspace{0.6em}
 	\end{minipage}
 
+	% 项目经历
 	\begin{minipage}[t]{\textwidth}
-		% 项目经历
 		\section[项目经历]{\makebox[\iconwidth][c]{\color{primary_color}{\faChalkboardTeacher}}\quad 项目经历}
+		
+		\vspace{0.5em}
 		
 		{\large \textbf{建筑结构力学分析计算内核开发 (C++)}}\quad \textbf{主要参与人}
 		\begin{itemize}
 			\setlength{\itemsep}{0.2em}
-			\item \textbf{合作公司}：中国建筑第五工程局有限公司。
-			\item \textbf{高性能计算开发}：设计并实现了跨平台、高可扩展且易于维护的 C++ 结构力学仿真计算内核。
-			\item \textbf{结果验证与交付}：主导仿真计算结果的严格物理验证工作，并完成相关技术文档的交付。
+			\item \textbf{项目简介}：本项目为与中国建筑第五工程局有限公司的合作课题，旨在研发一套跨平台、高可扩展\\
+			且易于维护的底层建筑结构力学仿真计算内核。
+			\item \textbf{核心职责}：负责 C++ 仿真计算内核的底层代码设计与实现；深度参与并承担计算结果严格物理对标\\
+			与验证的核心工作，并完成技术文档的最终交付。
 		\end{itemize}
 		
 		\vspace{0.6em}
@@ -232,13 +219,24 @@ BoldFont=*-Bold,
 		{\large \textbf{CAX 仿真计算引擎 FEALPy 核心模块开发}}\quad \textbf{主要参与人}
 		\begin{itemize}
 			\setlength{\itemsep}{0.2em}
-			\item \textbf{开源仓库}：\href{https://github.com/weihuayi/fealpy}{https://github.com/weihuayi/fealpy}
-			
-			\item \textbf{CSM 模块开发}：负责计算固体力学模块的开发，包括线弹性方程、弹塑性方程等的求解器底层实现。
+			\item \textbf{项目简介}：参与维护并开发开源数值仿真引擎 FEALPy (\href{https://github.com/weihuayi/fealpy}{https://github.com/weihuayi/fealpy})，\\
+			该平台致力于为偏微分方程提供高效、灵活的科学计算支持。
+			\item \textbf{核心职责}：主导设计并实现了计算固体力学核心算法模块；完成了包含线弹性方程、弹塑性方程\\
+			在内的多种力学求解器的底层封装，大幅提升了引擎在固体力学领域的计算能力。
+		\end{itemize}
+		
+		\vspace{0.6em}
+		
+		{\large \textbf{韶峰天工 CAX 智能工作流协作平台开发}}\quad \textbf{核心研发骨干}
+		\begin{itemize}
+			\setlength{\itemsep}{0.2em}
+			\item \textbf{项目简介}：本项目旨在打造支撑 CAX 产学研用一体化的国产智能工作流协作平台，深度适配国产\\
+			操作系统与异构算力，为智能制造与数字孪生提供坚实的工业软件底座。
+			\item \textbf{核心职责}：负责平台结构工程领域核心计算节点的底层开发与封装；完成了桁架塔静力分析模块的\\
+			开发与数值验证工作；参与针对弯管及三通管二次流抑制与压损优化的形状优化算法研发。
 		\end{itemize}
 		
 		\vspace{1.2em}
 	\end{minipage}
-	
 	
 \end{document}
