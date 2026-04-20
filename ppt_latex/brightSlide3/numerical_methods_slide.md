@@ -336,13 +336,13 @@ $$f(x, y) = \frac{|x| - |y|}{x - y}$$
 
 ## 原始函数的不稳定性分析
 
-**原始函数：** $f(x, y) = \dfrac{|x| - |y|}{x - y}$，下面主要考虑 $x \approx y > 0$ 的情形。
+**原始函数：** $f(x, y) = \dfrac{|x| - |y|}{x - y}$
 
 基于多元函数误差传播公式，可将其相对误差写为
 
 $$\footnotesize  E_r(f) = \left[\frac{\text{sign}(x)}{|x|-|y|} - \frac{1}{x-y}\right]xE_r(x) + \left[\frac{-\text{sign}(y)}{|x|-|y|} + \frac{1}{x-y}\right]yE_r(y)$$
 
-将分母 $x-y$ 代入误差传播公式，可得
+下面主要考虑 $x \approx y > 0$ 的情形，将分母 $x-y$ 代入误差传播公式，可得
 
 $$\small E_r(x-y) \approx \frac{x}{x-y}E_r(x) - \frac{y}{x-y}E_r(y),\quad \left|\frac{x}{x-y}\right|, \left|\frac{y}{x-y}\right|\to\infty$$
 
