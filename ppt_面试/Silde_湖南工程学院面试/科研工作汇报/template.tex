@@ -501,7 +501,357 @@
 				形成\textbf{“高阶离散 — 多分辨率解耦 — 混合应力建模}"的高精度拓扑优化方法体系}
 		\end{tcolorbox}
 		
-	\end{frame}A
+	\end{frame}
+	
+	% ============================================================
+	%  02-2  任意次拉格朗日有限元拓扑优化方法
+	% ============================================================
+	\begin{frame}
+		\frametitle{任意次拉格朗日有限元拓扑优化方法}
+		
+		% ── 顶部总述条 ───────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{8}{12}\selectfont\sffamily
+				将变密度拓扑优化中的状态方程从传统低阶位移元推广到任意次拉格朗日有限元，
+				构建统一的高阶离散与优化建模框架。}
+		\end{tcolorbox}
+		
+		\vspace{-1.0em}
+		
+		% ── 三列卡片 ─────────────────────────────────────────────
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ─── 01 高阶有限元离散 ────────────────────────────
+			\begin{column}{0.325\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 任意次有限元离散},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=3pt, bottom=3pt, left=6pt, right=6pt]
+					{\fontsize{7.5}{11}\selectfont\sffamily
+					\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+					\setlength{\leftmargini}{0.85em}
+						\begin{itemize}
+							\setlength{\itemsep}{2pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 基于线弹性弱形式建立密度参数化状态方程
+							\item 构造任意次拉格朗日有限元空间 $V_h^k$
+							\item 统一支持单纯形单元与张量积单元
+					\end{itemize}}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ─── 02 设计变量表征 ──────────────────────────────
+			\begin{column}{0.325\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 设计变量表征},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=3pt, bottom=3pt, left=6pt, right=6pt]
+					{\fontsize{7.5}{11}\selectfont\sffamily
+					\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+					\setlength{\leftmargini}{0.85em}
+						\begin{itemize}
+							\setlength{\itemsep}{2pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 单元密度表征：每个单元对应一个设计变量
+							\item 节点密度表征：由节点变量插值构造连续密度场
+							\item SIMP 材料插值：建立密度—刚度耦合关系
+					\end{itemize}}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ─── 03 统一比较框架 ──────────────────────────────
+			\begin{column}{0.325\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+					title={\circnum{03}\enspace 统一比较框架},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=0.25pt, bottomtitle=0.25pt,
+					top=3pt, bottom=3pt, left=6pt, right=6pt]
+					{\fontsize{7.5}{11}\selectfont\sffamily
+					\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+					\setlength{\leftmargini}{0.85em}
+						\begin{itemize}
+							\setlength{\itemsep}{2pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 统一载荷、边界条件、体积约束与过滤半径
+							\item 比较单元类型、离散阶次与密度表征方式
+							\item 评估优化构型、收敛行为与计算代价
+					\end{itemize}}
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+		\vspace{0.5em}
+		
+		% ── 底部总结条 ───────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg, colframe=structure.fg,
+			arc=3pt, boxrule=0pt,
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			\centering
+			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
+				为系统评估高阶有限元在变密度拓扑优化中的适用性与局限性提供统一计算框架}
+		\end{tcolorbox}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  02-3  不同离散阶次与密度表征的比较
+	% ============================================================
+	\begin{frame}
+		\frametitle{不同离散阶次与密度表征的比较}
+		
+		% ── 顶部总述条：文字随 overlay 切换 ─────────────────────
+		\begin{tcolorbox}[
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{8}{12}\selectfont\sffamily
+				\only<1>{在统一过滤半径与体积约束下，比较线性元（$k=1$）
+					与四阶元（$k=4$）对优化构型及物理场精度的影响。}%
+				\only<2>{在相同离散阶次与过滤半径下，比较单元密度表征与节点密度表征
+					对边界平滑性、收敛行为与离散稳定性的影响。}%
+				\only<3>{系统比较表明：高阶离散、密度表征与显式正则化三者共同决定
+					优化质量，单一要素的提升不足以克服设计分辨率瓶颈。}}
+		\end{tcolorbox}
+		
+		\vspace{-1.5em}
+		
+		% ── 主体内容区：overlayarea 锁高，防止版面跳动 ───────────
+		\begin{overlayarea}{\linewidth}{0.50\paperheight}
+			
+			% ── Overlay 1：离散阶次比较 k=1 vs k=4 ───────────────────
+			\only<1>{%
+				\begin{columns}[T, totalwidth=\linewidth]
+					
+					\begin{column}{0.485\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={线性元 \quad $k = 1$},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							\begin{center}
+								\includegraphics[width=0.85\linewidth,
+								height=0.26\paperheight, keepaspectratio]{topo_k1}
+							\end{center}
+							\vspace{2pt}
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{2pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 构型轮廓模糊，边界呈锯齿状
+									\item 局部应力场逼近误差较大
+									\item 灵敏度分布受低精度位移场影响
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+					\begin{column}{0.485\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={四阶元 \quad $k = 4$},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							\begin{center}
+								\includegraphics[width=0.85\linewidth,
+								height=0.26\paperheight, keepaspectratio]{topo_k4}
+							\end{center}
+							\vspace{2pt}
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{2pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 相同网格下物理场逼近精度显著提升
+									\item 灵敏度分布更光滑，迭代收敛更稳定
+									\item 构型与 $k=1$ 高度相似，设计分辨率未见改善
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+				\end{columns}
+			}% end only<1>
+			
+			% ── Overlay 2：密度表征比较 ───────────────────────────────
+			\only<2>{%
+				\begin{columns}[T, totalwidth=\linewidth]
+					
+					\begin{column}{0.485\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={\circnum{01}\enspace 单元密度表征},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							\begin{center}
+								\includegraphics[width=0.85\linewidth,
+								height=0.26\paperheight, keepaspectratio]{topo_elem_density}
+							\end{center}
+							\vspace{2pt}
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{2pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 每单元一个设计变量，实现简单
+									\item 密度场分片常数，边界呈阶梯状
+									\item 高阶元下插值与密度分辨率不匹配
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+					\begin{column}{0.485\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={\circnum{02}\enspace 节点密度表征},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							\begin{center}
+								\includegraphics[width=0.85\linewidth,
+								height=0.26\paperheight, keepaspectratio]{topo_node_density}
+							\end{center}
+							\vspace{2pt}
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{2pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 节点插值构造连续密度场，边界更光滑
+									\item 与高阶元空间自然相容，稳定性更好
+									\item 灵敏度分析需额外处理插值雅可比项
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+				\end{columns}
+			}% end only<2>
+			
+			% ── Overlay 3：综合结论三列卡片 ──────────────────────────
+			\only<3>{%
+				\begin{columns}[T, totalwidth=\linewidth]
+					
+					\begin{column}{0.325\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={\circnum{01}\enspace 高阶离散的作用},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{3pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 提升位移场与应力场的逼近精度
+									\item 改善灵敏度分布的光滑性
+									\item 设计分辨率仍受网格粒度约束
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+					\begin{column}{0.325\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={\circnum{02}\enspace 密度表征的选择},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{3pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 节点密度与高阶元更自然相容
+									\item 连续密度场改善边界平滑性
+									\item 收敛行为对表征方式敏感
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+					\begin{column}{0.325\linewidth}
+						\begin{tcolorbox}[
+							colback=white, colframe=structure.fg!50,
+							colbacktitle=structure.fg, coltitle=white,
+							fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+							title={\circnum{03}\enspace 正则化的必要性},
+							arc=3pt, boxrule=0.5pt,
+							toptitle=0.25pt, bottomtitle=0.25pt,
+							top=5pt, bottom=5pt, left=6pt, right=6pt]
+							{\fontsize{7.5}{11}\selectfont\sffamily
+								\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+								\setlength{\leftmargini}{0.85em}
+								\begin{itemize}
+									\setlength{\itemsep}{3pt}\setlength{\topsep}{1pt}
+									\setlength{\parsep}{0pt}\setlength{\parskip}{0pt}
+									\item 过滤半径控制最小特征尺寸
+									\item 抑制棋盘格与数值不稳定性
+									\item 与离散阶次、密度表征存在耦合
+							\end{itemize}}
+						\end{tcolorbox}
+					\end{column}
+					
+				\end{columns}
+			}% end only<3>
+			
+		\end{overlayarea}
+		
+		\vspace{0.3em}
+		
+		% ── 底部结论条：文字随 overlay 切换 ─────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg, colframe=structure.fg,
+			arc=3pt, boxrule=0pt,
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			\centering
+			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
+				\only<1>{提高分析阶次可改善物理场评估精度，但不能自动提升设计分辨率}%
+				\only<2>{密度表征方式影响边界平滑性、收敛效率与高阶离散的稳定性}%
+				\only<3>{需引入多分辨率框架，解耦分析精度与设计分辨率，突破单网格瓶颈}}
+		\end{tcolorbox}
+		
+	\end{frame}
 	
 	
 	% ============================================================
