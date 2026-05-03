@@ -58,4 +58,4 @@ _minted*/
 build/
 
 # Windows WSL Zone Identifier files
-*:Zone.Identifier
+*:Zone*Identifier
