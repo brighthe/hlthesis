@@ -79,6 +79,7 @@ $$\begin{aligned} \text{Find} \quad & \boldsymbol{d} = (\boldsymbol{d}_1, ..., \
 
 ![[Pasted image 20260505112813.png]]
 <center>图 10：利用直组件对弯曲结构组件的逼近</center>
+
 ![[Pasted image 20260505112824.png#pic_center]]
 <center>图 11：基于骨架的拓扑优化</center>
 
@@ -161,7 +162,7 @@ $$ \frac{\partial I}{\partial p_i} = -2 \int_D \delta_i(\boldsymbol{\phi}^s)\mat
 
 所研究的问题绘制在图 13 中。设计域的**左侧位移被设置为零（即全固定约束）**。首先，让我们考虑在右侧中点（图 13 中的点 A）施加**单位垂直向下集中载荷**的情况。初始设计域的尺寸分别为长 $L = 2$ 和宽 $W = 1$。设计域由 $100 \times 50$ 的有限元网格离散。设计目标是在可用实体材料约束（$\bar{V} \le 0.5$，即**体积最大允许分数为 50%**）下，**最小化结构的平均柔顺度**。
 
-![[Pasted image 20260505112858.png]]a^fig13
+![[Pasted image 20260505112858.png]]^fig13
 <center>图 13：短梁示例</center>
 
 如图 14 所示的**初始设计由 16 个组件组成**，在优化过程中，这些组件可以移动、旋转、膨胀和收缩。相应的最优拓扑如图 15 所示。目标泛函（柔顺度）的最终收敛值为 $I = 69.44$。
