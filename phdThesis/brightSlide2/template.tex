@@ -982,100 +982,80 @@
 	\begin{frame}
 		\frametitle{拓扑优化中的数值优化算法}
 		
-		% ── 顶部总述条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=panelbg, colframe=structure.fg!40,
-			arc=3pt, boxrule=0.5pt,
-			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{12}\selectfont\sffamily
-				在获得灵敏度信息后，需基于梯度的优化算法驱动设计变量迭代更新；
-				OC 法 与 MMA 是工程中应用最广的两类代表算法。}
+			colback=structure.fg!6,
+			colframe=structure.fg!45,
+			arc=3pt, boxrule=0.45pt,
+			top=5pt, bottom=5pt, left=10pt, right=10pt]
+			{\fontsize{8.4}{11.2}\selectfont\sffamily
+				获得目标与约束的灵敏度后，拓扑优化需依靠基于梯度的算法
+				驱动设计变量迭代更新；其中 OC 与 MMA 是工程中应用较广的两类代表方法。
+			}
 		\end{tcolorbox}
 		
 		\vspace{-1.0em}
 		
-		% ── 两列对比 ─────────────────────────────────────────────
 		\begin{columns}[T, totalwidth=\linewidth]
 			
-			% ─── 左栏：OC 法 ────────────────────────────────────
+			% ─── 左栏：OC ─────────────────────────────────
 			\begin{column}{0.485\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={优化准则法 OC (Optimality Criteria)},
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={优化准则法 OC},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					equal height group=cards-02-6, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
-						\setlength{\leftmargini}{0.85em}
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=9pt, right=9pt,
+					height=0.45\paperheight]
+					
+					{\fontsize{7.75}{11.0}\selectfont\sffamily
 						
-						\textbf{\circnum{01}\enspace 基本思想}\par
-						\vspace{2pt}
 						\begin{itemize}
-							\item 由 KKT 最优性条件推导设计变量的启发式显式更新格式
-						\end{itemize}
-						
-						\textbf{\circnum{02}\enspace 经典更新格式 (Bendsøe)}\par
-						\vspace{2pt}
-						\begin{equation*}
-							\rho_i^{(k+1)} = \rho_i^{(k)} \bigl( B_i^{(k)} \bigr)^\eta
-						\end{equation*}
-						\vspace{-10pt}
-						\begin{itemize}
-							\item $B_i$：由灵敏度比值确定的局部更新系数（KKT 驻点条件）
-							\item $\eta$：阻尼系数，配合移动限制 $m$ 控制单步更新幅度
-						\end{itemize}
-						
-						\textbf{\circnum{03}\enspace 适用与局限}\par
-						\vspace{2pt}
-						\begin{itemize}
-							\item \textbf{适用}：单约束、自伴随问题（如柔顺度 + 体积约束）
-							\item \textbf{局限}：多约束下丧失显式更新优势；非自伴随问题易诱发震荡
+							\setlength{\itemsep}{0.95em}
+							
+							\item[\circnum{01}]
+							基于 KKT 最优性条件，构造设计变量的显式更新格式；
+							
+							\item[\circnum{02}]
+							实现简单、单步代价低，常与移动限制配合控制更新幅度；
+							
+							\item[\circnum{03}]
+							适合体积约束柔顺度最小化等单约束、自伴随问题。
 						\end{itemize}
 					}
 				\end{tcolorbox}
 			\end{column}
 			
-			% ─── 右栏：MMA ──────────────────────────────────────
+			% ─── 右栏：MMA ─────────────────────────────────
 			\begin{column}{0.485\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={移动渐近线方法 MMA (Method of Moving Asymptotes)},
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={移动渐近线方法 MMA},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					equal height group=cards-02-6, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
-						\setlength{\leftmargini}{0.85em}
+					toptitle=2pt, bottomtitle=2pt,
+					top=7pt, bottom=7pt, left=9pt, right=9pt,
+					height=0.45\paperheight]
+					
+					{\fontsize{7.75}{11.0}\selectfont\sffamily
 						
-						\textbf{\circnum{01}\enspace 基本思想 (Svanberg)}\par
-						\vspace{2pt}
 						\begin{itemize}
-							\item 序列凸规划 (SCP) 的经典代表
-							\item 用动态更新的移动渐近线构造可分严格凸近似
-						\end{itemize}
-						
-						\textbf{\circnum{02}\enspace 严格凸近似子问题}\par
-						\vspace{2pt}
-						\begin{equation*}
-							\tilde{f}_i^{(k)}(\boldsymbol{\rho}) = \sum_{j=1}^{N_d} \!\left( \frac{p_{ij}^{(k)}}{U_j^{(k)} - \rho_j} + \frac{q_{ij}^{(k)}}{\rho_j - L_j^{(k)}} \right) + r_i^{(k)}
-						\end{equation*}
-						\vspace{-10pt}
-						\begin{itemize}
-							\item $L_j^{(k)}, U_j^{(k)}$：自适应更新的下/上移动渐近线
-						\end{itemize}
-						
-						\textbf{\circnum{03}\enspace 适用与优势}\par
-						\vspace{2pt}
-						\begin{itemize}
-							\item \textbf{适用}：多约束、高度非线性的复杂拓扑优化问题
-							\item \textbf{优势}：子问题严格凸，可用原对偶内点法高效求解
+							\setlength{\itemsep}{0.95em}
+							
+							\item[\circnum{01}]
+							采用序列凸规划思想，构造可分凸近似子问题；
+							
+							\item[\circnum{02}]
+							通过移动渐近线自适应调节近似模型的稳定性；
+							
+							\item[\circnum{03}]
+							适合多约束、非自伴随及应力约束等复杂优化问题。
 						\end{itemize}
 					}
 				\end{tcolorbox}
@@ -1083,16 +1063,14 @@
 			
 		\end{columns}
 		
-		\vspace{0.4em}
-		
-		% ── 底部结论条 ───────────────────────────────────────────
+		% ── 底部总结条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
 			colback=structure.fg, colframe=structure.fg,
 			arc=3pt, boxrule=0pt,
-			top=3.5pt, bottom=3.5pt, left=8pt, right=8pt]
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
 			\centering
-			{\fontsize{8}{11}\selectfont\sffamily\color{white}
-				OC 法实现简单、计算高效；MMA 通用性强、可处理多约束复杂问题}
+			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
+				OC 强调显式高效更新；MMA 强调复杂约束下的稳定通用求解}
 		\end{tcolorbox}
 		
 	\end{frame}
@@ -1106,15 +1084,18 @@
 		
 		% ── 顶部总述条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=panelbg, colframe=structure.fg!40,
-			arc=3pt, boxrule=0.5pt,
-			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{12}\selectfont\sffamily
-				连续体拓扑优化无正则化时数学上不适定，易出现网格依赖与棋盘格现象；
-				过滤与投影是控制最小长度尺度、获得网格无关设计的主流框架。}
+			colback=panelbg,
+			colframe=structure.fg!40,
+			arc=3pt,
+			boxrule=0.5pt,
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			{\fontsize{8.1}{11.6}\selectfont\sffamily
+				无正则化时，连续体拓扑优化易出现网格依赖、棋盘格与灰度区域；
+				过滤与投影通过长度尺度控制提升构型稳定性与边界清晰度。
+			}
 		\end{tcolorbox}
 		
-		\vspace{-1.0em}
+		\vspace{-0.8em}
 		
 		% ── 三列卡片 ─────────────────────────────────────────────
 		\begin{columns}[T, totalwidth=\linewidth]
@@ -1122,26 +1103,34 @@
 			% ─── 01 灵敏度过滤 ────────────────────────────────
 			\begin{column}{0.325\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
+					colback=white,
+					colframe=structure.fg!50,
+					colbacktitle=structure.fg,
+					coltitle=white,
 					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 灵敏度过滤 (Sigmund)},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=0.25pt, bottomtitle=0.25pt,
-					top=3pt, bottom=3pt, left=6pt, right=6pt,
-					equal height group=cards-02-7]
-					{\fontsize{7.5}{11}\selectfont\sffamily
+					title={\circnum{01}\enspace 灵敏度过滤},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.25pt,
+					bottomtitle=0.25pt,
+					top=6pt, bottom=6pt, left=7pt, right=7pt,
+					height=0.42\paperheight]
+					
+					{\fontsize{7.6}{11.0}\selectfont\sffamily
 						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
-						\setlength{\leftmargini}{0.85em}
+						\setlength{\leftmargini}{0.9em}
+						
 						\begin{itemize}
-							\setlength{\itemsep}{2pt}
+							\setlength{\itemsep}{0.8em}
 							\setlength{\topsep}{1pt}
 							\setlength{\parsep}{0pt}
 							\setlength{\parskip}{0pt}
-							\item 启发式方法，作用于灵敏度（梯度）场而非设计变量本身
-							\item 通过卷积平滑梯度场，有效抑制棋盘格现象
-							\item 形式简单、计算高效，工程应用最广泛
-							\item 但缺乏严格变分基础，不直接约束设计空间
+							
+							\item 仅修正灵敏度场，不改变设计变量；
+							
+							\item 平滑梯度信息，抑制棋盘格与局部振荡；
+							
+							\item 实现简单高效，但不直接约束设计空间。
 						\end{itemize}
 					}
 				\end{tcolorbox}
@@ -1150,31 +1139,34 @@
 			% ─── 02 密度过滤 ──────────────────────────────────
 			\begin{column}{0.325\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
+					colback=white,
+					colframe=structure.fg!50,
+					colbacktitle=structure.fg,
+					coltitle=white,
 					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 密度过滤 (Bruns \& Tortorelli)},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=0.25pt, bottomtitle=0.25pt,
-					top=3pt, bottom=3pt, left=6pt, right=6pt,
-					equal height group=cards-02-7]
-					{\fontsize{7.5}{11}\selectfont\sffamily
+					title={\circnum{02}\enspace 密度过滤},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.25pt,
+					bottomtitle=0.25pt,
+					top=6pt, bottom=6pt, left=7pt, right=7pt,
+					height=0.42\paperheight]
+					
+					{\fontsize{7.6}{11.0}\selectfont\sffamily
 						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
-						\setlength{\leftmargini}{0.85em}
+						\setlength{\leftmargini}{0.9em}
+						
 						\begin{itemize}
-							\setlength{\itemsep}{2pt}
+							\setlength{\itemsep}{0.8em}
 							\setlength{\topsep}{1pt}
 							\setlength{\parsep}{0pt}
 							\setlength{\parskip}{0pt}
-							\item 解耦“数学设计空间”与“物理材料空间”
-							\item 物理密度场为设计变量的卷积平滑：
-							\vspace{-2pt}
-							\begin{equation*}
-								\tilde{\rho}(\boldsymbol{x}) = \tfrac{1}{\psi(\boldsymbol{x})}\!\int_\Omega\! w(\|\boldsymbol{y}\!-\!\boldsymbol{x}\|)\rho(\boldsymbol{y})\,\mathrm{d}\boldsymbol{y}
-							\end{equation*}
-							\vspace{-6pt}
-							\item 具有严格的数学适定性保证 (Bourdin)
-							\item 但边界存在中间密度过渡（灰度带）
+							
+							\item 修正密度变量：$\rho \rightarrow \tilde{\rho}$；
+							
+							\item 解耦设计密度与物理密度；
+							
+							\item 控制最小长度尺度，但易形成灰度带。
 						\end{itemize}
 					}
 				\end{tcolorbox}
@@ -1183,31 +1175,34 @@
 			% ─── 03 投影方法 ──────────────────────────────────
 			\begin{column}{0.325\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
+					colback=white,
+					colframe=structure.fg!50,
+					colbacktitle=structure.fg,
+					coltitle=white,
 					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{03}\enspace 投影方法 (Guest, Sigmund)},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=0.25pt, bottomtitle=0.25pt,
-					top=3pt, bottom=3pt, left=6pt, right=6pt,
-					equal height group=cards-02-7]
-					{\fontsize{7.5}{11}\selectfont\sffamily
+					title={\circnum{03}\enspace 投影方法},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.25pt,
+					bottomtitle=0.25pt,
+					top=6pt, bottom=6pt, left=7pt, right=7pt,
+					height=0.42\paperheight]
+					
+					{\fontsize{7.6}{11.0}\selectfont\sffamily
 						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
-						\setlength{\leftmargini}{0.85em}
+						\setlength{\leftmargini}{0.9em}
+						
 						\begin{itemize}
-							\setlength{\itemsep}{2pt}
+							\setlength{\itemsep}{0.8em}
 							\setlength{\topsep}{1pt}
 							\setlength{\parsep}{0pt}
 							\setlength{\parskip}{0pt}
-							\item 在密度过滤后引入非线性投影，锐化边界灰度
-							\item 形成“三场表述”：$\rho \to \tilde{\rho} \to \bar{\rho}$
-							\item 双曲正切型投影（最常用）：
-							\vspace{-2pt}
-							\begin{equation*}
-								\bar{\rho} = \tfrac{\tanh(\beta\eta) + \tanh(\beta(\tilde{\rho}\!-\!\eta))}{\tanh(\beta\eta) + \tanh(\beta(1\!-\!\eta))}
-							\end{equation*}
-							\vspace{-6pt}
-							\item $\beta$ 延拓策略：由小到大，逐步逼近黑白设计
+							
+							\item 修正过滤密度：$\tilde{\rho} \rightarrow \bar{\rho}$；
+							
+							\item 形成三场表述：$\rho \rightarrow \tilde{\rho} \rightarrow \bar{\rho}$；
+							
+							\item 锐化灰度边界，推动黑白设计。
 						\end{itemize}
 					}
 				\end{tcolorbox}
@@ -1215,16 +1210,16 @@
 			
 		\end{columns}
 		
-		\vspace{0.5em}
-		
 		% ── 底部结论条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=3.5pt, bottom=3.5pt, left=8pt, right=8pt]
+			colback=structure.fg,
+			colframe=structure.fg,
+			arc=3pt,
+			boxrule=0pt,
+			top=4pt, bottom=4pt, left=8pt, right=8pt]
 			\centering
 			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				“过滤 + 投影” 组合机制是当前变密度拓扑优化最主流的正则化框架}
+				灵敏度过滤修正梯度，密度过滤修正密度，投影方法强化黑白边界}
 		\end{tcolorbox}
 		
 	\end{frame}
@@ -1352,7 +1347,7 @@
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{线弹性状态方程的任意次有限元离散}
+		\frametitle{密度参数化状态方程的任意次有限元离散}
 		
 		% ── 顶部引导语 ───────────────────────────────────────────
 		\begin{tcolorbox}[
@@ -3278,11 +3273,11 @@
 	\end{frame}
 	
 	% ============================================================
-	%  04-10  增广拉格朗日应力约束框
+	%  04-10  增广拉格朗日应力约束框架
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{增广拉格朗日应力约束框}
+		\frametitle{增广拉格朗日应力约束框架}
 		
 		\begin{tcolorbox}[
 			colback=structure.fg!5,
@@ -3472,7 +3467,8 @@
 								\setlength{\parskip}{0pt}
 								\item 通过 \(\max\) 截断将原始约束 \(g_{e,i}\) 转化为有效约束残量 \(h_{e,i}\)；
 								\item 对所有密度积分子单元上的 \(h_{e,i}\) 进行双重求和，构造增广拉格朗日惩罚项；
-								\item 乘子 \(\lambda^{(k)}_{e,i}\) 与罚参数 \(\mu^{(k)}\) 分别刻画线性惩罚和二次惩罚贡献。
+								\item 子问题求解后，更新拉格朗日乘子 $\lambda_{e,i}$ 与罚参数 $\mu$，
+								逐步增强局部应力约束的满足程度。
 							\end{itemize}
 						\end{column}
 						
@@ -3620,7 +3616,99 @@
 	\end{frame}
 	
 	% ============================================================
-	%  04-9  多分辨率框架在应力约束问题中的应用
+	%  04-11  算例设置：L 型支架应力约束问题
+	% ============================================================
+	
+	\begin{frame}
+		\frametitle{算例设置：L 型支架应力约束问题}
+		
+		% ── 顶部引导语 ─────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg!7,
+			colframe=structure.fg!35,
+			arc=2pt,
+			boxrule=0.35pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{8.0}{10.6}\selectfont\sffamily
+				考虑应力约束下的体积最小化问题，检验多分辨率框架对内凹角应力集中区域的处理能力。}
+		\end{tcolorbox}
+		
+		\vspace{-1.0em}
+		
+		% ═════════════════════════════════════════════════════
+		%  主体双栏：几何与边界载荷 / 算例特征与参数设置
+		% ═════════════════════════════════════════════════════
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ─── 左栏：几何与边界载荷 ─────────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={01\quad 设计域、载荷与边界条件},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.3pt,
+					bottomtitle=0.3pt,
+					top=5pt, bottom=5pt, left=7pt, right=7pt,
+					height=0.50\paperheight]
+					
+					\centering
+					\includegraphics[
+								width=0.94\linewidth,
+								height=0.40\paperheight,
+								keepaspectratio]{lbracket_bc}
+								
+				\end{tcolorbox}
+				
+			\end{column}
+			
+			% ─── 右栏：算例特征与参数设置 ─────────────────
+			\begin{column}{0.485\linewidth}
+				\begin{tcolorbox}[
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={02\quad 算例参数与应力特征},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.3pt,
+					bottomtitle=0.3pt,
+					top=6pt, bottom=5pt, left=9pt, right=9pt,
+					height=0.50\paperheight]
+					
+					{\fontsize{7.55}{10.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{0.95em}
+						\begin{itemize}
+							\setlength{\itemsep}{4pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 外包围尺寸取 $L=200\,\mathrm{mm}$，水平臂与垂直臂宽度均为 $2L/5$。
+							\item 左侧垂直臂顶端全固支，右侧水平臂末端中点施加竖向向下载荷 $P=400\,\mathrm{N}$。
+							\item 材料参数取 $E=70000\,\mathrm{MPa}$，$\nu=0.25$ 和 $\bar{\sigma}=100\,\mathrm{MPa}$。
+							\item 内凹角区域是典型的局部应力集中源。
+							\item 用于考察应力约束对凹角应力集中区域的调控效果。
+						\end{itemize}
+						
+					}
+					
+				\end{tcolorbox}
+				
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  04-12  多分辨率框架在应力约束问题中的应用
 	% ============================================================
 	
 	\begin{frame}
@@ -3631,9 +3719,8 @@
 			colback=structure.fg!8, colframe=structure.fg!40,
 			arc=2pt, boxrule=0.4pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			\centering
 			{\fontsize{8}{11}\selectfont\sffamily
-				以 L 型支架为例，在多分辨率框架下考察高阶有限元分析对应力约束拓扑结果的影响}
+				以 L 型支架为例，在多分辨率框架下比较不同有限元阶次对应力约束体积最小化结果的影响。}
 		\end{tcolorbox}
 		
 		%		\vspace{0.5em}
@@ -3690,7 +3777,7 @@
 			arc=3pt, boxrule=0pt,
 			top=4pt, bottom=4pt, left=8pt, right=8pt]
 			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
+			{\fontsize{8}{11}\selectfont\sffamily\color{white}
 				多分辨率框架可用于 L 型支架局部应力约束优化；
 				进一步提升应力场逼近质量，需要引入混合有限元方法}
 		\end{tcolorbox}
@@ -4103,7 +4190,7 @@
 						\boldsymbol{\sigma}_h\in L^2(\Omega;\mathbb{S})\ :\ 
 						&\boldsymbol{\sigma}_h|_T\in P_k(T;\mathbb{S}),
 						\quad \forall T\in\mathcal{T}_h,\\[-1pt]
-						&\mathcal{N}\text{-型自由度在公共面上单值}
+						&\mathcal{N}\text{-型自由度在共享 }(d-1)\text{-面上单值}
 					\end{aligned}
 					\right\}.
 					\]
@@ -4118,7 +4205,7 @@
 					\[
 					\mathcal{N}\text{-型自由度单值}
 					\Longrightarrow
-					\boldsymbol{\sigma}_h\boldsymbol{n}\text{ 单值}
+					\boldsymbol{\sigma}_h\boldsymbol{n}\text{ 的法向迹连续}
 					\Longrightarrow
 					\boldsymbol{\Sigma}_h^k
 					\subset
@@ -4222,6 +4309,87 @@
 				{\fontsize{8.0}{11}\selectfont\sffamily\color{white}
 					标准 Hu--Zhang 混合配对主要适用于高阶情形，
 					低阶应用需进一步引入稳定化扩展。}
+			\end{tcolorbox}
+		}
+		
+		% ============================================================
+		% Overlay 3：离散混合变分格式
+		% ============================================================
+		\only<3>{
+			\begin{tcolorbox}[
+				colback=white, colframe=structure.fg!50,
+				colbacktitle=structure.fg, coltitle=white,
+				fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
+				title={\circnum{03}\enspace 离散混合变分格式},
+				arc=3pt, boxrule=0.5pt,
+				toptitle=3pt, bottomtitle=3pt,
+				top=8pt, bottom=6pt, left=12pt, right=12pt,
+				height=0.50\paperheight, valign=top]
+				{\fontsize{7.65}{10.6}\selectfont\sffamily
+					
+					\vspace{0.15em}
+					
+					\centering
+					{\fontsize{7.6}{9.6}\selectfont\bfseries\sffamily
+						离散空间配对：
+						$\boldsymbol{\Sigma}_h^{k}
+						\subset
+						H(\operatorname{div};\Omega;\mathbb{S}),
+						\quad
+						\boldsymbol{V}_h^{k-1}
+						\subset
+						L^2(\Omega;\mathbb{R}^{d}).$
+					}
+					
+					\vspace{1.45em}
+					
+					{\fontsize{7.6}{9.6}\selectfont\bfseries\sffamily
+						离散混合格式：求
+						$(\boldsymbol{\sigma}_h,\boldsymbol{u}_h)
+						\in
+						\boldsymbol{\Sigma}_{h,g_N}^{k}
+						\times
+						\boldsymbol{V}_h^{k-1}$，
+						使得对任意
+						$(\boldsymbol{\tau}_h,\boldsymbol{v}_h)
+						\in
+						\boldsymbol{\Sigma}_{h,0}^{k}
+						\times
+						\boldsymbol{V}_h^{k-1}$，}
+					
+					\vspace{-1.45em}
+					
+					\[
+					\left\{
+					\begin{aligned}
+						a(\boldsymbol{\sigma}_h,\boldsymbol{\tau}_h)
+						+
+						b(\boldsymbol{\tau}_h,\boldsymbol{u}_h)
+						&=
+						\ell(\boldsymbol{\tau}_h),
+						\\[4pt]
+						b(\boldsymbol{\sigma}_h,\boldsymbol{v}_h)
+						&=
+						f(\boldsymbol{v}_h).
+					\end{aligned}
+					\right.
+					\]
+					
+					{\fontsize{7.6}{9.6}\selectfont
+						其中，$\boldsymbol{\Sigma}_{h,g_N}^{k}$ 与
+						$\boldsymbol{\Sigma}_{h,0}^{k}$
+						分别表示满足非齐次和齐次牵引边界条件的离散应力空间。}
+				}
+			\end{tcolorbox}
+			
+			\begin{tcolorbox}[
+				colback=structure.fg, colframe=structure.fg,
+				arc=3pt, boxrule=0pt,
+				top=3pt, bottom=3pt, left=8pt, right=8pt]
+				\centering
+				{\fontsize{8.0}{11}\selectfont\sffamily\color{white}
+					该离散格式形成应力--位移混合鞍点系统，
+					为低阶稳定化处理和拓扑优化列式奠定基础。}
 			\end{tcolorbox}
 		}
 		
@@ -4477,427 +4645,1121 @@
 	\end{frame}
 	
 	% ============================================================
-	%  05-1  从位移法到混合应力建模
+	%  05-5  最小柔顺度问题的互补能列式
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{从位移法到混合应力建模}
+		\frametitle{最小柔顺度问题的互补能列式}
 		
-		% ── 引导语 ───────────────────────────────────────────────
+		% ── 顶部引导语 ─────────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg!8, colframe=structure.fg!40,
-			arc=2pt, boxrule=0.4pt,
+			colback=structure.fg!7,
+			colframe=structure.fg!35,
+			arc=2pt,
+			boxrule=0.35pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{11}\selectfont\sffamily
-				前述高阶有限元与多分辨率框架提升了位移场分析精度与拓扑表达能力；
-				面向近不可压缩材料和局部应力约束，仍需更可靠的应力场建模方法。}
+			{\fontsize{8.0}{11.2}\selectfont\sffamily
+				胡张混合有限元将应力作为独立求解变量，
+				因此最小柔顺度问题可直接转化为基于互补应变能的应力--柔度型优化模型。}
 		\end{tcolorbox}
 		
-		\vspace{-1.5em}
-		
-		% ── 主体双栏：局限性 vs 解决思路 ───────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
+		% ── 中心模型框 ─────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=white,
+			colframe=structure.fg!55,
+			colbacktitle=structure.fg,
+			coltitle=white,
+			fonttitle=\fontsize{8.2}{10.2}\selectfont\bfseries\sffamily,
+			title={\enspace 应力--柔度型互补能优化模型},
+			arc=3pt,
+			boxrule=0.5pt,
+			toptitle=2.5pt, bottomtitle=2.5pt,
+			top=8pt, bottom=8pt, left=14pt, right=14pt,
+			height=0.53\paperheight,
+			valign=center]
 			
-			% ════════ 左栏：位移型有限元的局限 ════════
-			\begin{column}{0.485\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={位移型有限元的局限},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.45\paperheight, valign=top] % 锁高保证左右对齐
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						
-						\textbf{\circnum{01}\enspace 近不可压缩材料}\par
-						\vspace{2pt}
-						泊松比 $\nu \to 0.5$ 时，位移型有限元易出现体积闭锁，导致刚度高估与非物理拓扑演化。
-						
-						\vspace{8pt}
-						\textbf{\circnum{02}\enspace 局部应力场评估}\par
-						\vspace{2pt}
-						应力由位移梯度派生得到，跨单元通常不连续，局部应力集中与约束评估精度受限。
-					}
-				\end{tcolorbox}
-			\end{column}
+			{\fontsize{8.0}{10.2}\selectfont\sffamily
+				
+				\centering
+				{\bfseries
+					从位移--刚度型柔顺度
+					\(\boldsymbol{U}^{\top}\boldsymbol{K}(\rho)\boldsymbol{U}\)
+					转为应力--柔度型互补能
+					\(\boldsymbol{\Sigma}^{\top}
+					\boldsymbol{A}_{\sigma\sigma}(\rho)
+					\boldsymbol{\Sigma}\)}
+				
+				\vspace{-1.0em}
+				
+				\begingroup
+				\setlength{\jot}{1.5pt}
+				\[
+				\left\{
+				\begin{aligned}
+					\min_{\rho}\quad
+					& c(\boldsymbol{\Sigma},\rho)
+					=
+					\boldsymbol{\Sigma}^{\top}
+					\boldsymbol{A}_{\sigma\sigma}(\rho)
+					\boldsymbol{\Sigma},
+					\\[-1pt]
+					\mathrm{s.t.}\quad
+					&
+					\begin{bmatrix}
+						\boldsymbol{A}_{\sigma\sigma}(\rho) 
+						& \boldsymbol{B}_{\sigma u}\\
+						\boldsymbol{B}_{u\sigma} 
+						& \boldsymbol{0}
+					\end{bmatrix}
+					\begin{Bmatrix}
+						\boldsymbol{\Sigma}\\
+						\boldsymbol{U}
+					\end{Bmatrix}
+					=
+					\begin{Bmatrix}
+						\boldsymbol{0}\\
+						\boldsymbol{0}
+					\end{Bmatrix},
+					\\[-1pt]
+					&
+					g_V(\rho)
+					=
+					\frac{V(\rho)}{V_0}
+					-
+					V_f
+					\le 0,
+					\\[-1pt]
+					&
+					\rho_e\in[\rho_{\min},1],
+					\qquad
+					e=1,\ldots,N_c .
+				\end{aligned}
+				\right.
+				\]
+				\endgroup
+				
+				\vspace{-0.65em}
+				
+				其中 \(\boldsymbol{A}_{\sigma\sigma}(\rho)\) 为柔度矩阵，
+				牵引外载荷通过应力边界自由度施加，系统右端为零向量。
 			
-			% ════════ 右栏：混合应力建模思路 ════════
-			\begin{column}{0.485\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={混合应力建模思路},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.45\paperheight, valign=top] % 锁高保证左右对齐
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						
-						\textbf{\circnum{01}\enspace 应力—位移混合建模}\par
-						\vspace{2pt}
-						基于 Hellinger–Reissner 原理，将应力 $\boldsymbol{\sigma}$ 与位移 $\boldsymbol{u}$ 同时作为未知量求解，提高应力精度。
-						
-						\vspace{8pt}
-						\textbf{\circnum{02}\enspace 面向复杂局部约束}\par
-						\vspace{2pt}
-						构造 $H(\text{div})$ 协调应力空间，为近不可压缩与局部应力约束评估提供稳定支撑。
-					}
-				\end{tcolorbox}
-			\end{column}
+			}
 			
-		\end{columns}
+		\end{tcolorbox}
 		
 		% ── 底部结论条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			colback=structure.fg,
+			colframe=structure.fg,
+			coltext=white,
+			boxrule=0pt,
+			arc=3pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				从“位移导出应力”转向“应力—位移混合求解”，推动拓扑优化从位移场高精度分析进一步走向应力场高精度建模。}
+			{\fontsize{7.6}{10.2}\selectfont\sffamily
+				互补能列式使胡张混合元的“原生应力变量”直接进入拓扑优化目标函数。}
 		\end{tcolorbox}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  02-10  任意次胡张混合有限元
+	%  05-6  近不可压缩材料情形下的插值模型修正
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{任意次胡张混合有限元方法}
+		\frametitle{近不可压缩材料情形下的插值模型修正}
 		
-		% ── 引导语 ───────────────────────────────────────────────
+		% ── 顶部引导语 ─────────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg!8, colframe=structure.fg!40,
-			arc=2pt, boxrule=0.4pt,
+			colback=structure.fg!7,
+			colframe=structure.fg!35,
+			arc=2pt,
+			boxrule=0.35pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{11}\selectfont\sffamily
-				基于北京大学胡俊教授提出并发展的任意次单纯形胡张混合有限元，
-				完成程序实现，并系统引入变密度拓扑优化框架。}
+			{\fontsize{8.0}{11.2}\selectfont\sffamily
+				近不可压缩材料拓扑优化中，低密度弱材料不应继承实体材料的近不可压缩属性；
+				因此需要对 \(E(\rho)\) 与 \(\nu(\rho)\) 进行联合插值。}
 		\end{tcolorbox}
 		
 		\vspace{-1.5em}
 		
-		% ── 主体双栏：离散实现 vs 优化闭环 ───────────────────────────
+		% ── 主体双栏 ─────────────────────────────────────────────
 		\begin{columns}[T, totalwidth=\linewidth]
 			
-			% ════════ 左栏：任意次胡张元实现 ════════
-			\begin{column}{0.485\linewidth}
+			% ─── 左栏：问题来源 ─────────────────────────────────
+			\begin{column}{0.48\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={任意次胡张元实现},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.45\paperheight, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={01\quad 问题来源},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.3pt,
+					bottomtitle=0.3pt,
+					top=5pt, bottom=5pt, left=7pt, right=7pt,
+					height=0.45\paperheight,
+					valign=top]
+					
+					{\fontsize{8.0}{10.8}\selectfont\sffamily
 						
-						\textbf{\circnum{01}\enspace 对称应力空间构造}\par
-						\vspace{2pt}
-						以应力 $\boldsymbol{\sigma}$ 为独立未知量，构造满足 $H(\text{div})$ 协调性的对称张量有限元空间。
+						\vspace{0.5em}
+												
+						\centering
+						{\bfseries 近不可压缩极限}
 						
-						\vspace{8pt}
-						\textbf{\circnum{02}\enspace 任意阶次统一实现}\par
-						\vspace{2pt}
-						基于单纯形晶格与局部张量几何分解，实现不同阶次胡张混合元的统一构造与装配。
+						\vspace{0.5em}
+						
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{5pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							\item 实体材料近不可压缩时，位移型有限元易出现体积闭锁；
+							\item 若孔洞弱材料仍取 \(\nu_0\approx 0.5\)，会引入非物理静水压力；
+							\item 因此低密度区应表现为可压缩弱材料。
+						\end{itemize}
+						
 					}
+					
 				\end{tcolorbox}
 			\end{column}
 			
-			% ════════ 右栏：拓扑优化闭环嵌入 ════════
-			\begin{column}{0.485\linewidth}
+			% ─── 右栏：联合插值策略 ─────────────────────────────
+			\begin{column}{0.48\linewidth}
 				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={拓扑优化闭环嵌入},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.45\paperheight, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
+					colback=white,
+					colframe=structure.fg!55,
+					colbacktitle=structure.fg,
+					coltitle=white,
+					fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+					title={02\quad 联合插值策略},
+					arc=3pt,
+					boxrule=0.5pt,
+					toptitle=0.3pt,
+					bottomtitle=0.3pt,
+					top=5pt, bottom=5pt, left=9pt, right=9pt,
+					height=0.45\paperheight,
+					valign=center]
+					
+					{\fontsize{8.0}{10.8}\selectfont\sffamily
 						
-						\textbf{\circnum{01}\enspace 状态变量高精度求解}\par
-						\vspace{2pt}
-						在每步优化迭代中同时求解高精度独立应力场 $\boldsymbol{\sigma}_h$ 与位移场 $\boldsymbol{u}_h$。
+						\vspace{-0.5em}
 						
-						\vspace{8pt}
-						\textbf{\circnum{02}\enspace 目标函数与约束函数评估}\par
-						\vspace{2pt}
-						直接基于独立应力变量 $\boldsymbol{\sigma}_h$ 构造柔顺度目标函数与局部应力约束函数。
+						\centering
+						{\bfseries \(E(\rho)\) 与 \(\nu(\rho)\) 的密度相关插值}
+						
+						\vspace{-1.5em}
+						
+						\[
+						\begin{aligned}
+							E(\rho_e)
+							&=
+							E_{\min}
+							+
+							\rho_e^{p}
+							\bigl(E_0-E_{\min}\bigr),
+							\\[3pt]
+							\nu(\rho_e)
+							&=
+							\nu_{\mathrm{void}}
+							+
+							\rho_e^{p_{\nu}}
+							\bigl(\nu_0-\nu_{\mathrm{void}}\bigr).
+						\end{aligned}
+						\]
+						
+						\vspace{-1.5em}
+						
+						\[
+						\begin{aligned}
+							&\rho_e\to0:
+							(E,\nu)\to(E_{\min},\nu_{\mathrm{void}}),\\
+							&\rho_e\to1:
+							(E,\nu)\to(E_0,\nu_0).
+						\end{aligned}
+						\]
+					
 					}
+					
 				\end{tcolorbox}
+				
 			\end{column}
 			
 		\end{columns}
 		
+		\vspace{0.35em}
+		
 		% ── 底部结论条 ───────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
+			colback=structure.fg,
+			colframe=structure.fg,
+			coltext=white,
+			boxrule=0pt,
+			arc=3pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				实现了从“胡张混合有限元分析”到“变密度拓扑优化闭环”的系统拓展，\\
-				为高精度应力场驱动的拓扑优化奠定了底层的数学与实现基础。}
+			{\fontsize{7.55}{10.1}\selectfont\sffamily
+				近不可压缩情形下，互补能优化模型保持不变；
+				只需更新
+				\(\boldsymbol{A}_{\sigma\sigma}(\rho_e)
+				=
+				\boldsymbol{A}_{\sigma\sigma}(E(\rho_e),\nu(\rho_e))\)，
+				以排除低密度区非物理压力干扰。}
 		\end{tcolorbox}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  02-11  复杂边界与低阶情形下的适用性
+	%  05-7  基于独立表观应力的应力约束列式
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{复杂边界与低阶情形下的适用性}
+		\frametitle{基于独立表观应力的应力约束列式}
 		
-		% ── 引导语 ───────────────────────────────────────────────
+		% ── 顶部引导语 ─────────────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg!8, colframe=structure.fg!40,
-			arc=2pt, boxrule=0.4pt,
+			colback=structure.fg!7,
+			colframe=structure.fg!35,
+			arc=2pt,
+			boxrule=0.35pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{11}\selectfont\sffamily
-				为提升胡张混合有限元在实际拓扑优化问题中的适用性，
-				本研究进一步引入了顶点应力松弛与低阶稳定化处理技术。}
+			{\fontsize{8.0}{11.2}\selectfont\sffamily
+				胡张混合元将全局应力场作为原生求解变量；
+				因此局部应力约束可直接建立在独立表观应力
+				\(\boldsymbol{\Sigma}\) 上，并进一步构造无奇异约束函数。}
 		\end{tcolorbox}
 		
-		\vspace{-1.5em}
+		\vspace{-0.65em}
 		
-		% ── 主体双栏：复杂边界处理 vs 低阶情形稳定化 ───────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
+		% ============================================================
+		% Overlay 1：应力约束体积最小化模型
+		% ============================================================
+		\only<1>{
+			\begin{tcolorbox}[
+				colback=white,
+				colframe=structure.fg!55,
+				colbacktitle=structure.fg,
+				coltitle=white,
+				fonttitle=\fontsize{8.2}{10.2}\selectfont\bfseries\sffamily,
+				title={\enspace 应力约束体积最小化模型},
+				arc=3pt,
+				boxrule=0.5pt,
+				toptitle=2.5pt,
+				bottomtitle=2.5pt,
+				top=7pt, bottom=7pt, left=12pt, right=12pt,
+				height=0.52\paperheight,
+				valign=center]
+				
+				{\fontsize{7.85}{10.4}\selectfont\sffamily
+					\setlength{\abovedisplayskip}{4pt}
+					\setlength{\belowdisplayskip}{4pt}
+					\setlength{\abovedisplayshortskip}{3pt}
+					\setlength{\belowdisplayshortskip}{3pt}
+					
+					\noindent
+					{\bfseries\color{structure.fg}
+						从位移后处理应力约束，转为独立应力自由度约束}
+					
+					\vspace{-0.80em}
+					
+					\begingroup
+					\setlength{\jot}{2pt}
+					\[
+					\left\{
+					\begin{aligned}
+						\min_{\rho}\quad
+						&
+						f(\rho)
+						=
+						\frac{V(\rho)}{V_0},
+						\\[2pt]
+						\mathrm{s.t.}\quad
+						&
+						\begin{bmatrix}
+							\boldsymbol{A}_{\sigma\sigma}(\rho)
+							&
+							\boldsymbol{B}_{\sigma u}
+							\\
+							\boldsymbol{B}_{u\sigma}
+							&
+							\boldsymbol{0}
+						\end{bmatrix}
+						\begin{Bmatrix}
+							\boldsymbol{\Sigma}\\
+							\boldsymbol{U}
+						\end{Bmatrix}
+						=
+						\begin{Bmatrix}
+							\boldsymbol{0}\\
+							\boldsymbol{0}
+						\end{Bmatrix},
+						\\[3pt]
+						&
+						g_{\sigma,e}(\boldsymbol{\Sigma})
+						=
+						\sigma^{\mathrm{vM}}_{e}(\boldsymbol{\Sigma})
+						-
+						\bar{\sigma}
+						\le 0,
+						\qquad
+						e=1,\ldots,N_e,
+						\\[2pt]
+						&
+						\rho_e\in[\rho_{\min},1],
+						\qquad
+						e=1,\ldots,N_e .
+					\end{aligned}
+					\right.
+					\]
+					\endgroup
+					
+					{\fontsize{7.15}{9.5}\selectfont
+						其中 \(\sigma^{\mathrm{vM}}_e(\boldsymbol{\Sigma})\)
+						由胡张混合元原生求解的独立应力场提取。}
+				}
+			\end{tcolorbox}
 			
-			% ════════ 左栏：复杂边界处理 ════════
-			\begin{column}{0.485\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={复杂边界处理},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.48\paperheight, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						
-						\textbf{\circnum{01}\enspace 顶点应力连续性过约束}\par
-						\vspace{2pt}
-						复杂边界角点处多类边界条件交汇，严格顶点应力连续性易导致局部过约束。
-						
-						\vspace{4pt}
-						\textbf{\circnum{02}\enspace 顶点应力部分松弛}\par
-						\vspace{2pt}
-						局部放松边界顶点处的应力连续性要求，在维系全局 $H(\text{div})$ 协调性的同时，
-						提升复杂边界适用性。
-					}
-				\end{tcolorbox}
-			\end{column}
-			
-			% ════════ 右栏：低阶情形稳定化 ════════
-			\begin{column}{0.485\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={低阶情形稳定化},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.48\paperheight, valign=top]
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						
-						\textbf{\circnum{01}\enspace 低阶胡张元稳定性受限}\par
-						\vspace{2pt}
-						低阶空间（如 $k=1,2$）计算成本较低，但需额外处理以满足离散的 \textit{inf-sup} 稳定性条件。
-						
-						\vspace{4pt}
-						\textbf{\circnum{02}\enspace 矩阵型跳量稳定化处理}\par
-						\vspace{2pt}
-						引入矩阵型跳量稳定化项，惩罚位移场在单元界面的非协调跳跃，恢复低阶混合离散格式的稳定性与鲁棒性。
-					}
-				\end{tcolorbox}
-			\end{column}
-			
-		\end{columns}
+			\begin{tcolorbox}[
+				colback=structure.fg,
+				colframe=structure.fg,
+				coltext=white,
+				boxrule=0pt,
+				arc=3pt,
+				top=3pt, bottom=3pt, left=8pt, right=8pt]
+				\centering
+				{\fontsize{7.55}{10.1}\selectfont\sffamily
+					局部应力约束由位移场
+					\(\boldsymbol{U}\) 的后处理应力，
+					转为直接依赖胡张混合元的独立应力自由度
+					\(\boldsymbol{\Sigma}\)。}
+			\end{tcolorbox}
+		}
 		
-		% ── 底部结论条 ───────────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
-			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				通过“顶点松弛 + 低阶稳定化”双管齐下，\\
-				进一步拓展胡张混合有限元在复杂边界、低阶计算与拓扑优化闭环中的适用性。}
-		\end{tcolorbox}
+		% ============================================================
+		% Overlay 2：基于独立表观应力的无奇异约束
+		% ============================================================
+		\only<2>{
+			\begin{columns}[T, totalwidth=\linewidth]
+				
+				% ─── 左栏：表观应力含义 ─────────────────────────────
+				\begin{column}{0.485\linewidth}
+					\begin{tcolorbox}[
+						colback=white,
+						colframe=structure.fg!55,
+						colbacktitle=structure.fg,
+						coltitle=white,
+						fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+						title={01\quad 表观应力的物理含义},
+						arc=3pt,
+						boxrule=0.5pt,
+						toptitle=0.3pt,
+						bottomtitle=0.3pt,
+						top=6pt, bottom=6pt, left=9pt, right=9pt,
+						height=0.47\paperheight,
+						valign=center]
+						
+						{\fontsize{7.8}{10.5}\selectfont\sffamily
+							
+							\centering
+							{\bfseries 表观应力与实体应力的关系}
+							
+							\vspace{-0.8em}
+							
+							\[
+							\boldsymbol{\Sigma}
+							\approx
+							m_E(\rho)\,
+							\boldsymbol{\sigma}_0 .
+							\]
+							
+							\vspace{-0.3em}
+							
+							\raggedright
+							\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+							\setlength{\leftmargini}{1.0em}
+							\begin{itemize}
+								\setlength{\itemsep}{4pt}
+								\setlength{\topsep}{1pt}
+								\setlength{\parsep}{0pt}
+								\setlength{\parskip}{0pt}
+								\item \(\boldsymbol{\Sigma}\) 是混合元原生求解的宏观表观应力；
+								\item \(\boldsymbol{\sigma}_0\) 表示材料内部真实实体应力；
+								\item 当 \(\rho_e\to0\) 时，\(\boldsymbol{\Sigma}\to\boldsymbol{0}\)，
+								直接校核会误判低密度区“绝对安全”。
+							\end{itemize}
+						}
+					\end{tcolorbox}
+				\end{column}
+				
+				% ─── 右栏：无奇异约束函数 ─────────────────────────
+				\begin{column}{0.485\linewidth}
+					\begin{tcolorbox}[
+						colback=white,
+						colframe=structure.fg!55,
+						colbacktitle=structure.fg,
+						coltitle=white,
+						fonttitle=\fontsize{8.2}{10}\selectfont\bfseries\sffamily,
+						title={02\quad 无奇异约束函数},
+						arc=3pt,
+						boxrule=0.5pt,
+						toptitle=0.3pt,
+						bottomtitle=0.3pt,
+						top=6pt, bottom=6pt, left=9pt, right=9pt,
+						height=0.47\paperheight,
+						valign=center]
+						
+						{\fontsize{7.75}{10.2}\selectfont\sffamily
+							\setlength{\abovedisplayskip}{4pt}
+							\setlength{\belowdisplayskip}{4pt}
+							
+							\centering
+							{\bfseries 基于表观应力的归一化约束}
+							
+							\vspace{-0.9em}
+							
+							\[
+							g_e(\rho,\boldsymbol{\Sigma})
+							=
+							\frac{
+								\sigma^{\mathrm{vM}}_e(\boldsymbol{\Sigma})
+							}{\bar{\sigma}}
+							-
+							\eta(\rho_e)
+							\le 0 .
+							\]
+							
+							\vspace{-0.9em}
+							
+							\[
+							\eta(\rho_e)
+							=
+							m_E(\rho_e)
+							+
+							\varepsilon
+							\bigl(1-m_E(\rho_e)\bigr).
+							\]
+							
+							\vspace{-0.5em}
+							
+							\[
+							\begin{array}{ll}
+								\rho_e\to0:
+								&
+								\eta(\rho_e)\to\varepsilon,\quad
+								g_e\to-\varepsilon\le0,
+								\\[2pt]
+								\rho_e\approx1:
+								&
+								\eta(\rho_e)\approx1,\quad
+								\sigma^{\mathrm{vM}}_e(\boldsymbol{\Sigma})
+								\le\bar{\sigma}.
+							\end{array}
+							\]
+							
+							{\fontsize{7.2}{10.2}\selectfont
+								约束中不含密度分母，避免低密度应力奇异。}
+						}
+					\end{tcolorbox}
+				\end{column}
+				
+			\end{columns}
+			
+%			\vspace{0.30em}
+			
+			% ── 底部结论条 ───────────────────────────────────────────
+			\begin{tcolorbox}[
+				colback=structure.fg,
+				colframe=structure.fg,
+				coltext=white,
+				boxrule=0pt,
+				arc=3pt,
+				top=3pt, bottom=3pt, left=8pt, right=8pt]
+				\centering
+				{\fontsize{7.45}{10.0}\selectfont\sffamily
+					第四章通过消失约束处理位移法后处理应力；
+					本章基于原生表观应力
+					\(\boldsymbol{\Sigma}\)
+					重构阈值函数
+					\(\eta(\rho_e)\)。}
+			\end{tcolorbox}
+		}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  02-12  近不可压缩材料下的抗闭锁能力
+	%  05-8  最小柔顺度基准算例：两端固支梁
+	% ============================================================
+	
+	\begin{frame}
+		\frametitle{最小柔顺度基准算例：两端固支梁}
+		
+		% ── 顶部引导语 ─────────────────────────────────────────────
+		\begin{tcolorbox}[
+			colback=structure.fg!8,
+			colframe=structure.fg!40,
+			arc=2pt,
+			boxrule=0.4pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{8}{11}\selectfont\sffamily
+				以两端固支梁为基准算例，对比标准位移法与胡张混合法，
+				验证混合元拓扑优化闭环的正确性与稳定性。}
+		\end{tcolorbox}
+		
+		\vspace{-0.45em}
+		
+		% ============================================================
+		% Overlay 1：算例设置
+		% ============================================================
+		\only<1>{
+			\begin{tcolorbox}[
+				colback=white,
+				colframe=structure.fg!55,
+				colbacktitle=structure.fg,
+				coltitle=white,
+				fonttitle=\fontsize{8.4}{10.4}\selectfont\bfseries\sffamily,
+				title={\enspace 算例设置},
+				arc=3pt,
+				boxrule=0.5pt,
+				toptitle=2.5pt,
+				bottomtitle=2.5pt,
+				top=6pt,
+				bottom=6pt,
+				left=13pt,
+				right=13pt,
+				height=0.55\paperheight,
+				valign=top]
+				
+				\centering
+				
+				\vspace{0.75em}
+				
+				\includegraphics[
+				width=0.80\linewidth,
+				height=0.255\paperheight,
+				keepaspectratio]{fixed_beam_setup}
+				
+				\vspace{0.75em}
+				
+				{\fontsize{7.8}{10.6}\selectfont\sffamily
+					\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+					\setlength{\leftmargini}{1.2em}
+					
+					\begin{minipage}{0.88\linewidth}
+						\begin{itemize}
+							\setlength{\itemsep}{3pt}
+							\setlength{\topsep}{0pt}
+							\setlength{\parsep}{0pt}
+							\setlength{\parskip}{0pt}
+							
+							\item 几何尺寸为
+							\(\Omega=L\times 0.125L\)；取
+							\(L=160\,\mathrm{mm}\)，
+							\(E=30\,\mathrm{MPa}\)，
+							\(\nu=0.4\)，
+							\(V_f=0.4\)。
+							
+							\item 左右两端完全固支；下边界中点施加竖向集中载荷
+							\(P=3\,\mathrm{N}\)。
+						\end{itemize}
+					\end{minipage}
+				}
+				
+			\end{tcolorbox}
+	
+		}
+		
+		% ============================================================
+		% Overlay 2：优化结果与构型一致性
+		% ============================================================
+		\only<2>{
+			% ── 列标题行 ─────────────────────────────────────────────
+			\begin{columns}[T, totalwidth=\linewidth]
+				\begin{column}{0.48\linewidth}\centering
+					{\fontsize{8.8}{10.5}\selectfont\sffamily\bfseries\color{structure.fg}
+						标准位移法\par}
+				\end{column}
+				
+				\begin{column}{0.48\linewidth}\centering
+					{\fontsize{8.8}{10.5}\selectfont\sffamily\bfseries\color{structure.fg}
+						胡张混合法\par}
+				\end{column}
+			\end{columns}
+			
+			\vspace{0.25em}
+			
+			% ── 第一行：k = 2 ───────────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.48\linewidth}\centering
+					\includegraphics[
+					width=0.97\linewidth,
+					height=0.195\paperheight,
+					keepaspectratio]{fixed_beam_disp_k2}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(k=2\)：交叉承载路径清晰}
+				\end{column}
+				
+				\begin{column}{0.48\linewidth}\centering
+					\includegraphics[
+					width=0.97\linewidth,
+					height=0.195\paperheight,
+					keepaspectratio]{fixed_beam_mixed_k2}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(k=2\)：主拓扑特征保持一致}
+				\end{column}
+			\end{columns}
+			
+			\vspace{0.45em}
+			
+			% ── 第二行：k = 4 ───────────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.48\linewidth}\centering
+					\includegraphics[
+					width=0.97\linewidth,
+					height=0.195\paperheight,
+					keepaspectratio]{fixed_beam_disp_k4}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(k=4\)：高阶下构型稳定}
+				\end{column}
+				
+				\begin{column}{0.48\linewidth}\centering
+					\includegraphics[
+					width=0.97\linewidth,
+					height=0.195\paperheight,
+					keepaspectratio]{fixed_beam_mixed_k4}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(k=4\)：与位移法结果物理一致}
+				\end{column}
+			\end{columns}
+			
+			\vspace{0.35em}
+			
+			% ── 底部结论：统一蓝色样式 ───────────────────────────────
+			\begin{tcolorbox}[
+				colback=structure.fg,
+				colframe=structure.fg,
+				coltext=white,
+				boxrule=0pt,
+				arc=3pt,
+				top=3pt,
+				bottom=3pt,
+				left=8pt,
+				right=8pt]
+				\centering
+				{\fontsize{7.45}{10.0}\selectfont\sffamily
+					胡张混合法与标准位移法均获得物理一致的交叉承载构型，
+					说明胡张混合有限元可稳定嵌入柔顺度最小化拓扑优化闭环。}
+			\end{tcolorbox}
+		}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  05-9  近不可压缩材料下的抗闭锁能力
 	% ============================================================
 	
 	\begin{frame}
 		\frametitle{近不可压缩材料下的抗闭锁能力}
+	
+		% ============================================================
+		% Overlay 1：算例设置
+		% ============================================================
 		
-		% ── 引导语 ───────────────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg!8, colframe=structure.fg!40,
-			arc=2pt, boxrule=0.4pt,
-			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{11}\selectfont\sffamily
-				以二维轴承装置为例，对比两类方法在可压缩材料与近不可压缩材料下的拓扑优化结果。}
-		\end{tcolorbox}
-		
-		% ── 列标题行 ─────────────────────────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\end{column}
+		\only<1>{		
+			\begin{tcolorbox}[
+				colback=structure.fg!8,
+				colframe=structure.fg!40,
+				arc=2pt,
+				boxrule=0.4pt,
+				top=3pt,
+				bottom=3pt,
+				left=8pt,
+				right=8pt]
+				{\fontsize{8}{11}\selectfont\sffamily
+					以二维轴承装置为例，在统一几何、载荷与优化参数下仅改变实体材料泊松比，
+					检验胡张混合有限元在近不可压缩极限下的抗闭锁能力。}
+			\end{tcolorbox}
 			
-			\begin{column}{0.42\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					可压缩材料 \enspace $\nu_0 = 0.3$\par}
-			\end{column}
+			\vspace{-0.25em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					近不可压缩材料 \enspace $\nu_0 = 0.4999$\par}
-			\end{column}
-		\end{columns}
+			\begin{tcolorbox}[
+				colback=white,
+				colframe=structure.fg!55,
+				colbacktitle=structure.fg,
+				coltitle=white,
+				fonttitle=\fontsize{8.4}{10.4}\selectfont\bfseries\sffamily,
+				title={算例设置：二维轴承装置},
+				arc=3pt,
+				boxrule=0.5pt,
+				toptitle=2.5pt,
+				bottomtitle=2.5pt,
+				top=8pt,
+				bottom=8pt,
+				left=12pt,
+				right=12pt,
+				height=0.50\paperheight,
+				valign=center]
+				
+				\begin{columns}[c, totalwidth=\linewidth]
+					
+					% ─── 左侧：算例示意图 ─────────────────────────────
+					\begin{column}{0.57\linewidth}
+						\centering
+						\includegraphics[
+						width=0.98\linewidth,
+						height=0.34\paperheight,
+						keepaspectratio]{bearing_setup}
+					\end{column}
+					
+					% ─── 右侧：基本参数 ───────────────────────────────
+					\begin{column}{0.40\linewidth}
+						{\fontsize{7.7}{10.5}\selectfont\sffamily
+							\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+							\setlength{\leftmargini}{1.15em}
+							
+							\begin{itemize}
+								\setlength{\itemsep}{8pt}
+								\setlength{\topsep}{0pt}
+								\setlength{\parsep}{0pt}
+								\setlength{\parskip}{0pt}
+								
+								\item 几何尺寸为 \(3L\times L\)；取 $L=40\,\mathrm{mm}$，$E=1\,\mathrm{MPa}$，$V_f=0.35$;
+								
+								\item 底部边界完全固支；顶部施加竖向均布牵引 $\boldsymbol{t}=(0,-t_0)^{\mathrm T}$，其中 $t_0=8\times 10^{-2}\,\mathrm{N/mm}$。
+
+							\end{itemize}
+						}
+					\end{column}
+					
+				\end{columns}
+				
+			\end{tcolorbox}
+
+		}
 		
-		\vspace{0.2em}
-		
-		% ── 2x2 图阵第一行：标准位移法 ──────────────────────────────
-		\begin{columns}[c, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					标准\\[3pt]位移法\\{\fontsize{6}{8}\selectfont ($k=2$)}}
-			\end{column}
+		% ============================================================
+		% Overlay 2：结果对比
+		% ============================================================
+		\only<2>{
+			% ── 列标题行 ─────────────────────────────────────────────
+			\begin{columns}[T, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					{\fontsize{8.5}{10.2}\selectfont\sffamily\bfseries\color{structure.fg}
+						可压缩材料 \enspace \(\nu_0=0.3\)\par}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					{\fontsize{8.5}{10.2}\selectfont\sffamily\bfseries\color{structure.fg}
+						近不可压缩材料 \enspace \(\nu_0=0.4999\)\par}
+				\end{column}
+			\end{columns}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{bearing_disp_nu03}\\[2pt]
-				{\fontsize{7}{9}\selectfont $c \approx 123.37$ (结构清晰，正常收敛)}
-			\end{column}
+			\vspace{0.20em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{bearing_disp_nu4999}\\[2pt]
-				{\fontsize{7}{9}\selectfont $c \approx 55.78$ (刚度高估，构型异常)}
-			\end{column}
-		\end{columns}
-		
-		\vspace{0.4em}
-		
-		% ── 2x2 图阵第二行：胡张混合法 ──────────────────────────────
-		\begin{columns}[c, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					胡张\\[3pt]混合法\\{\fontsize{6}{8}\selectfont ($k=2$)}}
-			\end{column}
+			% ── 第一行：标准位移法 ─────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\centering
+					{\fontsize{8.3}{10.0}\selectfont\sffamily\bfseries\color{structure.fg}
+						标准\\[2pt]位移法\\[-1pt]
+						{\fontsize{6.5}{8}\selectfont \(k=2\)}}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.19\paperheight,
+					keepaspectratio]{bearing_disp_nu03}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(c=123.3753\)：结构清晰，正常收敛}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.19\paperheight,
+					keepaspectratio]{bearing_disp_nu4999}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(c=55.7879\)：刚度高估，构型异常}
+				\end{column}
+			\end{columns}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{bearing_mixed_nu03}\\[2pt]
-				{\fontsize{7}{9}\selectfont $c \approx 128.45$ (结构清晰，正常收敛)}
-			\end{column}
+			\vspace{0.38em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{bearing_mixed_nu4999}\\[2pt]
-				{\fontsize{7}{9}\selectfont $c \approx 102.79$ (抗体积闭锁，构型稳定)}
-			\end{column}
-		\end{columns}
-		
-		% ── 底部结论条 ───────────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=2pt, boxrule=0pt,
-			top=2pt, bottom=2pt, left=6pt, right=6pt]
-			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				可压缩材料下两类方法均可得到清晰构型；近不可压缩极限下，\\
-				胡张混合有限元有效缓解体积闭锁，避免刚度高估诱发的非物理拓扑演化。}
-		\end{tcolorbox}
+			% ── 第二行：胡张混合法 ─────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\centering
+					{\fontsize{8.3}{10.0}\selectfont\sffamily\bfseries\color{structure.fg}
+						胡张\\[2pt]混合法\\[-1pt]
+						{\fontsize{6.5}{8}\selectfont \(k=2\)}}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.19\paperheight,
+					keepaspectratio]{bearing_mixed_nu03}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(c=128.4504\)：结构清晰，结果接近}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.19\paperheight,
+					keepaspectratio]{bearing_mixed_nu4999}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						\(c=102.7948\)：抗体积闭锁，构型稳定}
+				\end{column}
+			\end{columns}
+			
+			\vspace{0.32em}
+			
+			% ── 底部结论条 ───────────────────────────────────────────
+			\begin{tcolorbox}[
+				colback=structure.fg,
+				colframe=structure.fg,
+				coltext=white,
+				boxrule=0pt,
+				arc=3pt,
+				top=3pt,
+				bottom=3pt,
+				left=8pt,
+				right=8pt]
+				\centering
+				{\fontsize{7.45}{10.0}\selectfont\sffamily
+					可压缩材料下两类方法均可得到清晰构型；近不可压缩极限下，
+					胡张混合有限元有效缓解体积闭锁，避免刚度高估诱发的非物理拓扑演化。}
+			\end{tcolorbox}
+		}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  02-13  局部应力约束下的应力场评估能力
+	%  05-10  局部应力约束下的应力场评估能力
 	% ============================================================
 	
 	\begin{frame}
 		\frametitle{局部应力约束下的应力场评估能力}
 		
-		% ── 引导语 ───────────────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg!8, colframe=structure.fg!40,
-			arc=2pt, boxrule=0.4pt,
-			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{8}{11}\selectfont\sffamily
-				以二维悬臂梁为例，对比两类方法在局部应力约束下的构型与应力场。}
-		\end{tcolorbox}
-		
-		% ── 列标题行（指标分类） ──────────────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\end{column}
+		% ============================================================
+		% Overlay 1：算例设置
+		% ============================================================
+		\only<1>{
+			% ── 顶部引导语：仅 Overlay 1 使用 ─────────────────────────
+			\begin{tcolorbox}[
+				colback=structure.fg!8,
+				colframe=structure.fg!40,
+				arc=2pt,
+				boxrule=0.4pt,
+				top=3pt,
+				bottom=3pt,
+				left=8pt,
+				right=8pt]
+				{\fontsize{8}{11}\selectfont\sffamily
+					以端部中点受载的二维悬臂梁为例，对比标准位移法与胡张混合法
+					在局部应力约束下的拓扑构型与应力场评估效果。}
+			\end{tcolorbox}
 			
-			\begin{column}{0.42\linewidth}\centering
-				{\fontsize{9}{11}\selectfont\sffamily\bfseries\color{structure.fg}
-					最终拓扑构型\par}
-			\end{column}
+			\vspace{0.35em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				{\fontsize{9}{11}\selectfont\sffamily\bfseries\color{structure.fg}
-					归一化 von Mises 等效应力\par}
-			\end{column}
-		\end{columns}
+			\begin{tcolorbox}[
+				colback=white,
+				colframe=structure.fg!55,
+				colbacktitle=structure.fg,
+				coltitle=white,
+				fonttitle=\fontsize{8.4}{10.4}\selectfont\bfseries\sffamily,
+				title={算例设置：端部中点受载二维悬臂梁},
+				arc=3pt,
+				boxrule=0.5pt,
+				toptitle=2.5pt,
+				bottomtitle=2.5pt,
+				top=8pt,
+				bottom=8pt,
+				left=12pt,
+				right=12pt,
+				height=0.50\paperheight,
+				valign=center]
+				
+				\begin{columns}[c, totalwidth=\linewidth]
+					
+					% ─── 左侧：算例示意图 ─────────────────────────────
+					\begin{column}{0.55\linewidth}
+						\centering
+						\includegraphics[
+						width=0.98\linewidth,
+						height=0.34\paperheight,
+						keepaspectratio]{stress_cantilever_setup}
+					\end{column}
+					
+					% ─── 右侧：基本参数 ───────────────────────────────
+					\begin{column}{0.42\linewidth}
+						{\fontsize{7.45}{10.2}\selectfont\sffamily
+							\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+							\setlength{\leftmargini}{1.15em}
+							
+							\begin{itemize}
+								\setlength{\itemsep}{7pt}
+								\setlength{\topsep}{0pt}
+								\setlength{\parsep}{0pt}
+								\setlength{\parskip}{0pt}
+								
+								\item 几何尺寸为 \(\Omega=L\times 0.5L\)；取
+								\(L=80\,\mathrm{mm}\)，
+								\(E=70000\,\mathrm{MPa}\)，
+								\(\nu=0.25\)，
+								\(\bar{\sigma}=180\,\mathrm{MPa}\)。
+								
+								\item 左侧边缘完全固支；右侧中点施加竖向载荷
+								\(P=400\,\mathrm{N}\)，并按长度
+								\(l=6\,\mathrm{mm}\) 分布化处理。
+							\end{itemize}
+						}
+					\end{column}
+					
+				\end{columns}
+				
+			\end{tcolorbox}
+	
+		}
 		
-		\vspace{0.2em}
-		
-		% ── 第一行：标准位移法 ────────────────────────────────────
-		\begin{columns}[c, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					标准\\[3pt]位移法\\{\fontsize{6}{8}\selectfont ($k=2$)}}
-			\end{column}
+		% ============================================================
+		% Overlay 2：结果对比
+		% ============================================================
+		\only<2>{
+			% ── 列标题行：指标分类 ──────────────────────────────────
+			\begin{columns}[T, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					{\fontsize{9}{11}\selectfont\sffamily\bfseries\color{structure.fg}
+						最终拓扑构型\par}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					{\fontsize{9}{11}\selectfont\sffamily\bfseries\color{structure.fg}
+						归一化 von Mises 等效应力\par}
+				\end{column}
+			\end{columns}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{stress_topo_disp}
-			\end{column}
+			\vspace{0.25em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{stress_vm_disp}
-			\end{column}
-		\end{columns}
-		
-		\vspace{0.4em}
-		
-		% ── 第二行：胡张混合法 ────────────────────────────────────
-		\begin{columns}[c, totalwidth=\linewidth]
-			\begin{column}{0.10\linewidth}\centering
-				{\fontsize{8.5}{10}\selectfont\sffamily\bfseries\color{structure.fg}
-					胡张\\[3pt]混合法\\{\fontsize{6}{8}\selectfont ($k=2$)}}
-			\end{column}
+			% ── 第一行：标准位移法 ────────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\centering
+					{\fontsize{8.4}{10}\selectfont\sffamily\bfseries\color{structure.fg}
+						标准\\[2pt]位移法\\[-1pt]
+						{\fontsize{6.5}{8}\selectfont \(k=2\)}}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.205\paperheight,
+					keepaspectratio]{stress_topo_disp}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						形成清晰 V 型交叉承载构型}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.205\paperheight,
+					keepaspectratio]{stress_vm_disp}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						单元间应力跳跃较明显}
+				\end{column}
+			\end{columns}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{stress_topo_mixed}
-			\end{column}
+			\vspace{0.42em}
 			
-			\begin{column}{0.42\linewidth}\centering
-				\includegraphics[width=0.95\linewidth, height=0.22\paperheight, keepaspectratio]{stress_vm_mixed}
-			\end{column}
-		\end{columns}
-		
-		% ── 底部结论条 ───────────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=2pt, boxrule=0pt,
-			top=2pt, bottom=2pt, left=6pt, right=6pt]
-			\centering
-			{\fontsize{7.5}{10}\selectfont\sffamily\color{white}
-				两类方法均得到清晰的 V 型交叉承载构型；但标准位移法应力场易出现单元间非物理跳跃，\\
-				胡张混合法基于$H(\text{div})$ 协调应力空间，可获得更平滑连续、约束评估更可靠的局部应力场。}
-		\end{tcolorbox}
+			% ── 第二行：胡张混合法 ────────────────────────────────────
+			\begin{columns}[c, totalwidth=\linewidth]
+				\begin{column}{0.10\linewidth}\centering
+					{\fontsize{8.4}{10}\selectfont\sffamily\bfseries\color{structure.fg}
+						胡张\\[2pt]混合法\\[-1pt]
+						{\fontsize{6.5}{8}\selectfont \(k=2\)}}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.205\paperheight,
+					keepaspectratio]{stress_topo_mixed}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						宏观拓扑构型保持一致}
+				\end{column}
+				
+				\begin{column}{0.42\linewidth}\centering
+					\includegraphics[
+					width=0.96\linewidth,
+					height=0.205\paperheight,
+					keepaspectratio]{stress_vm_mixed}
+					
+					\vspace{0.10em}
+					
+					{\fontsize{7.0}{8.8}\selectfont\sffamily
+						应力场更平滑，约束评估更可靠}
+				\end{column}
+			\end{columns}
+			
+			\vspace{0.35em}
+			
+			% ── 底部结论条 ───────────────────────────────────────────
+			\begin{tcolorbox}[
+				colback=structure.fg,
+				colframe=structure.fg,
+				coltext=white,
+				boxrule=0pt,
+				arc=3pt,
+				top=3pt,
+				bottom=3pt,
+				left=8pt,
+				right=8pt]
+				\centering
+				{\fontsize{7.35}{9.8}\selectfont\sffamily
+					两类方法均得到清晰的 V 型交叉承载构型；但标准位移法应力场易出现单元间非物理跳跃，\\
+					胡张混合法基于$H(\text{div})$ 协调应力空间，可获得更平滑连续、约束评估更可靠的局部应力场。}
+			\end{tcolorbox}
+		}
 		
 	\end{frame}
 	
@@ -4907,7 +5769,7 @@
 	% ============================================================
 	
 	% ============================================================
-	%  03-1  研发背景与设计理念
+	%  06-1  研发背景与设计理念
 	% ============================================================
 	\begin{frame}
 		\frametitle{研发背景与设计理念}
@@ -5000,7 +5862,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  03-2  总体架构与关键技术
+	%  06-2  总体架构与关键技术
 	% ============================================================
 	\begin{frame}
 		\frametitle{总体架构与关键技术}
@@ -5094,7 +5956,7 @@
 	\end{frame}
 	
 	% ============================================================
-	%  03-3  核心模块与计算闭环
+	%  06-3  核心模块与计算闭环
 	% ============================================================
 	\begin{frame}
 		\frametitle{核心模块与计算闭环}
@@ -5186,17 +6048,19 @@
 			coltext=white, boxrule=0pt, arc=3pt,
 			top=4pt, bottom=4pt, left=8pt, right=8pt,
 			]
-			\centering\fontsize{8.5}{12}\selectfont\sffamily
-			四大模块共同支撑\textbf{“密度映射—状态分析—正则化控制—优化更新”}的拓扑优化计算闭环。
+			\centering\fontsize{8}{10}\selectfont\sffamily
+			四大模块共同支撑“正则化映射—材料插值—状态分析—灵敏度反馈—优化更新”
+			的拓扑优化计算闭环。
 		\end{tcolorbox}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  03-4  高效矩阵组装与性能提升
+	%  06-4  高效矩阵组装与性能提升
 	% ============================================================
+	
 	\begin{frame}
-		\frametitle{高效矩阵组装与性能提升}
+		\frametitle{高效矩阵组装与算子缓存机制}
 		
 		% ── 顶部总述条 ──────────────────────────────────────
 		\begin{tcolorbox}[
@@ -5204,7 +6068,8 @@
 			arc=3pt, boxrule=0.5pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			{\fontsize{8}{12}\selectfont\sffamily
-				通过数值求积快速组装与解析预计算快速组装，将拓扑优化迭代中重复的矩阵装配转化为可复用的张量化计算过程。}
+				针对拓扑优化迭代中的重复矩阵装配，SOPTX 通过快速组装与算子缓存机制，
+				将局部刚度计算转化为可复用的张量化过程。}
 		\end{tcolorbox}
 		
 		% ══════════════════════════════════════════════════════════
@@ -5212,7 +6077,7 @@
 		% ══════════════════════════════════════════════════════════
 		\begin{center}
 			{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
-				不同矩阵组装技术在三维悬臂梁优化问题中的性能对比（单位：s）}
+				三维悬臂梁算例中不同矩阵组装策略的性能对比（单位：s）}
 			
 			\vspace{6pt}
 			
@@ -5238,18 +6103,18 @@
 			top=4pt, bottom=4pt, left=8pt, right=8pt]
 			{\fontsize{7.5}{11}\selectfont\sffamily
 				\setlength{\parskip}{0pt}
-				\textbf{\circnum{1} 后续组装效率提升：}后续平均矩阵组装耗时由 \textbf{0.787\,s} 降至约 \textbf{0.177\,s}，效率提升约 \textbf{4.4 倍}。
+				\textbf{\circnum{1} 总耗时最优：}数值求积快速组装总耗时由 \textbf{92.109\,s} 降至 \textbf{57.538\,s}，整体加速约 \textbf{1.6 倍}。
 				
-				\textbf{\circnum{2} 总体耗时表现：}基于数值求积的快速组装\textbf{总耗时最低}，由 \textbf{92.109\,s} 降至 \textbf{57.538\,s}。
+				\textbf{\circnum{2} 后续装配加速：}数值求积组装平均耗时降至 \textbf{0.182\,s}，较标准组装的 \textbf{0.787\,s} 提升约 \textbf{4.3 倍}。
 				
-				\textbf{\circnum{3} 预计算机制特点：}解析预计算首次开销较大，但后续组装耗时最低，体现算子缓存优势。
+				\textbf{\circnum{3} 缓存复用优势：}解析预计算后续组装最低，为 \textbf{0.177\,s}，提升约 \textbf{4.4 倍}；但首次开销为 \textbf{28.909\,s}。
 			}
 		\end{tcolorbox}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  03-5  自动微分灵敏度分析
+	%  06-5  自动微分灵敏度分析
 	% ============================================================
 	
 	\begin{frame}
@@ -5261,58 +6126,106 @@
 			arc=3pt, boxrule=0.5pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			{\fontsize{8}{12}\selectfont\sffamily
-				针对复杂目标与约束灵敏度推导成本高的问题，SOPTX 引入自动微分机制，提高算法实现与扩展效率。}
+				SOPTX 提供手动解析与自动微分两类灵敏度路径，
+				并从拓扑结果与计算开销两方面验证自动微分机制的可用性。}
 		\end{tcolorbox}
 		
-		\begin{center}
-			{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
-				不同灵敏度计算方式下三维悬臂梁最终拓扑构型}
-		\end{center}
+		% ============================================================
+		% Overlay 1：拓扑构型一致性
+		% ============================================================
+		\only<1>{
+			
+			\begin{center}
+				{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
+					不同灵敏度计算路径下三维悬臂梁最终拓扑构型}
+			\end{center}
+			
+			\begin{columns}[T, totalwidth=\linewidth]
+				
+				\begin{column}{0.48\linewidth}
+					\centering
+					\includegraphics[width=0.75\linewidth,
+					height=0.32\paperheight, keepaspectratio]{topo_sens_manual}
+					
+					{\fontsize{8}{11}\selectfont\sffamily (a)\enspace 手动解析}
+				\end{column}
+				
+				\begin{column}{0.48\linewidth}
+					\centering
+					\includegraphics[width=0.75\linewidth,
+					height=0.32\paperheight, keepaspectratio]{topo_sens_auto}
+					
+					{\fontsize{8}{11}\selectfont\sffamily (b)\enspace 自动微分}
+				\end{column}
+				
+			\end{columns}
+			
+			\begin{tcolorbox}[
+				colback=structure.fg, colframe=structure.fg,
+				coltext=white, boxrule=0pt, arc=3pt,
+				top=4pt, bottom=4pt, left=8pt, right=8pt]
+				{\fontsize{7.5}{11}\selectfont\sffamily
+					\setlength{\parskip}{0pt}
+					\textbf{\circnum{1} 构型一致：}手动解析与自动微分得到主承载路径高度一致的三维拓扑构型。
+					
+					\textbf{\circnum{2} 扩展便捷：}自动微分降低复杂目标与约束泛函的梯度推导、编码与维护成本。
+				}
+				
+			\end{tcolorbox}
+		}
 		
-		% ══════════════════════════════════════════════════════════
-		%  中部：（两子图横向并列）
-		% ══════════════════════════════════════════════════════════
-		\begin{columns}[T, totalwidth=\linewidth]
+		% ============================================================
+		% Overlay 2：计算耗时一致性
+		% ============================================================
+		\only<2>{
 			
-			\begin{column}{0.48\linewidth}
+			\begin{center}
+				{\fontsize{8.5}{12}\selectfont\sffamily\bfseries
+					不同灵敏度计算路径下三维悬臂梁优化问题耗时对比（单位：s）}
+			\end{center}
+				
 				\centering
-				\includegraphics[width=0.75\linewidth,
-				height=0.32\paperheight, keepaspectratio]{topo_sens_manual}
-				
-				{\fontsize{8}{11}\selectfont\sffamily (a)\enspace 手动微分}
-			\end{column}
+				{\fontsize{8.5}{12}\selectfont\sffamily
+					\begin{tabular}{lcccc}
+						\toprule
+						\textbf{灵敏度路径}
+						& \textbf{迭代次数}
+						& \textbf{总耗时}
+						& \textbf{首次迭代耗时}
+						& \textbf{后续平均耗时} \\
+						\midrule
+						手动解析
+						& 54
+						& 36.627
+						& 1.264
+						& 0.667 \\
+						自动微分
+						& 54
+						& 36.873
+						& 1.460
+						& 0.668 \\
+						\bottomrule
+					\end{tabular}
+				}
 			
-			\begin{column}{0.48\linewidth}
-				\centering
-				\includegraphics[width=0.75\linewidth,
-				height=0.32\paperheight, keepaspectratio]{topo_sens_auto}
+			\begin{tcolorbox}[
+				colback=structure.fg, colframe=structure.fg,
+				coltext=white, boxrule=0pt, arc=3pt,
+				top=4pt, bottom=4pt, left=8pt, right=8pt]
+				{\fontsize{7.5}{11}\selectfont\sffamily
+					\setlength{\parskip}{0pt}
+					\textbf{\circnum{1} 总耗时接近：}自动微分总耗时仅由 \textbf{36.627\,s} 增至 \textbf{36.873\,s}，额外开销约 \textbf{0.246\,s}，约 \textbf{0.67\%}。
+					
+					\textbf{\circnum{2} 稳态开销一致：}后续平均迭代耗时分别为 \textbf{0.667\,s} 与 \textbf{0.668\,s}，差异约 \textbf{0.15\%}。
+				}
 				
-				{\fontsize{8}{11}\selectfont\sffamily (b)\enspace 自动微分}
-			\end{column}
-			
-		\end{columns}
-		
-		% ══════════════════════════════════════════════════════════
-		%  底部：关键结论
-		% ══════════════════════════════════════════════════════════
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			coltext=white, boxrule=0pt, arc=3pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
-			{\fontsize{7.5}{11}\selectfont\sffamily
-				\setlength{\parskip}{0pt}
-				\textbf{\circnum{1} 结果一致：}自动微分与手动微分得到基本一致的三维拓扑构型。
-				
-				\textbf{\circnum{2} 效率相当：}两种方式迭代次数一致，整体计算耗时基本相当。
-				
-				\textbf{\circnum{3} 扩展便捷：}自动微分降低复杂目标函数与约束函数的梯度推导、编码与维护成本。
-			}
-		\end{tcolorbox}
+			\end{tcolorbox}
+		}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  03-6  多后端拓扑结果一致性
+	%  06-6  多后端拓扑结果一致性
 	% ============================================================
 	
 	\begin{frame}
@@ -5324,69 +6237,105 @@
 			arc=3pt, boxrule=0.5pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			{\fontsize{8}{12}\selectfont\sffamily
-				在统一算法接口下，SOPTX 支持 NumPy、PyTorch 与 JAX 后端切换，并保持拓扑优化结果一致。}
+				SOPTX 依托统一张量抽象接口，实现 NumPy、PyTorch 与 JAX 后端切换，
+				并从最终构型与收敛历程两方面验证跨后端结果一致性。}
 		\end{tcolorbox}
 		
+		% ============================================================
+		% Overlay 1：最终拓扑构型一致性
+		% ============================================================
+		\only<1>{
+			
 			\begin{center}
-			{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
-				不同计算后端下三维悬臂梁最终拓扑构型}
-		\end{center}
+				{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
+					不同张量后端下三维悬臂梁最终拓扑构型}
+			\end{center}
+			
+			\vspace{-0.2em}
+			
+			\begin{columns}[T, totalwidth=\linewidth]
+				
+				\begin{column}{0.32\linewidth}
+					\centering
+					\includegraphics[width=0.95\linewidth,
+					height=0.30\paperheight, keepaspectratio]{topo_backend_numpy}
+					
+					{\fontsize{8}{11}\selectfont\sffamily (a)\enspace NumPy}
+				\end{column}
+				
+				\begin{column}{0.32\linewidth}
+					\centering
+					\includegraphics[width=0.95\linewidth,
+					height=0.30\paperheight, keepaspectratio]{topo_backend_pytorch}
+					
+					{\fontsize{8}{11}\selectfont\sffamily (b)\enspace PyTorch}
+				\end{column}
+				
+				\begin{column}{0.32\linewidth}
+					\centering
+					\includegraphics[width=0.95\linewidth,
+					height=0.30\paperheight, keepaspectratio]{topo_backend_jax}
+					
+					{\fontsize{8}{11}\selectfont\sffamily (c)\enspace JAX}
+				\end{column}
+				
+			\end{columns}
+			
+			\vspace{0.4em}
+			
+			\begin{tcolorbox}[
+				colback=structure.fg, colframe=structure.fg,
+				coltext=white, boxrule=0pt, arc=3pt,
+				top=4pt, bottom=4pt, left=8pt, right=8pt]
+				{\fontsize{7.5}{11}\selectfont\sffamily
+					\setlength{\parskip}{0pt}
+					\textbf{\circnum{1} 构型一致：}三种后端均获得主承载路径高度一致的三维拓扑构型。
+					
+					\textbf{\circnum{2} 后端可切换：}同一套高层优化流程可在 \textbf{NumPy}、\textbf{PyTorch} 与 \textbf{JAX} 后端下稳定执行。
+				}
+			\end{tcolorbox}
+		}
 		
-		% ══════════════════════════════════════════════════════════
-		%  中部：图 6.8（三后端横向并列）
-		% ══════════════════════════════════════════════════════════
-		\begin{columns}[T, totalwidth=\linewidth]
+		% ============================================================
+		% Overlay 2：收敛历程一致性
+		% ============================================================
+		\only<2>{
 			
-			\begin{column}{0.32\linewidth}
-				\centering
-				\includegraphics[width=0.95\linewidth,
-				height=0.30\paperheight, keepaspectratio]{topo_backend_numpy}
-				
-				{\fontsize{8}{11}\selectfont\sffamily (a)\enspace NumPy 后端}
-			\end{column}
+			\begin{center}
+				{\fontsize{8.5}{11}\selectfont\sffamily\bfseries
+					不同张量后端下三维悬臂梁柔顺度收敛历程}
+			\end{center}
 			
-			\begin{column}{0.32\linewidth}
-				\centering
-				\includegraphics[width=0.95\linewidth,
-				height=0.30\paperheight, keepaspectratio]{topo_backend_pytorch}
-				
-				{\fontsize{8}{11}\selectfont\sffamily (b)\enspace PyTorch 后端}
-			\end{column}
+			\vspace{-0.2em}
 			
-			\begin{column}{0.32\linewidth}
-				\centering
-				\includegraphics[width=0.95\linewidth,
-				height=0.30\paperheight, keepaspectratio]{topo_backend_jax}
-				
-				{\fontsize{8}{11}\selectfont\sffamily (c)\enspace JAX 后端}
-			\end{column}
+			\begin{center}
+				\includegraphics[width=0.78\linewidth,
+				height=0.38\paperheight, keepaspectratio]{backend_convergence}
+			\end{center}
 			
-		\end{columns}
-		
-		% ══════════════════════════════════════════════════════════
-		%  底部：关键结论
-		% ══════════════════════════════════════════════════════════
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			coltext=white, boxrule=0pt, arc=3pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
-			{\fontsize{7.5}{11}\selectfont\sffamily
-				\setlength{\parskip}{0pt}
-				\textbf{\circnum{1} 构型一致：}NumPy、PyTorch 与 JAX 后端得到基本一致的三维拓扑构型。
-				
-				\textbf{\circnum{2} 收敛一致：}对应柔顺度收敛过程保持一致，说明优化迭代稳定可靠。
-				
-				\textbf{\circnum{3} 接口统一：}同一套高层优化逻辑可在不同计算后端下无缝执行。
-			}
-		\end{tcolorbox}
+			\vspace{-1.0em}
+			
+			\begin{tcolorbox}[
+				colback=structure.fg, colframe=structure.fg,
+				coltext=white, boxrule=0pt, arc=3pt,
+				top=4pt, bottom=4pt, left=8pt, right=8pt]
+				{\fontsize{7.5}{11}\selectfont\sffamily
+					\setlength{\parskip}{0pt}
+					\textbf{\circnum{1} 收敛曲线重合：}三条柔顺度下降曲线在全迭代过程中几乎完全重合。
+					
+					\textbf{\circnum{2} 终止步数一致：}三种后端均在相同终止准则下于第 \textbf{54 步}触发收敛。
+				}
+			\end{tcolorbox}
+		}
 		
 	\end{frame}
 	
 	% ============================================================
-	%  03-7  GPU 异构加速性能
+	%  06-7  CPU/GPU 异构执行与加速性能
 	% ============================================================
+	
 	\begin{frame}
-		\frametitle{GPU 异构加速性能}
+		\frametitle{CPU/GPU 异构执行与加速性能}
 		
 		% ── 顶部总述条 ──────────────────────────────────────
 		\begin{tcolorbox}[
@@ -5394,7 +6343,8 @@
 			arc=3pt, boxrule=0.5pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
 			{\fontsize{8}{12}\selectfont\sffamily
-				依托统一张量接口，SOPTX 可在 CPU/GPU 设备间切换，并利用 GPU 并行计算能力提升大规模三维拓扑优化效率。}
+				依托统一张量抽象接口，SOPTX 可在 CPU/GPU 异构设备间切换，
+				并利用 GPU 并行计算能力提升大规模三维拓扑优化效率。}
 		\end{tcolorbox}
 		
 		% ══════════════════════════════════════════════════════════
@@ -5431,7 +6381,7 @@
 				
 				\textbf{\circnum{2} 稳态迭代加速：}后续平均迭代耗时由 \textbf{21.087\,s} 降至 \textbf{4.841\,s}，稳态加速比约 \textbf{4.36$\times$}。
 				
-				\textbf{\circnum{3} 大规模计算支撑：}GPU 并行计算显著提升三维拓扑优化效率，为大规模问题求解提供支撑。
+				\textbf{\circnum{3} 异构计算支撑：}统一张量抽象支持同一优化流程迁移至 GPU 并行执行，为大规模三维问题求解提供支撑。
 			}
 		\end{tcolorbox}
 		
@@ -5441,568 +6391,323 @@
 	% ============================================================
 	\section{总结与研究展望}
 	% ============================================================
-
-	
-	
-%	% ============================================================
-%	\section{代表性成果与学术贡献}
-%	% ============================================================
 	
 	% ============================================================
-	%  04-1 代表性成果总览
+	%  07-1  主要工作与创新贡献
 	% ============================================================
 	
 	\begin{frame}
-		\frametitle{代表性成果总览}
+		\frametitle{主要工作与创新贡献}
 		
-		% ── 顶部总述条 ──────────────────────────────────────────────
+		% ── 顶部总述条 ──────────────────────────────────────
 		\begin{tcolorbox}[
 			colback=panelbg, colframe=structure.fg!40,
 			arc=3pt, boxrule=0.5pt,
-			top=2pt, bottom=2pt, left=8pt, right=8pt]
-			{\fontsize{7.5}{11}\selectfont\sffamily
-				博士期间围绕高阶有限元变密度拓扑优化的关键数值问题，持续开展方法研究、%
-				软件实现与科研实践，形成了较为完整的成果体系。}
-		\end{tcolorbox}
-		
-		\vspace{-1.5em}
-		
-		% ── 三列卡片 ────────────────────────────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
-			
-			% ── 卡片 01：学术研究成果 ─────────────────────────────
-			\begin{column}{0.315\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 学术研究成果},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=6pt, bottom=6pt, left=6pt, right=6pt,
-					height=0.40\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					{\fontsize{7.5}{12}\selectfont\sffamily
-						围绕高阶有限元离散、多分辨率拓扑优化、胡张混合有限元方法等方向，%
-						形成了具有代表性的论文与方法成果。}
-				\end{tcolorbox}
-			\end{column}
-			
-			% ── 卡片 02：软件平台与知识产权成果 ──────────────────
-			\begin{column}{0.315\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 软件平台与知识产权},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=6pt, bottom=6pt, left=6pt, right=6pt,
-					height=0.40\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					{\fontsize{7.5}{12}\selectfont\sffamily
-						围绕拓扑优化算法实现与平台建设，完成了相关软件系统开发，%
-						并形成了相应的软件著作权成果。}
-				\end{tcolorbox}
-			\end{column}
-			
-			% ── 卡片 03：科研项目与实践经历 ───────────────────────
-			\begin{column}{0.315\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{03}\enspace 科研项目与实践经历},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=6pt, bottom=6pt, left=6pt, right=6pt,
-					height=0.40\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					{\fontsize{7.5}{12}\selectfont\sffamily
-						参与多项科研项目，在方案讨论、程序实现、数值实验与协同推进过程中，%
-						积累了较为扎实的科研实践经验。}
-				\end{tcolorbox}
-			\end{column}
-			
-		\end{columns}
-		
-		\vspace{0.3em}
-		
-		% ── 底部总结条（主题色实底） ────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
 			top=3pt, bottom=3pt, left=8pt, right=8pt]
-			{\fontsize{7.5}{11}\selectfont\sffamily\color{white}
-				相关工作贯通了“数学模型—数值方法—软件实现—科研实践”的研究链条，%
-				体现了从理论研究到程序实现再到项目参与的综合科研能力。}
+			{\fontsize{8.0}{11.2}\selectfont\sffamily
+				本文围绕连续体结构变密度拓扑优化，形成了
+				高阶离散—多分辨率计算—混合建模—软件实现
+				的系统研究链条。}
 		\end{tcolorbox}
 		
-	\end{frame}
-	
-	% ============================================================
-	%  04-2 论文成果
-	% ============================================================
-	
-	\begin{frame}
-		\frametitle{论文成果}
+		\vspace{-1.0em}
 		
-		% ── 主体：左卡片 + 右卡片 ───────────────────────────────────
+		% ══════════════════════════════════════════════════════════
+		%  第一行：贡献 01-02
+		% ══════════════════════════════════════════════════════════
 		\begin{columns}[T, totalwidth=\linewidth]
 			
-			% ── 左侧卡片：第一作者论文 ────────────────────────────
-			\begin{column}{0.50\linewidth}
+			\begin{column}{0.49\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 代表性论文（第一作者）},
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace 任意次拉格朗日有限元拓扑优化方法},
 					arc=3pt, boxrule=0.5pt,
 					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=8pt, right=8pt,
-					height=0.60\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					
-					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
-						SOPTX: A Modular and Extensible Framework for
-						Topology Optimization with Multi-Backend Support\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\textbf{发表情况：}\textit{Communications in Computational Physics}，已录用\par
-						
-						\vspace{2pt}
-						\textbf{主要内容：}围绕拓扑优化软件平台的设计与实现，系统研究了模块化架构、%
-						面向多后端与异构设备的统一执行机制，以及典型优化模型与算法的集成实现。}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-			% ── 右侧卡片：两篇合作论文 ────────────────────────────
-			\begin{column}{0.47\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 合作研究成果（本人参与）},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=7pt, right=7pt,
-					height=0.60\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					
-					% 第一篇
-					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
-						Adaptive finite element method for phase field
-						fracture models based on recovery error estimates\par}
-					
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						\textbf{发表情况：}\textit{Journal of Computational and Applied Mathematics}, 2026, 472: 116732}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					% 第二篇
-					{\fontsize{7.5}{12}\selectfont\sffamily\bfseries
-						FEALPy: A Cross-platform Intelligent Numerical
-						Simulation Engine\par}
-					
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						\textbf{发表情况：}\textit{Communications in Computational Physics}，已录用}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-		\end{columns}
-		
-	\end{frame}
-	
-	% ============================================================
-	%  04-3 软件著作权
-	% ============================================================
-	
-	\begin{frame}
-		\frametitle{软件著作权}
-		
-		% ── 主体：左卡片 + 右卡片 ───────────────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
-			
-			% ── 左侧卡片：核心软件成果 ────────────────────────────
-			\begin{column}{0.50\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 核心软件成果},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=8pt, right=8pt,
-					height=0.60\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					
-					{\fontsize{8}{12}\selectfont\sffamily\bfseries
-						结构拓扑优化仿真计算软件\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					% 登记信息块
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 登记信息\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						\begin{tabular}{@{}l@{~~}l@{}}
-							登记号：& 2025SR0887352 \\[1pt]
-							证书号：& 软著登字第15543550号 \\[1pt]
-							本人排名：& 第一完成人 \\
-						\end{tabular}\par}
-					
-					\vspace{2pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					% 成果说明块
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 成果说明\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						面向结构拓扑优化问题的数值求解与仿真分析，开发了结构拓扑优化仿真计算软件，%
-						实现了相关算法模块与仿真计算功能。\par}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-			% ── 右侧卡片：相关软件成果 ────────────────────────────
-			\begin{column}{0.47\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace 相关软件成果},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=7pt, right=7pt,
-					height=0.60\paperheight, valign=top]
-					\setlength{\parskip}{0pt}
-					
-					{\fontsize{8}{12}\selectfont\sffamily\bfseries
-						建筑结构力学仿真计算软件\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					% 登记信息块
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 登记信息\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						\begin{tabular}{@{}l@{~~}l@{}}
-							登记号：& 2024SR0961048 \\[1pt]
-							证书号：& 软著登字第13364921号 \\[1pt]
-							本人排名：& 第三完成人 \\
-						\end{tabular}\par}
-					
-					\vspace{2pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-8pt}
-					
-					% 成果说明块
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 成果说明\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						围绕建筑结构力学仿真计算，参与了相关软件开发工作，%
-						形成了面向力学分析的软件成果积累。\par}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-		\end{columns}
-		
-	\end{frame}
-	
-	% ============================================================
-	%  04-4  参与项目与工程实践
-	% ============================================================
-	\begin{frame}
-		\frametitle{工程应用与核心算法实践}
-		
-		\begin{columns}[T, totalwidth=\linewidth]
-			
-			% ── 左侧卡片 ─────────────────────────────────────────────
-			\begin{column}{0.50\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{01}\enspace 建筑结构力学分析计算内核开发},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=8pt, right=8pt,
-					height=0.65\paperheight, valign=top,
-					]
-					\setlength{\parskip}{0pt}
-					
-					{\fontsize{8}{12}\selectfont\sffamily\bfseries
-						中国建筑第五工程局有限公司合作项目\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-6pt}
-					
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 本人角色：主要参与人\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-6pt}
-					
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 项目说明\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						参与研发建筑结构力学仿真 C++ 计算内核，并成功集成至中建智拓自主仿真分析软件平台；\par
-						\vspace{4pt}
-						围绕跨平台与可扩展仿真需求，重点开发了三维桁架、梁单元、四面体单元等基础有限元计算功能模块，
-						并负责数值结果的系统性验证及研发文档交付工作。\par}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-			\hfill
-			
-			% ── 右侧卡片 ─────────────────────────────────────────────
-			\begin{column}{0.47\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{7.5}{10}\selectfont\bfseries\sffamily,
-					title={\circnum{02}\enspace FEALPy 核心模块开发与算法实现},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=2pt, bottomtitle=2pt,
-					top=7pt, bottom=7pt, left=7pt, right=7pt,
-					height=0.65\paperheight, valign=top,
-					]
-					\setlength{\parskip}{0pt}
-					
-					{\fontsize{8}{12}\selectfont\sffamily\bfseries
-						国产开源仿真计算引擎 FEALPy\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!25}\rule{\linewidth}{0.4pt}}
-					\vspace{-6pt}
-					
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 本人角色：主要参与人\par}
-					
-					\vspace{-4pt}
-					{\color{structure.fg!30}\rule{\linewidth}{0.4pt}}
-					\vspace{-6pt}
-					
-					{\fontsize{7}{10}\selectfont\sffamily\bfseries 项目说明\par}
-					\vspace{2pt}
-					{\fontsize{7}{10.5}\selectfont\sffamily
-						参与 FEALPy 核心模块开发，负责计算固体力学库的底层架构设计与功能扩展；\par
-						\vspace{4pt}
-						实现了针对线弹性、弹塑性及超弹性等多种本构关系的有限元求解器，支撑复杂非线性力学问题的数值模拟，
-						优化张量化高阶有限元组装算法，提升大规模计算效率与扩展性。\par}
-					
-				\end{tcolorbox}
-			\end{column}
-			
-		\end{columns}
-		
-	\end{frame}
-	
-	
-%	% ============================================================
-%	\section{未来科研计划}
-%	% ============================================================
-	
-	% ============================================================
-	%  05-1 论文产出与基金申报
-	% ============================================================
-	\begin{frame}
-		\frametitle{论文产出与基金申报}
-		
-		% ── 主体双栏内容 ──────────────────────────────────────
-		\begin{columns}[T, totalwidth=\linewidth]
-			
-			% ─── 左栏：高水平论文持续产出 ───────────────────────────
-			\begin{column}{0.485\linewidth}
-				\begin{tcolorbox}[
-					colback=white, colframe=structure.fg!50,
-					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={1\enspace 高水平论文持续产出},
-					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.60\paperheight, valign=top]
-					
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\textbf{\circnum{01}\enspace 多分辨率拓扑优化}\par
-						\vspace{2pt}
-						整理多分辨率拓扑优化研究成果；
-						围绕设计—分析解耦、密度映射与局部应力约束问题，形成多分辨率拓扑优化方向投稿论文。
-						
-						\vspace{6pt}
-
-						\color{black}
-						\textbf{\circnum{02}\enspace 胡张混合有限元拓扑优化}\par
-						\vspace{2pt}
-						整理任意次胡张混合有限元拓扑优化研究成果；
-						面向近不可压缩材料与局部应力约束问题，形成胡张混合有限元拓扑优化方向投稿论文。
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 建立任意次多单元族拉格朗日有限元离散框架；
+							\item 比较单元类型、离散阶次与密度表征方式的影响。
+						\end{itemize}
 					}
 				\end{tcolorbox}
 			\end{column}
 			
-			% ─── 右栏：纵向课题持续申报 ─────────────────────
-			\begin{column}{0.485\linewidth}
+			\begin{column}{0.49\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={2\enspace 纵向课题持续申报},
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 高阶有限元多分辨率拓扑优化框架},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.60\paperheight, valign=top]
-					
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\textbf{\circnum{01}\enspace 国家自然科学基金青年项目}\par
-						\vspace{2pt}
-						围绕复杂局部约束下的高精度拓扑优化有限元方法，
-						凝练高阶/混合有限元与应力约束中的关键科学问题，
-						积极申报国家自然科学基金青年项目。
-						
-						\vspace{6pt}
-						
-						\color{black}
-						\textbf{\circnum{02}\enspace 省部级及校级科研项目}\par
-						\vspace{2pt}
-						面向湖南省工程结构优化、智能制造与国产工业软件需求，
-						积极申报湖南省自然科学基金、教育厅及校级科研项目。
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 构建分析网格、密度积分网格与设计网格解耦机制；
+							\item 在可控计算规模下兼顾分析精度与拓扑表达分辨率。
+						\end{itemize}
 					}
 				\end{tcolorbox}
 			\end{column}
 			
 		\end{columns}
 		
-		% ── 底部总结条 ──────────────────────────────────────
+		\vspace{0.35em}
+		
+		% ══════════════════════════════════════════════════════════
+		%  第二行：贡献 03-04
+		% ══════════════════════════════════════════════════════════
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			\begin{column}{0.49\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{03}\enspace 任意次胡张混合有限元拓扑优化方法},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 建立应力--位移混合拓扑优化列式与离散格式；
+							\item 提升近不可压缩与局部应力约束问题的计算可靠性。
+						\end{itemize}
+					}
+				\end{tcolorbox}
+			\end{column}
+			
+			\begin{column}{0.49\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{04}\enspace 多后端拓扑优化软件平台 SOPTX},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 依托 FEALPy 构建拓扑优化模块化计算闭环；
+							\item 支持自动微分、多后端切换与 CPU/GPU 异构执行。
+						\end{itemize}
+					}
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
+		
+	\end{frame}
+	
+	% ============================================================
+	%  07-2  下一步研究安排
+	% ============================================================
+	
+	\begin{frame}
+		\frametitle{下一步研究安排}
+		
+		% ── 顶部总述条 ──────────────────────────────────────
 		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
-			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				以博士成果为基础，形成\textbf{“论文投稿 $\xrightarrow{}$ 基金申报 $\xrightarrow{}$ 方向拓展”}的连续科研推进路径。}
+			colback=panelbg, colframe=structure.fg!40,
+			arc=3pt, boxrule=0.5pt,
+			top=3pt, bottom=3pt, left=8pt, right=8pt]
+			{\fontsize{8.0}{11.2}\selectfont\sffamily
+				在现有高阶有限元、多分辨率计算与 SOPTX 平台基础上，
+				后续将面向大规模三维优化、显式几何建模与智能化分析加速，
+				构建高性能、可扩展的拓扑优化计算框架。}
 		\end{tcolorbox}
 		
-	\end{frame}
-	
-	% ============================================================
-	%  05-2 软件平台建设与产学研协同
-	% ============================================================
-	\begin{frame}
-		\frametitle{软件平台建设与产学研协同}
+		\vspace{-1.0em}
 		
-		% ── 主体双栏内容 ──────────────────────────────────────
+		% ══════════════════════════════════════════════════════════
+		%  第一行：方向 01-02
+		% ══════════════════════════════════════════════════════════
 		\begin{columns}[T, totalwidth=\linewidth]
 			
-			% ─── 左栏：自主仿真软件研发 ───────────────────────────
-			\begin{column}{0.485\linewidth}
+			% ─── 01 Matrix-free ─────────────────────────────────
+			\begin{column}{0.49\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={1\enspace 自主仿真软件研发},
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{01}\enspace GPU 与并行支撑的 Matrix-free 计算},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.52\paperheight, valign=top]
-					
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\textbf{\circnum{01}\enspace SOPTX 平台持续迭代}\par
-						\vspace{2pt}
-						围绕虚单元方法、移动网格技术等先进离散方法与数值技术，
-						持续完善 SOPTX 的模型接口、算法模块与算例体系。
-						
-						\vspace{6pt}
-						
-						\color{black}
-						\textbf{\circnum{02}\enspace FEALPy 底层能力贡献}\par
-						\vspace{2pt}
-						依托 FEALPy 开源智能 CAX 引擎，
-						持续参与有限元分析、张量化计算与多后端计算模块建设。
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 面向大规模三维拓扑优化，避免反复显式组装全局刚度矩阵；
+							\item 结合 GPU 并行算子作用与迭代求解，提升优化闭环计算效率。
+						\end{itemize}
 					}
 				\end{tcolorbox}
 			\end{column}
 			
-			% ─── 右栏：重大平台与项目协作 ─────────────────────
-			\begin{column}{0.485\linewidth}
+			% ─── 02 MMC/MMV ─────────────────────────────────────
+			\begin{column}{0.49\linewidth}
 				\begin{tcolorbox}[
 					colback=white, colframe=structure.fg!50,
 					colbacktitle=structure.fg, coltitle=white,
-					fonttitle=\fontsize{8}{10}\selectfont\bfseries\sffamily,
-					title={2\enspace 重大平台与项目协作},
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{02}\enspace 显式拓扑优化方法 MMC/MMV},
 					arc=3pt, boxrule=0.5pt,
-					toptitle=3pt, bottomtitle=3pt,
-					top=5pt, bottom=5pt, left=6pt, right=6pt,
-					height=0.52\paperheight, valign=top]
-					
-					{\fontsize{7.5}{11}\selectfont\sffamily
-						\textbf{\circnum{01}\enspace 韶峰天工平台研发}\par
-						\vspace{2pt}
-						依托算海团队参与韶峰天工 CAX 智能工作流协作平台研发，
-						服务国产工业软件平台建设与复杂工程应用需求。
-						
-						\vspace{6pt}
-
-						\color{black}
-						\textbf{\circnum{02}\enspace 平台资源协同拓展}\par
-						\vspace{2pt}
-						积极连接湖南国家应用数学中心、湖南韶峰应用数学研究院及工程单位资源，
-						推动科学计算与工程仿真的产学研交叉。
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 引入移动可变形组件/孔洞方法，直接描述结构边界与几何构型；
+							\item 探索显式几何表达与高阶有限元、多分辨率框架的结合。
+						\end{itemize}
 					}
 				\end{tcolorbox}
 			\end{column}
 			
 		\end{columns}
 		
-		\vspace{0.4em}
+		\vspace{0.35em}
 		
-		% ── 底部总结条 ──────────────────────────────────────
-		\begin{tcolorbox}[
-			colback=structure.fg, colframe=structure.fg,
-			arc=3pt, boxrule=0pt,
-			top=4pt, bottom=4pt, left=8pt, right=8pt]
-			\centering
-			{\fontsize{8.5}{12}\selectfont\sffamily\color{white}
-				形成\textbf{“数学模型 $\xrightarrow{}$ 数值算法 $\xrightarrow{}$ 软件平台 $\xrightarrow{}$ 工程应用”}的协同发展路径。}
-		\end{tcolorbox}
+		% ══════════════════════════════════════════════════════════
+		%  第二行：方向 03-04
+		% ══════════════════════════════════════════════════════════
+		\begin{columns}[T, totalwidth=\linewidth]
+			
+			% ─── 03 PIML ────────────────────────────────────────
+			\begin{column}{0.49\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{03}\enspace 问题无关机器学习 PIML},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 构建与边界条件、载荷和设计域弱相关的局部算子学习模型；
+							\item 加速高频重复的局部分析过程，提升拓扑优化计算效率。
+						\end{itemize}
+					}
+				\end{tcolorbox}
+			\end{column}
+			
+			% ─── 04 融合框架 ─────────────────────────────────
+			\begin{column}{0.49\linewidth}
+				\begin{tcolorbox}[
+					colback=white, colframe=structure.fg!50,
+					colbacktitle=structure.fg, coltitle=white,
+					fonttitle=\fontsize{7.8}{9.6}\selectfont\bfseries\sffamily,
+					title={\circnum{04}\enspace 高性能智能拓扑优化融合框架},
+					arc=3pt, boxrule=0.5pt,
+					toptitle=2pt, bottomtitle=2pt,
+					top=4pt, bottom=4pt, left=7pt, right=7pt,
+					height=0.28\paperheight]
+					{\fontsize{7.1}{9.6}\selectfont\sffamily
+						\setbeamertemplate{itemize item}{\raisebox{1pt}{\tiny$\bullet$}}
+						\setlength{\leftmargini}{1.0em}
+						\begin{itemize}
+							\setlength{\itemsep}{2.0pt}
+							\setlength{\topsep}{1pt}
+							\setlength{\parsep}{0pt}
+							\item 将 Matrix-free、MMC/MMV 与 PIML 统一到 SOPTX 框架中；
+							\item 面向复杂三维结构设计，形成可扩展的智能优化工具链。
+						\end{itemize}
+					}
+				\end{tcolorbox}
+			\end{column}
+			
+		\end{columns}
 		
 	\end{frame}
 	
+	
 	% ============================================================
-	%  结束页
+	%  结束页：致谢
 	% ============================================================
+	
 	\begin{frame}[plain]
-		\vspace{1.2cm}
+		
+		\vspace*{0.75cm}
+		
 		\begin{center}
-			{\fontsize{24}{30}\selectfont\bfseries\sffamily\color{structure.fg} 科研工作汇报结束}
+			% ── 标题 ─────────────────────────────────────
+			{\fontsize{28}{34}\selectfont
+				\bfseries\sffamily\color{structure.fg}
+				致\hspace{1.2em}谢}
 			
-			\vspace{0.9cm}
-			\begin{tcolorbox}[
-				colback=panelbg, colframe=structure.fg!45,
-				arc=4pt, boxrule=0.6pt,
-				top=8pt, bottom=8pt, left=14pt, right=14pt,
-				width=0.68\linewidth]
+			\vspace{1.55cm}
+			
+			% ── 主体感谢语 ───────────────────────────────
+			\begin{minipage}{0.82\linewidth}
 				\centering
-				{\fontsize{12}{18}\selectfont\bfseries\sffamily 感谢各位老师聆听}\\[4pt]
-				{\fontsize{10}{15}\selectfont\sffamily 恳请批评指正}
-			\end{tcolorbox}
+				
+				{\fontsize{16}{25}\selectfont\sffamily
+					衷心感谢各位答辩委员会专家、教授}
+				
+				\vspace{0.45cm}
+				
+				{\fontsize{16}{25}\selectfont\sffamily
+					对本论文的审阅、指导与宝贵建议！}
+				
+				\vspace{1.00cm}
+				
+				{\fontsize{12}{19}\selectfont\sffamily\color{black!55}
+					感谢导师、同门以及团队在论文工作中的帮助与支持。}
+				
+				\vspace{0.95cm}
+				
+				{\fontsize{18}{25}\selectfont
+					\bfseries\sffamily\color{structure.fg}
+					敬请各位专家批评指正！}
+				
+			\end{minipage}
 			
 		\end{center}
+		
 	\end{frame}
 	
 	
