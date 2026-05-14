@@ -1,0 +1,25 @@
+\phantomsection
+\addcontentsline{toc}{chapter}{参考文献}
+% \bibliographystyle{GBTbibsty}
+%\bibliographystyle{reference/xtuthesis-numeric}
+%\bibliographystyle{reference/ws-m3as}
+\bibliographystyle{gbt7714-numerical}
+%% --- 开始：参考文献标准排版精调 ---
+%\setlength{\bibsep}{8pt}     % 保持刚才令人舒适的上下行间距
+%\setlength{\labelsep}{0.5em} % 强制设定编号小括号 ] 与文字的距离
+%
+%% 恢复湘大要求的悬挂缩进设置，这是对齐第二行的关键！
+%% 如果编译后发现第二行比第一行文字偏左或偏右一点点，可以微调这里的数值（如 1.8em, 2.2em）
+%\setlength{\bibhang}{2em}    
+%% --- 结束 ---
+% --- 开始：参考文献排版间距与对齐强制精调 ---
+\setlength{\bibsep}{8pt}     % 保持这个完美的上下间距
+\setlength{\labelsep}{0.5em} % 编号盒子与正文的距离
+
+\makeatletter
+% 【关键修改】：将 \hfill 放到前面！让编号在预留的宽度盒子内“向右靠拢”
+\renewcommand\@biblabel[1]{\hfill[#1]}
+\makeatother
+% --- 结束 ---
+%\bibliographystyle{xtuthesis-bachelor}
+\bibliography{reference/ref}
