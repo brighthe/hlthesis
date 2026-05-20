@@ -1,0 +1,680 @@
+% !Mode:: "TeX:UTF-8"
+%s\usepackage{fontspec}
+%\RequirePackage[colorlinks,linkcolor=black,anchorcolor=black,citecolor=black,CJKbookmarks=True]{hyperref}
+\RequirePackage[colorlinks,linkcolor=black,anchorcolor=black,citecolor=black,urlcolor=black,CJKbookmarks=True]{hyperref} % 超级链接
+%\ RequirePackage[CJKbookmarks,hyperindex=true,
+%            bookmarksnumbered=false,bookmarksopen=true,
+%            colorlinks,linkcolor=black,anchorcolor=black,citecolor=black]{hyperref}           % 超级链接
+\RequirePackage{amsmath,amsthm}                                                                % 排版数学公式
+\RequirePackage{longtable,booktabs}                                                            % 长表格
+\RequirePackage{array}                                                                         % 扩展表格列格式（m{} 等）
+\RequirePackage{makecell}                                                                      % 表格单元格内便捷换行与对齐
+\RequirePackage{rotating}                                                                      % 表格旋转
+\theoremstyle{definition}     % 定理、定义等环境使用正体
+\RequirePackage{latexsym}
+\RequirePackage{amsfonts}
+\RequirePackage{amssymb}                                                                       % 定义AMS的数学符号命令
+\RequirePackage{mathrsfs}                                                                      % 数学RSFS书写字体
+\RequirePackage{bm}                                                                            % 数学黑体
+\RequirePackage{wrapfig}                                                                       % wrapfigure 图文混排
+\RequirePackage{graphicx}                                                                      % 支持插图,图形宏包graphics的扩展宏包
+\RequirePackage{adjustbox}                                                                     % 表格/图片按版心缩放（adjustbox 环境）
+\RequirePackage{subfigure}                                                                     % 支持子图
+\RequirePackage{color,xcolor}                                                                  % 支持彩色
+\RequirePackage[paperwidth=21cm,paperheight=29.7cm,
+top=2.79cm,bottom=2.54cm,left=2.96cm,right=2.76cm,
+headheight=1.2cm,headsep=0.07cm,footskip=1.27cm]{geometry}                         % 简单灵活的页面设置界面
+\RequirePackage{amscd}
+%\RequirePackage[linesnumbered,ruled,vlined]{algorithm2e}
+%\RequirePackage{float}
+\RequirePackage{slashbox}
+%\RequirePackage{cite}
+\RequirePackage{xtuformat}
+\RequirePackage[labelsep=space]{caption}
+\RequirePackage{setspace}                                                                      % 使用间距宏包
+\RequirePackage{multirow}
+
+\RequirePackage{algpseudocode}
+\RequirePackage{algorithm}
+\RequirePackage{algorithmicx}
+\RequirePackage{varwidth}      
+\RequirePackage{lipsum}
+\RequirePackage[bottom]{footmisc}                                                              % 脚注居底不与正文相连
+
+% --- 推荐的学术级代码配色方案 ---
+
+\RequirePackage{listings}
+\RequirePackage{xcolor}
+
+% 1. 定义更沉稳的颜色 (Academic Palette)
+\definecolor{acablue}{RGB}{0, 83, 166}       % 普鲁士蓝：用于关键字
+\definecolor{acagreen}{RGB}{0, 100, 0}       % 深森林绿：用于注释
+\definecolor{acapurple}{RGB}{128, 0, 128}    % 深紫色：用于字符串
+\definecolor{backcolour}{rgb}{0.96, 0.96, 0.96} % 极浅灰背景
+
+\lstset{
+	language=Python,                 % 全局默认语言设为 Python
+	% 2. 字体与排版微调
+	basicstyle=\ttfamily\footnotesize, % 【关键】改为 footnotesize，比 small 更紧凑精致
+	backgroundcolor=\color{backcolour},
+	% 3. 应用新颜色
+	keywordstyle=\color{acablue}\bfseries,
+	commentstyle=\color{acagreen},
+	stringstyle=\color{acapurple},
+	% 4. 边框与间距设置
+	frame=tb,                        % 仅显示上下边框 (Top/Bottom)
+	framerule=0.5pt,
+	rulecolor=\color{black!80},
+	breaklines=true,
+	numbers=left,
+	numbersep=8pt,
+	numberstyle=\tiny\color{gray},
+	captionpos=t,                    % 标题在顶部
+	tabsize=4,
+	showstringspaces=false,
+	xleftmargin=2em,
+	framexleftmargin=1.5em,
+	%	aboveskip=1.5em,                 % 【新增】增加代码块与上方正文的间距，避免太挤
+	%	belowskip=1.5em                  % 【新增】增加代码块与下方正文的间距
+}
+
+% 将 Listing 重命名为中文 "代码"
+\renewcommand{\lstlistingname}{代码}
+
+% --- 拓扑优化流程图所需的 TikZ 宏包及库 ---
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+
+\makeatletter
+\@addtoreset{algorithm}{chapter}  % 重置algorithm计数器，随chapter变化
+\renewcommand{\thealgorithm}{\thechapter.\@arabic\c@algorithm}  % 编号格式为“章节号.算法号”
+\makeatother
+
+%\RequirePackage{natbib}%[sort&compress,longnamesfirst]
+%%\bibpunct[, ]{(}{)}{;}{a}{}{,}
+%\addtolength{\bibsep}{-0.5 em} % 缩小参考文献间的垂直间距
+%\setlength{\bibhang}{2em}
+
+% 脚注带圈且注释部分编号与文字等大
+\makeatletter
+\newskip\@footindent
+\@footindent=1.5em
+\renewcommand\footnoterule{\kern-3\p@ \hrule width 0.4\columnwidth \kern 2.6\p@}
+% 脚注带圈且注释部分编号与文字等大
+
+\long\def\@makefntext#1{\@setpar{\@@par\@tempdima \hsize
+		\advance\@tempdima-\@footindent
+		\parshape \@ne \@footindent \@tempdima}\par
+	\noindent \hbox to \z@{\hss\@thefnmark\hspace{0.2em}}#1}
+\renewcommand\thefootnote{\textcircled{\arabic{footnote}}}
+\makeatother
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+{% \begin{breakablealgorithm}
+		\begin{center}
+			\refstepcounter{algorithm}% New algorithm
+			\hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+			\renewcommand{\caption}[2][\relax]{% Make a new \caption
+				{\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+				\ifx\relax##1\relax % #1 is \relax
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+				\else % #1 is not \relax
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+				\fi
+				\kern2pt\hrule\kern2pt
+			}
+		}{% \end{breakablealgorithm}
+		\kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+	\end{center}
+}
+\makeatother
+
+%---中文封面--------------------------------------------------------------------------
+\makeatletter
+\newcommand*{\schoolcode}[1]{\gdef\@schoolcode{#1}}
+\newcommand*{\studentid}[1]{\gdef\@studentid{#1}}
+\newcommand*{\cntitle}[1]{\gdef\@cntitle{#1}}
+\newcommand*{\cnname}[1]{\gdef\@cnname{#1}}
+\newcommand*{\cnteacher}[1]{\gdef\@cnteacher{#1}}
+\newcommand*{\cncollege}[1]{\gdef\@cncollege{#1}}
+\newcommand*{\cnmajor}[1]{\gdef\@cnmajor{#1}}
+\newcommand*{\cnspcial}[1]{\gdef\@cnspcial{#1}}
+\newcommand*{\cndegree}[1]{\gdef\@cndegree{#1}}
+\newcommand*{\cnschool}[1]{\gdef\@cnschool{#1}}
+\newcommand*{\cdate}[1]{\gdef\@cdate{#1}}
+\newcommand*{\security}[1]{\gdef\@security{#1}}%自己后来添加的
+\newcommand*{\@schoolcode}{10530}%
+
+%=========================================
+% 使用 [today=big] 强制 CTEX 输出中文数字化日期（如：二〇二六年五月十九日），避免阿拉伯数字。
+%=========================================
+\newcommand*{\@cdate}{\CTEXoptions[today=big]\today}
+
+\newcommand*{\makecntitle}{%
+	\thispagestyle{empty}
+	
+	\begin{flushleft}
+		%=========================================
+		% 学校相关信息的内容（数字、字母及密级英文）均强制指定为 小四号 Times New Roman 字体
+		%=========================================
+		\makebox[17mm][s]{\heiti\zihao{-4} 学校代码}\underline{\makebox[35mm][c]{\setmainfont{Times New Roman}\zihao{-4}\@schoolcode}}\hfill\makebox[17mm][s]{\heiti\zihao{-4} 学号}\underline{\makebox[35mm][c]{\setmainfont{Times New Roman}\zihao{-4}\@studentid}}\\
+		\vskip0.2cm
+		\makebox[17mm][s]{\heiti\zihao{-4} 分类号}\underline{\makebox[35mm][c]{\setmainfont{Times New Roman}\zihao{-4}O241.82}}\hfill\makebox[17mm][s]{\heiti\zihao{-4} 密级}\underline{\makebox[35mm][c]{\setmainfont{Times New Roman}\zihao{-4}\makebox[17mm][s]{\@security}}}
+	\end{flushleft}
+%	\begin{flushleft}
+%		\makebox[17mm][s]{\heiti 学校代码}\underline{\makebox[35mm][c]{\@schoolcode}}\hfill\makebox[17mm][s]{\heiti 学号}\underline{\makebox[35mm][c]{\@studentid}}\\
+%		\vskip0.2cm
+%		\makebox[17mm][s]{\heiti 分类号}\underline{\makebox[35mm][c]{O241.82}}\hfill\makebox[17mm][s]{\heiti 密级}\underline{\makebox[35mm][c]{\makebox[17mm][s]{\@security}}}
+%	\end{flushleft}
+	
+	\vskip1.5cm
+	\begin{center}
+		%\includegraphics[scale=0.7]{./Figures/xtu.pdf}
+		\includegraphics[scale=0.7]{xtu.pdf}
+	\end{center}
+	\vskip0.3cm
+	\begin{center}
+		\makebox[109mm][s]{\heiti\zihao{-0}博士学位论文}
+	\end{center}
+	
+	%=========================================
+	% 中文外封面论文题目：一号黑体、居中、1.25倍行距
+	% [排版提示]：上下的 \vskip 2.0cm 间距并非《写作指南》的硬性规定，
+	% 而是为了平衡视觉重心。若论文题目字数变化导致折行数增减，请自行微调此处参数。
+	%=========================================
+	\vskip 2.0cm
+	\begin{center}
+		\begin{spacing}{1.25}
+			\heiti \zihao{1}\@cntitle
+		\end{spacing}
+	\end{center}
+	\vskip 2.0cm
+%	\vskip1.5cm
+%	\begin{center}
+%		\heiti \zihao{2}\@cntitle
+%	\end{center}
+%	\vskip2.5cm 
+	
+	\begin{center}
+		% 用户要求：保留“左黑右仿”设计。左侧为四号黑体，右侧填写内容为三号仿宋。保留“指导老师”称谓。
+		\makebox[30mm][s]{\heiti\zihao{4}学位申请人}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnname}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{4}指导老师}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnteacher}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{4}学院名称}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cncollege}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{4}学科专业}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnmajor}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{4}研究方向}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnspcial}}
+	\end{center}
+%	\begin{center}
+%		\makebox[30mm][s]{\heiti 学位申请人}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnname}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 指导老师}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnteacher}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学院名称}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cncollege}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学科专业}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnmajor}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 研究方向}\underline{\makebox[87mm][c]{\fangsong\zihao{3}\@cnspcial}}
+%	\end{center}
+	\vskip1.85cm
+	\begin{center}
+		{\songti\zihao{3}\@cdate}
+	\end{center}
+	
+	%----中文内封面------------------------------------------------------------------------------
+	\newpage
+	\clearpage
+	\phantom{s}
+	\thispagestyle{empty}
+	
+	\newpage
+	\thispagestyle{empty}
+	
+	%=========================================
+	% 中文内封面论文题目：保持与外封面绝对一致的排版规范
+	% [排版提示]：此处的 \topskip 4.5cm 和 \vskip 2.5cm 并非硬性规定，
+	% 而是为了将下方庞大的个人信息块整体上提，释放底部呼吸空间。视具体排版情况微调即可。
+	%=========================================
+	\topskip 4.5cm
+	\begin{center}
+		\begin{spacing}{1.25}
+			\heiti \zihao{1}\@cntitle
+		\end{spacing}
+	\end{center}
+	\vskip 2.5cm
+%	\topskip 4.2cm
+%	\begin{center}
+%		\heiti \zihao{1}\@cntitle
+%	\end{center}
+%	\vskip 4cm
+	
+	\begin{center}
+		% 用户要求：内封面也同步保留“左黑右仿”设计。左侧为小四黑体，右侧为小四仿宋。
+		\makebox[30mm][s]{\heiti\zihao{-4}学位申请人}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnname}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}导师姓名及职称}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnteacher}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}学院名称}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cncollege}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}学科专业}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnmajor}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}研究方向}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnspcial}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}学位申请级别}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cndegree}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}学位授予单位}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnschool}}\\
+		\vskip0.7cm
+		\makebox[30mm][s]{\heiti\zihao{-4}论文提交日期}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cdate}}
+	\end{center}
+%	\begin{center}
+%		\makebox[30mm][s]{\heiti 学位申请人}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnname}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 导师姓名及职称}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnteacher}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学院名称}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cncollege}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学科专业}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnmajor}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 研究方向}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnspcial}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学位申请级别}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cndegree}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 学位授予单位}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cnschool}}\\
+%		\vskip0.7cm
+%		\makebox[30mm][s]{\heiti 论文提交日期}\underline{\makebox[66.5mm][c]{\fangsong\zihao{-4}\@cdate}}
+%	\end{center}
+	
+	\newpage
+	\clearpage
+	\phantom{s}
+	\thispagestyle{empty}
+}
+\makeatother
+
+\makeatletter
+%----英文内封面-----------------------------------------------------------------------------
+\newcommand*{\entitle}[1]{\gdef\@entitle{#1}}
+\newcommand*{\candidate}[1]{\gdef\@candidate{#1}}
+\newcommand*{\supervisor}[1]{\gdef\@supervisor{#1}}
+\newcommand*{\college}[1]{\gdef\@college{#1}}
+\newcommand*{\program}[1]{\gdef\@program{#1}}
+\newcommand*{\specialization}[1]{\gdef\@specialization{#1}}
+%\newcommand*{\specializationS}[1]{\gdef\@specializationS{#1}}
+%\newcommand*{\specializationE}[1]{\gdef\@specializationE{#1}}
+\newcommand*{\degree}[1]{\gdef\@degree{#1}}
+\newcommand*{\university}[1]{\gdef\@university{#1}}
+\newcommand*{\edate}[1]{\gdef\@edate{#1}}
+
+\newcommand*{\@edate}{\CTEXoptions[today=old]\today}
+
+\newcommand*{\makeentitle}{%
+	\newpage
+	\thispagestyle{empty}
+	\topskip 4cm
+	\begin{center}
+		%=========================================
+		% 英文题名精确指定字号为 20pt Arial 字体，加粗，居中书写
+		%=========================================
+		\fontspec{Arial}\fontsize{20pt}{25pt}\selectfont\bfseries\@entitle
+%		\setmainfont{Arial}\huge\textbf{\@entitle}
+	\end{center}
+	\vskip 3.5cm
+	\begin{center}
+		%=========================================
+		% 其它信息内容强制切换为 小四号 (\zihao{-4}) Times New Roman 字体
+		% 净化作用域，确保下方所有的标签和填写内容字体不漂移
+		%=========================================
+		\setmainfont{Times New Roman}\zihao{-4}
+		\makebox[135mm][l]{\textbf{Candidate}\underline{\makebox[112.5mm][c]{\@candidate}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{Supervisor}\underline{\makebox[112mm][c]{\@supervisor}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{College}\underline{\makebox[119mm][c]{\@college}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{Program}\underline{\makebox[116mm][c]{\@program}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\parbox{10cm}{\centering\@specialization}}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{Degree}\underline{\makebox[119.5mm][c]{\@degree}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{University}\underline{\makebox[112.5mm][c]{\@university}}}\\
+		\vskip0.7cm
+		\makebox[135mm][l]{\textbf{Date}\underline{\makebox[124.5mm][c]{\@edate}}}
+%		\makebox[135mm][l]{\textbf{Candidate}\underline{\makebox[112.5mm][c]{\@candidate}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{Supervisor}\underline{\makebox[112mm][c]{\@supervisor}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{College}\underline{\makebox[119mm][c]{\@college}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{Program}\underline{\makebox[116mm][c]{\@program}}}\\
+%		\vskip0.7cm
+%		%    方法 1：标准单行显示
+%		%    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\@specialization}}}\\
+%		%    方法 2：两行显示
+%		\makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[106mm][c]{\parbox{10cm}{\centering\@specialization}}}}\\
+%		%    方法 3: 两栏显示
+%		%    \makebox[135mm][l]{\textbf{Specialization}\underline{\makebox[105.5mm][c]{\@specializationS}}}\\
+%		%    \vskip0.7cm
+%		%    \makebox[135mm][l]{\hspace{29.5mm}\underline{\makebox[105.5mm][c]{\@specializationE}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{Degree}\underline{\makebox[119.5mm][c]{\@degree}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{University}\underline{\makebox[112.5mm][c]{\@university}}}\\
+%		\vskip0.7cm
+%		\makebox[135mm][l]{\textbf{Date}\underline{\makebox[124.5mm][c]{\@edate}}}
+	\end{center}
+	
+	\newpage
+	\clearpage
+	\phantom{s}
+	\thispagestyle{empty}
+}
+
+\makeatother
+
+\newpage
+%----原创声明和版权授权-----------------------------------------------------------------------
+\makeatletter
+\newcommand*{\makedeclare}{%
+	\newpage
+	\thispagestyle{empty}
+	\topskip10mm
+	\begin{center}
+		{\heiti\zihao{2}湘潭大学 \vskip5mm 学位论文原创性声明}
+	\end{center}
+	\songti\zihao{4}
+	
+	本人郑重声明：所呈交的论文是本人在导师的指导下独立进行研究所取得的研究成果。除了文中特别加以
+	标注引用的内容外，本论文不包含任何其他个人或集体已经发表或撰写的成果作品。对本文的研究做出重要贡
+	献的个人和集体，均已在文中以明确方式标明。本人完全意识到本声明的法律后果由本人承担。
+	\vskip8mm
+	
+	作者签名：\hfill~~~~~~~~~~~~~~~~~~~~~~~~~日期：\kern 1.6cm 年 \kern 0.8cm 月 \kern 0.8cm 日
+	\vskip30mm
+	\begin{center}
+		{\heiti\zihao{2}学位论文版权使用授权书}
+	\end{center}
+	
+	本学位论文作者完全了解学校有关保留、使用学位论文的规定，同意学校保留并向国家有关部门或机构送
+	交论文的复印件和电子版，允许论文被查阅和借阅。本人授权湘潭大学可以将本学位论文的全部或部分内容编
+	入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存和汇编本学位论文。
+	\par
+	涉密论文按学校规定处理。
+	\vskip30mm
+	
+	作者签名：\hfill~~~~~~~~~~~~~~~~~~~~~~~~~日期：\kern 1.6cm 年 \kern 0.8cm 月 \kern 0.8cm 日
+	\vskip8mm
+	
+	导师签名：\hfill~~~~~~~~~~~~~~~~~~~~~~~~~日期：\kern 1.6cm 年 \kern 0.8cm 月 \kern 0.8cm 日
+	
+	\newpage
+	\clearpage
+	\phantom{s}
+	\thispagestyle{empty}
+}
+\makeatother
+
+%---定制目录--------------------------------------------------------------------------
+\makeatletter
+\setcounter{tocdepth}{1} % 【核心修改】刚性限制目录深度为 1：只保留到一级节标题（Section），不再向下显示二级节标题
+% 1. 针对【章标题】的定制底层命令：黑体小四，段前6磅，行距20磅
+\def\@bfdottedtocline#1#2#3#4#5{%
+	\ifnum #1>\c@tocdepth \else
+	\vskip 6pt \@plus.2\p@ % 【规范落实】段前空 6 磅 (替换了原有的 \z@)
+	{\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
+		\parindent #2\relax\@afterindenttrue
+		\interlinepenalty\@M
+		% 【规范落实】黑体小四，并强制将该段落的基线距离(行距)锁定为 20pt
+		\leavevmode \heiti\zihao{-4}\setlength{\baselineskip}{20pt}% 
+		\@tempdima #3\relax
+		\advance\leftskip \@tempdima \null\nobreak\hskip -\leftskip
+		{#4}\normalfont\nobreak
+		\leaders\hbox{$\m@th
+			\mkern \@dotsep mu\hbox{.}\mkern \@dotsep
+			mu$}\hfill
+		\nobreak
+		\hb@xt@\@pnumwidth{\hfil\normalfont \normalcolor #5}%
+		\par}%
+	\fi}
+
+% 2. 针对【一级节、二级节标题】的定制底层命令：宋体小四，段前0磅，行距20磅
+\def\@stdottedtocline#1#2#3#4#5{%
+	\ifnum #1>\c@tocdepth \else
+	\vskip \z@ \@plus.2\p@ % 【规范落实】段前空 0 磅
+	{\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
+		\parindent #2\relax\@afterindenttrue
+		\interlinepenalty\@M
+		% 【规范落实】宋体小四，并强制行距锁定为 20pt
+		\leavevmode \songti\zihao{-4}\setlength{\baselineskip}{20pt}% 
+		\@tempdima #3\relax
+		\advance\leftskip \@tempdima \null\nobreak\hskip -\leftskip
+		{#4}\normalfont\nobreak
+		\leaders\hbox{$\m@th
+			\mkern \@dotsep mu\hbox{.}\mkern \@dotsep
+			mu$}\hfill
+		\nobreak
+		\hb@xt@\@pnumwidth{\hfil\normalfont \normalcolor #5}%
+		\par}%
+	\fi}
+
+% 3. 将格式绑定到具体的目录层级，并落实缩进要求
+\renewcommand*\l@chapter{\@bfdottedtocline{0}{0em}{1.5em}} % 章标题：居左书写 (0em 缩进)
+\renewcommand*\l@section{\@stdottedtocline{1}{1em}{2em}}   % 一级节标题：缩进1个汉字符 (1em)
+\renewcommand*\l@subsection{\@stdottedtocline{2}{2em}{3em}}% 二级节标题：缩进2个汉字符 (2em)
+\makeatother
+%%---定制目录--------------------------------------------------------------------------
+%\makeatletter
+%\def\@bfdottedtocline#1#2#3#4#5{%
+%	\ifnum #1>\c@tocdepth \else
+%	\vskip \z@ \@plus.2\p@
+%	{\leftskip #2\relax \rightskip \@tocrmarg \parfillskip -\rightskip
+%		\parindent #2\relax\@afterindenttrue
+%		\interlinepenalty\@M
+%		\leavevmode \heiti\zihao{-4}%原本是\bfseries
+%		\@tempdima #3\relax
+%		\advance\leftskip \@tempdima \null\nobreak\hskip -\leftskip
+%		{#4}\normalfont\nobreak
+%		\leaders\hbox{$\m@th
+%			\mkern \@dotsep mu\hbox{.}\mkern \@dotsep
+%			mu$}\hfill
+%		\nobreak
+%		\hb@xt@\@pnumwidth{\hfil\normalfont \normalcolor #5}%
+%		\par}%
+%	\fi}
+%\renewcommand*\l@chapter{\@bfdottedtocline{0}{0em}{1.5em}}
+%\makeatother
+
+%---定理, 定义 等环境的设置---------------------------------------------------------------
+% \theoremstyle
+\newtheorem{definition}{\hspace{0em}定义}[chapter]
+\newtheorem{proposition}{\hspace{0em}命题}[chapter]
+\newtheorem{property}{\hspace{0em}性质}[chapter]
+\newtheorem{lemma}{\hspace{0em}引理}[chapter]
+\newtheorem{theorem}{\hspace{0em}定理}[chapter]
+\newtheorem{corollary}{\hspace{0em}推论}[chapter]
+\newtheorem{example}{\hspace{0em}例}[chapter]
+\newtheorem{remark}{\hspace{0em}注}[chapter]
+\newtheorem{assumption}{\hspace{0em}假设}[chapter]
+
+\renewcommand{\proofname}{\rm{\textbf{证明: }}}
+
+
+%---自定义命令和环境-----------------------------------------------------------------------
+
+%=========================================
+% 中、英文摘要标题与正文格式
+%
+% 写作指南要求：
+% 中文摘要标题为黑体三号、居中、单倍行距；
+% 英文摘要标题为 Arial 三号加粗、居中、单倍行距；
+% 标题段后为 18 磅；
+% 中文摘要正文为小四号宋体，英文摘要正文为小四号 Times New Roman。
+%
+% 说明：
+% 写作指南中摘要标题段前为 24 磅。
+% 但本模板的页面版式已由 geometry 的上边距及页眉区域预留标题前空白，
+% 若在摘要标题前继续叠加 24 磅，会导致摘要页顶部空白过大。
+% 因此此处将标题前的附加垂直间距设为 0pt，
+% 以保证最终输出效果与学位论文摘要页的视觉规范一致。
+%=========================================
+
+\newcommand{\xtucnabstracttitle}{%
+	\vspace*{0pt}%
+	{\centering\heiti\zihao{3}\linespread{1}\selectfont 摘~~~~要\par}%
+	\vspace{18pt}%
+}
+
+\newcommand{\xtuenabstracttitle}{%
+	\vspace*{0pt}%
+	{\centering\fontspec{Arial}\bfseries\zihao{3}\linespread{1}\selectfont Abstract\par}%
+	\vspace{18pt}%
+}
+
+\newcommand{\xtuabstractbodyformat}{%
+	\zihao{-4}\selectfont
+	\setlength{\baselineskip}{20pt}%
+	\setlength{\parindent}{2em}%
+	\setlength{\parskip}{0pt}%
+}
+
+%=========================================
+% 中文摘要环境：标题“摘~~~~要”，正文小四号宋体、两端对齐；
+% 目录从第1章开始，摘要不加入目录。
+%=========================================
+
+\newenvironment{cnabstract}{%
+	\clearpage
+	\thispagestyle{plain}
+	\markboth{摘要}{摘要}
+	\xtucnabstracttitle
+	\begingroup
+	\songti\xtuabstractbodyformat
+	\ignorespaces
+}{%
+	\par
+	\endgroup
+	\ignorespacesafterend
+}
+
+%=========================================
+% 中文关键词：小四号，关键词之间用分号间隔，数量不超过5个。
+%=========================================
+
+\newenvironment{cnkeywords}{%
+	\par\vskip 0.6cm
+	\noindent{\heiti\zihao{-4}\selectfont 关键词：}%
+	\begingroup
+	\songti\xtuabstractbodyformat
+	\ignorespaces
+}{%
+	\par
+	\endgroup
+	\ignorespacesafterend
+}
+
+%=========================================
+% 英文摘要环境：标题“Abstract”，正文小四号 Times New Roman、两端对齐；
+% 目录从第1章开始，英文摘要不加入目录。
+%=========================================
+
+\newenvironment{enabstract}{%
+	\clearpage
+	\thispagestyle{plain}
+	\markboth{Abstract}{Abstract}
+	\xtuenabstracttitle
+	\begingroup
+	\fontspec{Times New Roman}\xtuabstractbodyformat
+	\ignorespaces
+}{%
+	\par
+	\endgroup
+	\ignorespacesafterend
+}
+
+%=========================================
+% 英文关键词：“Key Words”与中文关键词对应，关键词之间用分号间隔。
+%=========================================
+
+\newenvironment{enkeywords}{%
+	\par\vskip 0.6cm
+	\noindent{\fontspec{Times New Roman}\bfseries\zihao{-4}\selectfont Key Words: }%
+	\begingroup
+	\fontspec{Times New Roman}\xtuabstractbodyformat
+	\ignorespaces
+}{%
+	\par
+	\endgroup
+	\ignorespacesafterend
+}
+
+%=========================================
+% 全局标题编号深度设置
+%=========================================
+% 刚性设定标题编号深度为 4（章、一级节、二级节、三级节）
+\setcounter{secnumdepth}{4}
+
+%=========================================
+% 正文各级标题格式全局配置 (基于现代 ctexset 键值对接口)
+% 严格落实《写作指南》中关于标题字体、字号及段前段后间距的排版规范
+%=========================================
+\ctexset{
+	chapter = {
+		format={\centering\sffamily},          % 整体格式：居中排列，无衬线字体族
+		nameformat={\heiti\zihao{3}},          % "第X章" 字样的格式：三号黑体
+		titleformat={\heiti\zihao{3}},         % 标题具体内容的格式：三号黑体
+		numberformat={\heiti\zihao{3}},        % 数字编号的格式：三号黑体
+		beforeskip={0pt},afterskip={30pt},     % 间距：段前 0pt，段后 30pt (保证章标题下方有足够的呼吸感)
+		name={第, 章},number={\arabic{chapter}}  % 样式：阿拉伯数字编号 (如 "第1章")
+	},
+	section = {
+		format={\flushleft\sffamily\heiti\zihao{4}}, % 一级节标题：左对齐，四号黑体
+		beforeskip={24pt},afterskip={6pt},           % 间距：段前 24pt，段后 6pt
+	},
+	subsection = {
+		format={\flushleft\sffamily\heiti\zihao{-4}}, % 二级节标题：左对齐，小四号黑体
+		beforeskip={12pt},afterskip={6pt},            % 间距：段前 12pt，段后 6pt
+	},   
+	subsubsection = {
+		format={\flushleft\sffamily\heiti\zihao{-4}}, % 三级节标题：左对齐，小四号黑体
+		beforeskip={12pt},afterskip={6pt},            % 间距：段前 12pt，段后 6pt
+	}
+}
+
+%=========================================
+% 自定义图像宽度变量 (辅助拓扑优化章节排版)
+% 用于统一控制单图、双图并排、三图并排时的图像缩放比例
+%=========================================
+\newlength\oneimage
+\setlength\oneimage{0.8\textwidth}    % 单张主图宽度：占版心宽度的 80%
+
+\newlength\twoimage
+\setlength\twoimage{0.45\textwidth}   % 双图并排宽度：占版心宽度的 45% (中间留空 10%)
+
+\newlength\threeimage
+\setlength\threeimage{0.3\textwidth}  % 三图并排宽度：占版心宽度的 30%
+
+% --- 用户自定义：拓扑优化章节绘图辅助长度 ---
+\newlength{\figheight}
+\newlength{\figwidth}
+\newlength{\rowoneheight}
+\newlength{\rowtwoheight}
+
+%---罗马数字--------
+\makeatletter
+\newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+
+%---将Algorithm改为中文宋体“算法”--------
+%\renewcommand{\algorithmcfname}{\songti 算法}
+%\makeatletter
+%\renewcommand{\algocf@captiontext}[2]{#1\algocf@typo\quad \AlCapFnt{}#2}
+%\makeatother
+\floatname{algorithm}{算法}
+\renewcommand{\algorithmicrequire}{\textbf{输入:}}
+\renewcommand{\algorithmicensure}{\textbf{输出:}}
+%
+% 上标引用
+\newcommand{\upcite}[1]{\textsuperscript{\cite{#1}}}

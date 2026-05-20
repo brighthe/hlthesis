@@ -1,0 +1,1901 @@
+% !TeX root = ../../brightPhD.tex
+\chapter{任意次多单元族拉格朗日有限元拓扑优化比较研究}
+\label{chap:lagrange_comparison}
+
+%\iffalse
+
+\section{引言}
+\label{sec:ch3_intro}
+
+拓扑优化旨在给定设计域、载荷与边界条件下寻求材料的最优分布，以在满足约束条件的前提下实现预定性能目标。在变密度法框架下，设计域经有限元离散后，以连续设计变量表征材料分布，并通过材料插值将其与状态方程耦合，从而形成 “有限元分析--灵敏度分析--设计变量更新” 的迭代求解过程。对于该类方法，空间离散方式不仅影响状态场近似精度，也会影响拓扑构型的数值稳定性与几何表达质量。
+
+经典的变密度拓扑优化方法多基于低阶位移有限元实现。此类方法实现简便、计算代价较低，但在缺乏适当正则化时，往往容易出现棋盘格、网格依赖及边界锯齿化等数值现象。相较而言，高阶拉格朗日有限元在相近的离散规模下通常具有更强的逼近能力，能够有效改善结构响应的计算精度及边界细节表示。因此，系统考察单元族与离散阶次对拓扑优化结果的影响规律，具有重要的研究价值。
+
+除分析离散外，设计变量的表征方式也是影响优化结果的重要因素。本章主要比较两类常用表征：一类是单元密度表征，即每个单元对应一个设计变量；另一类是节点密度表征，即由节点设计变量插值构造连续密度场。前者形式直接，但分辨率通常受网格尺度限制；后者能够提供更平滑的密度描述，但其数值表现与离散空间、网格类型及积分精度密切相关。基于此，本章在统一物理长度尺度下（即将过滤半径统一定义在物理坐标系中），并在统一求解参数与约束设置下，围绕不同单元族、任意离散阶次以及单元密度/节点密度两类表征方式，系统比较其在线弹性拓扑优化中的离散特性、数值稳定性与优化结果差异，并通过二维、三维及柔顺机构等算例进行定量分析与综合评估。
+
+
+\section{线弹性问题的连续模型与变分形式}
+\label{sec:linear_elastic}
+
+为建立后续任意次多单元族拉格朗日有限元离散格式，本节首先回顾线弹性问题的连续模型，并给出相应的变分形式。具体而言，先在小变形静力线弹性假设下给出边值问题的强形式，再进一步推导其弱形式及最小势能原理，为后续有限元离散奠定基础。
+
+
+\subsection{线弹性问题的强形式}
+\label{subsec:elastic_strong}
+
+结构拓扑优化中的状态方程通常采用经典小变形静力线弹性模型，其为柔顺度最小化等问题提供了统一的连续力学基础~\cite{bendsoeTopologyOptimization2004a}。本文将结构材料视为连续介质，并假设结构在载荷作用下的位移与转动足够小，从而可在线性化几何框架下建立应变—位移关系；同时假设材料满足线性本构关系。对于各向同性材料，应力张量 $\boldsymbol{\sigma}$ 与应变张量 $\boldsymbol{\varepsilon}$ 之间满足广义胡克定律
+\[
+\boldsymbol{\sigma}(\boldsymbol{u}) = \mathbb{C}:\boldsymbol{\varepsilon}(\boldsymbol{u}),
+\]
+其中 $\mathbb{C}$ 为四阶弹性刚度张量。在各向同性情形下，上式可进一步写为
+\begin{equation}
+	\boldsymbol{\sigma}(\boldsymbol{u}) = 2\mu \boldsymbol{\varepsilon}(\boldsymbol{u}) + \lambda \operatorname{tr}(\boldsymbol{\varepsilon}(\boldsymbol{u}))\boldsymbol{I},
+	\label{eq:ch3_constitutive_equation}
+\end{equation}
+其中 $\lambda$ 和 $\mu$ 为 Lamé 常数，$\boldsymbol{I}$ 为二阶单位张量。若采用杨氏模量 $E$ 与泊松比 $\nu$ 表征材料参数，则有
+\[
+\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)}, \qquad \mu = \frac{E}{2(1+\nu)},
+\]
+对于二维问题，平面应变情形可直接由上述三维本构诱导得到，而平面应力情形则采用相应的降维本构关系。
+
+在小变形假设下，应变张量由位移场 $\boldsymbol{u}$ 的对称梯度给出：
+\[
+\boldsymbol{\varepsilon}(\boldsymbol{u}) = \frac{1}{2}\bigl(\nabla\boldsymbol{u} + (\nabla\boldsymbol{u})^{\top}\bigr),
+\]
+在上述假设下，忽略时间效应并考虑静力平衡时，位移场 $\boldsymbol{u}$ 满足如下边值问题：
+\begin{equation}
+	-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u})=\boldsymbol{b} \qquad \text{in } \Omega,
+	\label{eq:ch3_equilibrium_equation}
+\end{equation}
+其中 $\boldsymbol{b}$ 表示体力项。设边界 $\partial\Omega$ 分解为狄利克雷边界 $\Gamma_D$ 与诺伊曼边界 $\Gamma_N$，满足
+\[
+\partial\Omega=\Gamma_D\cup\Gamma_N, \qquad \Gamma_D\cap\Gamma_N=\emptyset.
+\]
+
+给定位移边界数据 $\boldsymbol{u}_D$ 与表面力边界数据 $\boldsymbol{g}$，线弹性边值问题可表述为：求位移场 $\boldsymbol{u}:\Omega\to\mathbb{R}^d$，使其满足：
+\begin{equation}
+	\begin{cases}
+		-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}) = \boldsymbol{b}, & \text{in } \Omega, \\
+		\boldsymbol{u} = \boldsymbol{u}_D, & \text{on } \Gamma_D, \\
+		\boldsymbol{\sigma}(\boldsymbol{u})\boldsymbol{n} = \boldsymbol{g}, & \text{on } \Gamma_N,
+	\end{cases}
+	\label{eq:ch3_elastic_strong}
+\end{equation}
+其中 $\boldsymbol{n}$ 表示边界上的单位外法向量，$\boldsymbol{\sigma}(\boldsymbol{u})\boldsymbol{n}$ 表示柯西应力张量在法向量 $\boldsymbol{n}$ 上的作用，即边界牵引向量。
+
+
+%\subsection{线弹性理论的基本假设}
+%\label{subsec:elastic_assumption}
+%
+%结构拓扑优化中的状态方程通常采用经典小变形线弹性理论，其为柔顺度最小化等优化问题提供了明确的物理基础与数学结构。本节简要回顾该理论所依赖的标准假设\cite{bendsoeTopologyOptimization2004}
+%\begin{enumerate}
+%	\item 连续介质假设：将由离散原子、分子构成的真实材料在宏观尺度上理想化为连续、致密且可无限分割的介质。
+%	
+%	\item 小变形假设：假设结构在载荷作用下产生的位移和转动均是微小的，即位移梯度张量 $\nabla\boldsymbol{u}$ 的范数远小于 1，该假设带来两个关键简化：
+%	\begin{enumerate}
+%		\item 几何线性化：应变与位移的关系可由线性的几何方程描述。应变张量 $\boldsymbol{\varepsilon}$ 被定义为位移向量 $\boldsymbol{u}$ 的对称梯度：
+%		\[
+%		\boldsymbol{\varepsilon} = \frac{1}{2}(\nabla\boldsymbol{u} + (\nabla\boldsymbol{u})^T).
+%		\]
+%		\item 平衡方程简化：可忽略变形前后物体几何构型的差异，直接在未变形的初始构型上建立静力平衡方程。
+%	\end{enumerate}
+%	
+%	\item 线性本构假设：假设材料的力学响应是线性的，即应力张量 $\boldsymbol{\sigma}$ 与应变张量 $\boldsymbol{\varepsilon}$ 之间服从广义胡克定律：
+%	\[
+%	\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon},
+%	\]
+%	其中 $\mathbb{C}$ 为四阶弹性刚度张量，包含了描述材料弹性特性的所有信息，且在该假设下被视为不依赖于应变的常数张量。
+%	
+%	\item 各向同性假设：假设材料的力学性质在所有方向上都是相同的。在此假设下，$\mathbb{C}$ 仅由两个独立的材料常数来完全决定，以拉梅常数 $\lambda$ 和 $\mu$ 表示：
+%	\[
+%	\boldsymbol{\sigma} = 2\mu\boldsymbol{\varepsilon} + \lambda\operatorname{tr}(\boldsymbol{\varepsilon})\boldsymbol{I},
+%	\]
+%	其中 $\operatorname{tr}(\boldsymbol{\varepsilon})$ 表示应变张量的迹，$\boldsymbol{I}$ 为二阶单位张量。
+%\end{enumerate}
+%
+%工程实践中常用的材料参数体系包括：
+%\begin{itemize}
+%	\item 杨氏模量 $E$：描述材料在单轴拉伸或压缩时的刚度。
+%	\item 泊松比 $\nu$：描述材料在单轴加载时横向应变与纵向应变的比值。
+%	\item 拉梅第一常数 $\lambda$：主要出现在应力-应变关系的数学表述中，无直接的物理解释。
+%	\item 剪切模量 $\mu$：描述材料抵抗剪切变形的能力，亦称拉梅第二常数。
+%	\item 体积模量 $K$：描述材料在各向同性压力下的体积变化特性。
+%\end{itemize}
+%
+%在经典三维各向同性线弹性理论中，上述材料参数之间存在如下转换关系：
+%\[
+%\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)},\quad \mu = \frac{E}{2(1+\nu)},\quad K = \frac{E}{3(1-2\nu)},
+%\]
+%反过来有
+%\[
+%E = \frac{\mu(3\lambda + 2\mu)}{\lambda + \mu},\quad \nu = \frac{\lambda}{2(\lambda + \mu)}.
+%\]
+%
+%\subsection{线弹性问题的强形式}
+%\label{subsec:elastic_strong}
+%
+%在不考虑时间效应的静态情况下，求解域 $\Omega$ 内的任意一点满足本构三类控制方程：
+%
+%\begin{enumerate}
+%	\item 静力平衡方程：描述物体内任意点的内力平衡关系
+%	\[
+%	\operatorname{div}\boldsymbol{\sigma} + \boldsymbol{b} = \boldsymbol{0}
+%	\quad\text{in }\Omega.
+%	\]
+%	
+%	\item 几何方程：描述应变场与位移场之间的运动学关系
+%	\[
+%	\boldsymbol{\varepsilon}(\boldsymbol{u}) = 
+%	\frac{1}{2}\bigl(\nabla\boldsymbol{u} + (\nabla\boldsymbol{u})^{\!\top}\bigr)
+%	\quad\text{in }\Omega.
+%	\]
+%	
+%	\item 本构方程：描述各向同性线弹性材料的应力–应变关系
+%	\[
+%	\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}
+%	\quad\text{in }\Omega.
+%	\]
+%\end{enumerate}
+%
+%设 $\partial\Omega=\Gamma_D\cup\Gamma_N$ 且 $\Gamma_D\cap\Gamma_N=\emptyset$，给定边界数据 $\boldsymbol{u}_D$ 与 $\boldsymbol{g}$，求 $\boldsymbol{u}:\Omega\to\mathbb{R}^d$，使得
+%\begin{equation}
+%	\begin{cases}
+%		-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}) = \boldsymbol{b}      &\text{in}\ \Omega,   \\[1pt]
+%		\boldsymbol{u} = \boldsymbol{u}_D                                            &\text{on}\ \Gamma_D, \\[1pt]
+%		\boldsymbol{\sigma}\boldsymbol{n} = \boldsymbol{g}                           &\text{on}\ \Gamma_N
+%	\end{cases}
+%	\label{eq:strong_form}
+%\end{equation}
+%其中 $\boldsymbol{n}$ 为外法向量。
+
+\subsection{线弹性问题的弱形式与最小势能原理}
+\label{subsec:elastic_weak}
+
+为建立后续有限元离散所需的变分框架，下面在线弹性问题连续模型的基础上，给出其弱形式及对应的最小势能原理。设
+\[
+\mathcal{V} :=\{\boldsymbol{v}\in{H}^1(\Omega;\mathbb{R}^d):\boldsymbol{v} = \boldsymbol{u}_D~\text{on}~{\Gamma_D}\},\quad\mathcal{V}_0 := \{\boldsymbol{v}\in{H}^1(\Omega;\mathbb{R}^d):\boldsymbol{v} = \boldsymbol{0}~\text{on}~{\Gamma_D}\},
+\]
+其中，$\Gamma_D$ 上的位移边界条件在迹意义下成立，$\mathcal{V}$ 表示满足给定狄利克雷边界条件的可行位移集合，$\mathcal{V}_0$ 表示与之对应的齐次测试函数空间。
+
+对平衡方程~\eqref{eq:ch3_equilibrium_equation} 取任意测试函数 $\boldsymbol{v}\in\mathcal{V}_0$，并与其作 $L^2$ 内积，可得
+\[
+(-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}),\boldsymbol{v}) = (\boldsymbol{b},\boldsymbol{v}),
+\]
+对左端应用 Green 公式，有
+\[
+(-\operatorname{div}\boldsymbol{\sigma}(\boldsymbol{u}),\boldsymbol{v}) = -\langle\boldsymbol{\sigma}(\boldsymbol{u})\boldsymbol{n},\boldsymbol{v}\rangle_{\partial\Omega} + (\boldsymbol{\sigma}(\boldsymbol{u}),\nabla\boldsymbol{v}),
+\]
+由于 $\boldsymbol{v}=\boldsymbol{0}$ 在 $\Gamma_D$ 上成立，且在 $\Gamma_N$ 上满足 $\boldsymbol{\sigma}(\boldsymbol{u})\boldsymbol{n} = \boldsymbol{g}$ ，故上式化为
+\[
+(\boldsymbol{\sigma}(\boldsymbol{u}),\nabla\boldsymbol{v}) = (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},
+\]
+利用 Cauchy 应力张量的对称性 $\boldsymbol{\sigma}=\boldsymbol{\sigma}^{\top}$，可将梯度项写成对称梯度项，即
+\[
+(\boldsymbol{\sigma}(\boldsymbol{u}),\boldsymbol{\varepsilon}(\boldsymbol{v})) = (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},\quad\forall\boldsymbol{v}\in\mathcal{V}_0.
+\]
+据此定义双线性型与线性泛函：
+\begin{equation} \label{eq:ch3_bilinear_linear_forms}
+	a(\boldsymbol{u},\boldsymbol{v}) := (\boldsymbol{\sigma}(\boldsymbol{u}),\boldsymbol{\varepsilon}(\boldsymbol{v})),\quad\ell(\boldsymbol{v}) := (\boldsymbol{b},\boldsymbol{v}) + \langle\boldsymbol{g},\boldsymbol{v}\rangle_{\Gamma_N},
+\end{equation}
+则线弹性边值问题的弱形式可表述为：求 $\boldsymbol{u}\in\mathcal{V}$，使得
+\begin{equation} \label{eq:ch3_elastic_weak_form}
+	a(\boldsymbol{u},\boldsymbol{v}) = \ell(\boldsymbol{v}),\quad\forall\boldsymbol{v}\in\mathcal{V}_0.
+\end{equation}
+对于线性各向同性弹性材料，由本构关系~\eqref{eq:ch3_constitutive_equation} 可得双线性型的应变型表达式：
+\[
+	a(\boldsymbol{u},\boldsymbol{v}) = 2\mu(\boldsymbol{\varepsilon}(\boldsymbol{u}),\boldsymbol{\varepsilon}(\boldsymbol{v})) + \lambda(\operatorname{div}\boldsymbol{u},\operatorname{div}\boldsymbol{v}).
+\]
+此外，在满足相应边界条件时，上式还可等价地写为梯度型表达式：
+\[
+a(\boldsymbol{u},\boldsymbol{v}) = \mu(\nabla\boldsymbol{u},\nabla\boldsymbol{v}) + (\lambda+\mu)(\operatorname{div}\boldsymbol{u},\operatorname{div}\boldsymbol{v}).
+\]
+
+通过对非齐次狄利克雷边界条件作适当提升，可将原问题等价地转化为定义在 $\mathcal{V}_0$ 上的齐次弱问题。由弹性刚度张量 $\mathbb{C}$ 的有界性，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上连续；由 Korn 不等式~\cite{brennerMathematicalTheoryFinite2008} 可知，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上满足强椭圆性；此外 $\ell(\cdot)$ 在 $\mathcal{V}_0$ 上连续。根据 Lax–Milgram 定理，弱形式~\eqref{eq:ch3_elastic_weak_form} 存在唯一解~\cite{ciarletFiniteElementMethod2002a}。另一方面，该弱形式还具有清晰的变分解释。为此，定义系统的总势能泛函：
+\[
+\Pi(\boldsymbol{v}) :=\frac{1}{2}a(\boldsymbol{v},\boldsymbol{v})-\ell(\boldsymbol{v}), \qquad \boldsymbol{v}\in\mathcal{V},
+\]
+其中，第一项表示结构的弹性应变能，第二项表示外力势能。根据最小势能原理，线弹性问题的平衡解等价于 $\Pi$ 在 $\mathcal{V}$ 上的极小点，即
+\[
+\Pi(\boldsymbol{u})=\min_{\boldsymbol{v}\in\mathcal{V}}\Pi(\boldsymbol{v}).
+\]
+弱形式 \eqref{eq:ch3_elastic_weak_form} 正是该极小化问题的 Euler-Lagrange 方程。因此，求解线弹性问题的弱式，等价于在满足位移边界条件的可行位移集合中寻求使总势能达到最小的稳定平衡态~\cite{zienkiewiczFiniteElementMethod2005}。
+
+
+\section{线弹性问题的任意次多单元族拉格朗日有限元方法}
+\label{sec:lagrange_fem}
+
+为建立后续拓扑优化计算所依赖的状态方程离散框架，本节在第~\ref{sec:linear_elastic} 节弱形式的基础上，分别讨论单纯形单元与张量积单元上的任意次拉格朗日有限元空间构造，并给出线弹性问题的统一有限元离散形式。最后，通过具有解析解的算例对所实现的任意次多单元族拉格朗日有限元方法进行收敛性验证。
+
+
+\subsection{单纯形单元上拉格朗日有限元空间构造}
+\label{subsec:simplex_lagrange}
+
+为构造单纯形单元上的任意次拉格朗日有限元空间，首先引入多重指标及相应的单纯形晶格记号。记长度为 $d+1$ 的多重指标为
+\[
+\boldsymbol{\alpha} = (\alpha_0,\alpha_1,\cdots,\alpha_d),\quad\alpha_i\in\mathbb{N},\quad{i}=0,\cdots,d,
+\]
+其次数与阶乘分别定义为
+\[|\boldsymbol{\alpha}| = \sum_{i=0}^{d}\alpha_i,\qquad\boldsymbol{\alpha}! = \prod_{\substack{i=0}}^d(\alpha_i!).
+\]
+给定多项式阶次 $k\in\mathbb{N}$，所有满足 $|\boldsymbol{\alpha}| = k$ 的多重指标构成的集合记为
+\[
+\mathbb{T}_k^d = \{\boldsymbol{\alpha}\in\mathbb{N}^{d+1}:|\boldsymbol{\alpha}| = k\},
+\]
+称为 $d$ 维 $k$ 阶单纯形晶格。为便于程序实现，通常需要对 $\mathbb{T}_k^d$ 中的多重指标作线性编号。本文采用基于字典序的编号方式~\cite{chenGeometricDecompositionEfficient2024b}。对任意 $\alpha\in\mathbb{T}_k^d$，其编号定义为
+\[
+R_d(\boldsymbol{\alpha}) = \sum_{i=1}^d
+\begin{pmatrix}
+	\alpha_i+\alpha_{i+1}+\cdots+\alpha_d+d-i\\
+	d+1-i
+\end{pmatrix}.
+\]
+
+设 $\boldsymbol{x}_0,\boldsymbol{x}_1,\cdots,\boldsymbol{x}_d\in\mathbb{R}^d$ 为 $d+1$ 个仿射无关的点，则由它们的凸包构成一个 $d$-维单纯形
+\[
+T = \operatorname{Conv}(\boldsymbol{x}_0,\boldsymbol{x}_1,\cdots,\boldsymbol{x}_d) = \left\{\sum_{i=0}^d\lambda_i\boldsymbol{x}_i:\lambda_i\geq0,\sum_{i=0}^d\lambda_i=1\right\},
+\]
+对于任意 $\boldsymbol{x}\in{T}$，其系数向量 $\boldsymbol{\lambda} = (\lambda_0,\cdots,\lambda_d)$ 称为点 $\boldsymbol{x}$ 关于单纯形 $T$ 的重心坐标。基于此，定义单纯形 $T$ 上的 $k$ 阶插值点（晶格节点）集合为
+\[
+\mathcal{X}_T = \left\{\boldsymbol{x}_{\boldsymbol{\alpha}} = \frac{1}{k}\sum_{i=0}^{d}\alpha_i\boldsymbol{x}_i:\boldsymbol{\alpha}\in\mathbb{T}_k^d\right\},
+\]
+对于任意 $\boldsymbol{\alpha} = (\alpha_0,\alpha_1,\cdots,\alpha_d)\in\mathbb{T}_k^d$，与插值点 $\boldsymbol{x}_{\alpha}$ 对应的重心坐标为
+\[
+\boldsymbol{\lambda}(\boldsymbol{\alpha}) = \frac{1}{k}(\alpha_0,\alpha_1,\cdots,\alpha_d).
+\]
+由此可见，单纯形上的 $k$ 阶插值点与多重指标集合 $\mathbb{T}_k^d$ 一一对应，$\mathcal{X}_T$ 中插值点的排序由多重指标的字典序编号 $R_d(\boldsymbol{\alpha})$ 诱导确定，即 $\boldsymbol{\alpha}$ 的顺序与 $\boldsymbol{\alpha}\in\mathbb{T}_k^d$ 的编号顺序保持一致。
+
+对于任意单纯形 $T$，记 $P_k(T)$ 为 $T$ 上总次数不超过 $k$ 的标量多项式空间。由单纯形晶格节点 $\mathcal{X}_T$ 可构造 $P_k(T)$ 的一组节点型拉格朗日基函数 $\phi_{\boldsymbol\alpha}(\boldsymbol{x})$~\cite{nicolaidesClassFiniteElements1972, chenGeometricDecompositionEfficient2024b}：
+\[
+\phi_{\boldsymbol{\alpha}}(\boldsymbol{x}) = \frac{1}{\boldsymbol{\alpha}!}\prod_{\substack{i=0}}^d\prod_{\substack{j=0}}^{\alpha_i-1}(k\lambda_i(\boldsymbol{x}) - j),\quad\boldsymbol{\alpha}\in\mathbb{T}_k^d,
+\]
+其中，约定当 $\alpha_i=0$ 时，内层连乘积的值为 1。于是有
+\[
+P_k(T) = \text{span}\{\phi_{\boldsymbol{\alpha}}:\boldsymbol{\alpha}\in\mathbb{T}_k^d\},
+\]
+与插值点 $\boldsymbol{x}_{\boldsymbol{\alpha}}\in\mathcal{X}_T$ 对应的局部自由度定义为节点值泛函：
+\[
+N_{\boldsymbol{\alpha}} : P_k(T) \to \mathbb{R},\qquad N_{\boldsymbol{\alpha}}(u) = u(\boldsymbol{x}_{\boldsymbol{\alpha}}),
+\]
+这些自由度与基函数满足对偶关系：
+\[
+N_{\boldsymbol{\beta}}(\phi_{\boldsymbol{\alpha}}) = \phi_{\boldsymbol{\alpha}}(\boldsymbol{x}_{\boldsymbol{\beta}}) = \delta_{\boldsymbol{\alpha},\boldsymbol{\beta}},
+\]
+其中 $\delta_{\boldsymbol{\alpha},\boldsymbol{\beta}}$ 为 Kronecker 记号。因而，$\{\phi_{\boldsymbol{\alpha}}\}_{\boldsymbol{\alpha}\in\mathbb{T}_k^d}$ 构成关于节点自由度 $\{N_{\boldsymbol{\alpha}}\}$ 的节点型对偶基。进一步地，
+\[
+\dim P_k(T)=\#\mathbb{T}_k^d=\binom{k+d}{d}
+\]
+表明该组局部自由度与多项式空间的维数相匹配，从而可唯一确定单纯形上的 $k$ 次拉格朗日有限元函数。
+
+%为标准化计算流程并便于高效数值积分，物理单元 $T$ 上的量通过仿射映射 $\boldsymbol{F}_T:\hat{T}\to{T}$ 统一转移至参考单纯形 $\hat{T}$（二维取 $(0,0),(1,0),(0,1)$）处理：
+%\[
+%\boldsymbol{x} = \boldsymbol{F}_T(\boldsymbol{\xi}) = \boldsymbol{J}\boldsymbol{\xi} + \boldsymbol{x}_0,\qquad\int_T{f}(\boldsymbol{x})~\mathrm{d}\boldsymbol{x} = \int_{\hat{T}}f(\boldsymbol{F}_T(\boldsymbol{\xi}))|\det\boldsymbol{J}|~\mathrm{d}\boldsymbol{\xi},
+%\]
+%其中，雅可比矩阵 $\boldsymbol{J}$ 是一个常数矩阵，$\boldsymbol{x}_0$ 是一个常数向量，对直边单纯形单元，$\boldsymbol{J}$ 与 $\vert\det\boldsymbol{J}\vert$ 为常数；若采用曲边等高阶几何映射，则需在各求积点评估 $\boldsymbol{J}(\boldsymbol{\xi})$ 与 $\vert\det\boldsymbol{J}(\boldsymbol{\xi})\vert$。
+
+上述标量拉格朗日有限元的构造可自然推广到矢量值情形~\cite{chenGeometricDecompositionEfficient2024b}。记 $\boldsymbol{P}_k(T) := [P_k(T)]^d$ 为单纯形 $T$ 上的 $d$ 维矢量值多项式空间。对于任意插值点 $\boldsymbol{x}_{\boldsymbol{\alpha}}\in\mathcal{X}_T$，取 $\mathbb{R}^d$ 的一组局部基底 $\{\boldsymbol{e}_i^{\boldsymbol{x}_{\boldsymbol{\alpha}}}\}_{i=1}^{d}$ 及其对偶基 $\{\hat{\boldsymbol{e}}_i^{\boldsymbol{x}_{\boldsymbol{\alpha}}}\}_{i=1}^{d}$，满足：
+\[
+(\hat{\boldsymbol{e}}_i^{\boldsymbol{x}_{\boldsymbol{\alpha}}},\boldsymbol{e}_j^{\boldsymbol{x}_{\boldsymbol{\alpha}}})_{\mathbb{R}^d} = \delta_{ij},
+\]
+则可定义矢量基函数与相应自由度为
+\[
+\boldsymbol{\phi}_{\boldsymbol{\alpha},i}(\boldsymbol{x}) = \phi_{\boldsymbol{\alpha}}(\boldsymbol{x})\hat{\boldsymbol{e}}_i^{\boldsymbol{x}_{\boldsymbol{\alpha}}},\qquad{N}_{\boldsymbol{\alpha,i}}(\boldsymbol{u}) =  \boldsymbol{u}(\boldsymbol{x}_{\boldsymbol{\alpha}})\cdot\boldsymbol{e}_i^{\boldsymbol{x}_{\boldsymbol{\alpha}}},
+\]
+并满足对偶关系
+\[
+N_{\boldsymbol{\beta},i}(\boldsymbol{\phi}_{\boldsymbol{\alpha},j}) = \delta_{\boldsymbol{\alpha},\boldsymbol{\beta}}\delta_{ij},
+\]
+这表明标量节点型拉格朗日元可通过局部基底与对偶基的张量化构造，自然推广为矢量拉格朗日元。
+
+%基于上述构造，标量拉格朗日元在单个 $d$ 维单纯形单元上的局部自由度数为
+%\[
+%\text{ldof}^{(s)} = 
+%\begin{pmatrix}
+%	k+d\\
+%	d
+%\end{pmatrix}.
+%\]
+%矢量拉格朗日元（位移场）在每个单元上的局部自由度数为
+%\[
+%\text{ldof}^{(v)} = d~\text{ldof}^{(s)} = 
+%d\begin{pmatrix}
+%	k+d\\
+%	d
+%\end{pmatrix}.
+%\]
+%在二维、三维情形下，可得到更直观的表达式：
+%\begin{itemize}
+%	\item 二维三角形单元：
+%	\[
+%	\text{ldof}^{(v)} = 2\begin{pmatrix}
+%		k+2\\
+%		2
+%	\end{pmatrix} = (k+1)(k+2).
+%	\]
+%	\item 三维四面体单元：
+%	\[
+%	\text{ldof}^{(v)} = 3\begin{pmatrix}
+%		k+3\\
+%		3
+%	\end{pmatrix} = \frac{(k+1)(k+2)(k+3)}{2}.
+%	\]
+%\end{itemize}
+%
+%在全局层面，记 $\text{NN}$、$\text{NE}$、$\text{NF}$、$\text{NC}$ 分别为网格中的顶点数、边数、三角形面数和单元数，则标量拉格朗日空间的全局自由度数为：
+%\begin{itemize}
+%	\item 二维三角形网格：
+%	\[
+%	\text{gdof}^{(s)} = 
+%	\text{NN} + \text{NE}\times(k-1) + \text{NC}\times
+%	\begin{pmatrix}
+%		k-1\\
+%		2
+%	\end{pmatrix}.
+%	\]
+%	\item 三维四面体网格：
+%	\[
+%	\text{gdof}^{(s)} = 
+%	\text{NN} + \text{NE}\times(k-1) + \text{NF}\times\begin{pmatrix}
+%		k-1\\
+%		2
+%	\end{pmatrix} + \text{NC}\times\begin{pmatrix}
+%		k-1\\
+%		3
+%	\end{pmatrix}.
+%	\]
+%\end{itemize}
+%矢量拉格朗日位移空间由标量空间在每个坐标方向复制一份得到，其全局自由度数满足统一关系
+%\[
+%\text{gdof}^{(v)} = d~\text{gdof}^{(s)}.
+%\]
+%在二维、三维情形下可写为：
+%\begin{itemize}
+%	\item 二维三角形网格：
+%	\[
+%	\text{gdof}^{(v)} = 
+%	\text{NN}\times2 + \text{NE}\times2(k-1) + \text{NC}\times2\begin{pmatrix}
+%		k-1\\
+%		2
+%	\end{pmatrix}.
+%	\]
+%	\item 三维四面体网格：
+%	\[
+%	\text{gdof}^{(v)} = 
+%	\text{NN}\times3 + \text{NE}\times3(k-1) + \text{NF}\times3\begin{pmatrix}
+%		k-1\\
+%		2
+%	\end{pmatrix} + \text{NC}\times3\begin{pmatrix}
+%		k-1\\
+%		3
+%	\end{pmatrix}.
+%	\]
+%\end{itemize}
+
+
+\subsection{张量积单元上拉格朗日有限元空间构造}
+\label{subsec:tensor_lagrange}
+
+与第~\ref{subsec:simplex_lagrange}~节中基于重心坐标和单纯形晶格 $\mathbb{T}_k^d$ 构造拉格朗日有限元空间的方式不同，四边形、六面体等张量积单元不具有与单纯形完全对应的内蕴重心坐标结构。对于这类单元，局部有限元空间通常建立在参考张量积单元上的一维插值与张量积多项式结构之上，再通过单元映射推广到物理单元。因此，本节在张量积晶格 $\mathbb{S}_k^d$ 的统一框架下，给出四边形、六面体单元上 $k$ 次拉格朗日有限元空间的构造及其矢量值推广。
+
+考虑 $d$ 维参考张量积单元  $\hat{Q} = [-1,1]^d$，其参考坐标记为 $\boldsymbol{\xi} = (\xi_1,\cdots,\xi_d)$。在一维参考区间 $I = [-1,1]$ 上，选取 $k+1$ 个互不相同的插值节点 $\{s_i\}_{i=0}^k\subset{I}$。对应于节点 $s_j$，定义一维 $k$ 次拉格朗日基函数：
+\[
+l_j^k(t) = \prod_{\substack{i=0 \\ i\neq j}}^k \frac{t-s_i}{s_j-s_i}, \quad j=0,\cdots,k,
+\]
+并满足插值性质 $l_j^k(s_i) = \delta_{ij}$。为描述张量积结构，引入长度为 $d$ 的多重指标
+\[
+\boldsymbol{i} = (i_1,\cdots,i_d),\qquad{i}_{\ell}\in\{0,1,\cdots,k\},\quad\ell=1,\cdots,d,
+\]
+所有这样的多重指标构成张量积晶格
+\[
+\mathbb{S}_k^d = \{\boldsymbol{i}\in\mathbb{N}^d~:~0\leq{i}_\ell\leq{k},\ell=1,\cdots,d\}.
+\]
+
+基于一维节点 $\{s_i\}_{i=0}^k$，参考单元上的插值点集合定义为
+\[
+\mathcal{X}_{\hat{Q}} = \{\boldsymbol{\xi}_{\boldsymbol{i}} = (s_{i_1},\cdots,s_{i_d}):\boldsymbol{i}\in\mathbb{S}_k^d\},
+\]
+对每个 $\boldsymbol{i} = (i_1,\cdots,i_d)\in\mathbb{S}_k^d$，定义张量积形式的标量拉格朗日基函数
+\[
+\hat{\phi}_{\boldsymbol{i}}(\boldsymbol{\xi}) = \prod_{\substack{\ell=1}}^dl_{i_\ell}^k(\xi_\ell),\quad\boldsymbol{\xi}\in\hat{Q},
+\]
+利用一维基函数的 Kronecker $\delta$ 性质，可以得到高维基函数在插值点上的插值特性：
+\[
+\hat{\phi}_{\boldsymbol{i}}(\boldsymbol{\xi}_{\boldsymbol{p}}) = \prod_{\substack{\ell=1}}^dl_{i_\ell}^k(s_{p_\ell}) = \prod_{\substack{\ell=1}}^d\delta_{i_{\ell}p_{\ell}} = \delta_{\boldsymbol{i},\boldsymbol{p}},\qquad\boldsymbol{i},\boldsymbol{p}\in\mathbb{S}_k^d,
+\]
+其中 $\delta_{\boldsymbol{i},\boldsymbol{p}}$ 表示多重指标意义下的 Kronecker 记号。因此 $\{\hat{\phi}_{\boldsymbol{i}}\}_{\boldsymbol{i}\in\mathbb{S}_k^d}$ 构成了参考单元上张量积多项式空间的一组节点型拉格朗日基函数。
+
+用多重指标 $\boldsymbol{\beta} = (\beta_1,\cdots,\beta_d)\in\mathbb{N}^d$ 表示各坐标方向上的幂次，则该张量积多项式空间可写为
+\[
+Q_k(\hat{Q}) = \operatorname{span}\left\{
+\xi_1^{\beta_1}\cdots\xi_d^{\beta_d}:\boldsymbol{\beta} = (\beta_1,\cdots,\beta_d)\in\mathbb{N}^d,0\leq\beta_\ell\leq{k}
+\right\},
+\]
+因此，
+\[
+Q_k(\hat Q) = \operatorname{span}\{\hat{\phi}_{\boldsymbol{i}}:\boldsymbol{i}\in\mathbb{S}_k^d\}, \qquad \dim Q_k(\hat Q)=(k+1)^d.
+\]
+在具体实现中，张量积晶格 $\mathbb{S}_k^d$ 中的多重指标通常可按固定顺序进行线性化编号。这一处理方式与单纯形晶格 $\mathbb{T}_k^d$ 的多重指标管理具有相似性，从而便于在统一的数据结构下组织不同单元族的局部基函数索引及全局自由度编号。
+
+%设 $Q$ 为空间中的任一四边形或六面体物理单元，其几何控制点集合记为
+%\[
+%\{\boldsymbol{x}_{\boldsymbol{j}}\}_{\boldsymbol{j}\in\mathbb{S}_k^d} \subset \mathbb{R}^d,
+%\]
+%借助参考基函数，可以定义从参考单元到物理单元的等参映射
+%\[
+%\boldsymbol{F}_Q:\hat{Q}\to{Q},\qquad\boldsymbol{x} = \boldsymbol{F}_Q(\boldsymbol{\xi}) = \sum_{\boldsymbol{j}\in\mathbb{S}_k^d}\boldsymbol{x}_{\boldsymbol{j}}\hat{\phi}_{\boldsymbol{j}}(\boldsymbol{\xi}),
+%\]
+%在等参元设定下，几何映射与场变量（如位移场）的插值采用同一组形函数。定义在物理单元 $Q$ 上的标量拉格朗日基函数由参考基函数通过映射 $\boldsymbol{F}_Q$ 的逆得到：
+%\[
+%\phi_{\boldsymbol{i}}(\boldsymbol{x}) = \hat{\phi}_{\boldsymbol{i}}(\boldsymbol{F}_Q^{-1}(\boldsymbol{x})),\qquad\boldsymbol{i}\in\mathbb{S}_k^d,
+%\]
+%对物理单元上的积分，通过变量代换可统一转移到参考单元上：
+%\[
+%\int_Q{f}(\boldsymbol{x})~\mathrm{d}\boldsymbol{x} = \int_{\hat{Q}}f(\boldsymbol{F}_Q(\boldsymbol{\xi}))|\det\boldsymbol{J}(\boldsymbol{\xi})|~\mathrm{d}\boldsymbol{\xi},
+%\]
+%其中 $\boldsymbol{J}$ 是映射 $\boldsymbol{F}_Q$ 的雅可比矩阵。与单纯形单元的仿射映射不同，张量积等参元中的 $\boldsymbol{F}_Q$ 一般是非线性的，故 $\boldsymbol{J}$ 及其行列式通常依赖于 $\boldsymbol{\xi}$，需要在每个求积点上重新计算。
+%
+%类似于单纯形上的矢量拉格朗日元构造，张量积单元上的矢量空间同样可以通过在每个插值点处引入局部基底与对偶基底来刻画。鉴于本文所考虑的线弹性问题均在全局笛卡尔坐标系下描述，且自由度自然对应于各坐标分量上的位移值，为简化记号，在本节中不再区分不同插值点处的局部坐标基，而是统一采用全局标准正交基 $\{\boldsymbol{e}_m\}_{m=1}^d$。
+
+上述参考单元上的标量节点型拉格朗日基函数可通过单元映射诱导为物理张量积单元 $Q$ 上的标量基函数，记为 $\{\phi_{\boldsymbol{i}}\}_{\boldsymbol{i}\in\mathbb{S}_k^d}$，其对应的插值点集合记为
+\[
+\mathcal{X}_Q=\{\boldsymbol{x}_{\boldsymbol{i}}:\boldsymbol{i}\in\mathbb{S}_k^d\}.
+\]
+类似于单纯形单元上的处理，标量拉格朗日有限元可自然推广到矢量值情形。鉴于本文所考虑的线弹性位移场均在全局笛卡尔坐标系下描述，且自由度自然对应于各坐标分量在插值点处的点值，因此此处不再引入依赖于插值点的局部基底，而统一采用 $\mathbb{R}^d$ 的标准正交基 $\{\boldsymbol{e}_m\}_{m=1}^d$。对于任意插值点 $\boldsymbol{x}_{\boldsymbol{i}}\in\mathcal{X}_Q$，定义矢量基函数与相应自由度为
+\[
+\boldsymbol{\phi}_{\boldsymbol{i},m}(\boldsymbol{x}) = \phi_{\boldsymbol{i}}(\boldsymbol{x})\,\boldsymbol{e}_m, \qquad N_{\boldsymbol{i},m}(\boldsymbol{u}) = \boldsymbol{u}(\boldsymbol{x}_{\boldsymbol{i}})\cdot\boldsymbol{e}_m, \qquad \boldsymbol{i}\in\mathbb{S}_k^d,\ \ m=1,\dots,d.
+\]
+其中，$N_{\boldsymbol{i},m}$ 表示在第 $\boldsymbol{i}$ 个插值点处取矢量函数第 $m$ 个坐标分量的点值。
+
+由标量基函数的插值性质可知，对任意 $\boldsymbol{i},\boldsymbol{p}\in\mathbb{S}_k^d$ 及 $m,n=1,\dots,d$，有
+\[
+N_{\boldsymbol{p},m}\big(\boldsymbol{\phi}_{\boldsymbol{i},n}\big) = \big(\phi_{\boldsymbol{i}}(\boldsymbol{x}_{\boldsymbol{p}})\boldsymbol{e}_n\big)\cdot\boldsymbol{e}_m = \phi_{\boldsymbol{i}}(\boldsymbol{x}_{\boldsymbol{p}})\,\delta_{mn} = \delta_{\boldsymbol{i}\boldsymbol{p}}\delta_{mn},
+\]
+其中，$\delta_{\boldsymbol{i}\boldsymbol{p}}$ 表示多重指标意义下的 Kronecker 记号。于是，$\{\boldsymbol{\phi}_{\boldsymbol{i},m}\}$ 与 $\{N_{\boldsymbol{i},m}\}$ 构成一组互为对偶的矢量值节点型基函数与自由度体系。这表明，张量积单元上的标量节点型拉格朗日元同样可以通过与全局笛卡尔基的张量化构造，自然推广为矢量拉格朗日元。
+
+
+%在上述晶格框架下，参考张量积单元上的标量局部自由度数为
+%\[
+%\text{ldof}^{(s)} = (k+1)^d.
+%\]
+%矢量拉格朗日元（位移场）的局部自由度数为
+%\[
+%\text{ldof}^{(v)} = d~\text{ldof}^{(s)} = d(k+1)^d.
+%\]
+%在二维四边形单元与三维六面体单元上分别为
+%\begin{itemize}
+%	\item 二维四边形单元：
+%	\[
+%	\text{ldof}^{(v)} = 2(k+1)^2.
+%	\]
+%	\item 三维六面体单元：
+%	\[
+%	\text{ldof}^{(v)} = 3(k+1)^3.
+%	\]
+%\end{itemize}
+%
+%标量空间的全局自由度数为：
+%\begin{itemize}
+%	\item 二维四边形网格：
+%	\[
+%	\text{gdof}^{(s)} = 
+%	\text{NN} + \text{NE}\times(k-1) + \text{NC}\times
+%	(k-1)^2
+%	\]
+%	\item 三维六面体网格：
+%	\[
+%	\text{gdof}^{(s)} = 
+%	\text{NN} + \text{NE}\times(k-1) + \text{NF}\times(k-1)^2 + \text{NC}\times(k-1)^3
+%	\]
+%\end{itemize}
+%矢量拉格朗日位移空间由标量自由度在每个坐标方向复制得到，其全局自由度数满足统一关系
+%\[
+%\text{gdof}^{(v)} = d~\text{gdof}^{(s)}
+%\]
+%在二维、三维情形下可写为：
+%\begin{itemize}
+%	\item 二维四边形网格：
+%	\[
+%	\text{gdof}^{(v)} = 
+%	\text{NN}\times2 + \text{NE}\times2(k-1) + \text{NC}\times
+%	2(k-1)^2
+%	\]
+%	\item 三维六面体网格：
+%	\[
+%	\text{gdof}^{(v)} = 
+%	\text{NN}\times3 + \text{NE}\times3(k-1) + \text{NF}\times3(k-1)^2 + \text{NC}\times3(k-1)^3
+%	\]
+%\end{itemize}
+
+
+\subsection{线弹性问题的有限元离散格式}
+\label{subsec:elastic_discrete}
+
+设 $\mathcal{K}_h$ 为区域 $\Omega$ 上的一族形状正则、相容的网格剖分，满足 $\overline{\Omega}=\bigcup_{K\in\mathcal{K}_h}K$，其中 $h$ 为网格的特征尺寸。基于前文第~\ref{subsec:simplex_lagrange} 节和第~\ref{subsec:tensor_lagrange} 节中关于单纯形单元与张量积单元上任意次拉格朗日基函数的构造，定义单元 $K$ 上的局部向量值多项式空间为
+\[
+\boldsymbol{\mathcal P}_k(K) := 
+\begin{cases} 
+	[P_k(K)]^d, & K \text{ 为单纯形单元},\\[4pt] [Q_k(K)]^d, & K \text{ 为张量积单元}. 
+\end{cases}
+\]
+据此，定义 $\Omega$ 上的连续拉格朗日有限元空间为
+\[
+\boldsymbol{V}_h = \left\{ \boldsymbol{v}_h\in C^0(\overline{\Omega};\mathbb{R}^d): \boldsymbol{v}_h|_K\in \boldsymbol{\mathcal P}_k(K),\ \forall K\in\mathcal{K}_h \right\}.
+\]
+上述定义突出了拉格朗日有限元函数在单元内为分片多项式、在单元间保持 $C^0$ 连续的构造特征。由于这类函数具有平方可积的一阶弱导数，因此 $\boldsymbol{V}_h\subset H^1(\Omega;\mathbb{R}^d)$，从而可作为前述连续弱形式中位移空间的有限维离散子空间。若进一步考虑狄利克雷边界条件，则定义对应的齐次离散测试空间：
+\[
+\boldsymbol{V}_{h,0} = \left\{ \boldsymbol{v}_h\in\boldsymbol{V}_h: \boldsymbol{v}_h=\boldsymbol{0}\ \text{on}\ \Gamma_D \right\}.
+\]
+若 $\boldsymbol{u}_D$ 为给定的狄利克雷边界位移，记其离散边界数据为 $\boldsymbol{u}_{D,h}$，则离散试探空间定义为
+\[
+\boldsymbol{V}_h^D = \left\{ \boldsymbol{u}_h\in\boldsymbol{V}_h: \boldsymbol{u}_h=\boldsymbol{u}_{D,h}\ \text{on}\ \Gamma_D \right\} = \boldsymbol{u}_{D,h}+\boldsymbol{V}_{h,0}.
+\]
+
+由于 $\boldsymbol{V}_h$ 为有限维空间，其任意函数均可由全局有限元基函数展开表示。设 $\{\boldsymbol{\phi}_I(\boldsymbol{x})\}_{I=1}^{N_{\text{dof}}}$ 为 $\boldsymbol{V}_h$ 的一组全局矢量基函数，则任意 $\boldsymbol{v}_h\in\boldsymbol{V}_h$ 可表示为
+\[
+\boldsymbol{v}_h(\boldsymbol{x}) = \sum_{I=1}^{N_{\mathrm{dof}}} V_I\,\boldsymbol{\phi}_I(\boldsymbol{x}),
+\]
+其中，$N_{\mathrm{dof}}$ 为全局自由度总数，$V_I$ 为对应的自由度系数。
+
+由前述连续弱形式的 Galerkin 离散，可得线弹性问题的有限元离散变分格式如下：求 $\boldsymbol{u}_h\in\boldsymbol{V}_h^D$，使得:
+\begin{equation} \label{eq:ch3_discrete_weak_form}
+	a(\boldsymbol{u}_h,\boldsymbol{v}_h)=\ell(\boldsymbol{v}_h), \qquad \forall \boldsymbol{v}_h\in\boldsymbol{V}_{h,0},
+\end{equation}
+其中双线性型 $a(\cdot,\cdot)$ 与线性泛函 $\ell(\cdot)$ 定义为
+\[
+a(\boldsymbol{u}_h,\boldsymbol{v}_h) := (\boldsymbol{\sigma}(\boldsymbol{u}_h),\boldsymbol{\varepsilon}(\boldsymbol{v}_h)), \qquad \ell(\boldsymbol{v}_h) := (\boldsymbol{b},\boldsymbol{v}_h) + \langle\boldsymbol{g},\boldsymbol{v}_h\rangle_{\Gamma_N},
+\]
+该离散格式是连续弱形式在有限维离散空间上的 Galerkin 逼近，因此保持了原问题的基本变分结构，并为后续刚度矩阵的组装以及拓扑优化离散模型的建立奠定了基础。
+
+%设 $\mathcal{K}_h$ 为区域 $\Omega$ 的一族形状正则的网格剖分，由有限个闭合单元 $K$ 组成，记 $h$ 为网格的特征尺寸参数。基于前文 \ref{subsec:simplex_lagrange} 节和 \ref{subsec:tensor_lagrange} 节中关于单纯形与张量积单元上多项式框架及其拉格朗日基函数的构造，记定义在单元 $K$ 上的局部 $k$ 次向量值多项式空间为 ${P}_k(K;\mathbb{R}^d)$，据此，定义 $\Omega$ 上的连续拉格朗日有限元空间 如下
+%\[
+%\boldsymbol{V}_h = \{\boldsymbol{u}_h\in {C}^0(\Omega;\mathbb{R}^d):\boldsymbol{u}_h|_{K}\in{P}_k(K;\mathbb{R}^d),~\forall{K}\in\mathcal{K}_h\},
+%\]
+%如此定义的 $\boldsymbol{V}_h$ 构成了原连续问题解空间的有限维子空间，该空间中的任意函数 $\boldsymbol{u}_h$ 可以由其在插值点上的矢量自由度唯一确定，并表示为矢量基函数的线性组合：
+%\[
+%\boldsymbol{u}_h(\boldsymbol{x}) = \sum_{I=1}^{N_{\text{dof}}}U_I\boldsymbol{\phi}_I(\boldsymbol{x}),
+%\]
+%其中，$N_{\text{dof}}$ 为系统中自由度的总数，$\{\boldsymbol{\phi}_I(\boldsymbol{x})\}_{I=1}^{N_{\text{dof}}}$ 为第 $I$ 个全局矢量基函数，$U_I$ 为对应的自由度值。相应的测试函数空间定义为
+%\[
+%\boldsymbol{V}_{h,0} = \{\boldsymbol{v}_h\in\boldsymbol{V}_h :~\boldsymbol{v}_h = \boldsymbol{0}~\text{on}~{\Gamma_D}\}.
+%\]
+%
+%有限元近似解 $\boldsymbol{u}_h\in\boldsymbol{V}_h$ 满足离散变分问题
+%\[
+%a(\boldsymbol{u}_h,\boldsymbol{v}_h) = l(\boldsymbol{v}_h),\quad\forall\boldsymbol{v}_h\in\boldsymbol{V}_{h,0}
+%\]
+%其中
+%\[
+%a(\boldsymbol{u}_h,\boldsymbol{v}_h) := (\boldsymbol{\sigma}(\boldsymbol{u}_h),\boldsymbol{\varepsilon}(\boldsymbol{v}_h)),\quad\ell(\boldsymbol{v}_h) := (\boldsymbol{b},\boldsymbol{v}_h) + \langle\boldsymbol{g},\boldsymbol{v}_h\rangle_{\Gamma_N}.
+%\] 
+
+为将上述离散变分问题进一步写成标准的有限元矩阵形式，下面引入应变--位移关系及相应的本构矩阵表示。在小变形假设下，应变张量定义为位移梯度的对称部分，即
+\[
+\boldsymbol{\varepsilon}(\boldsymbol{u}_h) = \frac{1}{2}\bigl(\nabla\boldsymbol{u}_h + (\nabla\boldsymbol{u}_h)^{\top}\bigr),
+\]
+为便于后续有限元矩阵形式的建立，以下采用工程应变形式的 Voigt 记号，其中剪切应变分量定义为
+\[
+\gamma_{xy}=2\varepsilon_{xy},\qquad \gamma_{xz}=2\varepsilon_{xz},\qquad \gamma_{yz}=2\varepsilon_{yz}.
+\]
+以三维情形为例，记
+\[
+\hat{\boldsymbol{\varepsilon}} = 
+\begin{pmatrix} 
+	\varepsilon_{xx},&\varepsilon_{yy},&\varepsilon_{zz},&\gamma_{xy},&\gamma_{xz},&\gamma_{yz} 
+\end{pmatrix}^{\top} 
+= 
+\begin{pmatrix} 
+	\varepsilon_{xx},&\varepsilon_{yy},&\varepsilon_{zz},&2\varepsilon_{xy},&2\varepsilon_{xz},&2\varepsilon_{yz}
+\end{pmatrix}^{\top},
+\]
+\[
+\hat{\boldsymbol{\sigma}} = \begin{pmatrix} \sigma_{xx},&\sigma_{yy},&\sigma_{zz},&\sigma_{xy},&\sigma_{xz},&\sigma_{yz} \end{pmatrix}^{\top}.
+\]
+
+设 $\boldsymbol{U}$ 为位移场的全局自由度列向量，则有限元位移函数可由全局矢量基函数展开表示，从而应变–位移关系可写为
+\[
+\hat{\boldsymbol{\varepsilon}}(\boldsymbol{u}_h(\boldsymbol{x})) = \boldsymbol{B}(\boldsymbol{x})\boldsymbol{U},
+\]
+其中，$\boldsymbol{B}(\boldsymbol{x})$ 为由基函数导数组成的应变–位移矩阵，二维情形可类似写出。
+
+线弹性本构关系  $\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}$ 在上述 Voigt 记号下可写为
+\[
+\hat{\boldsymbol{\sigma}} = \boldsymbol{D}\hat{\boldsymbol{\varepsilon}},
+\]
+在三维各向同性情形下，本构矩阵为
+\[
+\boldsymbol{D} =
+\begin{bmatrix}
+	2\mu+\lambda &\lambda &\lambda &0 &0 &0\\
+	\lambda &2\mu+\lambda &\lambda &0 &0 &0\\
+	\lambda &\lambda &2\mu+\lambda &0 &0 &0\\
+	0 &0 &0 &\mu &0 &0\\
+	0 &0 &0 & 0 &\mu &0\\
+	0 &0 &0 &0 &0 &\mu
+\end{bmatrix},
+\]
+对于二维平面问题，记 $\gamma_{xy} = 2\varepsilon_{xy}$，
+%则
+%\[
+%\hat{\boldsymbol{\varepsilon}} = 
+%\begin{pmatrix} 
+%	\varepsilon_{xx},&\varepsilon_{yy},&\gamma_{xy} 
+%\end{pmatrix}^{\top} 
+%= 
+%\begin{pmatrix} 
+%	\varepsilon_{xx},&\varepsilon_{yy},&2\varepsilon_{xy} 
+%\end{pmatrix}^{\top}, \qquad \hat{\boldsymbol{\sigma}} = 
+%\begin{pmatrix} 
+%	\sigma_{xx},&\sigma_{yy},&\sigma_{xy} 
+%\end{pmatrix}^{\top}.
+%\]
+则在平面应变与平面应力假设下，本构矩阵分别为
+\[
+\boldsymbol{D}_{\text{pe}} = 
+\begin{bmatrix}
+	2\mu + \lambda & \lambda & 0 \\
+	\lambda & 2\mu + \lambda & 0 \\
+	0 & 0 & \mu
+\end{bmatrix},\quad
+\boldsymbol{D}_{\text{ps}} = \frac{E}{1-\nu^2}
+\begin{bmatrix}
+	1 &\nu &0\\
+	\nu &1 &0\\
+	0 &0 &(1-\nu)/2
+\end{bmatrix}.
+\]
+由此，离散位移场对应的应变与应力均可表示为自由度向量 $\boldsymbol{U}$ 的线性函数。
+
+在上述记号下，利用本构矩阵 $\boldsymbol{D}$ 的对称性，双线性型可转化为如下矩阵乘法形式：
+\[
+\begin{aligned} 
+	a(\boldsymbol{u}_h,\boldsymbol{v}_h) &=(\boldsymbol{\sigma}(\boldsymbol{u}_h),\boldsymbol{\varepsilon}(\boldsymbol{v}_h))\\ &=\int_{\Omega}\hat{\boldsymbol{\sigma}}(\boldsymbol{u}_h)^{\top}\hat{\boldsymbol{\varepsilon}}(\boldsymbol{v}_h)\,\mathrm{d}\boldsymbol{x}\\ &=\int_{\Omega}\bigl(\boldsymbol{D}\hat{\boldsymbol{\varepsilon}}(\boldsymbol{u}_h)\bigr)^{\top}\hat{\boldsymbol{\varepsilon}}(\boldsymbol{v}_h)\,\mathrm{d}\boldsymbol{x}\\ &=\int_{\Omega}\bigl(\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})\boldsymbol{U}\bigr)^{\top}\boldsymbol{B}(\boldsymbol{x})\boldsymbol{V}\,\mathrm{d}\boldsymbol{x}\\ &=\boldsymbol{V}^{\top}\left(\int_{\Omega}\boldsymbol{B}(\boldsymbol{x})^{\top}\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x}\right)\boldsymbol{U}. 
+\end{aligned}
+\]
+由此可定义全局刚度矩阵：
+\begin{equation} \label{eq:ch3_global_stiffness_matrix}
+	\boldsymbol{K} = \int_{\Omega}\boldsymbol{B}(\boldsymbol{x})^{\top}\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x}.
+\end{equation}
+另一方面，由于
+\[
+\boldsymbol{V}_h = \operatorname{span}\{\boldsymbol{\phi}_1,\boldsymbol{\phi}_2,\cdots,\boldsymbol{\phi}_{N_{\mathrm{dof}}}\},
+\]
+可记由全局矢量基函数组成的矩阵为
+\[
+\boldsymbol{N}(\boldsymbol{x}) = 
+\begin{pmatrix} 
+	\boldsymbol{\phi}_1(\boldsymbol{x})& \boldsymbol{\phi}_2(\boldsymbol{x})& \cdots& \boldsymbol{\phi}_{N_{\mathrm{dof}}}(\boldsymbol{x}) 
+\end{pmatrix},
+\]
+其中 $\boldsymbol{N}(\boldsymbol{x})\in\mathbb{R}^{d\times N_{\mathrm{dof}}}$。于是有限元函数可写为
+\[
+\boldsymbol{u}_h(\boldsymbol{x})=\boldsymbol{N}(\boldsymbol{x})\boldsymbol{U}, \qquad \boldsymbol{v}_h(\boldsymbol{x})=\boldsymbol{N}(\boldsymbol{x})\boldsymbol{V}.
+\]
+同理，由右端线性泛函
+\[
+\ell(\boldsymbol{v}_h) = (\boldsymbol{b},\boldsymbol{v}_h) + \langle \boldsymbol{g},\boldsymbol{v}_h\rangle_{\Gamma_N}
+\]
+可得
+\[
+\ell(\boldsymbol{v}_h) = \boldsymbol{V}^{\top}\boldsymbol{F},
+\]
+其中载荷向量 $\boldsymbol{F}$ 定义为：
+\begin{equation} \label{eq:ch3_global_load_vector}
+	\boldsymbol{F} = \int_{\Omega}\boldsymbol{N}(\boldsymbol{x})^{\top}\boldsymbol{b}\,\mathrm{d}\boldsymbol{x} + \int_{\Gamma_N}\boldsymbol{N}(\boldsymbol{x})^{\top}\boldsymbol{g}\,\mathrm{d}s.
+\end{equation}
+因此，在施加狄利克雷边界条件后，线弹性问题的有限元离散代数系统可写为：
+\begin{equation} \label{eq:ch3_fem_algebraic_system}
+	\boldsymbol{K}\boldsymbol{U} = \boldsymbol{F}.
+\end{equation}
+
+% $\boldsymbol{\varepsilon}(\boldsymbol{u}_h)$ 由位移梯度给出。将对称应变和对称应力按 Voigt 记号展平，在三维情形中记为
+%\[
+%\hat{\boldsymbol{\varepsilon}} = 
+%\begin{pmatrix}
+%	\varepsilon_{xx},&\varepsilon_{yy},&\varepsilon_{zz},&2\varepsilon_{xy},&2\varepsilon_{xz},&2\varepsilon_{yz}
+%\end{pmatrix}^{\top},\quad
+%\hat{\boldsymbol{\sigma}} = 
+%\begin{pmatrix}
+%	\sigma_{xx},&\sigma_{yy},&\sigma_{zz},&2\sigma_{xy},&2\sigma_{xz},&2\sigma_{yz}
+%\end{pmatrix}^{\top}.
+%\]
+%记全局位移和测试函数的自由度列向量分别为
+%\[
+%\boldsymbol{U} = \begin{pmatrix}
+%	U_1, &\cdots, &U_{N_{\text{dof}}}
+%\end{pmatrix}^{\top},\quad
+%\boldsymbol{V} = \begin{pmatrix}
+%	V_1, &\cdots, &V_{N_{\text{dof}}}
+%\end{pmatrix}^{\top}.
+%\]
+%将矢量基函数按分量展开，设每个分量对应的标量拉格朗日形函数为 $\{\phi_j\}_{j=1}^{N_n}$，并记
+%\[
+%\boldsymbol{\Phi}(\boldsymbol{x}) = \begin{pmatrix}
+%	\phi_1(\boldsymbol{x}), &\cdots, &\phi_{N_n}(\boldsymbol{x})
+%\end{pmatrix},
+%\]
+%则矢量有限元函数可写为
+%\[
+%\boldsymbol{u}_h(\boldsymbol{x}) = 
+%\begin{pmatrix}
+%	\boldsymbol{\Phi}(\boldsymbol{x})\\
+%	&\ddots\\
+%	& &\boldsymbol{\Phi}(\boldsymbol{x})
+%\end{pmatrix}\boldsymbol{U},
+%\]
+%其中块对角矩阵由 $\boldsymbol{\Phi}(\boldsymbol{x})$ 在 $d$ 个分量方向上复制而成，由此得到应变–位移关系
+%\[
+%\hat{\boldsymbol{\varepsilon}}(\boldsymbol{u}_h(\boldsymbol{x})) = \boldsymbol{B}(\boldsymbol{x})\boldsymbol{U},
+%\]
+%其中应变-位移矩阵可写为
+%\[
+%\boldsymbol{B} = 
+%\begin{bmatrix}
+%	\boldsymbol{\Phi}_{,x} &\boldsymbol{0} &\boldsymbol{0}\\
+%	\boldsymbol{0} &\boldsymbol{\Phi}_{,y} &\boldsymbol{0}\\
+%	\boldsymbol{0} &\boldsymbol{0} &\boldsymbol{\Phi}_{,z}\\
+%	\boldsymbol{\Phi}_{,y} &\boldsymbol{\Phi}_{,x} &\boldsymbol{0}\\
+%	\boldsymbol{\Phi}_{,z} &\boldsymbol{0} &\boldsymbol{\Phi}_{,x}\\
+%	\boldsymbol{0} &\boldsymbol{\Phi}_{,z} &\boldsymbol{\Phi}_{,y}\\
+%\end{bmatrix},
+%\]
+%其中 $\boldsymbol{\Phi}_{,x},\boldsymbol{\Phi}_{,y},\boldsymbol{\Phi}_{,z}$ 分别表示标量形函数对相应坐标的导数组成的行向量。
+%
+%线弹性本构关系  $\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}$ 在 Voigt 表示下写为
+%\[
+%\hat{\boldsymbol{\sigma}} = \boldsymbol{D}\hat{\boldsymbol{\varepsilon}},
+%\]
+%三维各向同性情形下本构矩阵为
+%\[
+%\boldsymbol{D} =
+%\begin{bmatrix}
+%	2\mu+\lambda &\lambda &\lambda &0 &0 &0\\
+%	\lambda &2\mu+\lambda &\lambda &0 &0 &0\\
+%	\lambda &\lambda &2\mu+\lambda &0 &0 &0\\
+%	0 &0 &0 &\mu &0 &0\\
+%	0 &0 &0 & 0 &\mu &0\\
+%	0 &0 &0 &0 &0 &\mu
+%\end{bmatrix},
+%\]
+%二维平面问题下，记
+%\[
+%\hat{\boldsymbol{\varepsilon}} = 
+%\begin{pmatrix}
+%	\varepsilon_{xx},&\varepsilon_{yy},&2\varepsilon_{xy}
+%\end{pmatrix}^{\top},\quad\hat{\boldsymbol{\sigma}} = 
+%\begin{pmatrix}
+%	\sigma_{xx},&\sigma_{yy},&2\sigma_{xy} 
+%\end{pmatrix}^{\top},
+%\]
+%则在平面应变与平面应力假设下，本构矩阵分别为
+%\[
+%\boldsymbol{D}_{\text{pe}} = 
+%\begin{bmatrix}
+%	2\mu + \lambda & \lambda & 0 \\
+%	\lambda & 2\mu + \lambda & 0 \\
+%	0 & 0 & \mu
+%\end{bmatrix},\quad
+%\boldsymbol{D}_{\text{ps}} = \frac{E}{1-\nu^2}
+%\begin{bmatrix}
+%	1 &\nu &0\\
+%	\nu &1 &0\\
+%	0 &0 &(1-\nu)/2
+%\end{bmatrix}.
+%\]
+%
+%在上述记号下，双线性型可写为
+%\[
+%\begin{aligned}
+%	(\boldsymbol{\sigma}(\boldsymbol{u}_h),\boldsymbol{\varepsilon}(\boldsymbol{v}_h)) 
+%	&= \int_{\Omega}(\boldsymbol{\sigma}(\boldsymbol{u}_h))^{\top}\boldsymbol{\varepsilon}(\boldsymbol{v}_h)~\mathrm{d}\boldsymbol{x}\\
+%	&= \int_{\Omega}(\boldsymbol{D}\boldsymbol{\varepsilon}(\boldsymbol{u}_h))^{\top}\boldsymbol{\varepsilon}(\boldsymbol{v}_h)~\mathrm{d}\boldsymbol{x}\\
+%	&= \int_{\Omega}(\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})\boldsymbol{U})^{\top}\boldsymbol{B}(\boldsymbol{x})\boldsymbol{V}~\mathrm{d}\boldsymbol{x}\\
+%	&= \boldsymbol{U}^{\top}\left(\int_{\Omega}\boldsymbol{B}(\boldsymbol{x})^{\top}\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})~\mathrm{d}\boldsymbol{x}\right)\boldsymbol{V},
+%\end{aligned}
+%\]
+%由此可定义全局刚度矩阵
+%\[
+%\boldsymbol{K} = \int_{\Omega}\boldsymbol{B}(\boldsymbol{x})^{\top}\boldsymbol{D}\boldsymbol{B}(\boldsymbol{x})\,\mathrm{d}\boldsymbol{x},
+%\]
+%同理，由右端线性泛函得到载荷向量
+%\[
+%\boldsymbol{F} = \int_\Omega \boldsymbol{\Phi}^{\top}\boldsymbol{f} ~\mathrm{d}\boldsymbol{x}
+%+\int_{\Gamma_N} \boldsymbol{\Phi}^{\top}\boldsymbol{g}_N ~ \mathrm{d}\boldsymbol{s},
+%\]
+%于是线弹性问题的有限元离散代数系统可写为
+%$$\boldsymbol{K}\boldsymbol{U} = \boldsymbol{F}.$$
+
+
+\subsection{任意次多单元族拉格朗日有限元的收敛性验证}
+\label{subsec:fem_verification}
+
+为验证第~\ref{subsec:simplex_lagrange}-\ref{subsec:elastic_discrete} 节所构造的任意次、多单元族拉格朗日有限元离散格式及其程序实现的正确性，并检验其理论收敛阶，本节考虑一个具有解析解的二维线弹性边值问题。由于本节主要关注离散误差与收敛行为，而非材料参数的量纲效应，因此以下算例采用无量纲化设置。
+
+考虑单位正方形区域 $\Omega = [0,1]^2$，假设材料为均匀各向同性线弹性体，处于平面应变状态，取拉梅第一常数 $\lambda=1$，剪切模量 $\mu = 0.5$。构造精确位移解
+\[
+\boldsymbol{u}(x,y) = 
+\begin{pmatrix} 
+	\sin(\frac{\pi}{2}x)\sin(\pi{y})\\ -2\sin(\pi{x})(\sin(\frac{\pi}{2}{y})-y) 
+\end{pmatrix},
+\]
+将上述精确解代入前文给出的线弹性控制方程与本构关系，可得到相应的体力密度向量
+\[
+\boldsymbol{b}(x,y) = 
+\begin{pmatrix}
+	\pi^2[\sin(\frac{\pi}{2}x)\sin(\pi{y}) +  \frac{3}{2}\cos(\pi{x})\cos(\frac{\pi}{2}y)] - 2\pi(\lambda+\mu)\cos(\pi{x})\\
+	-\frac{3}{4}\pi^2\cos(\frac{\pi}{2}x)\cos({\pi}{y}) - 2\pi^2\sin(\pi{x})\sin(\frac{\pi}{2}y)+2\mu\pi^2y\sin(\pi{x}) 
+\end{pmatrix},
+\]
+在上下边界 $y=0,1$ 上施加与精确解一致的狄利克雷位移边界条件，在左右边界 $x=0,1$ 上施加与精确解一致的诺伊曼牵引边界条件，其表达式分别为
+\[
+\boldsymbol{g}(0,y) = 
+\begin{pmatrix}
+	-\pi\sin(\pi{y})\\
+	\pi\sin(\frac{\pi{y}}{2})-2\mu\pi{y}
+\end{pmatrix},\quad
+\boldsymbol{g}(1,y) = 
+\begin{pmatrix}
+	0\\
+	\frac{\pi}{2}\cos(\pi{y})+\pi\sin(\frac{\pi{y}}{2})-2\mu\pi{y}
+\end{pmatrix},
+\]
+由此得到一个具有光滑解析解的二维线弹性基准问题。
+
+为了系统评估并对比不同单元族在统一框架下的数值精度与收敛阶，本节在保持多项式阶次 $k$ 固定的前提下，分别针对三角形单元与四边形单元进行了 $h$ 型网格细化测试。通过计算一系列加密网格上的数值解，提取了位移场的 $L^2$ 误差 $\|\boldsymbol u-\boldsymbol u_h\|_{0,\Omega}$ 与位移场梯度的 $L^2$ 误差 $\|\nabla(\boldsymbol u-\boldsymbol u_h)\|_{0,\Omega}$，后者即位移场的 $H^1$ 半范数误差。图 \ref{fig:ch3_convergence_comparison} 在双对数坐标系下给出了两类单元族在不同阶次下的误差收敛曲线对比。图中带标记的曲线表示数值误差，无标记的直线段表示理论参考斜率。
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+	
+	\subfigure[三角形单元]{
+		\label{fig:ch3_tri_convergence}
+		\includegraphics[width=0.47\textwidth]{ch3_tri_convergence}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[四边形单元]{
+		\label{fig:ch3_quad_convergence}
+		\includegraphics[width=0.47\textwidth]{ch3_quad_convergence} 
+	}
+	\caption{不同阶次下三角形单元与四边形单元的误差收敛曲线}
+	\label{fig:ch3_convergence_comparison}
+\end{figure}
+
+由经典拉格朗日有限元的先验误差估计~\cite{ciarletFiniteElementMethod2002a, brennerMathematicalTheoryFinite2008} 可知，在精确解具有足够正则性的条件下，位移场的 $L^2$ 误差与位移场梯度的 $L^2$ 误差分别满足
+\[
+\|\boldsymbol u-\boldsymbol u_h\|_{0,\Omega}=\mathcal O(h^{k+1}),\qquad \|\nabla(\boldsymbol u-\boldsymbol u_h)\|_{0,\Omega}=\mathcal O(h^k),
+\]
+由图~\ref{fig:ch3_convergence_comparison} 可见，无论是三角形单元还是四边形单元，在 $k=1,2,3,4$ 的各阶情形下，位移场的 $L^2$ 误差与位移场梯度的 $L^2$ 误差均随网格加密稳定下降，并整体上与理论参考斜率吻合良好。
+
+总体而言，位移场的 $L^2$ 误差收敛阶与 $\mathcal O(h^{k+1})$ 一致，而位移场梯度的 $L^2$ 误差收敛阶与 $\mathcal O(h^k)$ 一致。需要指出的是，在当前算例与网格序列下，$k=3$ 时位移场梯度的 $L^2$ 误差表现出高于理论 3 阶的观测收敛阶，呈现出一定的超收敛现象，但这并不影响本文关于最优收敛阶的总体结论。上述结果表明，本文实现的任意次多单元族拉格朗日有限元求解器在不同阶次下均具有良好的数值正确性与可靠性。
+
+
+\section{不同设计变量表征下的离散优化模型}
+\label{sec:diff_design_var_rep}
+
+本节在第 \ref{chap:top_models_numerics} 章连续模型与变分形式的基础上，讨论不同设计变量表征下体积分数约束拓扑优化问题的有限元离散表达。为便于比较，后续模型统一采用相同的位移有限元离散格式与 SIMP 材料插值，不同表征之间的差异主要体现在离散密度表示、体积分数约束离散形式及相应灵敏度表达上。
+记设计变量向量为 $\boldsymbol{\rho}$，其诱导的离散密度表示记为 $\rho_h$。对应的有限元平衡方程写为
+\[
+\boldsymbol{K}(\boldsymbol{\rho})\,\boldsymbol{U}(\boldsymbol{\rho})=\boldsymbol{F},
+\]
+其中 $\boldsymbol{K}(\boldsymbol{\rho})$ 为全局刚度矩阵，$\boldsymbol{U}(\boldsymbol{\rho})$ 为位移向量，$\boldsymbol{F}$ 为外载荷向量。
+
+对于柔顺度最小化问题，目标函数定义为
+\[
+c(\boldsymbol{\rho})=\boldsymbol{F}^{\top}\boldsymbol{U}(\boldsymbol{\rho}),
+\]
+并由平衡方程可等价写为
+\[
+c(\boldsymbol{\rho})=\boldsymbol{U}(\boldsymbol{\rho})^{\top}\boldsymbol{K}(\boldsymbol{\rho})\,\boldsymbol{U}(\boldsymbol{\rho}).
+\]
+为保证比较的一致性，本文统一采用 SIMP 材料插值模型
+\[
+E(\rho_h)=\rho_h^{\,p}E_0,
+\]
+其中 $E_0$ 为实体材料的杨氏模量，$p\ge 1$ 为惩罚指数。下面分别讨论单元密度表征与节点密度表征下离散优化模型的具体构造。
+
+
+\subsection{单元密度表征下的离散优化模型}
+\label{subsec:cell_density_rep}
+
+首先考虑经典的单元密度表征。设设计变量为各单元上的常值密度
+\[
+\rho_e\in[\rho_{\min},1],\qquad e=1,\cdots,N_c,
+\]
+其中 $N_c$ 为单元总数，$\rho_{\min}\in(0,1)$ 为避免整体刚度矩阵奇异而引入的最小相对密度下界。记第 $e$ 个单元所在的区域为 $\Omega_e$，对应的体积为 $v_e=|\Omega_e|$ 则材料体积函数的离散形式为
+\[
+V(\boldsymbol{\rho})=\sum_{e=1}^{N_c}\int_{\Omega_e}\rho_e\,\mathrm{d}\boldsymbol{x} =\sum_{e=1}^{N_c}\rho_e v_e,
+\]
+设计域总体积为
+\[
+V_0=|\Omega|=\sum_{e=1}^{N_c}v_e,
+\]
+故体积分数约束写为
+\[
+g_V(\boldsymbol{\rho}) =\frac{V(\boldsymbol{\rho})}{V_0}-V_f =\frac{1}{V_0}\sum_{e=1}^{N_c}\rho_e v_e - V_f \le 0.
+\]
+在单元密度表征下，体积分数约束的柔顺度最小化离散模型可写为：
+\begin{equation} \label{eq:ch3_discrete_model_cell}
+	\begin{aligned} 
+		\min_{\boldsymbol{\rho}}\quad & c(\boldsymbol{\rho})=\boldsymbol{F}^{\top}\boldsymbol{U}\\ 
+		\text{subject to}\quad & \boldsymbol{K}(\boldsymbol{\rho})\boldsymbol{U}(\boldsymbol{\rho})=\boldsymbol{F},\\ 
+		& g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} - V_f \le 0,\\ 
+		& \rho_e\in[\rho_{\min},1],\qquad e=1,\cdots,N_c. 
+	\end{aligned}
+\end{equation}
+
+弹性模量采用 SIMP 插值 $E(\rho_e) = \rho_e^pE_0$。在线弹性各向同性材料且泊松比保持不变的条件下，弹性矩阵关于杨氏模量成线性比例关系，因此可记
+\[
+\boldsymbol D(\rho_e)=\rho_e^p\boldsymbol D_0,
+\]
+其中 $\boldsymbol D_0$ 表示实体材料对应的弹性矩阵。于是，第 $e$ 个单元刚度矩阵可写为
+\[
+\boldsymbol{K}_e(\rho_e) = \int_{\Omega_e}\boldsymbol{B}^{\top}\boldsymbol{D}(\rho_e)\boldsymbol{B}\,\mathrm{d}\boldsymbol{x} = \int_{\Omega_e}\boldsymbol{B}^{\top}(\rho_e^p\boldsymbol{D}_0)\boldsymbol{B}\,\mathrm{d}\boldsymbol{x} = \rho_e^p\boldsymbol{K}_e^{(0)},
+\]
+其中
+\[
+\boldsymbol K_e^{(0)}=\int_{\Omega_e}\boldsymbol B^{\top}\boldsymbol D_0\boldsymbol B\,\mathrm d\boldsymbol x
+\]
+表示实体材料充满该单元时对应的基准单元刚度矩阵。在上述记号下，材料体积函数与体积分数约束函数对设计变量 $\rho_e$ 的导数分别为
+\[
+\frac{\partial V(\boldsymbol{\rho})}{\partial\rho_e}=v_e, \qquad \frac{\partial g_V(\boldsymbol{\rho})}{\partial\rho_e}=\frac{v_e}{V_0}.
+\]
+
+进一步，由
+\[
+\frac{\partial \boldsymbol D(\rho_e)}{\partial \rho_e} = p\rho_e^{p-1}\boldsymbol D_0
+\]
+可以得到单元刚度矩阵的导数为
+\[
+\frac{\partial\boldsymbol{K}_e}{\partial\rho_e} = \int_{\Omega_e}\boldsymbol{B}^{\top}\frac{\partial\boldsymbol{D}(\rho_e)}{\partial\rho_e}\boldsymbol{B}\,\mathrm{d}\boldsymbol{x} = p\rho_e^{p-1}\int_{\Omega_e}\boldsymbol{B}^{\top}\boldsymbol{D}_0\boldsymbol{B}\,\mathrm{d}\boldsymbol{x} = p\rho_e^{p-1}\boldsymbol{K}_e^{(0)},
+\]
+因此，柔顺度关于设计变量的导数为：
+\begin{equation} \label{eq:ch3_sens_cell_compliance}
+	\frac{\partial{c}}{\partial\rho_e} = -\boldsymbol{U}_e^{\top}\frac{\partial\boldsymbol{K}_e}{\partial\rho_e}\boldsymbol{U}_e = -p\rho_e^{p-1}\boldsymbol{U}_e^{\top}\boldsymbol{K}_e^{(0)}\boldsymbol{U}_e,
+\end{equation}
+其中，$\boldsymbol{U}_e$ 表示第 $e$ 个单元的局部位移向量。
+
+
+\subsection{节点密度表征下的离散优化模型}
+\label{subsec:node_density_rep}
+
+在单元密度表征的基础上，进一步考虑节点密度表征。需要指出的是，尽管前文位移场采用任意次拉格朗日有限元离散，本文对密度场仍采用基于网格顶点的一阶拉格朗日插值，而不直接使用与位移场同阶的高阶拉格朗日插值。这是因为节点密度表征要求当节点设计变量满足 $\rho_i\in[\rho_{\min},1]$ 时，插值得到的单元内部密度场 $\rho_h(\boldsymbol{x})$ 仍保持相同的取值范围，特别是满足 $\rho_h(\boldsymbol{x})\ge \rho_{\min}>0$。一阶拉格朗日基函数在单元内满足非负性与单位分解性质，使得单元内部的密度场实际上是节点密度的凸组合，因此能够自然保证插值后的密度值严格处于 $[\rho_{\min}, 1]$ 区间内。而高阶拉格朗日基函数一般不具备这一性质，因而难以直接用于节点密度表征~\cite{kangNodalVariableMethod2012a}。
+
+设节点设计变量向量为
+\[
+\boldsymbol{\rho}=(\rho_1,\rho_2,\cdots,\rho_{N_n})^{\top},\qquad \rho_i\in[\rho_{\min},1],\quad i=1,\cdots,N_n,
+\]
+其中 $N_n$ 为参与密度插值的网格顶点总数。记 $\{\phi_i\}_{i=1}^{N_n}$ 为对应的一阶拉格朗日基函数，则离散密度函数 $\rho_h$ 在单元 $\Omega_e$ 上可表示为
+\[
+\rho_h(\boldsymbol{x})\big|_{\Omega_e} = \sum_{i\in\mathcal N(e)}\phi_i^{(e)}(\boldsymbol{x})\rho_i, \qquad \boldsymbol{x}\in\Omega_e,
+\]
+其中 $\mathcal N(e)$ 表示与单元 $\Omega_e$ 相关的局部节点指标集合，$\phi_i^{(e)}$ 表示基函数 $\phi_i$ 在单元 $\Omega_e$ 上的局部限制。与单元密度表征中密度场在单元边界处呈现不连续跳跃的特征不同，节点密度表征通过上述基函数的插值，能够自然构造出在整个设计域上保持 $C^0$ 连续的相对密度场。
+
+由于一阶拉格朗日基函数满足
+\[
+\phi_i^{(e)}(\boldsymbol{x})\ge 0,\qquad \sum_{i\in\mathcal N(e)}\phi_i^{(e)}(\boldsymbol{x})=1, \qquad \boldsymbol{x}\in\Omega_e,
+\]
+故当 $\rho_i\in[\rho_{\min},1]$ 时，有 $\rho_h(\boldsymbol{x})\in[\rho_{\min},1]$，且其导数为
+\[
+\frac{\partial \rho_h(\boldsymbol{x})}{\partial \rho_i} = \begin{cases} \phi_i^{(e)}(\boldsymbol{x}), & i\in\mathcal N(e),\\[4pt] 0, & i\notin\mathcal N(e), \end{cases} \qquad \boldsymbol{x}\in\Omega_e.
+\]
+
+材料体积函数的离散形式为
+\[
+V(\boldsymbol{\rho}) = \int_{\Omega}\rho_h(\boldsymbol{x})\,\mathrm d\boldsymbol{x} = \sum_{e=1}^{N_c}\int_{\Omega_e}\rho_h(\boldsymbol{x})\,\mathrm d\boldsymbol{x},
+\]
+采用数值积分后，可近似写为
+\[
+V(\boldsymbol{\rho}) \approx \sum_{e=1}^{N_c}\sum_{g=1}^{N_q} \rho_h(\boldsymbol{x}_{e,g}) \det\boldsymbol J_e(\boldsymbol{x}_{e,g})\,\omega_g,
+\]
+其中 $N_q$ 为每个单元的积分点数，$\boldsymbol{x}_{e,g}$ 为单元 $\Omega_e$ 上第 $g$ 个积分点对应的物理坐标，$\omega_g$ 为参考单元上的积分权重，$\boldsymbol J_e$ 为由参考单元到物理单元的映射雅可比矩阵。设计域总体积仍记为 $V_0=|\Omega|$，于是体积分数约束函数可写为
+\[
+g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0}-V_f\le 0.
+\]
+
+因此，在节点密度表征下，包含体积分数约束的最小柔顺度离散优化模型可写为：
+\begin{equation} \label{eq:ch3_discrete_model_node}
+	\begin{aligned} 
+		\min_{\boldsymbol{\rho}}\quad & c(\boldsymbol{\rho}) = \boldsymbol{F}^{\top}\boldsymbol{U}\\ 
+		\text{subject to}\quad & \boldsymbol{K}(\boldsymbol\rho)\boldsymbol{U}(\boldsymbol\rho)=\boldsymbol{F},\\ 
+		& g_V(\boldsymbol\rho)=\frac{V(\boldsymbol\rho)}{V_0}-V_f\le 0,\\ 
+		& \rho_i\in[\rho_{\min},1],\qquad i=1,\cdots,N_n. 
+	\end{aligned}
+\end{equation}
+在 SIMP 插值 $E(\rho_h(\boldsymbol{x}))=\rho_h(\boldsymbol{x})^pE_0$ 下，在线弹性各向同性材料且泊松比保持不变的条件下，可记
+\[
+\boldsymbol D(\rho_h(\boldsymbol{x})) = \rho_h(\boldsymbol{x})^p\boldsymbol D_0.
+\]
+于是，第 $e$ 个单元刚度矩阵可写为
+\[
+\begin{aligned}
+	\boldsymbol{K}_e(\rho_h(\boldsymbol{x})) 
+	&= \int_{\Omega_e}\boldsymbol{B}^{\top}\boldsymbol{D}(\rho_h)\boldsymbol{B}\,\mathrm{d}\boldsymbol{x} = \int_{\Omega_e}\rho_h(\boldsymbol x)^p\boldsymbol B^{\top}\boldsymbol D_0\boldsymbol B\,\mathrm d\boldsymbol x\\
+	&\approx \sum_{g=1}^{N_q}\rho_h(\boldsymbol{x}_{e,g})^p\boldsymbol{B}_{e,g}^{\top}\boldsymbol{D}_0\boldsymbol{B}_{e,g}\det\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\omega_g.
+\end{aligned}
+\]
+
+记与节点 $i$ 相邻的单元集合为
+\[
+\mathcal I_i:=\{\,e:\,i\in\mathcal N(e)\,\},
+\]
+则材料体积函数与体积分数约束函数关于设计变量 $\rho_i$ 的导数分别为
+\[
+\frac{\partial V(\boldsymbol\rho)}{\partial \rho_i} = \sum_{e\in\mathcal I_i} \int_{\Omega_e}\phi_i^{(e)}(\boldsymbol{x})\,\mathrm d\boldsymbol x \approx \sum_{e\in\mathcal I_i}\sum_{g=1}^{N_q} \phi_i^{(e)}(\boldsymbol{x}_{e,g}) \det\boldsymbol J_e(\boldsymbol{x}_{e,g})\,\omega_g,
+\]
+以及
+\[
+\frac{\partial g_V(\boldsymbol\rho)}{\partial \rho_i} = \frac{1}{V_0}\frac{\partial V(\boldsymbol\rho)}{\partial \rho_i}.
+\]
+进一步，由链式法则可得
+\[
+\frac{\partial \boldsymbol D(\rho_h(\boldsymbol{x}))}{\partial \rho_i} = p\,\rho_h(\boldsymbol{x})^{p-1}\phi_i^{(e)}(\boldsymbol{x})\,\boldsymbol D_0, \qquad \boldsymbol{x}\in\Omega_e,\ e\in\mathcal I_i,
+\]
+从而，当 $e\in\mathcal I_i$ 时，单元刚度矩阵关于 $\rho_i$ 的导数为
+\[
+\begin{aligned}
+	\frac{\partial\boldsymbol{K}_e}{\partial\rho_i} 
+	&= \int_{\Omega_e} \boldsymbol B^{\top} \frac{\partial \boldsymbol D(\rho_h(\boldsymbol{x}))}{\partial \rho_i} \boldsymbol B\,\mathrm d\boldsymbol x = \int_{\Omega_e} p\,\rho_h(\boldsymbol{x})^{p-1}\phi_i^{(e)}(\boldsymbol{x}) \boldsymbol B^{\top}\boldsymbol D_0\boldsymbol B\,\mathrm d\boldsymbol x\\
+	&\approx \sum_{g=1}^{N_q} p\,\rho_h(\boldsymbol{x}_{e,g})^{p-1} \phi_i^{(e)}(\boldsymbol{x}_{e,g}) \boldsymbol B_{e,g}^{\top}\boldsymbol D_0\boldsymbol B_{e,g} \det\boldsymbol J_e(\boldsymbol{x}_{e,g})\,\omega_g.
+\end{aligned}
+\]
+若 $e\notin\mathcal I_i$，则有
+\[
+\frac{\partial \boldsymbol K_e}{\partial \rho_i}=0.
+\]
+
+因此，柔顺度关于设计变量 $\rho_i$ 的导数为：
+\begin{equation} \label{eq:ch3_sens_node_compliance}
+	\frac{\partial c}{\partial \rho_i} = -\sum_{e\in\mathcal I_i} \boldsymbol U_e^{\top} \frac{\partial \boldsymbol K_e}{\partial \rho_i} \boldsymbol U_e,
+\end{equation}
+%\[
+%\frac{\partial c}{\partial \rho_i} = -\sum_{e\in\mathcal I_i} \boldsymbol U_e^{\top} \frac{\partial \boldsymbol K_e}{\partial \rho_i} \boldsymbol U_e,
+%\]
+其对应的数值积分表达式为
+\[
+\frac{\partial c}{\partial \rho_i} \approx -\sum_{e\in\mathcal I_i}\sum_{g=1}^{N_q} p\,\rho_h(\boldsymbol{x}_{e,g})^{p-1} \phi_i^{(e)}(\boldsymbol{x}_{e,g}) \boldsymbol{U}_e^{\top} \boldsymbol{B}_{e,g}^{\top}\boldsymbol{D}_0\boldsymbol{B}_{e,g} \boldsymbol{U}_e\, \det\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\,\omega_g.
+\]
+%\begin{equation} \label{eq:ch3_sens_node_compliance}
+%	\frac{\partial c}{\partial \rho_i} \approx -\sum_{e\in\mathcal I_i}\sum_{g=1}^{N_q} p\,\rho_h(\boldsymbol{x}_{e,g})^{p-1} \phi_i^{(e)}(\boldsymbol{x}_{e,g}) \boldsymbol{U}_e^{\top} \boldsymbol{B}_{e,g}^{\top}\boldsymbol{D}_0\boldsymbol{B}_{e,g} \boldsymbol{U}_e\, \det\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\,\omega_g.
+%\end{equation}
+值得注意的是，与单元密度表征不同，节点密度表征下的密度场在单元内部连续变化，单元刚度矩阵及其灵敏度中的被积函数包含非线性项 $(\rho_h(\boldsymbol{x}))^p$。因此，在相同单元类型与位移离散阶次下，为更准确地刻画单元内部刚度变化并减小数值积分误差，节点密度表征通常需要采用高于单元密度表征的数值积分阶次。
+
+%在单元密度模型的基础上，进一步考虑节点密度表征。设计变量取每个节点的密度 $\rho_i\in[0,1]$（$i = 1,\dots,N_n$ ），采用一阶拉格朗日形函数 $\{\phi_i^{(e)}\}_{i\in\mathcal{N}(e)}$ 对密度场近似：
+%\[
+%\rho_h(\boldsymbol{x}) = \sum_{i\in\mathcal{N}(e)}\phi_i^{(e)}(\boldsymbol{x})\rho_i,\quad\phi_i^{(e)}(\boldsymbol{x})\geq0,\quad\sum_{i\in\mathcal{N}(e)}\phi_{i}^{(e)}(\boldsymbol{x}) = 1
+%\]
+%因此若 $0\leq\rho_i\leq1$，则
+%\[
+%0\leq\rho_h(\boldsymbol{x}) \leq 1,\quad\frac{\partial\rho_h(\boldsymbol{x})}{\partial\rho_i} = \phi_i^{(e)}(\boldsymbol{x}) \geq 0
+%\]
+%体积分数可写为
+%\[
+%V(\boldsymbol{\rho}) =  \frac{1}{|\Omega|}\int_{\Omega}\rho_h(\boldsymbol{x})~\mathrm{d}\boldsymbol{x} = \frac{1}{|\Omega|}\sum_{e=1}^{N_c}\int_{\Omega_e}\rho_h(\boldsymbol{x})~\mathrm{d}\boldsymbol{x} \approx \frac{1}{|\Omega|}\sum_{e=1}^{N_c}\sum_{g=1}^{N_q}\rho(\boldsymbol{x}_{e,g})\operatorname{det}\boldsymbol{J}_{e}(\boldsymbol{x}_{e,g})\omega_g
+%\]
+%由此，柔顺度最小化问题为
+%\[
+%\begin{aligned} 
+%	\min_{\boldsymbol{\rho}}&:c(\boldsymbol{\rho}) = \boldsymbol{F}^T\boldsymbol{U} = \boldsymbol{U}^T\boldsymbol{K}\boldsymbol{U} \\ \mathrm{subject~to}
+%	&:\begin{cases}
+%		\boldsymbol{K}(\boldsymbol{\rho})\boldsymbol{U}(\boldsymbol{\rho}) = \boldsymbol{F}\\
+%		g_V(\boldsymbol{\rho}) = V(\boldsymbol{\rho}) - V_f\leq0\\ 
+%		\rho(\boldsymbol{x})\in[\rho_{\min},1]
+%	\end{cases}
+%\end{aligned}
+%\]
+%
+%在经典 SIMP 模型 $E(\rho_h(\boldsymbol{x})) = \rho_h(\boldsymbol{x})^pE_0$ 插值下，单元刚度矩阵：
+%\[
+%\boldsymbol{K}_e(\rho_h(\boldsymbol{x})) = \int_{\Omega_e}\boldsymbol{B}^T\boldsymbol{D}(\rho_h(\boldsymbol{x}))\boldsymbol{B}~\mathrm{d}\boldsymbol{x} \approx \sum_{g=1}^{N_q}\boldsymbol{B}_g^T\boldsymbol{D}(\rho(\boldsymbol{x}_g))\boldsymbol{B}_g\operatorname{det}\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\omega_g
+%\]
+%体积分数约束函数的导数由链式法则并按单元分片求和：
+%\[
+%\frac{\partial{g}_V(\boldsymbol{\rho})}{\partial\rho_i} = \frac{\partial{V}(\boldsymbol{\rho})}{\partial\rho_i} = \frac{1}{|\Omega|}\sum_{e\in{I}_i}\int_{\Omega_e}\phi_i^{(e)}(\boldsymbol{x})~\mathrm{d}\boldsymbol{x} \approx \frac{1}{|\Omega|}\sum_{e\in{I}_i}\sum_{g=1}^{N_q}\phi_i^{(e)}(\boldsymbol{x}_{e,g})\operatorname{det}\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\omega_g
+%\]
+%先对杨氏模量求导
+%\[
+%\frac{\partial{E}(\rho_h(\boldsymbol{x}))}{\partial\rho_i} = p\rho_h(\boldsymbol{x})^{p-1}E_0\phi_i^{(e)}(\boldsymbol{x})
+%\]
+%从而单元刚度矩阵的导数为
+%\[
+%\begin{aligned}
+%	\frac{\partial\boldsymbol{K}_e}{\partial\rho_i} &= \int_{\Omega_e}\boldsymbol{B}^T\left(\frac{\partial{E}(\rho_h(\boldsymbol{x}))}{\partial\rho_i}\frac{1}{E_0}\boldsymbol{D}_0\right)\boldsymbol{B}~\mathrm{d}\boldsymbol{x} = \int_{\Omega_e}\boldsymbol{B}^T(p\rho_h(\boldsymbol{x})^{p-1}\phi_i^{(e)}(\boldsymbol{x})\boldsymbol{D}_0)\boldsymbol{B}~\mathrm{d}\boldsymbol{x}\\
+%	&\approx \sum_{g=1}^{N_q}p\rho_h(\boldsymbol{x}_{e,g})^{p-1}\phi_i^{(e)}(\boldsymbol{x}_{e,g})\boldsymbol{B}_g^T\boldsymbol{D}_0\boldsymbol{B}_g\operatorname{det}\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\omega_g
+%\end{aligned}
+%\]
+%最后，柔顺度的导数为
+%\[
+%\begin{aligned}
+%	\frac{\partial{c}}{\partial\rho_i} 
+%	&= -\sum_{e\in{I}_i}\boldsymbol{U}_e^T\frac{\partial\boldsymbol{K}_e}{\partial\rho_i}\boldsymbol{U}_e = -\sum_{e\in{I}_i}\boldsymbol{U}_e^T\left(\int_{\Omega_e}\boldsymbol{B}^T\frac{\partial\boldsymbol{D}(\rho_h(\boldsymbol{x}))}{\partial\rho_i}\boldsymbol{B}\right)\boldsymbol{U}_e\\ &\approx -\sum_{e\in{I}_i}\sum_{g=1}^{N_q}p\rho_h(\boldsymbol{x}_{e,g})^{p-1}\phi_i^{(e)}(\boldsymbol{x}_{e,g})\boldsymbol{B}_g^T\boldsymbol{D}_0\boldsymbol{B}_g\operatorname{det}\boldsymbol{J}_e(\boldsymbol{x}_{e,g})\omega_g
+%\end{aligned}
+%\]
+
+%值得注意的是，与单元密度表征不同，节点密度表征下的被积函数包含了密度插值函数的高次幂项 $(\rho_h(\boldsymbol{x}))^p$，这意味着为了精确捕捉单元内部的刚度变化并避免数值积分误差，节点密度模型通常需要比同阶位移元更高的数值积分阶次。
+
+
+\subsection{柔顺机构设计问题的离散推广}
+\label{subsec:compl_mech_design}
+
+在上述两种密度表征下柔顺度最小化问题的基础上，本小节进一步将优化目标由结构柔顺度推广为柔顺机构输出端在指定方向上的位移。为突出离散推广的基本思路，以下仍以单元密度表征为例进行说明；对于节点密度表征，只需将第 \ref{subsec:node_density_rep} 节中的体积约束、单元刚度矩阵及其灵敏度表达代入下述框架，即可得到完全类比的离散模型。
+
+设输出端在指定方向上的离散位移定义为
+\[
+u_{\text{out}}(\boldsymbol{\rho}) = \boldsymbol{L}^{\top}\boldsymbol{U}(\boldsymbol{\rho}),
+\]
+其中 $\boldsymbol{L}$ 为输出选择向量，用于提取输出端在给定方向上的位移分量。记 $\boldsymbol{F}_{\text{in}}$ 为输入载荷向量，则柔顺机构设计问题的离散优化模型可写为：
+\begin{equation} \label{eq:ch3_discrete_model_mechanism}
+	\begin{aligned}
+		\max_{\boldsymbol{\rho}}\quad & u_{\text{out}}(\boldsymbol{\rho}) = \boldsymbol{L}^{\top}\boldsymbol{U}(\boldsymbol{\rho})\\
+		\text{subject to}\quad & \boldsymbol{K}_{\text{system}}(\boldsymbol{\rho})\boldsymbol{U}(\boldsymbol{\rho}) = \boldsymbol{F}_{\text{in}},\\
+		& g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} - V_f\leq 0,\\ 
+		& \rho_e\in[\rho_{\min},1],\qquad e=1,\cdots,N_c. 
+	\end{aligned}
+\end{equation}
+其中，总刚度矩阵 $\boldsymbol{K}_{\text{system}}$ 由结构刚度和输入/输出弹簧刚度组合而成，即
+\[
+\boldsymbol{K}_{\text{system}}(\boldsymbol{\rho}) = \boldsymbol{K}(\boldsymbol{\rho}) + \boldsymbol{K}_{\text{spring}},
+\]
+这里 $\boldsymbol{K}_{\text{spring}}$ 为弹簧刚度矩阵，与设计变量 $\boldsymbol{\rho}$ 无关。结构部分仍采用 SIMP 插值模型：
+\[
+\boldsymbol{K}_e(\rho_e) = \rho_e^p\boldsymbol{K}_e^{(0)},\quad e=1,\cdots,N_c,
+\]
+经标准有限元装配后得到全局结构刚度矩阵 $\boldsymbol{K}(\boldsymbol{\rho})$。
+
+由于柔顺机构设计问题的目标函数不再是柔顺度，其离散灵敏度一般不能利用自伴随性质直接化简，因此需要引入离散伴随向量 $\boldsymbol{\lambda}$，满足
+\[
+\boldsymbol{K}_{\text{system}}(\boldsymbol{\rho})\boldsymbol{\lambda} = -\boldsymbol{L},
+\]
+于是，在状态方程与伴随方程均成立时，输出位移关于单元密度 $\rho_e$ 的导数为
+\[
+\frac{\partial u_{\text{out}}}{\partial \rho_e}  = \boldsymbol{\lambda}^{\top} \frac{\partial \boldsymbol{K}_{\text{system}}}{\partial \rho_e} \boldsymbol{U},
+\]
+由于 $\boldsymbol{K}_{\text{spring}}$ 与设计变量无关，有
+\[
+\frac{\partial\boldsymbol{K}_{\text{system}}}{\partial \rho_e} = \frac{\partial\boldsymbol{K}}{\partial \rho_e},
+\]
+进一步地，对第 $e$ 个单元有
+\[
+\frac{\partial\boldsymbol{K}_e}{\partial \rho_e} = p\rho_e^{p-1}\boldsymbol{K}_e^{(0)},
+\]
+从而得到柔顺机构输出位移对单元密度的灵敏度表达式：
+\begin{equation} \label{eq:ch3_sens_mechanism}
+	\frac{\partial u_{\text{out}}}{\partial \rho_e} = \boldsymbol{\lambda}^{\top} \frac{\partial \boldsymbol{K}_{\text{system}}}{\partial \rho_e} \boldsymbol{U} = \boldsymbol{\lambda}_e^{\top}\frac{\partial\boldsymbol{K}_e}{\partial\rho_e}\boldsymbol{U}_e = p\rho_e^{p-1} \boldsymbol{\lambda}_e^{\top} \boldsymbol{K}_e^{(0)} \boldsymbol{U}_e.
+\end{equation}
+
+由此可见，柔顺机构设计问题在离散层面仍可统一表述为受平衡方程约束的优化问题，与柔顺度最小化模型相比，其主要区别在于目标函数由结构柔顺度改为输出位移，从而导致相应的伴随方程与灵敏度表达发生变化。对于节点密度表征，只需将第~\ref{subsec:node_density_rep} 节中的节点密度插值、体积约束及单元刚度灵敏度公式代入上述推导过程，即可得到对应的离散优化模型与灵敏度表达。
+
+
+\section{不同设计变量表征下的过滤策略}
+\label{sec:diff_design_var_filtering}
+
+在基于变密度法的拓扑优化求解过程中，若不引入适当的正则化技术，往往容易出现棋盘格现象、网格依赖性以及局部极值等数值病态问题。过滤技术作为一种行之有效的显式正则化手段，不仅能够有效抑制高频数值振荡，还能在一定程度上控制结构的最小特征尺度，从而改善优化结果的网格无关性。为与前文的离散优化模型相匹配，本节将分别讨论并给出单元密度表征与节点密度表征下的离散过滤策略，涵盖经典的灵敏度过滤与密度过滤两种形式。
+
+
+\subsection{单元密度表征下的过滤策略}
+\label{subsec:cell_density_filtering}
+
+在单元密度表征中，设计变量与有限元网格单元一一对应。记 $\boldsymbol{x}_e$ 与 $\boldsymbol{x}_s$ 分别表示单元 $e$ 与单元 $s$ 的几何中心坐标，并定义两单元中心之间的距离为
+\[
+\mathrm{dist}(e,s) := \vert\boldsymbol{x}_e - \boldsymbol{x}_s\vert.
+\]
+给定过滤半径 $r_{\min}>0$，定义离散卷积权重因子：
+\[
+H_{es} = \max\{0,r_{\min} - \mathrm{dist}(e,s)\}^q,
+\]
+其中$q \geq 1$ 为衰减指数。当 $q=1$ 时，上式退化为常用的线性锥形核。
+
+离散权重 $H_{es}$ 可视为第~\ref{subsec:filter_sensitivity} 节中连续卷积核函数 $w(r)$ 在离散网格上的采样形式。具体而言，若取
+\[
+w(r) = \max\{0, r_{\min} - r\}^q,
+\]
+则有
+\[
+H_{es} = w(\vert\boldsymbol{x}_e - \boldsymbol{x}_s\vert) = w(\mathrm{dist}(e,s)).
+\]
+因此，$H_{es}$ 可理解为连续核函数 $w(r)$ 在单元几何中心点上的离散取值。由 $\max\{\cdot\}$ 的截断形式可知，当 $\mathrm{dist}(e,s)\ge r_{\min}$ 时有 $H_{es}=0$，即过滤邻域外的单元不再对单元 $e$ 的过滤结果产生影响，从而保证权重非负并使得过滤仅在局部邻域内生效，这是拓扑优化中常用的离散过滤构造方式。
+
+\textbf{灵敏度过滤}：该方法主要修正易产生高频振荡的目标函数（以柔顺度 $c$ 为例）的灵敏度场，而不直接改变设计变量本身。过滤后的灵敏度定义为：
+\begin{equation} \label{eq:ch3_cell_sens_filter}
+	\widetilde{\frac{\partial c}{\partial \rho_e}} = \frac{1}{\max\{\gamma,\rho_e\}}\; \frac{\sum_{s=1}^{N_c}H_{es}\,v_s\,\rho_s\, \frac{\partial c}{\partial \rho_s}} {\sum_{s=1}^{N_c}H_{es}\,v_s},
+\end{equation}
+其中，$N_c$ 为单元总数，$v_s$ 为单元 $s$ 的测度，$\gamma>0$ 为防止分母奇异的小正数。
+
+\textbf{密度过滤}：与灵敏度过滤不同，密度过滤首先对设计变量本身进行局部加权平均，从而构造过滤后的物理密度场 $\tilde{\boldsymbol{\rho}}$。对单元 $e$，其物理密度定义为：
+\begin{equation} \label{eq:ch3_cell_dens_filter}
+	\tilde{\rho}_e = \frac{1}{\sum_{s=1}^{N_c} H_{es}v_s}\sum_{s=1}^{N_c} H_{es}v_s \rho_s,
+\end{equation}
+在此表征下，有限元刚度矩阵的组装、以及目标函数、约束函数的计算均基于物理密度 $\tilde{\boldsymbol{\rho}}$ 进行。因此，对于任意依赖于物理密度的函数 $f(\tilde{\boldsymbol{\rho}})$（如目标函数 $c$ 或体积分数约束 $g_V$），其关于原始设计变量 $\rho_e$ 的导数需要通过链式法则求得。由上式可直接得到
+\[
+\frac{\partial \tilde{\rho}_j}{\partial \rho_e} = \frac{H_{je} v_e}{\sum_{s=1}^{N_c} H_{js} v_s},
+\]
+结合卷积权重的对称性（即 $H_{je} = H_{ej}$），可得最终的链式求导表达式为：
+\begin{equation} \label{eq:ch3_cell_chain_rule}
+	\frac{\partial{f}}{\partial\rho_e} = \sum_{j=1}^{N_c} \frac{\partial{f}}{\partial \tilde{\rho}_j} \frac{\partial \tilde{\rho}_j}{\partial \rho_e} = v_e\sum_{j=1}^{N_c}H_{je}\left( \frac{1}{\sum_{s=1}^{N_c} H_{js} v_s}\frac{\partial{f}}{\partial \tilde{\rho}_j}\right),
+\end{equation}
+式中，$\frac{\partial f}{\partial \tilde{\rho}_j}$ 表示函数 $f$ 关于物理密度 $\tilde{\rho}_j$ 的导数。
+
+
+\subsection{节点密度表征下的过滤策略}
+\label{subsec:node_density_regularization}
+
+在节点密度表征下，设计变量定义于网格顶点。记 $N_n$ 为设计节点总数，$\boldsymbol{x}_i$ 与 $\boldsymbol{x}_k$ 分别表示节点 $i$ 与节点 $k$ 的几何坐标，并定义两节点之间的距离为
+\[
+\mathrm{dist}(i,k):=\vert \boldsymbol{x}_i-\boldsymbol{x}_k\vert.
+\]
+给定过滤半径 $r_{\min}>0$，定义离散卷积权重为
+\[
+H_{ik}=\max\{0,r_{\min}-\mathrm{dist}(i,k)\}^q.
+\]
+为考虑节点邻域对应的离散测度，引入与节点 $i$ 关联的控制体积 $v_i$。在实现中，$v_i$ 采用集中质量近似构造，即将各单元测度按其顶点数均分后累加到相应顶点。
+
+\textbf{灵敏度过滤}：定义节点 $i$ 处过滤后的柔顺度目标函数 $c$ 的灵敏度为：
+\begin{equation} \label{eq:ch3_node_sens_filter}
+	\widetilde{\frac{\partial c}{\partial\rho_i}} = \frac{v_i}{\max\{\gamma,\rho_i\}\sum_{k=1}^{N_n}H_{ik}v_k} \sum_{k=1}^{N_n}H_{ik}\rho_k\frac{1}{v_k}\frac{\partial c}{\partial\rho_k}.
+\end{equation}
+
+\textbf{密度过滤}：引入物理节点密度向量 $\tilde{\boldsymbol{\rho}}=(\tilde{\rho}_1,\cdots,\tilde{\rho}_{N_n})^{\top}$，并定义：
+\begin{equation} \label{eq:ch3_node_dens_filter}
+	\tilde{\rho}_i = \frac{1}{\sum_{k=1}^{N_n} H_{ik}v_k}\sum_{k=1}^{N_n} H_{ik}v_k \rho_k.
+\end{equation}
+对于任意关于物理密度 $\tilde{\boldsymbol{\rho}}$ 可微的函数 $f(\tilde{\boldsymbol{\rho}})$，由链式法则可得其关于原始节点设计变量 $\rho_k$ 的灵敏度为
+\[
+\frac{\partial f}{\partial \rho_k} = \sum_{j=1}^{N_n} \frac{\partial f}{\partial \tilde{\rho}_j} \frac{\partial \tilde{\rho}_j}{\partial \rho_k},
+\]
+由 $\tilde{\rho}_j$ 的定义进一步有
+\[
+\frac{\partial \tilde{\rho}_j}{\partial \rho_k} = \frac{H_{jk}v_k}{\sum_{l=1}^{N_n}H_{jl}v_l},
+\]
+从而利用权重对称性可得：
+\begin{equation} \label{eq:ch3_node_chain_rule}
+	\frac{\partial f}{\partial \rho_k} = \sum_{j=1}^{N_n} \frac{\partial f}{\partial \tilde{\rho}_j} \frac{H_{jk}v_k}{\sum_{l=1}^{N_n}H_{jl}v_l} = v_k\sum_{j=1}^{N_n} H_{jk} \left( \frac{1}{\sum_{l=1}^{N_n}H_{jl}v_l} \frac{\partial f}{\partial \tilde{\rho}_j} \right).
+\end{equation}
+值得注意的是，求和项 $\sum_{j=1}^{N_n}$ 表示节点 $k$ 的设计变量变化通过卷积关系影响其邻域内所有节点 $j$ 的物理密度，进而对全局目标函数产生贡献。
+
+
+\section{数值算例}
+\label{sec:ch3_numerical_examples}
+
+本节旨在通过典型数值算例，对前文建立的任意次拉格朗日有限元离散格式及不同密度表征方法进行评估。在统一的计算基准下，本文将依次探讨二维 MBB 梁、简支桥梁、三维悬臂梁以及柔顺机构设计等问题，系统剖析单元阶次、表征方式及正则化策略对拓扑优化数值稳定性和最终构型的具体影响。
+
+
+\subsection{算例设置与统一框架}
+\label{subsec:ch3_case_framework}
+
+为确保本章所有比较研究均在统一且公平的基准下进行，除特别说明外，全部数值算例均采用如下统一设置：
+\begin{description}
+	\item[物理模型与本构]：材料为均匀、各向同性的线弹性体。对于二维问题，统一采用平面应力假设。
+
+	\item [材料插值模型]：采用修正的 SIMP 模型，以避免低密度区域的刚度矩阵奇异性。杨氏模量 $E$ 被定义为空间位置 $\boldsymbol{x}$ 处相对密度 $\rho(\boldsymbol{x})$ 的函数：
+	\[
+	E(\rho(\boldsymbol{x})) = E_{\min} + (\rho(\boldsymbol{x}))^p (E_0 - E_{\min}),
+	\]
+	其中，$E_0 = 1\,\mathrm{MPa}$ 为实体材料的杨氏模量，$E_{\min} = 10^{-9}\,\mathrm{MPa}$ 为孔洞区域设定的极小非零刚度下限，惩罚因子固定为 $p=3$。
+	
+	\item [最小尺度控制]：为获得网格无关且无病态的解，统一采用固定的最小特征尺度控制。过滤算子采用基于单元邻域的加权平均形式，其过滤半径 $r_{\min}$ 以物理长度为单位度量，除特别说明外统一取 $r_{\min} = 2.4\,\mathrm{mm}$。该设置确保在不同网格密度下，过滤邻域覆盖的物理范围保持一致，从而实现真正的网格无关性。
+	
+	\item [优化算法配置]：设计变量更新采用 OC 法，统一设置如下参数：正向移动限制 $m=0.2$；数值阻尼系数 $\eta=0.5$；拉格朗日乘子采用二分法搜索，给定上界 $l_{\max}=10^9$ 与容差 $\epsilon_{\text{bisect}}=10^{-3}$；设计变量下界 $\rho_{\min}=10^{-9}$。
+		
+	\item [收敛准则]： 当连续两次迭代中设计变量 $\boldsymbol{\rho}$ 的变化量满足 
+	\[
+	\Vert\boldsymbol{\rho}^{(n+1)} - \boldsymbol{\rho}^{(n)}\Vert_{\infty,\Omega} < 10^{-2},
+	\]
+	时，认为优化过程已收敛。设置最大迭代步数 $n_{\max} = 500$ 作为安全上限。当迭代达到 $n_{\max}$ 而上述条件仍未满足时，算法亦终止。若此时柔顺度与体积分数已在较长迭代区间内保持基本稳定，则本文将该情形记为“准收敛”。
+	
+	\item [单位体系]：本章所有算例统一采用 $\mathrm{mm}/\mathrm{N}/\mathrm{MPa}$（长度单位 $\mathrm{mm}$，力单位 $\mathrm{N}$，杨氏模量单位 $\mathrm{MPa}$）。
+	
+	\item [数值积分策略]：为克服节点密度表征下 SIMP 插值引入的高次非线性导致的积分误差，需采用比单元密度表征更高的积分精度 。本章统一积分设置如下：对于张量积单元，单元与节点密度表征分别采用 $q=k+1$ 与 $q=k+2$ 阶高斯积分；对于单纯形单元，二者则分别选用代数精度不低于 $2k$ 与 $2k+2$ 的积分公式 。
+
+\end{description}
+
+
+\subsection{基准比较：数值病态与最小尺度控制}
+\label{subsec:benchmark_pathology_min_lengthscale}
+
+本节首先采用二维 MBB（Messerschmitt-Bölkow-Blohm）梁~\cite{olhoff1991cad} 作为基准算例，旨在对比是否施加最小尺度控制对优化结果的具体影响，从而为后续的核心比较建立可靠参照。
+
+\subsubsection*{算例 3.1：二维 MBB 梁}
+
+结构完整设计域如图~\ref{fig:ch3_mbb_domain_full} 所示，引入特征半长 $L=60\,\mathrm{mm}$，结构高度设定为 $L/3$，则其完整宏观几何尺寸为 $2L\times L/3$。鉴于结构与载荷关于竖向中线对称，为降低计算开销，提取其右半域作为实际计算域，如图 \ref{fig:ch3_mbb_domain_half} 所示。半域尺寸为 $60\,\mathrm{mm}\times20\,\mathrm{mm}$，左侧边施加对称约束（$u_x = 0$），右下角节点施加滑移支座（$u_y = 0$），左上角节点施加竖直向下的集中载荷 $P = 1\,\mathrm{N}$，其余边界均按自由边界（即齐次诺伊曼边界）处理。材料的杨氏模量 $E = 1\,\mathrm{MPa}$，泊松比 $\nu=0.3$，优化问题定义为：在给定体积分数约束 $V_f = 0.5$ 下，寻求材料的最优空间分布，以最小化结构的全局柔顺度（即实现结构整体刚度的最大化）。
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+
+	\subfigure[完整设计域]{
+		\label{fig:ch3_mbb_domain_full}
+		\includegraphics[width=0.57\textwidth]{ch3_mbb_domain_full}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[右半设计域]{
+		\label{fig:ch3_mbb_domain_half}
+		\includegraphics[width=0.37\textwidth]{ch3_mbb_domain_half} 
+	}
+	\caption{二维 MBB 梁的设计域、载荷与边界条件示意图}
+	\label{fig:ch3_mbb_domain}
+\end{figure}
+
+为突出数值病态与最小特征尺度控制的影响，本节基准比较统一采用单分辨率的位移型有限元离散，分析单元取 $k=1$ 阶四边形单元，采用 $q=2$ 阶高斯积分公式，设计变量取每个单元上的常值密度 $\rho_e$。在此基础上，考虑三种过滤策略：不施加最小特征尺度控制（无过滤）、灵敏度过滤与密度过滤。为保证物理尺度的一致性，灵敏度过滤与密度过滤的过滤半径均取 $r_{\min}=2.4\,\mathrm{mm}$，并在三种不同网格剖分下进行对比，三组网格剖分分别为 $60\times20$、$90\times30$ 与 $150\times50$，对应位移自由度 $u_{\mathrm{dof}} = \{2562,\,5642,\,15402\}$，设计变量自由度 $\rho_{\mathrm{dof}}=\{1200,\,2700,\,7500\}$。不同网格分辨率与过滤策略下的优化对比结果汇总于表 \ref{tab:mbb_mesh_filter_results}。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与过滤策略下的优化结果}
+	\label{tab:mbb_mesh_filter_results}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				% 垂直居中
+				>{\centering\arraybackslash}m{0.15\textwidth} 
+				>{\centering\arraybackslash}m{0.28\textwidth}
+				>{\centering\arraybackslash}m{0.28\textwidth}
+				>{\centering\arraybackslash}m{0.28\textwidth}
+			}
+			\toprule
+			网格剖分 & 无过滤 & 灵敏度过滤 & 密度过滤 \\
+			\midrule
+			
+			\makecell{$60\times20$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none}\\[-0.5mm]\footnotesize $n=53$, $c=203.0660$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_dens}\\[-0.5mm]\footnotesize $n=144$, $c=233.7146$}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_90_30_none}\\[-0.5mm]\footnotesize $n=34$, $c=201.0279$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_90_30_sens}\\[-0.5mm]\footnotesize $n=95$, $c=217.9426$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_90_30_dens}\\[-0.5mm]\footnotesize $n=265$, $c=234.4671$}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_150_50_none}\\[-0.5mm]\footnotesize $n=48$, $c=202.8103$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_150_50_sens}\\[-0.5mm]\footnotesize $n=95$, $c=219.7274$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_150_50_dens}\\[-0.5mm]\footnotesize $n=362$, $c=235.7332$}
+			\\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表~\ref{tab:mbb_mesh_filter_results} 第 2 列直观展示了未施加最小特征尺度控制时，不同网格剖分下的优化结果。以粗网格 $60\times20$ 为例，优化在 53 步收敛，柔顺度值 $c$ 约为 203，但结构内部出现了大面积棋盘格图案，相邻单元密度剧烈交替，属于典型的高频数值病态。尽管无过滤情形下的柔顺度值在各组对比中表面上达到最低，但这实际上是因为棋盘格模式会人为高估局部刚度，从而导致算法陷入虚假最优解，其在物理原理与工程制造上是完全不可行的。更为棘手的是，当网格细化至 $90\times30$ 与 $150\times50$ 时，目标函数值并未显著改善，局部拓扑反而极度细碎化。不同分辨率下的腹板走向与微观分支差异显著，表现出强烈的网格依赖性。相比之下，施加最小特征尺度控制后（表~\ref{tab:mbb_mesh_filter_results} 第 3、4 列），优化构型获得了实质性改善。无论采用何种过滤策略，三种网格尺度下的主承载路径均保持高度一致，杆件宽度稳定在由过滤半径 $r_{\min}$ 决定的物理尺度附近，从根本上消除了棋盘格与网格依赖现象。尽管过滤算子引入的平滑惩罚使得结构柔顺度与迭代步数普遍增加，但这换取了物理上切实可行且几何规整的清晰设计。
+
+此外，在相同过滤半径下，密度过滤所获结构倾向于保守，边界灰度带略显宽泛，而灵敏度过滤则能促成更为锐利的 0–1 拓扑分布。鉴于在当前二维 MBB 梁基准算例的具体参数配置下，灵敏度过滤在几何清晰度与算法收敛效率之间取得了更优的折中，为简化统一的比较基准，本章后续算例如无特别说明，均采用灵敏度过滤作为最小特征尺度控制手段。
+
+
+\subsection{核心对比：表征方法与单元阶次}
+\label{subsec:core_compare_rep_order}
+
+第 \ref{subsec:benchmark_pathology_min_lengthscale} 节通过二维 MBB 梁基准算例说明了在单元密度表征下，若缺乏显式的最小特征尺度控制，则容易产生棋盘格与网格依赖等数值病态；而施加统一物理半径的正则化策略后，上述病态现象被有效抑制，从而获得几何清晰且具备网格无关性的拓扑结构。基于这一认识，本节在上述 MBB 梁算例的基础上，系统比较不同设计变量表征方式与不同单元阶次对优化结果的影响，物理与优化参数均沿用前文的统一设置。
+
+为突出设计变量表征方式本身的作用，表 \ref{tab:mbb_elem_vs_node_density_unfiltered} 给出了在未施加最小特征尺度控制时，采用 $k=1$ 阶四边形单元时两种表征方式的优化结果。根据前文统一设置，单元与节点密度表征分别采用 $q=2$ 和 $q=3$ 阶高斯积分。在 $60 \times 20$、$90 \times 30$ 与 $150 \times 50$ 三组网格分辨率下，单元密度表征的设计变量自由度分别为 1200、2700 与 7500；节点密度表征因定义于网格顶点，自由度相应略增至 1281、2821 与 7701。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与密度表征下的优化结果（未过滤）}
+	\label{tab:mbb_elem_vs_node_density_unfiltered}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				% 垂直居中
+				>{\centering\arraybackslash}m{0.17\textwidth}
+				>{\centering\arraybackslash}m{0.415\textwidth}
+				>{\centering\arraybackslash}m{0.415\textwidth}
+			}
+			\toprule
+			网格剖分 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$60\times20$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_60_20_none_cell}\\[-0.5mm]
+				\footnotesize $n=53$, $c=203.0660$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_60_20_none_node}\\[-0.5mm]
+				\footnotesize $n=302$, $c=204.0256$
+			}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_90_30_none_cell}\\[-0.5mm]
+				\footnotesize $n=34$, $c=201.0279$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_90_30_none_node}\\[-0.5mm]
+				\footnotesize $n=216$, $c=197.3244$
+			}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$\\[1mm]}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_150_50_none_cell}\\[-0.5mm]
+				\footnotesize $n=48$, $c=202.8103$
+			}
+			&
+			\makecell{
+				\includegraphics[width=\linewidth]{ch3_150_50_none_node}\\[-0.5mm]
+				\footnotesize $n=369$, $c=192.3462$
+			}
+			\\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+与基准的单元密度方案（表~\ref{tab:mbb_elem_vs_node_density_unfiltered} 左列）相比，节点密度方案得益于双线性形函数的插值特性，其密度场天然具备 $C^0$ 连续性。这一底层机制有效抑制了高频数值振荡，基本消除了棋盘格病态，使主承载路径呈现出连续的条带状，视觉上更为平滑清晰。然而，节点密度方案并未彻底克服网格依赖性，细网格下不同分辨率的腹板走向与微观分支仍存在可见差异。更为显著的问题在于计算代价的大幅攀升：在柔顺度相近的前提下，单元密度方案仅需 $30\sim50$ 步即可收敛，而节点密度方案则骤增至 $200\sim400$ 步。究其机理，节点变量通过形函数在相邻单元间形成了强耦合，其固有的连续性犹如一种隐式的平滑惩罚，阻碍了空间上快速形成锐利的 0–1 阶跃边界，导致算法在迭代后期收敛缓慢。综合而言，单纯依赖节点表征的 $C^0$ 连续性虽能抑制棋盘格，但无法根除网格依赖，且会显著提高达到给定收敛精度所需的计算成本。
+
+鉴于未过滤情形下两种表征方式均无法根除网格依赖性，为在统一且物理可制造的框架下进行公平对比，本节进一步考察施加灵敏度过滤后的优化表现。表~\ref{tab:mbb_elem_vs_node_density_sens} 给出了在统一物理过滤半径 $r_{\min} = 2.4\,\mathrm{mm}$ 下，不同网格剖分对应的单元密度与节点密度表征方式的优化结果。
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同网格剖分与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_elem_vs_node_density_sens}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.15\textwidth}
+				>{\centering\arraybackslash}m{0.425\textwidth}
+				>{\centering\arraybackslash}m{0.425\textwidth}
+			}
+			\toprule
+			网格剖分 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$60\times20$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_cell}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_node}\\[-0.5mm]\footnotesize $n=140$, $c=225.3707$}
+			\\
+			\midrule
+			
+			\makecell{$90\times30$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_90_30_sens_cell}\\[-0.5mm]\footnotesize $n=95$, $c=217.9426$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_90_30_sens_node}\\[-0.5mm]\footnotesize $n=108$, $c=221.4765$}
+			\\
+			\midrule
+			
+			\makecell{$150\times50$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_150_50_sens_cell}\\[-0.5mm]\footnotesize $n=95$, $c=219.7274$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_150_50_sens_node}\\[-0.5mm]\footnotesize $n=112$, $c=220.8803$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+与作为基准的单元密度方案（表~\ref{tab:mbb_elem_vs_node_density_sens} 左列）相比，施加同样过滤条件的节点密度方案（表~\ref{tab:mbb_elem_vs_node_density_sens} 右列）在最终拓扑形态上仅表现出细微差异。在三种网格分辨率下，统一半径的灵敏度过滤均有效地消除了节点密度表征下的网格依赖性。结合第~\ref{subsec:benchmark_pathology_min_lengthscale} 节的结论可以发现，一旦引入显式的物理尺度控制，正则化算子在抑制数值病态方面便占据了主导地位，而设计变量的表征方式对最终拓扑的影响则降为次要因素。这一趋势在迭代行为中得到了更直观的印证，未施加过滤时，两种方案的迭代成本相差接近一个数量级；而施加过滤后，两者的迭代步数均收敛至一百步左右，计算效率趋于一致。上述对比有力地说明，在本算例框架下，数值稳定性与算法效率的决定性因素并非离散空间的设计变量选取（单元或节点），而是是否实施了统一的最小特征尺度控制。
+
+针对 $k=1$ 阶低阶单元的对比分析表明：在缺乏显式尺度控制时，无论采用何种网格分辨率，单元密度方案均深陷棋盘格病态，而节点密度方案虽具备天然平滑性，却仍无法根除网格依赖性且伴随高昂的迭代代价。然而，一旦引入统一物理半径的灵敏度过滤，显式的尺度控制便取代离散表征成为影响拓扑性态的主导因素，使得两种方案在拓扑形态、柔顺度及收敛效率上均趋于一致。
+
+在考察了网格分辨率的影响后，本小节将空间离散统一固定为 $60 \times 20$ 的四边形网格。在不施加过滤的条件下，通过改变单元阶次 $k$，系统考察设计变量表征与有限元插值阶次之间的耦合效应。为确保对比的公平性，实验维持设计变量空间维度基本一致（单元方案 $\rho_{\mathrm{dof}}=1200$，节点方案 $\rho_{\mathrm{dof}}=1281$）。随着阶次 $k$ 的提升，位移场受控自由度数由 $u_{\mathrm{dof}}=2562$ 分别显著增至 $9922$ ($k=2$) 与 $39042$ ($k=4$)，具体结果见表~\ref{tab:mbb_order_elem_vs_node_unfiltered}。
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同四边形单元阶次与密度表征下的优化结果（无过滤）}
+	\label{tab:mbb_order_elem_vs_node_unfiltered}
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.16\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度
+			\\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k1_cell}\\[-0.5mm]\footnotesize $n=53$, $c=203.0660$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k1_node}\\[-0.5mm]\footnotesize $n=302$, $c=204.0256$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k2_cell}\\[-0.5mm]\footnotesize $n=36$, $c=213.1796$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k2_node}\\[-0.5mm]\footnotesize $n=500^{+}$, $c=212.1727$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k4_cell}\\[-0.5mm]\footnotesize $n=41$, $c=218.6621$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_none_k4_node}\\[-0.5mm]\footnotesize $n=500^{+}$, $c=216.0374$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表~\ref{tab:mbb_order_elem_vs_node_unfiltered} 揭示了在未施加过滤时，单元阶次 $k$ 对两种表征方式的深层影响。从数值趋势来看，随着 $k$ 的增加，两种方案的柔顺度均呈现单调上升（单元密度方案由 $c\approx203$ 增至 $c\approx219$，节点方案由 $c\approx204$ 增至 $c\approx216$）。这种现象并非结构性能恶化，而是高阶有限元凭借更强的插值能力消除了由低阶离散误差引起的虚假刚度，使目标函数回归至物理合理的真实水平。在此共性基础上，两者的拓扑演化表现出截然不同的特性：单元密度方案展现出显著的数值正则化效应，即 $k=1$ 时遍布的细碎棋盘格在提升至 $k=2$ 后被拉伸为平顺的连续条带，局部振荡大幅减弱，并在 $k \ge 2$ 后趋于饱和；相比之下，节点密度表征凭借形函数的 $C^0$ 连续性，在 $k=1$ 时已基本根除棋盘格，提升阶次对其宏观拓扑框架影响甚微，主要作用仅限于边界的轻微平滑与虚假刚度的削弱。
+
+然而，节点密度方案虽在构型上保持稳定，但在高阶单元下却表现出严重的收敛迟滞：当 $k \ge 2$ 时，迭代均触及上限 $n_{\max} = 500$ 仍未满足收敛判据。图~\ref{fig:ch3_k4_conv_compare} 的迭代历程对比揭示了该现象的宏观动力学特征：单元方案仅需约 40 步即可快速收敛（图~\ref{fig:ch3_k4_conv_elem}）；而节点方案（图~\ref{fig:ch3_k4_conv_node}）在初期柔顺度骤降后，目标柔顺度与体积分数均快速进入极其平稳的状态（如图中平直曲线所示）。尽管宏观性能指标已不再显著变化，但算法却呈现出典型的“准收敛”特征。究其数值根源，高阶形函数空间使得单一节点变量的灵敏度高度依赖于周围更多相邻节点的状态，导致结构边界处的底层节点密度持续发生局部微调。这种微观层面的往复震荡使得设计变量的最大变化量始终无法落入收敛阈值，最终导致算法难以满足严格的收敛判据。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[单元密度]{
+		\label{fig:ch3_k4_conv_elem}
+		\includegraphics[width=0.47\textwidth]{ch3_k4_convergence_cell}
+	}
+	\hfill
+	\subfigure[节点密度]{
+		\label{fig:ch3_k4_conv_node}
+		\includegraphics[width=0.47\textwidth]{ch3_k4_convergence_node}
+	}
+	
+	\caption{二维 MBB 梁在 $k=4$ 时两种密度表征的收敛曲线对比}
+	\label{fig:ch3_k4_conv_compare}
+\end{figure}
+
+前述无过滤算例表明，单纯提高位移插值阶次并不能作为一种鲁棒的正则化手段来替代物理过滤，其甚至在节点密度表征下诱发了极其低效的“准收敛”问题。为进一步考察在显式施加最小特征尺度控制后单元阶次的影响机制，本节在上述实验配置的基础上，引入过滤半径为 $r_{\min}=2.4\,\mathrm{mm}$ 的灵敏度过滤，重新计算了不同阶次下两种表征方式的优化结果，详见表~\ref{tab:mbb_order_elem_vs_node_sens}。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同四边形单元阶次与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_order_elem_vs_node_sens}
+	
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.16\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+				>{\centering\arraybackslash}m{0.42\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_cell_k1}\\[-0.5mm]\footnotesize $n=106$, $c=216.8137$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_node_k1}\\[-0.5mm]\footnotesize $n=140$, $c=225.3707$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_cell_k2}\\[-0.5mm]\footnotesize $n=115$, $c=226.2545$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_node_k2}\\[-0.5mm]\footnotesize $n=144$, $c=229.6092$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_cell_k4}\\[-0.5mm]\footnotesize $n=113$, $c=230.8768$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_60_20_sens_node_k4}\\[-0.5mm]\footnotesize $n=144$, $c=233.5225$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表~\ref{tab:mbb_order_elem_vs_node_sens} 揭示了在引入灵敏度过滤后，单元阶次 $k$ 对两种表征方式优化行为的综合影响。对比无过滤情形可见，物理过滤的引入彻底重塑了高阶离散下的演化规律：在拓扑形态上，无论采用何种密度表征，$k=1, 2, 4$ 情形均收敛至高度一致的宏观构型，不仅彻底根除棋盘格病态，主承载路径与杆件尺度也几近重合，仅在边界灰度过渡上存在微小差异；在迭代行为上，节点密度方案在高阶单元下遭遇的“准收敛”迟滞被彻底消除，两种表征的迭代步数均稳定回落至 100 至 150 步的合理区间。究其机理，宽泛的物理平滑核有效抑制了由高阶形函数局部过耦合诱发的高频灵敏度震荡，使得由 $r_{\min}$ 决定的物理尺度成为控制拓扑演化的主导因素。上述对比结果表明，在设定统一过滤半径的前提下，单纯提升插值阶次或改变离散表征并未带来实质的拓扑改进，高阶有限元的精度优势在宽泛的灵敏度过滤下难以充分发挥，显式正则化手段在此类问题中已成为主导算法鲁棒性与最终构型的核心因素。
+
+为检验前述结论在其他有限元族上的适用性，本节进一步引入等面积剖分的三角形网格。除网格类型与积分规则外，其余物理参数、算法配置以及灵敏度过滤半径均与四边形算例保持一致。为保证高阶离散下的计算精度，积分方案严格遵循第~\ref{subsec:ch3_case_framework} 节的统一设定：在单元密度表征下，采用代数精度不低于 $2k$ 阶的高斯积分公式；在节点密度表征下，则采用不低于 $2k+2$ 阶的公式。表~\ref{tab:mbb_tri_order_elem_vs_node_sens} 展示了施加灵敏度过滤后，不同三角形单元阶次与密度表征方式下的最终优化结果。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维 MBB 梁在不同三角形单元阶次与密度表征下的优化结果（灵敏度过滤）}
+	\label{tab:mbb_tri_order_elem_vs_node_sens}
+	
+	\setlength{\tabcolsep}{6pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.12\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k1_elem}\\[-0.5mm]\footnotesize $n=101$, $c=212.2910$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k1_node}\\[-0.5mm]\footnotesize $n=112$, $c=221.7030$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k2_elem}\\[-0.5mm]\footnotesize $n=98$, $c=224.2097$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k2_node}\\[-0.5mm]\footnotesize $n=109$, $c=228.9346$}
+			\\
+			\midrule
+			
+			\makecell{$k=4$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k4_elem}\\[-0.5mm]\footnotesize $n=99$, $c=228.8028$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{tab3-6_tri_k4_node}\\[-0.5mm]\footnotesize $n=105$, $c=233.1645$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+表~\ref{tab:mbb_tri_order_elem_vs_node_sens} 的结果表明，三角形有限元族的优化表现与前述四边形网格高度一致，全面印证了基于四边形单元得出的核心结论。在统一的显式物理尺度控制下，不同阶次（$k=1,2,4$）与密度表征方式均稳健收敛于拓扑骨架几近重合的清晰构型，且迭代步数稳定在百步量级，彻底排除了高阶离散下的“准收敛”迟滞。虽然节点密度方案受其边界节点体积权重偏小的离散特性影响，在左侧固支端出现了局部的边界高密度带，但这仅为体积度量方式的局部副产物，并未改变主承载路径的整体分布与算法的收敛特性。综合上述观察可知，显式正则化机制主导拓扑演化与算法鲁棒性的规律，对不同的空间离散格式与单元族均具有极强的普适性。
+
+%从表 \ref{tab:mbb_tri_order_elem_vs_node_sens} 可以看到，在三角形单元上，单元密度与节点密度在统一施加灵敏度过滤后，同样收敛到无棋盘格、拓扑结构高度一致的解，不同单元阶次 $k$ 之间的拓扑差异很小，主要表现为杆件略有加粗或局部边界略为平滑，主承载路径和整体构型基本保持不变。相应的迭代步数也都集中在约百步量级，未再无过滤情形下的 “准收敛” 等异常行为。这与前文四边形单元上的观察结论一致，表明在统一的最小特征尺度控制下，“表征方法与单元阶次”的主要规律对不同单元族均具有良好的鲁棒性。
+%
+%需要注意的是，在节点密度表征下，左侧固定边界附近形成了一条饱和的高密度带，视觉上呈现为一条 “黑色边界”。这可以理解为节点密度离散与体积分数度量方式共同作用的自然结果：边界节点仅被较少单元共享，在体积分数约束中的有效权重较小，在相同体积分数限制下将其取为 $1$ 所 “消耗” 的体积分数更低，因此优化过程倾向于优先填满这些边界节点，再叠加灵敏度过滤的平滑效应，高密度沿边界连续传播，最终形成稳定的边界高密度带。若在实际应用中希望进一步消除这种边界偏好，可通过重新设计体积分数的离散形式来统一各设计变量的体积权重（例如对节点密度采用归一化权重），这类修正可以减弱边界高密度带，但不会改变本节关于拓扑形态与收敛特性的整体结论，本文不再展开。
+
+
+\subsection{应用推广：不同边界载荷}
+\label{subsec:case_boundary_loads}
+
+为进一步验证前文结论（即在显式尺度控制下，优化获得的宏观拓扑构型对设计变量表征方式与单元阶次表现出高度的一致性与鲁棒性）在不同边界条件与载荷形式下的普适性，本节选取二维简支桥梁模型作为第二个基准数值算例。与 MBB 梁算例不同，该问题引入了分布载荷与非设计域约束，更接近实际工程中的桥梁设计场景 。
+
+\subsubsection*{算例 3.2：二维简支桥梁}
+
+引入特征长度 $L = 120\,\mathrm{mm}$，结构高度设定为 $L/3$，则设计域的宏观几何尺寸为 $L \times L/3$（如图~\ref{fig:ch3_simply_supported_bridge_domain} 所示）。为了模拟实际桥梁中的桥面结构并确保载荷能够有效传递至支撑结构，将设计域顶部厚度为 $L/30$（即 $4\,\mathrm{mm}$，占总高度的 10\%）的区域 $\Omega_{\text{solid}} = \{(x, y) \mid 36 \le y \le 40\}$ 设定为实体非设计域。在优化迭代过程中，该区域内的设计变量被强制锁定为 $\rho(x)=1$。结构上边界施加竖直向下的均布牵引载荷 $\boldsymbol{t} = (0, -t_0)^{\top}$，其中 $t_0 = 1\,\mathrm{N/mm}$。支撑体系采用典型的简支形式：在设计域左下角节点处施加固定铰支约束（$u_x = u_y = 0$），在右下角节点处施加滑动铰支约束（$u_y = 0$），其余边界为自由边界。材料的杨氏模量 $E = 350\,\mathrm{MPa}$，泊松比 $\nu = 0.3$。优化目标为最小化结构柔顺度，体积分数约束设定为 $V_f = 0.5$。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.65\textwidth]{ch3_simply_supported_bridge_domain}
+	\caption{二维简支桥梁设计域、载荷与边界条件示意图}
+	\label{fig:ch3_simply_supported_bridge_domain}
+\end{figure}
+
+为保持对比的一致性，本算例沿用第~\ref{subsec:ch3_case_framework} 节所确立的统一数值框架。空间离散采用 $120 \times 40$ 的四边形网格剖分，材料模型采用修正的 SIMP 插值模型（$p=3$），并施加物理半径为 $r_{\min}=2.4\,\mathrm{mm}$ 的灵敏度过滤以控制最小特征尺度。表~\ref{tab:simply_bridge_k_density_sens} 汇总了不同单元阶次 $k \in \{1, 2\}$ 与两种设计变量表征（单元密度与节点密度）下的最终拓扑构型及相应的计算指标。
+
+\begin{table}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\caption{二维简支桥梁在不同阶次与不同密度表征下的优化结果}
+	\label{tab:simply_bridge_k_density_sens}
+	
+	\setlength{\tabcolsep}{6pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{adjustbox}{width=\textwidth}
+		\begin{tabular}{
+				>{\centering\arraybackslash}m{0.12\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+				>{\centering\arraybackslash}m{0.44\textwidth}
+			}
+			\toprule
+			单元阶次 & 单元密度 & 节点密度 \\
+			\midrule
+			
+			\makecell{$k=1$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_simply_bridge_k1_cell}\\[-0.5mm]\footnotesize $n=78$, $c=435.9132$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_simply_bridge_k1_node}\\[-0.5mm]\footnotesize $n=94$, $c=451.1564$}
+			\\
+			\midrule
+			
+			\makecell{$k=2$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_simply_bridge_k2_cell}\\[-0.5mm]\footnotesize $n=75$, $c=493.8612$}
+			&
+			\makecell{\includegraphics[width=\linewidth]{ch3_simply_bridge_k2_node}\\[-0.5mm]\footnotesize $n=92$, $c=501.3982$}
+			\\
+			
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+从表~\ref{tab:simply_bridge_k_density_sens} 可以清晰地看到，优化所得结构呈现出典型的“桥面+支撑”形式：顶部非设计域自然演化为连续实心桥面，以直接承接均布载荷；下方设计域则自发形成了拱形结构与类桁架的腹杆体系。这种拓扑形态与简支桥梁在均布载荷下的力学传力路径高度吻合，验证了本文方法在处理均布载荷及非对称边界条件时的物理有效性。从数值与离散角度看，本文提出的框架在本算例中表现出良好的鲁棒性与精度优势。随着单元阶次从 $k=1$ 提升至 $k=2$，结构柔顺度数值呈现合理的上升趋势。这再次印证了高阶单元能有效缓解低阶单元在弯曲主导变形下的离散误差，消除了刚度高估现象，从而获得了更接近真实物理状态的评价指标。此外，不同密度表征方式在该算例下均能获得拓扑特征高度一致的桥梁构型，证明了在显式尺度控制机制下，优化框架对离散表征方式具有良好的鲁棒性，能够稳健地应用于复杂边界条件下的工程结构设计。
+
+
+\subsection{应用推广：三维问题}
+\label{subsec:case_3d}
+
+为进一步检验前述关于密度表征方法与单元阶次的结论在三维情形下的适用性，本节选取经典的三维悬臂梁作为算例。相较于前述的二维算例，该问题在厚度方向上引入有限尺寸，可同时考察三维应力状态与多层构件布置对优化结果的影响。
+
+\subsubsection*{算例 3.3：三维悬臂梁}
+
+结构设计域尺寸设定为 $L \times L/3 \times L/15$，其中特征长度 $L = 60\,\mathrm{mm}$（如图~\ref{fig:ch3_cantilever_3d} 所示）。左端面完全固支（$u_x=u_y=u_z=0$），右端面的底边施加竖直向下的均布线载荷 $\boldsymbol{t}$，其对应的总合力为 $1\,\mathrm{N}$（数值实现中按等效节点力处理）。这可视为二维算例中集中点载荷在三维情形下的自然推广，其余外表面均施加零牵引边界条件。材料的杨氏模量 $E=1.0\,\mathrm{MPa}$，泊松比 $\nu=0.3$。优化目标为最小化结构柔顺度，体积分数约束设定为 $V_f = 0.3$。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.65\textwidth]{ch3_canti3d_domain}
+	\caption{三维悬臂梁设计域、载荷与边界条件示意图}
+	\label{fig:ch3_cantilever_3d}
+\end{figure}
+
+基于前文建立的统一基准，并在统一灵敏度过滤半径 $r_{\min} = 1.5\,\mathrm{mm}$ 的条件下，本节采用 $60 \times 20 \times 4$ 的六面体网格剖分，考察三维悬臂梁在不同阶次 $k \in \{1, 2\}$ 下的优化结果。不同单元阶次下的最终三维拓扑构型与目标函数收敛历程分别如图~\ref{fig:ch3_canti3d_top} 和图~\ref{fig:ch3_canti3d_convergence_plot} 所示。
+
+由图~\ref{fig:ch3_canti3d_top} 可见（为清晰展示内部的三维传力路径，图中采用 $\rho > 0.3$ 的密度阈值进行截断显示），三维悬臂梁在 $k = 1$ 与 $k = 2$ 下均收敛到了拓扑清晰且主承载路径高度一致的空间构型：上、下弦杆形成连续的传力通道，中部斜腹杆将右端竖向载荷有效传递至左端固支面，整体呈现出典型且合理的三维空间桁架受力特征。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$k=1$]{
+		\label{fig:ch3_canti3d_k1_top}
+		\includegraphics[width=0.45\textwidth]{ch3_canti3d_k1_top}
+	}
+	\hfill
+	\subfigure[$k=2$]{
+		\label{fig:ch3_canti3d_k2_top}
+		\includegraphics[width=0.45\textwidth]{ch3_canti3d_k2_top}
+	}
+	
+	\caption{三维悬臂梁在不同单元阶次下的最优拓扑构型（仅显示 $\rho>0.3$ 的单元）}
+	\label{fig:ch3_canti3d_top}
+\end{figure}
+
+图~\ref{fig:ch3_canti3d_convergence_plot} 进一步直观地展示了不同阶次下算法的迭代收敛特性差异。从图中可以看出，两种阶次下的目标函数均表现出初期快速下降并随后平稳收敛的特征，同时结构体积分数在迭代初期便迅速且严格地贴合于设定的约束上限（$V_f = 0.3$），整体寻优过程十分稳定。从数值结果对比来看，当单元阶次从 $k=1$ 提升至 $k=2$ 时，由于高阶离散对位移场与局部应变能分布的刻画更为精细，有效缓解了低阶单元的虚假刚度问题，最终结构柔顺度由 82.54 合理上升至 86.92。同时，正如收敛曲线后段所示，更为丰富的局部灵敏度信息使得优化算法在拓扑边界微观形貌的演化上经历了更长周期的微调，呈现出更为平缓的渐近收敛特征，进而需要更多的迭代步数以满足严格的终止准则（$k=2$ 收敛耗费 136 步，而 $k=1$ 仅需 54 步）。
+
+\begin{figure}[!htbp]
+	\centering
+	\captionsetup{justification=centering}
+	
+	\subfigure[$k=1$]{
+		\label{fig:ch3_canti3d_k1_convergence}
+		\includegraphics[width=0.47\textwidth]{ch3_canti3d_k1_convergence}
+	}
+	\hfill
+	\subfigure[$k=2$]{
+		\label{fig:ch3_canti3d_k2_convergence}
+		\includegraphics[width=0.47\textwidth]{ch3_canti3d_k2_convergence}
+	}
+	
+	\caption{三维悬臂梁在不同单元阶次下的优化收敛曲线}
+	\label{fig:ch3_canti3d_convergence_plot}
+\end{figure}
+
+
+\subsection{应用推广：柔顺机构设计}
+\label{subsec:case_compliant_mechanism}
+
+选取经典的位移反向器作为柔顺机构设计的基准算例~\cite{sarkarTopologyOptimizationQuadrilateral2025a}。位移反向器的设计目标是构建一个能够改变力传递方向的柔性机构：当在输入端口施加正向推力时，输出端口产生反向的位移输出。
+
+
+\subsubsection*{算例 3.4：位移反向器}
+
+全设计域尺寸设定为 $L \times L$，其中特征长度 $L=40\,\mathrm{mm}$，鉴于几何形状与载荷条件的对称性，为降低计算规模，本研究仅取设计域的上半部分进行建模分析，半域尺寸为 $L \times L/2$（如图~\ref{fig:disp_inverter_domain} 所示）。在此简化模型中，下边界（几何对称轴）施加对称位移约束 $u_y=0$，左侧边界的上端施加全固支约束 $u_x=u_y=0$，其作用范围取为半域高度的 $1/20$（即 $1\,\mathrm{mm}$），其余边界均视为自由表面并满足零牵引边界条件。材料的杨氏模量 $E = 1.0\,\mathrm{MPa}$，泊松比 $\nu=0.3$，并采用平面应力假设。优化目标为在给定的体积分数上限（$V_f = 0.3$）约束下，获得能够实现高效位移反向功能的柔顺机构，即最大化输出端在水平反方向上的位移幅值。
+
+为模拟致动器有限刚度与输出端工作阻力，避免优化过程中出现刚体位移或铰链退化，模型中引入线性弹簧模型：在输入端（对称轴左下角）施加水平向右的输入载荷 $F_{\text{in}}=1\,\mathrm{N}$，并在该输入自由度方向上附加弹簧刚度 $k_{\text{in}}=0.1\,\mathrm{N/mm}$；在输出端（对称轴右下角）的输出自由度方向上附加弹簧刚度 $k_{\text{out}}=0.1\,\mathrm{N/mm}$，用于表征工件的反作用力。
+
+%为模拟致动器有限刚度与输出端工作阻力，避免优化过程中出现刚体位移或铰链退化，模型中引入线性弹簧模型：
+%\begin{itemize}
+%	\item 输入端：在对称轴左下角施加水平向右的输入载荷 $F_{\text{in}}=1~\mathrm{N}$，并在输入自由度方向引入弹簧刚度 $k_{\text{in}}=0.1~\mathrm{N/mm}$。
+%	\item 输出端：在对称轴右下角的输出自由度方向引入弹簧刚度 $k_{\text{out}}=0.1~\mathrm{N/mm}$，用于表征工件反力。
+%\end{itemize}
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+	
+	\subfigure[全设计域]{
+		\label{fig:ch3_disp_inverter_full}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_full}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[上半设计域]{
+		\label{fig:ch3_disp_inverter_half}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_half} 
+	}
+	\caption{位移反向器设计域、载荷与边界条件示意图}
+	\label{fig:disp_inverter_domain}
+\end{figure}
+
+在数值实现中，最大化输出位移的设计目标被等价转化为最小化负的输出位移。考虑到柔顺机构设计（属于非自伴随问题）具有极强的数值敏感性，本文对 OC 优化器的核心参数进行了针对性调整：将更新步长限制缩紧至 $m = 0.1$，以限制单步设计变量的更新幅度，抑制优化初期的剧烈震荡；将数值阻尼系数调整为 $\eta = 0.3$，以平滑灵敏度历史信息，提升迭代轨迹的平稳性；将二分法搜索上限扩展至 $l_{\max} = 10^5$ 且收敛容差收紧至 $\epsilon_{\text{bisect}} = 10^{-4}$，以确保体积约束的精确满足；同时，将设计变量下界调整为 $\rho_{\min} = 10^{-3}$，从而有效避免全局刚度矩阵奇异，保障有限元求解的数值稳定性。
+
+基于前文建立的统一基准，本节重点考察单元密度与节点密度两种表征方式对柔顺机构优化结果的影响。为严格控制变量，有限元离散阶次在本算例中固定不变（取 $k=1$）。计算模型取上半设计域，采用 $80 \times 40$ 的规则四边形网格剖分，并统一施加过滤半径 $r_{\min} = 1.2\,\mathrm{mm}$ 的灵敏度过滤。在此配置下分别求解优化问题，不同表征方式下所得的最终拓扑构型与输出端目标位移 $u_{\text{out}}$ 的收敛历程分别如图~\ref{fig:ch3_disp_inverter_top} 和图~\ref{fig:ch3_disp_inverter_convergence} 所示。
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+	
+	\subfigure[单元密度表征]{
+		\label{fig:ch3_disp_inverter_top_cell}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_top_cell}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[节点密度表征]{
+		\label{fig:ch3_disp_inverter_top_node}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_top_node} 
+	}
+	\caption{位移反向器在不同密度表征下的最优拓扑构型}
+	\label{fig:ch3_disp_inverter_top}
+\end{figure}
+
+由图~\ref{fig:ch3_disp_inverter_top} 可见，在相同网格与相同灵敏度过滤设置下，单元密度与节点密度两种表征均能收敛到拓扑清晰的位移反向器构型：输入端与输出端之间形成连续传力通道，并通过中部斜向构件实现位移反向功能。两种表征的整体构型与主传力路径基本一致，差异主要体现在局部的离散边界表达上：节点密度表征下杆件边界更为平滑、密度过渡更连续；而单元密度表征下受限于分片常数插值，其边界呈现出更为明显的阶梯状特征。
+
+\begin{figure}[!htbp]
+	\centering
+	% 强制标题居中
+	\captionsetup{justification=centering} 
+	
+	\subfigure[单元密度表征]{
+		\label{fig:ch3_disp_inverter_convergence_cell}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_convergence_cell}
+	}
+	\hfill % 把两张图撑到版心的最左和最右，利用所有空间
+	\subfigure[节点密度表征]{
+		\label{fig:ch3_disp_inverter_convergence_node}
+		\includegraphics[width=0.47\textwidth]{ch3_disp_inverter_convergence_node} 
+	}
+	\caption{位移反向器在不同密度表征下的优化收敛曲线}
+	\label{fig:ch3_disp_inverter_convergence}
+\end{figure}
+
+如图~\ref{fig:ch3_disp_inverter_convergence} 所示，两种密度表征下输出位移 $u_{\text{out}}$ 与体积分数 $V_f$ 的收敛历程均表现出初期快速变化并随后平稳收敛的演化特征，且结构体积分数在极少的迭代步内便迅速贴合于设定的约束上限（$V_f = 0.3$），证明了所提算法在处理非自伴随问题时的整体鲁棒性。从定量结果对比来看，单元密度表征较快满足终止准则（收敛步数 $n = 80$），并获得了绝对值更大的反向输出位移（$u_{\text{out}} = -1.09$）；而节点密度表征的迭代历程更为平缓，所需步数显著增多（$n = 181$），且最终位移幅值略小（$u_{\text{out}} = -1.06$）。这一数值差异深刻反映了两种表征空间插值特性的不同：节点密度表征固有的 $C^0$ 连续性在边界过渡区域产生了隐式的平滑效应，限制了材料的极端分布，进而在收敛效率和最终极值上表现出一定的保守性。总体而言，尽管底层密度表征方式在局部边界平滑性与优化动力学上存在上述合理差异，但两者均能稳健地收敛至满足位移反向功能的合理构型。
+
+
+\section{本章小结}
+\label{sec:ch3_summary}
+
+本章在变密度法框架下，系统比较了任意次多单元族拉格朗日有限元在拓扑优化中的数值表现。通过构建统一的高阶离散格式，并推导单元与节点密度表征下的离散优化模型，本章结合二维、三维及柔顺机构典型算例，深入剖析了离散阶次、表征方式与正则化策略的综合影响。主要结论如下：
+
+\begin{enumerate}
+	\item \textbf{高阶有限元的优势与局限}：高阶有限元（如 $k\ge2$）能有效消除低阶离散（$k=1$）引起的虚假刚度，使目标函数回归真实物理水平。然而，单纯提升插值阶次并不能替代拓扑优化的正则化机制，同时还会显著增加计算成本。
+	
+	\item \textbf{不同密度表征的离散特性}：单元密度表征形式直接、收敛高效，但边界易呈阶梯状；节点密度表征凭借 $C^0$ 连续性使边界过渡更为平滑，但在某些特定问题或参数设置下，其隐式的平滑惩罚会导致算法陷入低效的“准收敛”状态，显著增加计算代价。两者在统一框架下均展现出良好鲁棒性，可根据实际需求灵活选用。
+	
+	\item \textbf{显式正则化机制的主导作用}：引入统一物理半径的显式正则化（如灵敏度过滤）后，其在抑制数值病态与控制最小特征尺度上占据绝对主导地位 。在此机制下，不同方案均能稳健收敛于高度一致的宏观构型，并彻底消除高阶离散的迭代迟滞。
+	
+	\item \textbf{传统耦合框架下高阶元优势的受限}：在传统的分析与设计网格严格绑定的单分辨率框架下，一旦施加主导拓扑演化的物理过滤，高阶离散（如 $k\ge2$）的优化构型及主承载路径与低阶情形几近重合。单纯提升插值阶次并未带来实质的拓扑改进，高阶有限元的精度优势难以充分发挥。
+\end{enumerate}
+
+综上所述，高精度离散能提升物理状态的评估质量，但边界清晰、局部细节丰富的拓扑构型仍依赖于合理的显式正则化。与此同时，传统单分辨率框架不仅限制了高阶元优势的发挥，且在全局高阶网格上同步细化分析与设计变量将导致计算规模急剧膨胀。这一矛盾自然引出了本文后续的研究动机：如何在保持高精度分析的同时，有效释放高阶元的优势并提升设计分辨率？下一章将以此为切入点，重点探讨基于高阶有限元的多分辨率高精度拓扑优化计算框架。
+
+
+%\fi

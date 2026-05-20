@@ -1,0 +1,127 @@
+% SIAM Shared Information Template
+% This is information that is shared between the main document and any
+% supplement. If no supplement is required, then this information can
+% be included directly in the main document.
+
+
+% Packages and macros go here
+\usepackage{bbding} % \Checkmark
+\usepackage{longtable} % for long table
+\usepackage{threeparttable}
+
+% new theorem environment;
+\newtheorem{thm}{Theorem}[section]
+
+
+
+\newcommand\tbbint{{-\mkern -16mu\int}}
+\newcommand\tbint{{\mathchar '26\mkern -14mu\int}}
+\newcommand\dbbint{{-\mkern -19mu\int}}
+\newcommand\dbint{{\mathchar '26\mkern -18mu\int}}
+\newcommand\bint{
+	{\mathchoice{\dbint}{\tbint}{\tbint}{\tbint}}
+}
+\newcommand\bbint{
+	{\mathchoice{\dbbint}{\tbbint}{\tbbint}{\tbbint}}
+}
+
+
+\DeclareMathOperator*{\argmin}{\mathrm{argmin}}
+\DeclareMathOperator*{\argmax}{\mathrm{argmax}}
+
+\newcommand{\Prox}{\mathrm{Prox}}
+\newcommand{\BProx}{\mathrm{BProx}}
+\newcommand{\GProx}{\mathrm{GProx}}
+\newcommand{\Vect}{\mathrm{Vec}}
+%\renewcommand{\baselinestretch}{1.5}
+
+\usepackage{amsopn}
+\DeclareMathOperator{\diag}{diag}
+
+
+\newcommand{\dom}{\mathrm{dom}}
+\newcommand{\dist}{\mathrm{dist}}
+\DeclareMathOperator{\intdom}{\mathrm{int}\dom}
+
+
+\newcommand{\mbk}{\bm{k}}
+\newcommand{\mbh}{\bm{h}}
+\newcommand{\mbb}{\bm{b}}
+\newcommand{\mbr}{\bm{r}}
+\newcommand{\mbp}{\bm{p}}
+\newcommand{\mbt}{\bm{t}}
+\newcommand{\mbP}{\bm{P}}
+\newcommand{\mbN}{\bm{N}}
+\newcommand{\mbbC}{\mathbb{C}}
+\newcommand{\mbbN}{\mathbb{N}}
+\newcommand{\mbbQ}{\mathbb{Q}}
+\newcommand{\mbbR}{\mathbb{R}}
+\newcommand{\mbbZ}{\mathbb{Z}}
+\newcommand{\hphi}{\hat{\phi}}
+\newcommand{\tphi}{\tilde{\phi}}
+\newcommand{\hPhi}{\hat{\Phi}}
+\newcommand{\tR}{\tilde{R}}
+\newcommand{\tmbr}{\tilde{\mbr}}
+\newcommand{\mcD}{\mathcal{D}}
+\newcommand{\mcF}{\mathcal{F}}
+\newcommand{\mcP}{\mathcal{P}}
+\newcommand{\mcL}{\mathcal{L}}
+\newcommand{\tmcP}{\tilde{\mcP}}
+\newcommand{\msA}{\mathscr{A}}
+
+\newcommand{\myblue}[1]{\textcolor{blue}{#1}}
+\newcommand{\myred}[1]{\textcolor{red}{#1}}
+
+\definecolor{SlateBlue1}{RGB}{131, 111, 255}
+\definecolor{DarkOrange1}{RGB}{255, 127, 0}
+\definecolor{DodgerBlue2}{RGB}{28, 134, 238}
+\definecolor{DarkCyan}{RGB}{0, 139, 139}
+\definecolor{DarkRed}{RGB}{139, 0, 0}
+\definecolor{grey11}{RGB}{28, 28, 28}
+\definecolor{Red1}{RGB}{255, 0, 0}
+\definecolor{DarkMagenta}{RGB}{139, 0, 139}
+\definecolor{lightGreen}{RGB}{144, 238, 144}
+
+\definecolor{RoyalBlue2}{RGB}{67,110,238}
+\definecolor{Purple2}{RGB}{145,44,238}
+\definecolor{DarkTurquoise}{RGB}{0,206,209}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\figW}[0]{14cm}
+\newcommand{\figWD}[0]{6.5cm}
+\newcommand{\figWT}[0]{4.8cm}
+\newcommand{\figWF}[0]{3.5cm}
+\newcommand{\figWDD}[0]{8cm}
+\newcommand{\figH}[0]{3cm}
+
+
+\newcommand{\fref}[1]{Figure \ref{#1}}
+\newcommand{\curl}[0]{\nabla\times}
+\newcommand{\veps}[0]{\varepsilon}
+\newcommand{\vphi}[0]{\varphi}
+\newcommand{\bfB}[0]{\bf B}
+\newcommand{\bfD}[0]{\bf D}
+\newcommand{\lsum}[2]{\sum\limits_{#1}^{#2}}
+\newcommand{\pat}[0]{\partial_t}
+\newcommand{\dert}[0]{\delta_{\tau}}
+\newcommand{\patt}[0]{\partial_{tt}}
+\newcommand{\bmcal}[1]{\bm{\mathcal{#1}}}
+\newcommand{\bmscr}[1]{\bm{\mathscr{#1}}}
+\newcommand{\vepsT}[0]{\veps_{0}\chi^{(3)}}
+
+\newcommand{\hua}[1]{\left\{ #1 \right\}}
+\newcommand{\kuo}[1]{\left( #1 \right)}
+\newcommand{\zhong}[1]{\left[ #1 \right]}
+\newcommand{\jue}[1]{\left| #1 \right|}
+\newcommand{\fan}[1]{\left\| #1 \right\|}
+\newcommand{\neiji}[1]{\left\langle #1 \right\rangle}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%% END HELPER CODE
+%%% Local Variables: 
+%%% mode:latex
+%%% TeX-master: "ex_article"
+%%% End: 

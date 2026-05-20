@@ -1,0 +1,39 @@
+%----摘要----------------------------------------------------------------------------------------
+\begin{cnabstract}
+	
+	连续体结构拓扑优化是实现复杂结构轻量化与高性能设计的重要方法。然而，现有的变密度拓扑优化方法在高精度边界刻画、局部应力建模及异构加速计算方面仍面临瓶颈。这不仅受限于传统低阶位移有限元在局部应力刻画与材料体积闭锁时的理论局限，也受制于高阶离散下大规模计算缺乏高效的并行加速机制。为此，本文聚焦“拓扑设计与物理空间的匹配与映射”、“混合离散下的应力对称与稳定性”与“高阶离散下大规模迭代的计算瓶颈”等核心挑战，深入研究高阶有限元离散、复杂局部约束建模及其高性能软件实现。
+	
+	针对高精度离散建模中的拓扑设计与物理空间匹配问题，本文阐明了任意次拉格朗日有限元在变密度拓扑优化中的数值特征，揭示了高阶离散空间对拓扑演化的影响规律与精度优势。进而构建了基于高阶有限元的多分辨率拓扑优化框架，通过设计网格与分析网格的解耦及高阶离散下的密度映射算子，建立了该框架下通用的拓扑优化模型及其伴随灵敏度分析方法，并推广至应力约束问题，在不显著增加物理自由度的前提下实现了拓扑边界的高分辨率精准表达。
+	
+	针对强非线性局部约束下的应力张量对称性与离散稳定性条件，本文提出了基于任意次胡张混合有限元的高精度拓扑优化方法。基于 Hellinger–Reissner 混合变分原理，构建了应力与位移协同逼近的拓扑优化模型。通过低阶稳定化与顶点应力连续性部分松弛策略，增强了非结构网格及复杂边界下的收敛性，从根本上消除了体积闭锁，保障了局部应力约束评估的数学严谨性。
+	
+	面向高阶离散下大规模迭代的计算瓶颈与高性能工程计算需求，本文基于开源智能 CAX 计算引擎 FEALPy 的底层张量抽象，主导研发了高性能拓扑优化软件平台 SOPTX。平台采用模块化分层架构，构建了基于解析预计算与张量收缩的高效矩阵组装与算子缓存机制，并结合自动微分实现了复杂约束灵敏度的自动化计算；通过二次封装 FEALPy 的多后端计算能力，实现了面向 NumPy、PyTorch、JAX 等计算后端的性能可移植计算与 CPU/GPU 异构加速。
+	
+	综上，本文围绕拓扑优化中的核心数学与数值瓶颈，贯通了“高精度离散建模——复杂局部约束求解——软件平台验证”的研究主线，建立了严谨的“理论——方法——实现”全链条体系，有效缓解了精度与效率的固有矛盾，为推动计算数学方法转化为工程实际生产力
+	提供了系统的理论支撑与自主数字化工具。
+
+\end{cnabstract}
+
+\begin{cnkeywords}
+	高阶有限元；胡张混合有限元；多分辨率拓扑优化；应力约束拓扑优化；拓扑优化软件平台 SOPTX
+\end{cnkeywords}
+
+%----Abstract----------------------------------------------------------------
+\newpage
+\begin{enabstract}
+	
+	Continuum structural topology optimization is an important method for achieving the lightweight and high-performance design of complex structures. However, current density-based topology optimization methods still face bottlenecks in high-accuracy boundary representation, local stress modeling, and heterogeneous accelerated computing. This is constrained not only by the theoretical limitations of traditional low-order displacement finite elements in local stress characterization and volumetric locking, but also by the lack of efficient parallel acceleration mechanisms for large-scale computations under high-order discretizations. To address these issues, this dissertation focuses on core challenges including the "matching and mapping between topology design and physical spaces", "stress symmetry and stability under mixed discretizations", and "computational bottlenecks of large-scale iterations under high-order discretizations", thereby comprehensively investigating high-order finite element discretizations, complex local constraint modeling, and their high-performance software implementations.
+	
+	Regarding the matching problem between topology design and physical spaces in high-accuracy discrete modeling, this dissertation clarifies the numerical characteristics of arbitrary-order Lagrange finite elements in density-based topology optimization, revealing the influence patterns and accuracy advantages of high-order discrete spaces in topological evolution. Furthermore, a multi-resolution topology optimization framework based on high-order finite elements is constructed. Through the decoupling of design and analysis meshes and the density mapping operators under high-order discretizations, a generalized topology optimization model and its corresponding adjoint sensitivity analysis method are established and extended to stress-constrained problems. This framework achieves a high-resolution, precise representation of topological boundaries without significantly increasing physical degrees of freedom.
+	
+	To address the stress tensor symmetry and discrete stability conditions under strong nonlinear local constraints, this dissertation proposes a high-accuracy topology optimization method based on arbitrary-order Hu-Zhang mixed finite elements. Based on the Hellinger–Reissner mixed variational principle, a topology optimization model featuring the collaborative approximation of stress and displacement fields is constructed. By introducing a low-order stabilization technique and a partial relaxation strategy for vertex stress continuity, the convergence on unstructured meshes and complex boundaries is enhanced. This approach fundamentally eliminates volumetric locking and guarantees the mathematical rigor of local stress constraint evaluations.
+	
+	To resolve the computational bottlenecks of large-scale iterations under high-order discretizations and meet the demands of high-performance engineering computing, this dissertation presents a high-performance topology optimization software platform, SOPTX, spearheaded and developed by the author based on the underlying tensor abstraction of the open-source intelligent CAX computing engine FEALPy. Employing a modular, layered architecture, the platform incorporates efficient matrix assembly and operator caching mechanisms based on analytical precomputation and tensor contraction, and achieves the automated evaluation of complex constraint sensitivities combined with automatic differentiation. By further encapsulating the multi-backend computing capabilities of FEALPy, performance-portable computing and CPU/GPU heterogeneous acceleration across computing backends such as NumPy, PyTorch, and JAX are successfully realized.
+	
+	In summary, focusing on the core mathematical and numerical bottlenecks in topology optimization, this dissertation establishes a comprehensive research main line that integrates "high-accuracy discrete modeling, complex local constraint resolution, and software platform validation." By building a rigorous "theory-method-implementation" full-chain system, this work effectively mitigates the inherent contradiction between accuracy and efficiency, thereby providing systematic theoretical support and self-developed digital tools for transforming computational mathematical methods into practical engineering productivity.
+	
+\end{enabstract}
+
+\begin{enkeywords}
+	High-Order Finite Elements; Hu-Zhang Mixed Finite Elements; Multiresolution Topology Optimization; Stress-Constrained Topology Optimization; Topology Optimization Software Platform SOPTX
+\end{enkeywords}
