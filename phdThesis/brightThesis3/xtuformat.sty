@@ -644,6 +644,55 @@ headheight=1.2cm,headsep=0.07cm,footskip=1.27cm]{geometry}                      
 }
 
 %=========================================
+% 参考文献格式设置
+%
+% 写作指南要求：
+% 1. “参考文献”四个字的格式与章标题格式相同；
+% 2. 参考文献正文为五号字；
+% 3. 汉字用宋体，英文用 Times New Roman；
+% 4. 行距采用固定值 16 磅；
+% 5. 段前空 3 磅，段后空 0 磅；
+% 6. 每一条文献内容尽量写在同一页内。
+%=========================================
+
+\makeatletter
+
+% 参考文献标题名称
+\renewcommand{\bibname}{参考文献}
+
+% 参考文献正文格式
+% 说明：
+% thebibliography 本质上是一个列表环境。
+% 这里在列表初始化之后统一设置字体、字号、固定行距与条目间距。
+\AddToHook{cmd/thebibliography/after}{%
+	\songti\fontspec{Times New Roman}\zihao{5}%
+	\setlength{\baselineskip}{16pt}%
+	\selectfont
+	\setlength{\itemsep}{3pt}%
+	\setlength{\parsep}{0pt}%
+	\setlength{\parskip}{0pt}%
+	\setlength{\topsep}{0pt}%
+	\setlength{\partopsep}{0pt}%
+	\setlength{\labelsep}{0.5em}%
+	\interlinepenalty=8000%
+	\clubpenalty=10000%
+	\widowpenalty=10000%
+	\sloppy
+}
+
+% 若参考文献宏包定义了 \bibsep，则同步设置条目间距。
+\AtBeginDocument{%
+	\@ifundefined{bibsep}{}{%
+		\setlength{\bibsep}{3pt}%
+	}%
+}
+
+% 参考文献编号右对齐，例如 [1]、[12] 的右边界对齐。
+\renewcommand\@biblabel[1]{\hfill[#1]}
+
+\makeatother
+
+%=========================================
 % 自定义图像宽度变量 (辅助拓扑优化章节排版)
 % 用于统一控制单图、双图并排、三图并排时的图像缩放比例
 %=========================================
