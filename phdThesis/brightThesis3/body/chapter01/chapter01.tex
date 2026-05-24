@@ -62,7 +62,7 @@
 
 自 1981 年 Cheng 与 Olhoff~\cite{chengInvestigationConcerningOptimal1981} 关于实心弹性薄板材料布局的先驱性研究以来，连续体结构拓扑优化迎来了蓬勃发展。在随后的几十年中，研究者们基于不同的数学与力学理念，发展出了多种极具代表性的拓扑优化分支方法。根据拓扑构型的数学表达与数值演化策略，当前主流的连续体结构拓扑优化方法可归纳为以下三大类~\cite{rozvanyCriticalReviewEstablished2009, deatonSurveyStructuralMultidisciplinary2014a, JieGouTuoBuYouHuaShuZhiFangFaYanJiuJinZhan}：
 
-\begin{enumerate}
+\begin{enumerate}[{（}1{）}]
 	\item \textbf{基于材料分布的方法}：以设计域内的材料空间分布状态为优化对象。根据对材料微观物理模型与宏观属性映射方式的差异，该类方法主要包括早期的均匀化方法（Homogenization Method）以及随后被广泛应用的变密度方法（Density-based Method）。
 	
 	\item \textbf{进化方法}：基于启发式准则直接增删材料单元，典型代表包括渐进结构优化法（Evolutionary Structural Optimization, ESO）与双向渐进结构优化法（Bi-directional Evolutionary Structural Optimization, BESO）。
@@ -85,7 +85,7 @@
 
 综上所述，上述三类拓扑优化方法在数学表达、边界表示与演化机制等方面各有侧重，并在不同工程场景中展现出各自的适用性。然而，当本文的研究目标聚焦于拓扑优化与高精度数值离散方法的耦合，以及统一软件实现框架的构建时，变密度方法表现出更强的适应性。其成为本文开展相关算法研究的主要框架，主要基于以下三方面考虑：
 
-\begin{enumerate}
+\begin{enumerate}[{（}1{）}]
 	\item \textbf{建模与求解的便利性}：通过连续化松弛，原本离散的拓扑设计问题可转化为连续优化问题，从而较好契合移动渐近线法（Method of Moving Asymptotes, MMA）等基于梯度的优化算法，也便于开展灵敏度分析与数值实现。
 	
 	\item \textbf{良好的理论扩展性}：无论是后续讨论的任意次拉格朗日高阶有限元，还是能够实现高精度应力逼近的胡张混合有限元，都可以较为自然地嵌入 SIMP 材料插值框架之中，从而为高精度离散方法在拓扑优化中的推广提供统一建模基础。
