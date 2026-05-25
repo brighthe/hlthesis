@@ -7,7 +7,7 @@
 \section{引言}
 \label{sec:ch3_intro}
 
-拓扑优化旨在给定设计域、载荷与边界条件下寻求材料的最优分布，以在满足约束条件的前提下实现预定性能目标。在变密度法框架下，设计域经有限元离散后，以连续设计变量表征材料分布，并通过材料插值将其与状态方程耦合，从而形成 “有限元分析--灵敏度分析--设计变量更新” 的迭代求解过程。对于该类方法，空间离散方式不仅影响状态场近似精度，也会影响拓扑构型的数值稳定性与几何表达质量。
+拓扑优化旨在给定设计域、载荷与边界条件下寻求材料的最优分布，以在满足约束条件的前提下实现预定性能目标。在变密度法框架下，设计域经有限元离散后，以连续设计变量表征材料分布，并通过材料插值将其与状态方程耦合，从而形成 “有限元分析{--}灵敏度分析{--}设计变量更新” 的迭代求解过程。对于该类方法，空间离散方式不仅影响状态场近似精度，也会影响拓扑构型的数值稳定性与几何表达质量。
 
 经典的变密度拓扑优化方法多基于低阶位移有限元实现。此类方法实现简便、计算代价较低，但在缺乏适当正则化时，往往容易出现棋盘格、网格依赖及边界锯齿化等数值现象。相较而言，高阶拉格朗日有限元在相近的离散规模下通常具有更强的逼近能力，能够有效改善结构响应的计算精度及边界细节表示。因此，系统考察单元族与离散阶次对拓扑优化结果的影响规律，具有重要的研究价值。
 
@@ -34,7 +34,7 @@
 \end{equation}
 其中 $\lambda$ 和 $\mu$ 为 Lamé 常数，$\boldsymbol{I}$ 为二阶单位张量。若采用杨氏模量 $E$ 与泊松比 $\nu$ 表征材料参数，则有
 \[
-\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)}, \qquad \mu = \frac{E}{2(1+\nu)},
+\lambda = \frac{E\nu}{(1+\nu)(1-2\nu)}, \qquad \mu = \frac{E}{2(1+\nu)}.
 \]
 对于二维问题，平面应变情形可直接由上述三维本构诱导得到，而平面应力情形则采用相应的降维本构关系。
 
@@ -190,7 +190,7 @@
 a(\boldsymbol{u},\boldsymbol{v}) = \mu(\nabla\boldsymbol{u},\nabla\boldsymbol{v}) + (\lambda+\mu)(\operatorname{div}\boldsymbol{u},\operatorname{div}\boldsymbol{v}).
 \]
 
-通过对非齐次狄利克雷边界条件作适当提升，可将原问题等价地转化为定义在 $\mathcal{V}_0$ 上的齐次弱问题。由弹性刚度张量 $\mathbb{C}$ 的有界性，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上连续；由 Korn 不等式~\cite{brennerMathematicalTheoryFinite2008} 可知，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上满足强椭圆性；此外 $\ell(\cdot)$ 在 $\mathcal{V}_0$ 上连续。根据 Lax–Milgram 定理，弱形式~\eqref{eq:ch3_elastic_weak_form} 存在唯一解~\cite{ciarletFiniteElementMethod2002a}。另一方面，该弱形式还具有清晰的变分解释。为此，定义系统的总势能泛函：
+通过对非齐次狄利克雷边界条件作适当提升，可将原问题等价地转化为定义在 $\mathcal{V}_0$ 上的齐次弱问题。由弹性刚度张量 $\mathbb{C}$ 的有界性，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上连续；由 Korn 不等式~\cite{brennerMathematicalTheoryFinite2008} 可知，$a(\cdot,\cdot)$ 在 $\mathcal{V}_0\times\mathcal{V}_0$ 上满足强椭圆性；此外 $\ell(\cdot)$ 在 $\mathcal{V}_0$ 上连续。根据 Lax-Milgram 定理，弱形式~\eqref{eq:ch3_elastic_weak_form} 存在唯一解~\cite{ciarletFiniteElementMethod2002a}。另一方面，该弱形式还具有清晰的变分解释。为此，定义系统的总势能泛函：
 \[
 \Pi(\boldsymbol{v}) :=\frac{1}{2}a(\boldsymbol{v},\boldsymbol{v})-\ell(\boldsymbol{v}), \qquad \boldsymbol{v}\in\mathcal{V},
 \]
@@ -262,7 +262,7 @@ N_{\boldsymbol{\beta}}(\phi_{\boldsymbol{\alpha}}) = \phi_{\boldsymbol{\alpha}}(
 \]
 其中 $\delta_{\boldsymbol{\alpha},\boldsymbol{\beta}}$ 为 Kronecker 记号。因而，$\{\phi_{\boldsymbol{\alpha}}\}_{\boldsymbol{\alpha}\in\mathbb{T}_k^d}$ 构成关于节点自由度 $\{N_{\boldsymbol{\alpha}}\}$ 的节点型对偶基。进一步地，
 \[
-\dim P_k(T)=\#\mathbb{T}_k^d=\binom{k+d}{d}
+\dim P_k(T)=\#\mathbb{T}_k^d=\binom{k+d}{d},
 \]
 表明该组局部自由度与多项式空间的维数相匹配，从而可唯一确定单纯形上的 $k$ 次拉格朗日有限元函数。
 
@@ -386,12 +386,12 @@ l_j^k(t) = \prod_{\substack{i=0 \\ i\neq j}}^k \frac{t-s_i}{s_j-s_i}, \quad j=0,
 \]
 所有这样的多重指标构成张量积晶格
 \[
-\mathbb{S}_k^d = \{\boldsymbol{i}\in\mathbb{N}^d~:~0\leq{i}_\ell\leq{k},\ell=1,\cdots,d\}.
+\mathbb{S}_k^d = \{\boldsymbol{i}\in\mathbb{N}^d:\,0\leq{i}_\ell\leq{k},\,\ell=1,\cdots,d\}.
 \]
 
 基于一维节点 $\{s_i\}_{i=0}^k$，参考单元上的插值点集合定义为
 \[
-\mathcal{X}_{\hat{Q}} = \{\boldsymbol{\xi}_{\boldsymbol{i}} = (s_{i_1},\cdots,s_{i_d}):\boldsymbol{i}\in\mathbb{S}_k^d\},
+\mathcal{X}_{\hat{Q}} = \{\boldsymbol{\xi}_{\boldsymbol{i}} = (s_{i_1},\cdots,s_{i_d}):\,\boldsymbol{i}\in\mathbb{S}_k^d\},
 \]
 对每个 $\boldsymbol{i} = (i_1,\cdots,i_d)\in\mathbb{S}_k^d$，定义张量积形式的标量拉格朗日基函数
 \[
@@ -406,7 +406,7 @@ l_j^k(t) = \prod_{\substack{i=0 \\ i\neq j}}^k \frac{t-s_i}{s_j-s_i}, \quad j=0,
 用多重指标 $\boldsymbol{\beta} = (\beta_1,\cdots,\beta_d)\in\mathbb{N}^d$ 表示各坐标方向上的幂次，则该张量积多项式空间可写为
 \[
 Q_k(\hat{Q}) = \operatorname{span}\left\{
-\xi_1^{\beta_1}\cdots\xi_d^{\beta_d}:\boldsymbol{\beta} = (\beta_1,\cdots,\beta_d)\in\mathbb{N}^d,0\leq\beta_\ell\leq{k}
+\xi_1^{\beta_1}\cdots\xi_d^{\beta_d}:\,\boldsymbol{\beta} = (\beta_1,\cdots,\beta_d)\in\mathbb{N}^d,\,0\leq\beta_\ell\leq{k}
 \right\},
 \]
 因此，
@@ -437,11 +437,11 @@ Q_k(\hat Q) = \operatorname{span}\{\hat{\phi}_{\boldsymbol{i}}:\boldsymbol{i}\in
 
 上述参考单元上的标量节点型拉格朗日基函数可通过单元映射诱导为物理张量积单元 $Q$ 上的标量基函数，记为 $\{\phi_{\boldsymbol{i}}\}_{\boldsymbol{i}\in\mathbb{S}_k^d}$，其对应的插值点集合记为
 \[
-\mathcal{X}_Q=\{\boldsymbol{x}_{\boldsymbol{i}}:\boldsymbol{i}\in\mathbb{S}_k^d\}.
+\mathcal{X}_Q=\{\boldsymbol{x}_{\boldsymbol{i}}:\,\boldsymbol{i}\in\mathbb{S}_k^d\}.
 \]
 类似于单纯形单元上的处理，标量拉格朗日有限元可自然推广到矢量值情形。鉴于本文所考虑的线弹性位移场均在全局笛卡尔坐标系下描述，且自由度自然对应于各坐标分量在插值点处的点值，因此此处不再引入依赖于插值点的局部基底，而统一采用 $\mathbb{R}^d$ 的标准正交基 $\{\boldsymbol{e}_m\}_{m=1}^d$。对于任意插值点 $\boldsymbol{x}_{\boldsymbol{i}}\in\mathcal{X}_Q$，定义矢量基函数与相应自由度为
 \[
-\boldsymbol{\phi}_{\boldsymbol{i},m}(\boldsymbol{x}) = \phi_{\boldsymbol{i}}(\boldsymbol{x})\,\boldsymbol{e}_m, \qquad N_{\boldsymbol{i},m}(\boldsymbol{u}) = \boldsymbol{u}(\boldsymbol{x}_{\boldsymbol{i}})\cdot\boldsymbol{e}_m, \qquad \boldsymbol{i}\in\mathbb{S}_k^d,\ \ m=1,\dots,d.
+\boldsymbol{\phi}_{\boldsymbol{i},m}(\boldsymbol{x}) = \phi_{\boldsymbol{i}}(\boldsymbol{x})\,\boldsymbol{e}_m, \qquad N_{\boldsymbol{i},m}(\boldsymbol{u}) = \boldsymbol{u}(\boldsymbol{x}_{\boldsymbol{i}})\cdot\boldsymbol{e}_m, \qquad \boldsymbol{i}\in\mathbb{S}_k^d,\ \ m=1,\dots,d,
 \]
 其中，$N_{\boldsymbol{i},m}$ 表示在第 $\boldsymbol{i}$ 个插值点处取矢量函数第 $m$ 个坐标分量的点值。
 
@@ -518,15 +518,15 @@ N_{\boldsymbol{p},m}\big(\boldsymbol{\phi}_{\boldsymbol{i},n}\big) = \big(\phi_{
 \]
 据此，定义 $\Omega$ 上的连续拉格朗日有限元空间为
 \[
-\boldsymbol{V}_h = \left\{ \boldsymbol{v}_h\in C^0(\overline{\Omega};\mathbb{R}^d): \boldsymbol{v}_h|_K\in \boldsymbol{\mathcal P}_k(K),\ \forall K\in\mathcal{K}_h \right\}.
+\boldsymbol{V}_h = \left\{ \boldsymbol{v}_h\in C^0(\overline{\Omega};\mathbb{R}^d):\, \boldsymbol{v}_h|_K\in \boldsymbol{\mathcal P}_k(K),\,\forall K\in\mathcal{K}_h \right\}.
 \]
 上述定义突出了拉格朗日有限元函数在单元内为分片多项式、在单元间保持 $C^0$ 连续的构造特征。由于这类函数具有平方可积的一阶弱导数，因此 $\boldsymbol{V}_h\subset H^1(\Omega;\mathbb{R}^d)$，从而可作为前述连续弱形式中位移空间的有限维离散子空间。若进一步考虑狄利克雷边界条件，则定义对应的齐次离散测试空间：
 \[
-\boldsymbol{V}_{h,0} = \left\{ \boldsymbol{v}_h\in\boldsymbol{V}_h: \boldsymbol{v}_h=\boldsymbol{0}\ \text{on}\ \Gamma_D \right\}.
+\boldsymbol{V}_{h,0} = \left\{ \boldsymbol{v}_h\in\boldsymbol{V}_h:\, \boldsymbol{v}_h=\boldsymbol{0}\ \text{on}\ \Gamma_D \right\}.
 \]
 若 $\boldsymbol{u}_D$ 为给定的狄利克雷边界位移，记其离散边界数据为 $\boldsymbol{u}_{D,h}$，则离散试探空间定义为
 \[
-\boldsymbol{V}_h^D = \left\{ \boldsymbol{u}_h\in\boldsymbol{V}_h: \boldsymbol{u}_h=\boldsymbol{u}_{D,h}\ \text{on}\ \Gamma_D \right\} = \boldsymbol{u}_{D,h}+\boldsymbol{V}_{h,0}.
+\boldsymbol{V}_h^D = \left\{ \boldsymbol{u}_h\in\boldsymbol{V}_h:\, \boldsymbol{u}_h=\boldsymbol{u}_{D,h}\ \text{on}\ \Gamma_D \right\} = \boldsymbol{u}_{D,h}+\boldsymbol{V}_{h,0}.
 \]
 
 由于 $\boldsymbol{V}_h$ 为有限维空间，其任意函数均可由全局有限元基函数展开表示。设 $\{\boldsymbol{\phi}_I(\boldsymbol{x})\}_{I=1}^{N_{\text{dof}}}$ 为 $\boldsymbol{V}_h$ 的一组全局矢量基函数，则任意 $\boldsymbol{v}_h\in\boldsymbol{V}_h$ 可表示为
@@ -594,7 +594,7 @@ a(\boldsymbol{u}_h,\boldsymbol{v}_h) := (\boldsymbol{\sigma}(\boldsymbol{u}_h),\
 \[
 \hat{\boldsymbol{\varepsilon}}(\boldsymbol{u}_h(\boldsymbol{x})) = \boldsymbol{B}(\boldsymbol{x})\boldsymbol{U},
 \]
-其中，$\boldsymbol{B}(\boldsymbol{x})$ 为由基函数导数组成的应变–位移矩阵，二维情形可类似写出。
+其中，$\boldsymbol{B}(\boldsymbol{x})$ 为由基函数导数组成的应变{--}位移矩阵，二维情形可类似写出。
 
 线弹性本构关系  $\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}$ 在上述 Voigt 记号下可写为
 \[
@@ -671,7 +671,7 @@ a(\boldsymbol{u}_h,\boldsymbol{v}_h) := (\boldsymbol{\sigma}(\boldsymbol{u}_h),\
 \]
 同理，由右端线性泛函
 \[
-\ell(\boldsymbol{v}_h) = (\boldsymbol{b},\boldsymbol{v}_h) + \langle \boldsymbol{g},\boldsymbol{v}_h\rangle_{\Gamma_N}
+\ell(\boldsymbol{v}_h) = (\boldsymbol{b},\boldsymbol{v}_h) + \langle \boldsymbol{g},\boldsymbol{v}_h\rangle_{\Gamma_N},
 \]
 可得
 \[
@@ -932,7 +932,7 @@ g_V(\boldsymbol{\rho}) =\frac{V(\boldsymbol{\rho})}{V_0}-V_f =\frac{1}{V_0}\sum_
 \]
 其中
 \[
-\boldsymbol K_e^{(0)}=\int_{\Omega_e}\boldsymbol B^{\top}\boldsymbol D_0\boldsymbol B\,\mathrm d\boldsymbol x
+\boldsymbol K_e^{(0)}=\int_{\Omega_e}\boldsymbol B^{\top}\boldsymbol D_0\boldsymbol B\,\mathrm d\boldsymbol x,
 \]
 表示实体材料充满该单元时对应的基准单元刚度矩阵。在上述记号下，材料体积函数与体积分数约束函数对设计变量 $\rho_e$ 的导数分别为
 \[
@@ -941,7 +941,7 @@ g_V(\boldsymbol{\rho}) =\frac{V(\boldsymbol{\rho})}{V_0}-V_f =\frac{1}{V_0}\sum_
 
 进一步，由
 \[
-\frac{\partial \boldsymbol D(\rho_e)}{\partial \rho_e} = p\rho_e^{p-1}\boldsymbol D_0
+\frac{\partial \boldsymbol D(\rho_e)}{\partial \rho_e} = p\rho_e^{p-1}\boldsymbol D_0,
 \]
 可以得到单元刚度矩阵的导数为
 \[
@@ -1127,7 +1127,7 @@ u_{\text{out}}(\boldsymbol{\rho}) = \boldsymbol{L}^{\top}\boldsymbol{U}(\boldsym
 		\max_{\boldsymbol{\rho}}\quad & u_{\text{out}}(\boldsymbol{\rho}) = \boldsymbol{L}^{\top}\boldsymbol{U}(\boldsymbol{\rho})\\
 		\text{subject to}\quad & \boldsymbol{K}_{\text{system}}(\boldsymbol{\rho})\boldsymbol{U}(\boldsymbol{\rho}) = \boldsymbol{F}_{\text{in}},\\
 		& g_V(\boldsymbol{\rho}) = \frac{V(\boldsymbol{\rho})}{V_0} - V_f\leq 0,\\ 
-		& \rho_e\in[\rho_{\min},1],\qquad e=1,\cdots,N_c. 
+		& \rho_e\in[\rho_{\min},1],\qquad e=1,\cdots,N_c, 
 	\end{aligned}
 \end{equation}
 其中，总刚度矩阵 $\boldsymbol{K}_{\text{system}}$ 由结构刚度和输入/输出弹簧刚度组合而成，即
@@ -1185,17 +1185,17 @@ H_{es} = \max\{0,r_{\min} - \mathrm{dist}(e,s)\}^q,
 
 离散权重 $H_{es}$ 可视为第~\ref{subsec:filter_sensitivity} 节中连续卷积核函数 $w(r)$ 在离散网格上的采样形式。具体而言，若取
 \[
-w(r) = \max\{0, r_{\min} - r\}^q,
+w(r) = \max\{0,\,r_{\min} - r\}^q,
 \]
 则有
 \[
-H_{es} = w(\vert\boldsymbol{x}_e - \boldsymbol{x}_s\vert) = w(\mathrm{dist}(e,s)).
+H_{es} = w(\vert\boldsymbol{x}_e - \boldsymbol{x}_s\vert) = w(\mathrm{dist}(e,\,s)).
 \]
-因此，$H_{es}$ 可理解为连续核函数 $w(r)$ 在单元几何中心点上的离散取值。由 $\max\{\cdot\}$ 的截断形式可知，当 $\mathrm{dist}(e,s)\ge r_{\min}$ 时有 $H_{es}=0$，即过滤邻域外的单元不再对单元 $e$ 的过滤结果产生影响，从而保证权重非负并使得过滤仅在局部邻域内生效，这是拓扑优化中常用的离散过滤构造方式。
+因此，$H_{es}$ 可理解为连续核函数 $w(r)$ 在单元几何中心点上的离散取值。由 $\max\{\cdot\}$ 的截断形式可知，当 $\mathrm{dist}(e,\,s)\ge r_{\min}$ 时有 $H_{es}=0$，即过滤邻域外的单元不再对单元 $e$ 的过滤结果产生影响，从而保证权重非负并使得过滤仅在局部邻域内生效，这是拓扑优化中常用的离散过滤构造方式。
 
 \textbf{灵敏度过滤}：该方法主要修正易产生高频振荡的目标函数（以柔顺度 $c$ 为例）的灵敏度场，而不直接改变设计变量本身。过滤后的灵敏度定义为：
 \begin{equation} \label{eq:ch3_cell_sens_filter}
-	\widetilde{\frac{\partial c}{\partial \rho_e}} = \frac{1}{\max\{\gamma,\rho_e\}}\; \frac{\sum_{s=1}^{N_c}H_{es}\,v_s\,\rho_s\, \frac{\partial c}{\partial \rho_s}} {\sum_{s=1}^{N_c}H_{es}\,v_s},
+	\widetilde{\frac{\partial c}{\partial \rho_e}} = \frac{1}{\max\{\gamma,\,\rho_e\}}\; \frac{\sum_{s=1}^{N_c}H_{es}\,v_s\,\rho_s\, \frac{\partial c}{\partial \rho_s}} {\sum_{s=1}^{N_c}H_{es}\,v_s},
 \end{equation}
 其中，$N_c$ 为单元总数，$v_s$ 为单元 $s$ 的测度，$\gamma>0$ 为防止分母奇异的小正数。
 
@@ -1223,13 +1223,14 @@ H_{es} = w(\vert\boldsymbol{x}_e - \boldsymbol{x}_s\vert) = w(\mathrm{dist}(e,s)
 \]
 给定过滤半径 $r_{\min}>0$，定义离散卷积权重为
 \[
-H_{ik}=\max\{0,r_{\min}-\mathrm{dist}(i,k)\}^q.
+H_{ik}=\max\{0,\,r_{\min}-\mathrm{dist}(i,k)\}^q.
 \]
 为考虑节点邻域对应的离散测度，引入与节点 $i$ 关联的控制体积 $v_i$。在实现中，$v_i$ 采用集中质量近似构造，即将各单元测度按其顶点数均分后累加到相应顶点。
 
 \textbf{灵敏度过滤}：定义节点 $i$ 处过滤后的柔顺度目标函数 $c$ 的灵敏度为：
 \begin{equation} \label{eq:ch3_node_sens_filter}
-	\widetilde{\frac{\partial c}{\partial\rho_i}} = \frac{v_i}{\max\{\gamma,\rho_i\}\sum_{k=1}^{N_n}H_{ik}v_k} \sum_{k=1}^{N_n}H_{ik}\rho_k\frac{1}{v_k}\frac{\partial c}{\partial\rho_k}.
+	\widetilde{\frac{\partial c}{\partial\rho_i}} = \frac{v_i}{\max\{\gamma,\,
+		\rho_i\}\sum_{k=1}^{N_n}H_{ik}v_k} \sum_{k=1}^{N_n}H_{ik}\rho_k\frac{1}{v_k}\frac{\partial c}{\partial\rho_k}.
 \end{equation}
 
 \textbf{密度过滤}：引入物理节点密度向量 $\tilde{\boldsymbol{\rho}}=(\tilde{\rho}_1,\cdots,\tilde{\rho}_{N_n})^{\top}$，并定义：
@@ -1274,7 +1275,7 @@ H_{ik}=\max\{0,r_{\min}-\mathrm{dist}(i,k)\}^q.
 	
 	\item [优化算法配置]：设计变量更新采用 OC 法，统一设置如下参数：正向移动限制 $m=0.2$；数值阻尼系数 $\eta=0.5$；拉格朗日乘子采用二分法搜索，给定上界 $l_{\max}=10^9$ 与容差 $\epsilon_{\text{bisect}}=10^{-3}$；设计变量下界 $\rho_{\min}=10^{-9}$。
 		
-	\item [收敛准则]： 当连续两次迭代中设计变量 $\boldsymbol{\rho}$ 的变化量满足 
+	\item [收敛准则]：当连续两次迭代中设计变量 $\boldsymbol{\rho}$ 的变化量满足 
 	\[
 	\Vert\boldsymbol{\rho}^{(n+1)} - \boldsymbol{\rho}^{(n)}\Vert_{\infty,\Omega} < 10^{-2},
 	\]
@@ -1885,7 +1886,7 @@ H_{ik}=\max\{0,r_{\min}-\mathrm{dist}(i,k)\}^q.
 
 本章在变密度法框架下，系统比较了任意次多单元族拉格朗日有限元在拓扑优化中的数值表现。通过构建统一的高阶离散格式，并推导单元与节点密度表征下的离散优化模型，本章结合二维、三维及柔顺机构典型算例，深入剖析了离散阶次、表征方式与正则化策略的综合影响。主要结论如下：
 
-\begin{enumerate}
+\begin{enumerate}[{（}1{）}]
 	\item \textbf{高阶有限元的优势与局限}：高阶有限元（如 $k\ge2$）能有效消除低阶离散（$k=1$）引起的虚假刚度，使目标函数回归真实物理水平。然而，单纯提升插值阶次并不能替代拓扑优化的正则化机制，同时还会显著增加计算成本。
 	
 	\item \textbf{不同密度表征的离散特性}：单元密度表征形式直接、收敛高效，但边界易呈阶梯状；节点密度表征凭借 $C^0$ 连续性使边界过渡更为平滑，但在某些特定问题或参数设置下，其隐式的平滑惩罚会导致算法陷入低效的“准收敛”状态，显著增加计算代价。两者在统一框架下均展现出良好鲁棒性，可根据实际需求灵活选用。
