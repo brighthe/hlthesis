@@ -62,7 +62,15 @@
 
 自 1981 年 Cheng 与 Olhoff~\cite{chengInvestigationConcerningOptimal1981} 关于实心弹性薄板材料布局的先驱性研究以来，连续体结构拓扑优化迎来了蓬勃发展。在随后的几十年中，研究者们基于不同的数学与力学理念，发展出了多种极具代表性的拓扑优化分支方法。根据拓扑构型的数学表达与数值演化策略，当前主流的连续体结构拓扑优化方法可归纳为以下三大类~\cite{rozvanyCriticalReviewEstablished2009, deatonSurveyStructuralMultidisciplinary2014a, JieGouTuoBuYouHuaShuZhiFangFaYanJiuJinZhan}：
 
-\begin{enumerate}[{（}1{）}]
+\begin{enumerate}[
+	label={（\arabic*）},
+	labelsep=0.25em,
+	leftmargin=3.2em,
+	itemsep=0.4em,
+	topsep=0.4em,
+	parsep=0pt,
+	partopsep=0pt
+	]
 	\item \textbf{基于材料分布的方法}：以设计域内的材料空间分布状态为优化对象。根据对材料微观物理模型与宏观属性映射方式的差异，该类方法主要包括早期的均匀化方法（Homogenization Method）以及随后被广泛应用的变密度方法（Density-based Method）。
 	
 	\item \textbf{进化方法}：基于启发式准则直接增删材料单元，典型代表包括渐进结构优化法（Evolutionary Structural Optimization, ESO）与双向渐进结构优化法（Bi-directional Evolutionary Structural Optimization, BESO）。
@@ -84,8 +92,15 @@
 进一步提升了复杂几何拓扑演化过程中的数值稳定性。其二是以 Guo 等学者提出的 MMC 方法~\cite{guoDoingTopologyOptimization2014, guoExplicitStructuralTopology2016} 为代表的显式边界法。该方法不再依赖隐式边界演化偏微分方程，而是通过一系列显式参数化几何图元的布尔组合来表征结构边界，从而将边界演化问题转化为由有限个几何参数控制的显式优化问题，显著简化了拓扑表达与优化建模过程。在此基础上，Duan 等~\cite{yanThermoelasticStructuralTopology2021, hanStressbasedTopologyOptimization2022} 进一步将该框架推广到热弹性多物理场以及含摩擦接触的复杂应力约束结构优化问题中。总体而言，边界演化类方法在几何特征表达方面具有天然优势，但在处理极大规模三维系统与高度非线性的多约束优化问题时，其数值鲁棒性与通用软件实现能力仍有待进一步提升。
 
 综上所述，上述三类拓扑优化方法在数学表达、边界表示与演化机制等方面各有侧重，并在不同工程场景中展现出各自的适用性。然而，当本文的研究目标聚焦于拓扑优化与高精度数值离散方法的耦合，以及统一软件实现框架的构建时，变密度方法表现出更强的适应性。其成为本文开展相关算法研究的主要框架，主要基于以下三方面考虑：
-
-\begin{enumerate}[{（}1{）}]
+\begin{enumerate}[
+	label={（\arabic*）},
+	labelsep=0.25em,
+	leftmargin=3.2em,
+	itemsep=0.4em,
+	topsep=0.4em,
+	parsep=0pt,
+	partopsep=0pt
+	]
 	\item \textbf{建模与求解的便利性}：通过连续化松弛，原本离散的拓扑设计问题可转化为连续优化问题，从而较好契合移动渐近线法（Method of Moving Asymptotes, MMA）等基于梯度的优化算法，也便于开展灵敏度分析与数值实现。
 	
 	\item \textbf{良好的理论扩展性}：无论是后续讨论的任意次拉格朗日高阶有限元，还是能够实现高精度应力逼近的胡张混合有限元，都可以较为自然地嵌入 SIMP 材料插值框架之中，从而为高精度离散方法在拓扑优化中的推广提供统一建模基础。
